@@ -1,0 +1,165 @@
+{
+  "log": {
+    "version": "1.2",
+    "creator": {
+      "name": "Firefox",
+      "version": "140.0.2"
+    },
+    "browser": {
+      "name": "Firefox",
+      "version": "140.0.2"
+    },
+    "pages": [
+      {
+        "id": "page_3",
+        "pageTimings": {
+          "onContentLoad": 702,
+          "onLoad": 983
+        },
+        "startedDateTime": "2025-06-30T19:41:36.611-03:00",
+        "title": "http://saudehml.farroupilha.rs.gov.br/sigss/prontuarioAmbulatorial2.jsp?paramHash=Mov1OiUdLdtD+A5XVz/EzORhRld/GWcgLHdrBTk/+M/vUvoJKSM4NVdJfL6cRRwmAvdyylKz56wzDyC3YzkT3o1l5U5sNUkndtcF4JWJgm/ZPmQAnIfCWquiKL4kPpvEQJNvGgnPaBT2GIgodSNGsDWCfsQLmBjjHZR276sw1Q0uE9ohW+xmgLugDaptsBWbup+f8fQEVznJ79E5B7FSf+NOsU9Rc+XqRwfe2VKlQnqqYknoFrIV5Yoq989RbT0A9BMG59RuPE5DJ23NC3unb2oTKn5CHTzxo/bgaUnGQfmvt/RDLHUrUnAfgoC7R7lKO8q0GRLYIm1gc/UgDkIsSdjemudl90mc6ijlAnVsksftNo+U0ZgFQtRsstcb2UdTJcnwUIzRMeSReYsHW2hd5AWJ1ceXThMvnV7raXqkneGrWFXZ8LlN78DWfPsustqTfaZ9m9DKuFTFFDyRyQq3v9DWT4ahYXtT8xoT+dosM+G4LG4K8s3up7/C0n1gWfuSrbXxuomX+QD8RKOVzvf+6HYc/JU5a9KkrIrYY5VKDPy82CCH4WHI20+ygovj6Dk4bdc07tgnjV+fyxAt6nCULpOgvlzzbkSz4zGJqpMymOl9g9CpUMwc43EdvDKXqz+T8SfA0cTinpjpMtiQF4mmiR8UHAEG/6q+rJ7yyRGT1HW/DHWE+M64G7qQBKzs69LQsQcAm7yQSjLS4Y96+tkhJ2XmK2nmQ4JANQlmRfn5YwopuxfjCvV0muzgj7vta5S61UC3A0x6bm43tjQ19nPb7P5UZhKdMRRuhn/skYOhGLrsv9YBJ//s9QWnDNnZqGC8Ub2+j5WdfJjHZXxUaMTvMQ=="
+      }
+    ],
+    "entries": [
+      {
+        "startedDateTime": "2025-06-30T19:41:36.611-03:00",
+        "request": {
+          "bodySize": 0,
+          "method": "GET",
+          "url": "http://saudehml.farroupilha.rs.gov.br/sigss/prontuarioAmbulatorial2/buscaDadosConsultaEspecializadas_HTML?isenFullPKCrypto=yrYaJL9V6%2BP4y%2BJT3DJlGw&dataInicial=30%2F06%2F1900&dataFinal=30%2F06%2F2025",
+          "httpVersion": "HTTP/1.1",
+          "headers": [
+            {
+              "name": "Host",
+              "value": "saudehml.farroupilha.rs.gov.br"
+            },
+            {
+              "name": "User-Agent",
+              "value": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:140.0) Gecko/20100101 Firefox/140.0"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json, text/javascript, */*; q=0.01"
+            },
+            {
+              "name": "Accept-Language",
+              "value": "pt-BR,pt;q=0.8,en-US;q=0.5,en;q=0.3"
+            },
+            {
+              "name": "Accept-Encoding",
+              "value": "gzip, deflate"
+            },
+            {
+              "name": "X-Requested-With",
+              "value": "XMLHttpRequest"
+            },
+            {
+              "name": "Sec-GPC",
+              "value": "1"
+            },
+            {
+              "name": "Connection",
+              "value": "keep-alive"
+            },
+            {
+              "name": "Referer",
+              "value": "http://saudehml.farroupilha.rs.gov.br/sigss/prontuarioAmbulatorial2.jsp?paramHash=Mov1OiUdLdtD+A5XVz/EzORhRld/GWcgLHdrBTk/+M/vUvoJKSM4NVdJfL6cRRwmAvdyylKz56wzDyC3YzkT3o1l5U5sNUkndtcF4JWJgm/ZPmQAnIfCWquiKL4kPpvEQJNvGgnPaBT2GIgodSNGsDWCfsQLmBjjHZR276sw1Q0uE9ohW+xmgLugDaptsBWbup+f8fQEVznJ79E5B7FSf+NOsU9Rc+XqRwfe2VKlQnqqYknoFrIV5Yoq989RbT0A9BMG59RuPE5DJ23NC3unb2oTKn5CHTzxo/bgaUnGQfmvt/RDLHUrUnAfgoC7R7lKO8q0GRLYIm1gc/UgDkIsSdjemudl90mc6ijlAnVsksftNo+U0ZgFQtRsstcb2UdTJcnwUIzRMeSReYsHW2hd5AWJ1ceXThMvnV7raXqkneGrWFXZ8LlN78DWfPsustqTfaZ9m9DKuFTFFDyRyQq3v9DWT4ahYXtT8xoT+dosM+G4LG4K8s3up7/C0n1gWfuSrbXxuomX+QD8RKOVzvf+6HYc/JU5a9KkrIrYY5VKDPy82CCH4WHI20+ygovj6Dk4bdc07tgnjV+fyxAt6nCULpOgvlzzbkSz4zGJqpMymOl9g9CpUMwc43EdvDKXqz+T8SfA0cTinpjpMtiQF4mmiR8UHAEG/6q+rJ7yyRGT1HW/DHWE+M64G7qQBKzs69LQsQcAm7yQSjLS4Y96+tkhJ2XmK2nmQ4JANQlmRfn5YwopuxfjCvV0muzgj7vta5S61UC3A0x6bm43tjQ19nPb7P5UZhKdMRRuhn/skYOhGLrsv9YBJ//s9QWnDNnZqGC8Ub2+j5WdfJjHZXxUaMTvMQ=="
+            },
+            {
+              "name": "Cookie",
+              "value": "JSESSIONID=717DC35780713F7C94A5A614E226D513.worker_28080; pac4jCsrfToken=004b98b0-8c11-41aa-a040-5eddc2994ea6; languageDefault=pt-BR"
+            }
+          ],
+          "cookies": [
+            {
+              "name": "JSESSIONID",
+              "value": "717DC35780713F7C94A5A614E226D513.worker_28080"
+            },
+            {
+              "name": "pac4jCsrfToken",
+              "value": "004b98b0-8c11-41aa-a040-5eddc2994ea6"
+            },
+            {
+              "name": "languageDefault",
+              "value": "pt-BR"
+            }
+          ],
+          "queryString": [
+            {
+              "name": "isenFullPKCrypto",
+              "value": "yrYaJL9V6+P4y+JT3DJlGw"
+            },
+            {
+              "name": "dataInicial",
+              "value": "30/06/1900"
+            },
+            {
+              "name": "dataFinal",
+              "value": "30/06/2025"
+            }
+          ],
+          "headersSize": 1616
+        },
+        "response": {
+          "status": 200,
+          "statusText": "",
+          "httpVersion": "HTTP/1.1",
+          "headers": [
+            {
+              "name": "Server",
+              "value": "nginx/1.20.2"
+            },
+            {
+              "name": "Date",
+              "value": "Mon, 30 Jun 2025 22:41:37 GMT"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json;charset=UTF-8"
+            },
+            {
+              "name": "Transfer-Encoding",
+              "value": "chunked"
+            },
+            {
+              "name": "Connection",
+              "value": "keep-alive"
+            },
+            {
+              "name": "Cache-Control",
+              "value": "max-age=0"
+            },
+            {
+              "name": "Expires",
+              "value": "Mon, 30 Jun 2025 22:41:37 GMT"
+            }
+          ],
+          "cookies": [],
+          "content": {
+            "mimeType": "application/json; charset=UTF-8",
+            "size": 7146,
+            "text": "{\"tabela\":\"<div class='verdeBranco'>CONSULTA ESPECIALIZADA</div><div><label class='eme sigss-float-left'>&nbspEM&nbsp</label><label class='sigss-float-left'>: EMERGÊNCIA / </label><label class='mur sigss-float-left'>&nbspMU&nbsp</label><label class='sigss-float-left'>: MUITO URGENTE / </label><label class='urg sigss-float-left'>&nbspUR&nbsp</label><label class='sigss-float-left'>: URGENTE / </label><label class='pur sigss-float-left'>&nbspPU&nbsp</label><label class='sigss-float-left'>: POUCO URGENTE / </label><label class='nor sigss-float-left'>&nbspNO&nbsp</label><label>: NORMAL </label></div><div><table><tr class='tituloTabela'><th class='width10'></th><th class='width60 centralizado'>DATA</th><th class='width200'>UNIDADE DE ATENDIMENTO</th><th class='width200'>CBO (ESPECIALIDADE)</th><th class='width120'>PROFISSIONAL</th><th class='width40 centralizado'>PESO</th><th class='width40 centralizado'>ALT.</th><th class='width40 centralizado'>CINT.</th><th class='width40 centralizado'>QUAD.</th><th class='width40 centralizado'>TEMP.</th><th class='width40 centralizado'>P/A</th><th class='width40 centralizado'>IMC</th><th class='width40 centralizado'>RCQ</th><th class='width40 centralizado'>GLIC. C/P</th><th class='width40 centralizado'>O2</th><th class='width40 centralizado'>PER. CEF.</th><th class='width40 centralizado'>PULSO</th><th class='width40 centralizado'>F.R.</th></tr><tbody><tr class=''><td class='width10 nor'>NO</td><td class='width100 centralizado'>Ag 24/06/2025</td><td class='width200'>CENTRO ESPECIALIZADO DE SAUDE DE FARROUPILHA</td><td>MÉDICO CARDIOLOGISTA</td><td class='width200'>EDUARDO PALUDO<br/>Insc.: 38205</td><td class='width40 centralizado'></td><td class='width40 centralizado'></td><td class='width40 centralizado'></td><td class='width40 centralizado'></td><td class='width40 centralizado'></td><td class='width40 centralizado'></td><td class='width40 centralizado'></td><td class='width40 centralizado'></td><td class='width40 centralizado'>-/-</td><td class='width40 centralizado'></td><td class='width40 centralizado'></td><td class='width40 centralizado'></td><td class='width40 centralizado'></td></tr><tr><td COLSPAN='18'><hr></td></tr><tr class=''><td class='width10 nor'>NO</td><td class='width100 centralizado'>Ag 24/06/2022<br>At 24/06/2022 09:52:26</td><td class='width200'>CENTRO ESPECIALIZADO DE SAUDE DE FARROUPILHA</td><td>MÉDICO CLÍNICO</td><td class='width200'>GABRIELA THAIS WRONSKI<br/>Insc.: 51842</td><td class='width40 centralizado'></td><td class='width40 centralizado'></td><td class='width40 centralizado'></td><td class='width40 centralizado'></td><td class='width40 centralizado'>36,60</td><td class='width40 centralizado'>129/81</td><td class='width40 centralizado'></td><td class='width40 centralizado'></td><td class='width40 centralizado'>-/-</td><td class='width40 centralizado'>99,00</td><td class='width40 centralizado'></td><td class='width40 centralizado'>100,00</td><td class='width40 centralizado'></td></tr><tr><td class='width10'></td><td><b>Data / Hora</b></td><td COLSPAN='3'><b>Profissional</b></td><td COLSPAN='9'><b>CID - PATOLOGIA</b></td></tr><tr class='tituloTabela'><td class='width10'></td><td COLSPAN='17' class='width10'>HIPÓTESE DIAGNÓSTICA</td></tr><tr><td class='width10'></td><td>24/06/2022 09:52</td><td COLSPAN='3'>GABRIELA THAIS WRONSKI</td><td COLSPAN='3' valign='top'>CID - B34</td><td COLSPAN='10' valign='top'>DOENÇAS POR VÍRUS DE LOCALIZAÇÃO NÃO ESPECIFICADA</td></tr><tr><td class='width10'></td><td></td><td COLSPAN='21'><b>DESCRIÇÃO DA CONSULTA</b></td></tr><tr><td class='width10'></td><td></td><td COLSPAN='21'><div class='divHpdnObs'># Comorbidades: nega<br/># Medicações de uso contínuo: nega<br/># Alergias: nega<br/># Início dos sintomas:  22/06<br/># Vacina COVID-19: 2 doses<br/><br/>Subjetivo<br/>Paciente vem a consulta relatando cefaleia, tosse, mialgia e fraqueza. Nega febre e demais sintomas associados. Esteve ontem no HBSC devido ao quadro. <br/><br/>Objetivo<br/>BEG, LOC, MUC, afebril, eupneico, acianótico, anictérico<br/>AC: BNF, RR, 2T, SS<br/>AP: MVUD, SRA<br/><br/><br/>Impressão<br/>Síndrome Gripal, sem sinais de alarme<br/><br/>Conduta<br/>Solicito TR AG COVID-19;<br/>Oriento manter sintomáticos prescritos no HBSC ontem;<br/>Forneço ATM;<br/>Orientações gerais - precauções de contato e gotículas, e retorno se sinais de alarme, ao HBSC se necessário; <br/>Paciente ciente e concordante com todas as medidas tomadas.</div></td></tr><tr><td class='width10'> </td></tr><tr><td></td><td COLSPAN=9>OBSERVAÇÃO DE ENFERMAGEM: <br />Proveniente de casa, trazido pela mãe\\nPaciente vem a unidade referindo: cefaleia, dor no peito, fraqueza, consultou ontem no HBSC e apresentou leve melhora, sintomas iniciaram dia 22/06/2022\\nNega comorbidades\\nMedicação contínua: nega\\nNega alergia medicamentosa\\nNega tabagismo passivo\\nEsquema vacinal COVID: 2 doses\\nNega contato com COVID+<td></tr><tr><td COLSPAN='18'><hr></td></tr><tr class=''><td class='width10 nor'>NO</td><td class='width100 centralizado'>Ag 24/06/2022<br>At 24/06/2022 09:25:00</td><td class='width200'>CENTRO ESPECIALIZADO DE SAUDE DE FARROUPILHA</td><td>ENFERMEIRO</td><td class='width200'>MARIANE PINTO PEREIRA<br/>Insc.: 324326</td><td class='width40 centralizado'></td><td class='width40 centralizado'></td><td class='width40 centralizado'></td><td class='width40 centralizado'></td><td class='width40 centralizado'></td><td class='width40 centralizado'></td><td class='width40 centralizado'></td><td class='width40 centralizado'></td><td class='width40 centralizado'>-/-</td><td class='width40 centralizado'></td><td class='width40 centralizado'></td><td class='width40 centralizado'></td><td class='width40 centralizado'></td></tr><tr><td class='width10'></td><td><b>Data / Hora</b></td><td COLSPAN='3'><b>Profissional</b></td><td COLSPAN='9'><b>CID / <span style='color:blue'>CIAP2</span> - PATOLOGIA</b></td></tr><tr class='tituloTabela'><td class='width10'></td><td COLSPAN='17' class='width10'>HIPÓTESE DIAGNÓSTICA</td></tr><tr class='tituloTabela'><td class='width10'></td><td COLSPAN='17' class='width10'>SOAP - AVALIAÇÃO</td></tr><tr><td class='width10'></td><td valign='top'>24/06/2022 09:25</td><td COLSPAN='2' class='width10'>MARIANE PINTO PEREIRA</td><td class='width10'></td><td COLSPAN='10' valign='top'><span style='color:blue'>CIAP - A98 - MEDICINA PREVENTIVA/MANUTENÇÃO DA SAÚDE</span></td></tr></tr><tr><td class='width10'></td></td><td></td><td COLSPAN='21' valign='top'>OBS./NOTA: </td></tr><tr><td class='width10'></td></td><td></td><td COLSPAN='21'><div class='divHpdnObs'>(Problema Detectado / Hipótese Diagnóstica) <br/>Proveniente de casa, trazido pela mãe<br/>Paciente vem a unidade referindo: cefaleia, dor no peito, fraqueza, consultou ontem no HBSC e apresentou leve melhora, sintomas iniciaram dia 22/06/2022<br/>Nega comorbidades<br/>Medicação contínua: nega<br/>Nega alergia medicamentosa<br/>Nega tabagismo passivo<br/>Esquema vacinal COVID: 2 doses<br/>Nega contato com COVID+</div></td></tr><tr><td COLSPAN='18'><hr></td></tr></tbody></table></div><br />\"}"
+          },
+          "redirectURL": "",
+          "headersSize": 240,
+          "bodySize": 7386
+        },
+        "cache": {},
+        "timings": {
+          "blocked": -1,
+          "dns": 0,
+          "connect": 0,
+          "ssl": 0,
+          "send": 0,
+          "wait": 1389,
+          "receive": 1
+        },
+        "time": 1390,
+        "_securityState": "insecure",
+        "serverIPAddress": "150.230.89.212",
+        "connection": "80",
+        "pageref": "page_3"
+      }
+    ]
+  }
+}

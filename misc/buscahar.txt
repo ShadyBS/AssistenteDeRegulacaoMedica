@@ -1,0 +1,157 @@
+{
+  "log": {
+    "version": "1.2",
+    "creator": {
+      "name": "Firefox",
+      "version": "140.0.2"
+    },
+    "browser": {
+      "name": "Firefox",
+      "version": "140.0.2"
+    },
+    "pages": [
+      {
+        "id": "page_1",
+        "pageTimings": {
+          "onContentLoad": 1014,
+          "onLoad": 2826
+        },
+        "startedDateTime": "2025-06-30T18:05:47.573-03:00",
+        "title": "http://saudehml.farroupilha.rs.gov.br/sigss/regulacaoControleSolicitacao.jsp"
+      }
+    ],
+    "entries": [
+      {
+        "startedDateTime": "2025-06-30T18:05:47.573-03:00",
+        "request": {
+          "bodySize": 0,
+          "method": "GET",
+          "url": "http://saudehml.farroupilha.rs.gov.br/sigss/usuarioServico/busca?searchString=TESTE+MV",
+          "httpVersion": "HTTP/1.1",
+          "headers": [
+            {
+              "name": "Host",
+              "value": "saudehml.farroupilha.rs.gov.br"
+            },
+            {
+              "name": "User-Agent",
+              "value": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:140.0) Gecko/20100101 Firefox/140.0"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json, text/javascript, */*; q=0.01"
+            },
+            {
+              "name": "Accept-Language",
+              "value": "pt-BR,pt;q=0.8,en-US;q=0.5,en;q=0.3"
+            },
+            {
+              "name": "Accept-Encoding",
+              "value": "gzip, deflate"
+            },
+            {
+              "name": "X-Requested-With",
+              "value": "XMLHttpRequest"
+            },
+            {
+              "name": "Sec-GPC",
+              "value": "1"
+            },
+            {
+              "name": "Connection",
+              "value": "keep-alive"
+            },
+            {
+              "name": "Referer",
+              "value": "http://saudehml.farroupilha.rs.gov.br/sigss/regulacaoControleSolicitacao.jsp"
+            },
+            {
+              "name": "Cookie",
+              "value": "JSESSIONID=09186DD01F56105178FD1A5E5B1C1612.worker_28080; pac4jCsrfToken=69062f95-9998-48bd-9ac0-9c2f8d2fd678; languageDefault=pt-BR"
+            }
+          ],
+          "cookies": [
+            {
+              "name": "JSESSIONID",
+              "value": "09186DD01F56105178FD1A5E5B1C1612.worker_28080"
+            },
+            {
+              "name": "pac4jCsrfToken",
+              "value": "69062f95-9998-48bd-9ac0-9c2f8d2fd678"
+            },
+            {
+              "name": "languageDefault",
+              "value": "pt-BR"
+            }
+          ],
+          "queryString": [
+            {
+              "name": "searchString",
+              "value": "TESTE MV"
+            }
+          ],
+          "headersSize": 639
+        },
+        "response": {
+          "status": 200,
+          "statusText": "",
+          "httpVersion": "HTTP/1.1",
+          "headers": [
+            {
+              "name": "Server",
+              "value": "nginx/1.20.2"
+            },
+            {
+              "name": "Date",
+              "value": "Mon, 30 Jun 2025 21:05:47 GMT"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json;charset=UTF-8"
+            },
+            {
+              "name": "Transfer-Encoding",
+              "value": "chunked"
+            },
+            {
+              "name": "Connection",
+              "value": "keep-alive"
+            },
+            {
+              "name": "Cache-Control",
+              "value": "max-age=0"
+            },
+            {
+              "name": "Expires",
+              "value": "Mon, 30 Jun 2025 21:05:47 GMT"
+            }
+          ],
+          "cookies": [],
+          "content": {
+            "mimeType": "application/json; charset=UTF-8",
+            "size": 182,
+            "text": "[[16040,1,38307,1,\"20163-1\",\"TESTE MV\",\"160988170150002\",\"01/01/1990\",\"MAE DO TESTE MV\",\"f\",19876,1,\"\",\"\",\"f\",\"56439227386\",\"\",\"\",\"\",\"F\",\"1qTV7ssfYgbmcSmrQSz3eQ==\",\"entiPK-52199-1\"]]"
+          },
+          "redirectURL": "",
+          "headersSize": 240,
+          "bodySize": 422
+        },
+        "cache": {},
+        "timings": {
+          "blocked": -1,
+          "dns": 0,
+          "connect": 0,
+          "ssl": 0,
+          "send": 0,
+          "wait": 128,
+          "receive": 0
+        },
+        "time": 128,
+        "_securityState": "insecure",
+        "serverIPAddress": "150.230.89.212",
+        "connection": "80",
+        "pageref": "page_1"
+      }
+    ]
+  }
+}

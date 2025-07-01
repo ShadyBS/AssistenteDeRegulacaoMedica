@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Assistente de Regulação</title>
+    <link href="dist/output.css" rel="stylesheet" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Inter", sans-serif;
+      }
+      .collapse-section {
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.5s ease-in-out;
+      }
+      .collapse-section.show {
+        max-height: 10000px;
+      }
+      .btn-active {
+        background-color: #2563eb;
+        color: white;
+      }
+      /* ATUALIZADO: Estilos do tooltip para evitar cortes */
+      .comparison-icon {
+        display: inline-block;
+        margin-left: 8px;
+        font-size: 14px;
+        cursor: help;
+        position: relative;
+      }
+      .comparison-icon[data-tooltip]:hover::after {
+        content: attr(data-tooltip);
+        position: absolute;
+        bottom: 120%; /* Posiciona um pouco mais acima */
+        left: 50%;
+        transform: translateX(-50%);
+        background-color: #1f2937; /* Cor mais escura */
+        color: white;
+        padding: 8px 12px; /* Mais espaçamento interno */
+        border-radius: 6px;
+        font-size: 12px;
+        white-space: pre-wrap;
+        z-index: 9999; /* Garante que fique sobre todos os elementos */
+        display: block;
+        min-width: 280px; /* Largura mínima maior */
+        max-width: 320px; /* Largura máxima */
+        text-align: left;
+        pointer-events: none;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Sombra suave */
+      }
+      .comparison-icon[data-tooltip]::after {
+        display: none; /* Escondido por padrão */
+      }
+    </style>
+  </head>
+  <body
+    class="bg-slate-50 text-slate-800 antialiased flex flex-col h-screen"
+    style="height: 100vh"
+  >
+    <header
+      class="p-4 flex-shrink-0 flex items-center space-x-2 pb-2 border-b border-slate-200 justify-between"
+    >
+      <div class="flex items-center space-x-2">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          class="text-blue-600"
+        >
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+        </svg>
+        <h1 class="text-lg font-bold text-slate-900">
+          Assistente de Regulação
+        </h1>
+      </div>
+      <a href="options.html" title="Configurações" class="ml-2">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="20"
+          height="20"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          stroke-width="2"
+          class="text-slate-400 hover:text-blue-600 transition"
+        >
+          <circle cx="12" cy="12" r="3" />
+          <path
+            d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 8 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 8a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 8 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09c0 .66.42 1.24 1 1.51a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 8c.66 0 1.24.42 1.51 1H21a2 2 0 1 1 0 4h-.09c-.27 0-.52.11-.71.29-.19.18-.29.43-.29.71z"
+          />
+        </svg>
+      </a>
+    </header>
+
+    <main
+      class="flex-grow p-4 space-y-4 overflow-y-auto"
+      style="min-height: 0; max-height: 100vh"
+    >
+      <section
+        id="search-section"
+        class="bg-white p-4 rounded-lg border border-slate-200 shadow-sm"
+      >
+        <h2 class="text-md font-semibold text-slate-700 mb-3">
+          Buscar Paciente
+        </h2>
+        <div class="relative">
+          <input
+            type="search"
+            id="patient-search-input"
+            placeholder="Digite o nome ou CPF..."
+            class="w-full px-3 py-2 text-sm border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition duration-150 ease-in-out"
+          />
+          <div
+            id="loader"
+            class="absolute inset-y-0 right-3 flex items-center"
+            style="display: none"
+          >
+            <svg
+              class="animate-spin h-5 w-5 text-blue-600"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <circle
+                class="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                stroke-width="4"
+              ></circle>
+              <path
+                class="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+              ></path>
+            </svg>
+          </div>
+        </div>
+        <ul
+          id="search-results"
+          class="mt-2 border-t border-slate-200 -mx-4"
+        ></ul>
+        <ul
+          id="recent-patients-list"
+          class="hidden mt-2 border-t border-slate-200 -mx-4"
+        ></ul>
+      </section>
+
+      <section
+        id="patient-details-section"
+        class="bg-white p-4 rounded-lg border border-slate-200 shadow-sm"
+        style="display: none"
+      >
+        <h2 class="text-md font-semibold text-slate-700 mb-3">
+          Dados do Paciente
+        </h2>
+        <div id="patient-main-info" class="space-y-2 text-sm"></div>
+        <button
+          id="toggle-details-btn"
+          class="text-blue-600 text-sm font-medium mt-4 hover:underline"
+        >
+          Mostrar mais
+        </button>
+        <div
+          id="patient-additional-info"
+          class="collapse-section mt-4 pt-4 border-t border-slate-200 space-y-2 text-sm"
+        ></div>
+      </section>
+
+      <section
+        id="consultations-section"
+        class="bg-white p-4 rounded-lg border border-slate-200 shadow-sm"
+        style="display: none"
+      >
+        <div class="flex justify-between items-center mb-3">
+          <h2 class="text-md font-semibold text-slate-700">Consultas</h2>
+          <button
+            id="toggle-consultations-list-btn"
+            class="text-xs text-slate-500 hover:text-blue-600"
+          >
+            Recolher
+          </button>
+        </div>
+        <div id="consultations-wrapper" class="collapse-section show">
+          <div class="grid grid-cols-2 gap-4 text-sm">
+            <div>
+              <label for="date-initial" class="block font-medium"
+                >Data Inicial</label
+              ><input
+                type="date"
+                id="date-initial"
+                class="mt-1 w-full px-2 py-1 border border-slate-300 rounded-md"
+              />
+            </div>
+            <div>
+              <label for="date-final" class="block font-medium"
+                >Data Final</label
+              ><input
+                type="date"
+                id="date-final"
+                class="mt-1 w-full px-2 py-1 border border-slate-300 rounded-md"
+              />
+            </div>
+          </div>
+          <div class="mt-4 flex items-center">
+            <input
+              id="hide-no-show-checkbox"
+              type="checkbox"
+              class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+            /><label
+              for="hide-no-show-checkbox"
+              class="ml-2 block text-sm text-slate-700"
+              >Ocultar faltas</label
+            >
+          </div>
+          <div
+            id="fetch-type-buttons"
+            class="grid grid-cols-3 gap-1 mt-2 p-1 bg-slate-100 rounded-lg"
+          >
+            <button
+              data-fetch-type="all"
+              class="fetch-type-btn btn-active px-2 py-1 text-sm rounded-md transition-colors"
+            >
+              Todas
+            </button>
+            <button
+              data-fetch-type="basic"
+              class="fetch-type-btn px-2 py-1 text-sm rounded-md transition-colors text-slate-600 hover:bg-slate-200"
+            >
+              Básicas
+            </button>
+            <button
+              data-fetch-type="specialized"
+              class="fetch-type-btn px-2 py-1 text-sm rounded-md transition-colors text-slate-600 hover:bg-slate-200"
+            >
+              Especializadas
+            </button>
+          </div>
+          <div id="consultations-content" class="mt-4 border-t pt-4"></div>
+          <div id="debug-section" class="mt-4" style="display: none">
+            <button
+              id="toggle-raw-html-btn"
+              class="text-xs text-slate-500 hover:underline"
+            >
+              Mostrar/Ocultar HTML Original
+            </button>
+            <div
+              id="raw-html-content"
+              class="collapse-section mt-2 p-2 bg-slate-100 border rounded text-xs overflow-auto font-mono"
+            ></div>
+          </div>
+        </div>
+      </section>
+
+      <section
+        id="exams-section"
+        class="bg-white p-4 rounded-lg border border-slate-200 shadow-sm"
+        style="display: none"
+      >
+        <div class="flex justify-between items-center mb-3">
+          <h2 class="text-md font-semibold text-slate-700">
+            Exames Solicitados
+          </h2>
+          <button
+            id="toggle-exams-list-btn"
+            class="text-xs text-slate-500 hover:text-blue-600"
+          >
+            Recolher
+          </button>
+        </div>
+        <div id="exams-wrapper" class="collapse-section show">
+          <div class="grid grid-cols-2 gap-4 text-sm">
+            <div>
+              <label for="exam-date-initial" class="block font-medium"
+                >Data Inicial</label
+              >
+              <input
+                type="date"
+                id="exam-date-initial"
+                class="mt-1 w-full px-2 py-1 border border-slate-300 rounded-md"
+              />
+            </div>
+            <div>
+              <label for="exam-date-final" class="block font-medium"
+                >Data Final</label
+              >
+              <input
+                type="date"
+                id="exam-date-final"
+                class="mt-1 w-full px-2 py-1 border border-slate-300 rounded-md"
+              />
+            </div>
+          </div>
+          <div
+            id="exam-fetch-type-buttons"
+            class="grid grid-cols-3 gap-1 mt-4 p-1 bg-slate-100 rounded-lg"
+          >
+            <button
+              data-fetch-type="all"
+              class="exam-fetch-type-btn btn-active px-2 py-1 text-sm rounded-md transition-colors"
+            >
+              Todos
+            </button>
+            <button
+              data-fetch-type="withResult"
+              class="exam-fetch-type-btn px-2 py-1 text-sm rounded-md transition-colors text-slate-600 hover:bg-slate-200"
+            >
+              Com Resultado
+            </button>
+            <button
+              data-fetch-type="withoutResult"
+              class="exam-fetch-type-btn px-2 py-1 text-sm rounded-md transition-colors text-slate-600 hover:bg-slate-200"
+            >
+              Sem Resultado
+            </button>
+          </div>
+          <div
+            id="exams-content"
+            class="mt-4 border-t pt-4"
+            style="max-height: none; overflow: visible"
+          ></div>
+        </div>
+      </section>
+
+      <div
+        id="message-area"
+        class="p-3 rounded-md text-sm"
+        style="display: none"
+      ></div>
+    </main>
+
+    <script type="module" src="sidebar.js"></script>
+  </body>
+</html>

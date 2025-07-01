@@ -1,0 +1,165 @@
+{
+  "log": {
+    "version": "1.2",
+    "creator": {
+      "name": "Firefox",
+      "version": "140.0.2"
+    },
+    "browser": {
+      "name": "Firefox",
+      "version": "140.0.2"
+    },
+    "pages": [
+      {
+        "id": "page_2",
+        "pageTimings": {
+          "onContentLoad": 702,
+          "onLoad": 983
+        },
+        "startedDateTime": "2025-06-30T19:41:36.567-03:00",
+        "title": "http://saudehml.farroupilha.rs.gov.br/sigss/prontuarioAmbulatorial2.jsp?paramHash=Mov1OiUdLdtD+A5XVz/EzORhRld/GWcgLHdrBTk/+M/vUvoJKSM4NVdJfL6cRRwmAvdyylKz56wzDyC3YzkT3o1l5U5sNUkndtcF4JWJgm/ZPmQAnIfCWquiKL4kPpvEQJNvGgnPaBT2GIgodSNGsDWCfsQLmBjjHZR276sw1Q0uE9ohW+xmgLugDaptsBWbup+f8fQEVznJ79E5B7FSf+NOsU9Rc+XqRwfe2VKlQnqqYknoFrIV5Yoq989RbT0A9BMG59RuPE5DJ23NC3unb2oTKn5CHTzxo/bgaUnGQfmvt/RDLHUrUnAfgoC7R7lKO8q0GRLYIm1gc/UgDkIsSdjemudl90mc6ijlAnVsksftNo+U0ZgFQtRsstcb2UdTJcnwUIzRMeSReYsHW2hd5AWJ1ceXThMvnV7raXqkneGrWFXZ8LlN78DWfPsustqTfaZ9m9DKuFTFFDyRyQq3v9DWT4ahYXtT8xoT+dosM+G4LG4K8s3up7/C0n1gWfuSrbXxuomX+QD8RKOVzvf+6HYc/JU5a9KkrIrYY5VKDPy82CCH4WHI20+ygovj6Dk4bdc07tgnjV+fyxAt6nCULpOgvlzzbkSz4zGJqpMymOl9g9CpUMwc43EdvDKXqz+T8SfA0cTinpjpMtiQF4mmiR8UHAEG/6q+rJ7yyRGT1HW/DHWE+M64G7qQBKzs69LQsQcAm7yQSjLS4Y96+tkhJ2XmK2nmQ4JANQlmRfn5YwopuxfjCvV0muzgj7vta5S61UC3A0x6bm43tjQ19nPb7P5UZhKdMRRuhn/skYOhGLrsv9YBJ//s9QWnDNnZqGC8Ub2+j5WdfJjHZXxUaMTvMQ=="
+      }
+    ],
+    "entries": [
+      {
+        "startedDateTime": "2025-06-30T19:41:36.567-03:00",
+        "request": {
+          "bodySize": 0,
+          "method": "GET",
+          "url": "http://saudehml.farroupilha.rs.gov.br/sigss/prontuarioAmbulatorial2/buscaDadosConsulta_HTML?isenFullPKCrypto=yrYaJL9V6%2BP4y%2BJT3DJlGw&dataInicial=30%2F06%2F1900&dataFinal=30%2F06%2F2025",
+          "httpVersion": "HTTP/1.1",
+          "headers": [
+            {
+              "name": "Host",
+              "value": "saudehml.farroupilha.rs.gov.br"
+            },
+            {
+              "name": "User-Agent",
+              "value": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:140.0) Gecko/20100101 Firefox/140.0"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json, text/javascript, */*; q=0.01"
+            },
+            {
+              "name": "Accept-Language",
+              "value": "pt-BR,pt;q=0.8,en-US;q=0.5,en;q=0.3"
+            },
+            {
+              "name": "Accept-Encoding",
+              "value": "gzip, deflate"
+            },
+            {
+              "name": "X-Requested-With",
+              "value": "XMLHttpRequest"
+            },
+            {
+              "name": "Sec-GPC",
+              "value": "1"
+            },
+            {
+              "name": "Connection",
+              "value": "keep-alive"
+            },
+            {
+              "name": "Referer",
+              "value": "http://saudehml.farroupilha.rs.gov.br/sigss/prontuarioAmbulatorial2.jsp?paramHash=Mov1OiUdLdtD+A5XVz/EzORhRld/GWcgLHdrBTk/+M/vUvoJKSM4NVdJfL6cRRwmAvdyylKz56wzDyC3YzkT3o1l5U5sNUkndtcF4JWJgm/ZPmQAnIfCWquiKL4kPpvEQJNvGgnPaBT2GIgodSNGsDWCfsQLmBjjHZR276sw1Q0uE9ohW+xmgLugDaptsBWbup+f8fQEVznJ79E5B7FSf+NOsU9Rc+XqRwfe2VKlQnqqYknoFrIV5Yoq989RbT0A9BMG59RuPE5DJ23NC3unb2oTKn5CHTzxo/bgaUnGQfmvt/RDLHUrUnAfgoC7R7lKO8q0GRLYIm1gc/UgDkIsSdjemudl90mc6ijlAnVsksftNo+U0ZgFQtRsstcb2UdTJcnwUIzRMeSReYsHW2hd5AWJ1ceXThMvnV7raXqkneGrWFXZ8LlN78DWfPsustqTfaZ9m9DKuFTFFDyRyQq3v9DWT4ahYXtT8xoT+dosM+G4LG4K8s3up7/C0n1gWfuSrbXxuomX+QD8RKOVzvf+6HYc/JU5a9KkrIrYY5VKDPy82CCH4WHI20+ygovj6Dk4bdc07tgnjV+fyxAt6nCULpOgvlzzbkSz4zGJqpMymOl9g9CpUMwc43EdvDKXqz+T8SfA0cTinpjpMtiQF4mmiR8UHAEG/6q+rJ7yyRGT1HW/DHWE+M64G7qQBKzs69LQsQcAm7yQSjLS4Y96+tkhJ2XmK2nmQ4JANQlmRfn5YwopuxfjCvV0muzgj7vta5S61UC3A0x6bm43tjQ19nPb7P5UZhKdMRRuhn/skYOhGLrsv9YBJ//s9QWnDNnZqGC8Ub2+j5WdfJjHZXxUaMTvMQ=="
+            },
+            {
+              "name": "Cookie",
+              "value": "JSESSIONID=717DC35780713F7C94A5A614E226D513.worker_28080; pac4jCsrfToken=004b98b0-8c11-41aa-a040-5eddc2994ea6; languageDefault=pt-BR"
+            }
+          ],
+          "cookies": [
+            {
+              "name": "JSESSIONID",
+              "value": "717DC35780713F7C94A5A614E226D513.worker_28080"
+            },
+            {
+              "name": "pac4jCsrfToken",
+              "value": "004b98b0-8c11-41aa-a040-5eddc2994ea6"
+            },
+            {
+              "name": "languageDefault",
+              "value": "pt-BR"
+            }
+          ],
+          "queryString": [
+            {
+              "name": "isenFullPKCrypto",
+              "value": "yrYaJL9V6+P4y+JT3DJlGw"
+            },
+            {
+              "name": "dataInicial",
+              "value": "30/06/1900"
+            },
+            {
+              "name": "dataFinal",
+              "value": "30/06/2025"
+            }
+          ],
+          "headersSize": 1602
+        },
+        "response": {
+          "status": 200,
+          "statusText": "",
+          "httpVersion": "HTTP/1.1",
+          "headers": [
+            {
+              "name": "Server",
+              "value": "nginx/1.20.2"
+            },
+            {
+              "name": "Date",
+              "value": "Mon, 30 Jun 2025 22:41:38 GMT"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json;charset=UTF-8"
+            },
+            {
+              "name": "Transfer-Encoding",
+              "value": "chunked"
+            },
+            {
+              "name": "Connection",
+              "value": "keep-alive"
+            },
+            {
+              "name": "Cache-Control",
+              "value": "max-age=0"
+            },
+            {
+              "name": "Expires",
+              "value": "Mon, 30 Jun 2025 22:41:38 GMT"
+            }
+          ],
+          "cookies": [],
+          "content": {
+            "mimeType": "application/json; charset=UTF-8",
+            "size": 26393,
+            "text": "{\"tabela\":\"<div class='verdeBranco'>CONSULTA BÁSICA</div><div><label class='eme sigss-float-left'>&nbspEM&nbsp</label><label class='sigss-float-left'>: EMERGÊNCIA / </label><label class='mur sigss-float-left'>&nbspMU&nbsp</label><label class='sigss-float-left'>: MUITO URGENTE / </label><label class='urg sigss-float-left'>&nbspUR&nbsp</label><label class='sigss-float-left'>: URGENTE / </label><label class='pur sigss-float-left'>&nbspPU&nbsp</label><label class='sigss-float-left'>: POUCO URGENTE / </label><label class='nor sigss-float-left'>&nbspNO&nbsp</label><label>: NORMAL </label></div><div><table><tr class='tituloTabela'><th class='width10'></th><th class='width60'>DATA</th><th class='width200'>UNIDADE DE ATENDIMENTO</th><th class='width200'>CBO (ESPECIALIDADE)</th><th class='width120'>PROFISSIONAL</th><th class='width40'>PESO</th><th class='width40'>ALT.</th><th class='width40'>CINT.</th><th class='width40'>QUAD.</th><th class='width40'>TEMP.</th><th class='width40'>P/A</th><th class='width40'>IMC</th><th class='width40'>RCQ</th><th class='width40'>GLIC. C/P</th><th class='width40'>O2</th><th class='width40'>PER. CEF.</th><th class='width40'>PULSO</th><th class='width40'>F.R.</th></tr><tbody><tr><td class='width10 nor'>NO</td><td class='width100'>Ag 25/03/2025<br>At 25/03/2025 12:06:34</td><td class='width200'>UNIDADE BASICA DE SAUDE AMERICA</td><td>MÉDICO CLÍNICO</td><td class='width200'>CLAUDIO JOSE PINTO DE SOUZA JUNIOR<br/>Insc.: 49935</td><td class='width40 centralizado'></td><td class='width40 centralizado'></td><td class='width40 centralizado'></td><td class='width40 centralizado'></td><td class='width40 centralizado'></td><td class='width40 centralizado'></td><td class='width40 centralizado'></td><td class='width40 centralizado'></td><td class='width40 centralizado'>-/-</td><td class='width40 centralizado'></td><td class='width40 centralizado'></td><td class='width40 centralizado'></td><td class='width40 centralizado'></td></tr><tr class='tituloTabela'><td class='width10'></td><td COLSPAN='17' class='width10'>HIPÓTESE DIAGNÓSTICA</td></tr><tr><td class='width10'></td><td><b>Data / Hora</b></td><td COLSPAN='6'><b>Profissional</b></td><td COLSPAN='10'><b>CID / <span style='color:blue'>CIAP2</span> - PATOLOGIA</b></td></tr><tr class='tituloTabela'><td class='width10'></td><td COLSPAN='17' class='width10'>SOAP - OBJETIVO</td></tr><tr><td class='width10'></td><td valign='top'>25/03/2025 12:06</td><td COLSPAN='15' class='width10'>CLAUDIO JOSE PINTO DE SOUZA JUNIOR</td></tr><tr><td class='width10'></td><td></td><td COLSPAN='21'><div class='divHpdnObs'>(Exames Fisicos e Complementares) <br/>teste</div></td></tr><tr class='tituloTabela'><td class='width10'></td><td COLSPAN='17' class='width10'>SOAP - AVALIAÇÃO</td></tr><tr><td class='width10'></td><td valign='top'>25/03/2025 12:06</td><td COLSPAN='5' class='width10'>CLAUDIO JOSE PINTO DE SOUZA JUNIOR</td><td class='width10'></td><td COLSPAN='10' valign='top'>CID - I32 - PERICARDITE EM DOENÇAS CLASSIFICADAS EM OUTRA PARTE</td></tr></tr><tr><td class='width10'></td></td><td></td><td COLSPAN='21' valign='top'>OBS./NOTA: </td></tr><tr><td class='width10'></td></td><td></td><td COLSPAN='21'><div class='divHpdnObs'>(Problema Detectado / Hipótese Diagnóstica) <br/>teste</div></td></tr><tr><td COLSPAN='18'><hr></td></tr><tr><td class='width10 nor'>NO</td><td class='width100'>Ag 18/10/2024<br>At 18/10/2024 15:19:31</td><td class='width200'>UNIDADE BASICA DE SAUDE INDUSTRIAL</td><td>MÉDICO DE FAMÍLIA E COMUNIDADE</td><td class='width200'>BIANCA GRACELLI BRUTTOMESSO<br/>Insc.: 49540</td><td class='width40 centralizado'>75,000</td><td class='width40 centralizado'>1,69</td><td class='width40 centralizado'></td><td class='width40 centralizado'></td><td class='width40 centralizado'></td><td class='width40 centralizado'>120/80</td><td class='width40 centralizado'>26,26</td><td class='width40 centralizado'></td><td class='width40 centralizado'>-/-</td><td class='width40 centralizado'>98,00</td><td class='width40 centralizado'></td><td class='width40 centralizado'>88,00</td><td class='width40 centralizado'></td></tr><tr><td></td><td COLSPAN=17 style='word-break: break-all;'>OBSERVAÇÃO DE ENFERMAGEM:<br/>refree gripe</td></tr><tr><td></td><td COLSPAN='11'><hr></td></tr><tr class='tituloTabela'><td class='width10'></td><td COLSPAN='17' class='width10'>HIPÓTESE DIAGNÓSTICA</td></tr><tr><td class='width10'></td><td><b>Data / Hora</b></td><td COLSPAN='6'><b>Profissional</b></td><td COLSPAN='10'><b>CID / <span style='color:blue'>CIAP2</span> - PATOLOGIA</b></td></tr><tr class='tituloTabela'><td class='width10'></td><td COLSPAN='17' class='width10'>SOAP - AVALIAÇÃO</td></tr><tr><td class='width10'></td><td valign='top'>18/10/2024 15:19</td><td COLSPAN='5' class='width10'>BIANCA GRACELLI BRUTTOMESSO</td><td class='width10'></td><td COLSPAN='10' valign='top'>CID - I49 - OUTRAS ARRITMIAS CARDÍACAS</td></tr></tr><tr><td class='width10'></td></td><td></td><td COLSPAN='21' valign='top'>OBS./NOTA: </td></tr><tr><td class='width10'></td></td><td></td><td COLSPAN='21'><div class='divHpdnObs'>(Problema Detectado / Hipótese Diagnóstica) <br/>ANDREI, 18 ANOS<br/><br/>HMP:<br/>- Nega comorbidades<br/>- Nega cirurgias<br/>- Nega alergias<br/>- Nega tabagismo<br/>- Atividade física: não<br/>- Mora com mãe/pai/irmã, 3º ano - tarde, não trabalha<br/><br/>S. paciente vem acompanhado pela mãe para mostrar exames. Se queixa de cefaleia, dor de garganta, tosse e coriza com início há 2 dias. Relata dor no peito e palpitações cerca de 2x/semana há mais de 6 meses.  Nega demais queixas.<br/><br/>O. BEG, LOC, MUC, SV estáveis / PA 120/80<br/>AC: RR 2T SS, FC 80BPM<br/>AP: MVUD SRA, SAT 98% AA<br/>Oro: hiperemia, sem placas<br/><br/>ECG 04/10/24: ritmo sinusal, FC 58bpm, presença de extrassístole ventricular frequente - arritmia ventricular.<br/>LABS 07/10/24: HB 16,8 / LEUC 7400 / PLAQ 239 MIL / VIT D 18,1 / TSH 3,78 / T4 1,12 / B12 164 / FERRITINA 102 / HB GLICADA 4,95% / CT 167 / HDL 49 / TG 49 / CR 0,91 / EQU SP <br/><br/>A. Arritmia ventricular / Sintomas gripais / Hipovitaminose D e B12<br/><br/>C. Encaminho ao cardiologista<br/>Prescrevo colecalciferol e citoneurin<br/>Prescrevo sintomáticos, oriento lavagem nasal</div></td></tr><tr><td COLSPAN='18'><hr></td></tr><tr><td class='width10 nor'>NO</td><td class='width100'>Ag 18/09/2024<br>At 18/09/2024 08:02:02</td><td class='width200'>UNIDADE BASICA DE SAUDE INDUSTRIAL</td><td>MÉDICO DE FAMÍLIA E COMUNIDADE</td><td class='width200'>BIANCA GRACELLI BRUTTOMESSO<br/>Insc.: 49540</td><td class='width40 centralizado'>73,000</td><td class='width40 centralizado'>1,70</td><td class='width40 centralizado'></td><td class='width40 centralizado'></td><td class='width40 centralizado'></td><td class='width40 centralizado'>120/80</td><td class='width40 centralizado'>25,26</td><td class='width40 centralizado'></td><td class='width40 centralizado'>-/-</td><td class='width40 centralizado'></td><td class='width40 centralizado'></td><td class='width40 centralizado'></td><td class='width40 centralizado'></td></tr><tr><td></td><td COLSPAN=17 style='word-break: break-all;'>OBSERVAÇÃO DE ENFERMAGEM:<br/>solicitar exames</td></tr><tr><td></td><td COLSPAN='11'><hr></td></tr><tr class='tituloTabela'><td class='width10'></td><td COLSPAN='17' class='width10'>HIPÓTESE DIAGNÓSTICA</td></tr><tr><td class='width10'></td><td><b>Data / Hora</b></td><td COLSPAN='6'><b>Profissional</b></td><td COLSPAN='10'><b>CID / <span style='color:blue'>CIAP2</span> - PATOLOGIA</b></td></tr><tr class='tituloTabela'><td class='width10'></td><td COLSPAN='17' class='width10'>SOAP - AVALIAÇÃO</td></tr><tr><td class='width10'></td><td valign='top'>18/09/2024 08:02</td><td COLSPAN='5' class='width10'>BIANCA GRACELLI BRUTTOMESSO</td><td class='width10'></td><td COLSPAN='10' valign='top'>CID - Z000 - EXAME MÉDICO GERAL</td></tr></tr><tr><td class='width10'></td></td><td></td><td COLSPAN='21' valign='top'>OBS./NOTA: </td></tr><tr><td class='width10'></td></td><td></td><td COLSPAN='21'><div class='divHpdnObs'>(Problema Detectado / Hipótese Diagnóstica) <br/>ANDREI, 18 ANOS<br/><br/>HMP:<br/>- Nega comorbidades<br/>- Nega cirurgias<br/>- Nega alergias<br/>- Nega tabagismo<br/>- Atividade física: não <br/>- Mora com mãe/pai/irmã, 3º ano - tarde, não trabalha <br/><br/>S. paciente vem acompanhado pela mãe para solicitar exames de rotina. Se queixa de fraqueza, inapetência, tontura e cefaleia frequentes - relata que toma pouca água e come muita besteira. Mãe solicita atestado (?) - vai para a escola apenas à tarde. Mãe quer laudo dizendo que precisa do auxílio do filho para não ir para o exército. Mãe relata preocupação pois o pai do paciente é diabético. Nega demais queixas.<br/><br/>O. BEG, LOC, MUC, SV estáveis / PA 120/80<br/>AC: RR 2T SS, FC 80BPM<br/>AP: MVUD SRA, SAT 98% AA<br/>* Paciente pouco fala na consulta - apenas a mãe <br/><br/>A. Exames<br/><br/>C. Solicito ECG e laboratoriais <br/>Retorno com exames</div></td></tr><tr><td COLSPAN='18'><hr></td></tr><tr><td class='width10 nor'>NO</td><td class='width100'>Ag 14/06/2024<br>At 14/06/2024 09:13:35</td><td class='width200'>UNIDADE BASICA DE SAUDE INDUSTRIAL</td><td>MÉDICO CLÍNICO</td><td class='width200'>FERNANDA CHOINACKI DE AGUIAR<br/>Insc.: 54253</td><td class='width40 centralizado'>68,000</td><td class='width40 centralizado'></td><td class='width40 centralizado'></td><td class='width40 centralizado'></td><td class='width40 centralizado'>37,00</td><td class='width40 centralizado'>130/70</td><td class='width40 centralizado'></td><td class='width40 centralizado'></td><td class='width40 centralizado'>-/-</td><td class='width40 centralizado'>98,00</td><td class='width40 centralizado'></td><td class='width40 centralizado'>139,00</td><td class='width40 centralizado'></td></tr><tr><td></td><td COLSPAN=17 style='word-break: break-all;'>OBSERVAÇÃO DE ENFERMAGEM:<br/>refere gripe</td></tr><tr><td></td><td COLSPAN='11'><hr></td></tr><tr class='tituloTabela'><td class='width10'></td><td COLSPAN='17' class='width10'>HIPÓTESE DIAGNÓSTICA</td></tr><tr><td class='width10'></td><td><b>Data / Hora</b></td><td COLSPAN='6'><b>Profissional</b></td><td COLSPAN='10'><b>CID / <span style='color:blue'>CIAP2</span> - PATOLOGIA</b></td></tr><tr class='tituloTabela'><td class='width10'></td><td COLSPAN='17' class='width10'>SOAP - AVALIAÇÃO</td></tr><tr><td class='width10'></td><td valign='top'>14/06/2024 09:13</td><td COLSPAN='5' class='width10'>FERNANDA CHOINACKI DE AGUIAR</td><td class='width10'></td><td COLSPAN='10' valign='top'>CID - J069 - INFECÇÃO AGUDA DAS VIAS AÉREAS SUPERIORES NÃO ESPECIFICADA</td></tr></tr><tr><td class='width10'></td></td><td></td><td COLSPAN='21' valign='top'>OBS./NOTA: </td></tr><tr><td class='width10'></td></td><td></td><td COLSPAN='21'><div class='divHpdnObs'>(Problema Detectado / Hipótese Diagnóstica) <br/># Nega comorbidades<br/># Nega alergia medicamentosa<br/><br/>S: Paciente relata que no domingo apresentava dor em orelha esquerda, e há 3-4 dias iniciou com mialgia, cefaleia em região frontal além de coriza hialina. Refere melhora da dor em ouvido E. Nega dispneia ou demais queixas.<br/><br/>O: BEG, LOC, MUC, PA 130/70, Sat 98% , FC 105 BPM<br/>AP: MVUD SRA<br/><br/>I: IVAS <br/><br/>Cd: Orientações gerais<br/>Prescrevo sintomáticos para casa<br/>Oriento sinais e sintomas de alarme e a procurar atendimento médico de urgência<br/>Comprovante de comparecimento</div></td></tr><tr><td COLSPAN='18'><hr></td></tr><tr><td class='width10 nor'>NO</td><td class='width100'>Ag 13/06/2024</td><td class='width200'>UNIDADE BASICA DE SAUDE INDUSTRIAL</td><td>ENFERMEIRO DA ESTRATÉGIA DE SAÚDE DA FAMÍLIA</td><td class='width200'>ISABELLA CRISTINA LOPES DOS SANTOS<br/>Insc.: 700254</td><td COLSPAN=6 class='width210 textoVermelho'><b>FALTOU A CONSULTA</b></td></tr><tr><td></td><td COLSPAN=17 style='word-break: break-all;'>OBSERVAÇÃO DE ENFERMAGEM:<br/></td></tr><tr><td></td><td COLSPAN='11'><hr></td></tr><tr class='tituloTabela'><td class='width10'></td><td COLSPAN='17' class='width10'>HIPÓTESE DIAGNÓSTICA</td></tr><tr><td class='width10'></td><td><b>Data / Hora</b></td><td COLSPAN='6'><b>Profissional</b></td><td COLSPAN='10'><b>CID / <span style='color:blue'>CIAP2</span> - PATOLOGIA</b></td></tr><tr class='tituloTabela'><td class='width10'></td><td COLSPAN='17' class='width10'>SOAP - SUBJETIVO</td></tr><tr><td class='width10'></td><td valign='top'>13/06/2024 13:12</td><td COLSPAN='6' class='width10'>ISABELLA CRISTINA LOPES DOS SANTOS</td><td COLSPAN='10' valign='top'><span style='color:blue'>CIAP - A98 - MEDICINA PREVENTIVA/MANUTENÇÃO DA SAÚDE</span></td></tr><tr><td class='width10'></td><td></td><td COLSPAN='21' valign='top'>OBS./NOTA: </td></tr><tr><td class='width10'></td><td></td><td COLSPAN='21'><div class='divHpdnObs'>(Motivo da consulta / Queixa do Paciente / Entrevista Clínica) <br/>#acolhimento. <br/>Picos febris, tosse, dor no peito e náuseas. Com inicio ontem. Medicou com paracetamol e chás.</div></td></tr><tr class='tituloTabela'><td class='width10'></td><td COLSPAN='17' class='width10'>SOAP - PLANO </td></tr><tr><td class='width10'></td><td valign='top'>13/06/2024 13:15</td><td COLSPAN='5' class='width10'>ISABELLA CRISTINA LOPES DOS SANTOS</td><td class='width10'></td><td COLSPAN='10' valign='top'><span style='color:blue'>CIAP - A98 - MEDICINA PREVENTIVA/MANUTENÇÃO DA SAÚDE</span></td></tr><tr><td class='width10'></td></td><td></td><td COLSPAN='21' valign='top'>OBS./NOTA: </td></tr><tr><td class='width10'></td></td><td></td><td COLSPAN='21'><div class='divHpdnObs'>(Intervenção - Procedimento) <br/>Agendada consulta para amanhã.</div></td></tr><tr><td COLSPAN='18'><hr></td></tr><tr><td class='width10 nor'>NO</td><td class='width100'>Ag 26/02/2024</td><td class='width200'>UNIDADE BASICA DE SAUDE INDUSTRIAL</td><td>MÉDICO DE FAMÍLIA E COMUNIDADE</td><td class='width200'>BIANCA GRACELLI BRUTTOMESSO<br/>Insc.: 49540</td><td COLSPAN=6 class='width210 textoVermelho'><b>FALTOU A CONSULTA</b></td></tr><tr><td COLSPAN='18'><hr></td></tr><tr><td class='width10 nor'>NO</td><td class='width100'>Ag 21/02/2024<br>At 21/02/2024 15:03:20</td><td class='width200'>CENTRO DE SAUDE FARROUPILHA</td><td>MÉDICO CLÍNICO</td><td class='width200'>CAMILLA FONTANA PIOVESAN<br/>Insc.: 51840</td><td class='width40 centralizado'></td><td class='width40 centralizado'></td><td class='width40 centralizado'></td><td class='width40 centralizado'></td><td class='width40 centralizado'>36,80</td><td class='width40 centralizado'>120/70</td><td class='width40 centralizado'></td><td class='width40 centralizado'></td><td class='width40 centralizado'>-/-</td><td class='width40 centralizado'>98,00</td><td class='width40 centralizado'></td><td class='width40 centralizado'>79,00</td><td class='width40 centralizado'></td></tr><tr><td></td><td COLSPAN=17 style='word-break: break-all;'>OBSERVAÇÃO DE ENFERMAGEM:<br/>(33 Mal Estar em Adulto) Normal.\\n# Procedente de casa, acompanhado pela mãe\\n# Chegou referindo febre, cefaleia, tosse e dor no peito\\n# Com inicio há 3 dias\\n# Comorbidades: nega.  \\n# Alergia (s): nega.  \\n# Faz uso de medicação contínua: nega.  \\n# Vacina para Covid-19: Sim. 4 doses.  \\n# Aguarda em sala de espera Covid.</td></tr><tr><td></td><td COLSPAN='11'><hr></td></tr><tr class='tituloTabela'><td class='width10'></td><td COLSPAN='17' class='width10'>HIPÓTESE DIAGNÓSTICA</td></tr><tr><td class='width10'></td><td><b>Data / Hora</b></td><td COLSPAN='6'><b>Profissional</b></td><td COLSPAN='10'><b>CID / <span style='color:blue'>CIAP2</span> - PATOLOGIA</b></td></tr><tr class='tituloTabela'><td class='width10'></td><td COLSPAN='17' class='width10'>SOAP - AVALIAÇÃO</td></tr><tr><td class='width10'></td><td valign='top'>21/02/2024 15:03</td><td COLSPAN='5' class='width10'>CAMILLA FONTANA PIOVESAN</td><td class='width10'></td><td COLSPAN='10' valign='top'>CID - Z000 - EXAME MÉDICO GERAL</td></tr></tr><tr><td class='width10'></td></td><td></td><td COLSPAN='21' valign='top'>OBS./NOTA: </td></tr><tr><td class='width10'></td></td><td></td><td COLSPAN='21'><div class='divHpdnObs'>(Problema Detectado / Hipótese Diagnóstica) <br/># Comorbidades: nega<br/># Alergia (s): nega<br/># Medicações contínuas: nega.<br/> # Vacina Covid-19: Sim. 4 doses<br/><br/>Subjetivo: Trazido por mãe Marcelina. Paciente refere tosse seca, cefaleia, mialgia, febre há 4 dias.<br/><br/>Objetivo: <br/>BEG, LOC, MUC, SVE, AFEBRIL<br/>Oroscopia: orofaringe hiperemiada, ausência de edema/exsudato amigdaliano<br/>AP: murmúrio vesicular uniformemente distribuído, sem ruídos adventícios. Eupneico, sem esforço/tiragem <br/>AC: bulhas normofonéticas, ritmo regular, 2 tempos, não ausculto sopros<br/><br/>Avaliação:<br/>Covid positivo<br/>4º dia sintomas<br/><br/>Plano:<br/>Sintomáticos<br/>ATM 4 dias<br/>Oriento sinais de alarme</div></td></tr><tr><td COLSPAN='18'><hr></td></tr><tr><td class='width10 nor'>NO</td><td class='width100'>Ag 20/02/2024<br>At 20/02/2024 13:16:52</td><td class='width200'>UNIDADE BASICA DE SAUDE CENTRAL</td><td>ENFERMEIRO</td><td class='width200'>AMANDA CENTOFANTE<br/>Insc.: 000789083</td><td class='width40 centralizado'></td><td class='width40 centralizado'></td><td class='width40 centralizado'></td><td class='width40 centralizado'></td><td class='width40 centralizado'></td><td class='width40 centralizado'></td><td class='width40 centralizado'></td><td class='width40 centralizado'></td><td class='width40 centralizado'>-/-</td><td class='width40 centralizado'></td><td class='width40 centralizado'></td><td class='width40 centralizado'></td><td class='width40 centralizado'></td></tr><tr class='tituloTabela'><td class='width10'></td><td COLSPAN='17' class='width10'>HIPÓTESE DIAGNÓSTICA</td></tr><tr><td class='width10'></td><td><b>Data / Hora</b></td><td COLSPAN='6'><b>Profissional</b></td><td COLSPAN='10'><b>CID / <span style='color:blue'>CIAP2</span> - PATOLOGIA</b></td></tr><tr class='tituloTabela'><td class='width10'></td><td COLSPAN='17' class='width10'>SOAP - SUBJETIVO</td></tr><tr><td class='width10'></td><td valign='top'>20/02/2024 13:11</td><td COLSPAN='6' class='width10'>AMANDA CENTOFANTE</td><td COLSPAN='10' valign='top'><span style='color:blue'>CIAP - 46 - CONSULTA COM PROFISSIONAL DE APS</span></td></tr><tr><td class='width10'></td><td></td><td COLSPAN='21' valign='top'>OBS./NOTA: </td></tr><tr><td class='width10'></td><td></td><td COLSPAN='21'><div class='divHpdnObs'>(Motivo da consulta / Queixa do Paciente / Entrevista Clínica) <br/>ACOLHIMENTO REALIZADO EM ESF INDUSTRIAL<br/><br/>Paciente refere dor de cabeça, coriza, tosse seca</div></td></tr><tr class='tituloTabela'><td class='width10'></td><td COLSPAN='17' class='width10'>SOAP - AVALIAÇÃO</td></tr><tr><td class='width10'></td><td valign='top'>20/02/2024 13:16</td><td COLSPAN='5' class='width10'>AMANDA CENTOFANTE</td><td class='width10'></td><td COLSPAN='10' valign='top'><span style='color:blue'>CIAP - A98 - MEDICINA PREVENTIVA/MANUTENÇÃO DA SAÚDE</span></td></tr></tr><tr><td class='width10'></td></td><td></td><td COLSPAN='21' valign='top'>OBS./NOTA: </td></tr><tr><td class='width10'></td></td><td></td><td COLSPAN='21'><div class='divHpdnObs'>(Problema Detectado / Hipótese Diagnóstica) <br/>Explico para a mãe sobre as vagas e a importância de procurar atendimento em Centro de Saúde, a mesma comenta que se o seu filho piorar ela irá levar.<br/>Caso contrário irá esperar pela consulta agendada na segunda dia 26/05 as 09:00</div></td></tr><tr><td COLSPAN='18'><hr></td></tr><tr><td class='width10 nor'>NO</td><td class='width100'>Ag 12/04/2023<br>At 12/04/2023 11:19:00</td><td class='width200'>CENTRO DE SAUDE FARROUPILHA</td><td>MÉDICO CLÍNICO</td><td class='width200'>KARINE SANTOS DE AZEVEDO<br/>Insc.: 54401</td><td class='width40 centralizado'></td><td class='width40 centralizado'></td><td class='width40 centralizado'></td><td class='width40 centralizado'></td><td class='width40 centralizado'>36,60</td><td class='width40 centralizado'>120/90</td><td class='width40 centralizado'></td><td class='width40 centralizado'></td><td class='width40 centralizado'>-/-</td><td class='width40 centralizado'>98,00</td><td class='width40 centralizado'></td><td class='width40 centralizado'>86,00</td><td class='width40 centralizado'></td></tr><tr><td></td><td COLSPAN=17 style='word-break: break-all;'>OBSERVAÇÃO DE ENFERMAGEM:<br/>Sintomas :  Cefaleia, dor no corpo, tosse seca, febre 38,9\\nInicio: 09/04/23\\nmedicação usada: paracetamol e dipirona\\ncomorbidades: nega\\nMedicação continua: Nega\\nAlergia a medicação: nega\\nTabagista: Nega\\nDoses da vacina para covid:  3 doses\\nTeve contato com positivado para covid? nega</td></tr><tr><td></td><td COLSPAN='11'><hr></td></tr><tr class='tituloTabela'><td class='width10'></td><td COLSPAN='17' class='width10'>HIPÓTESE DIAGNÓSTICA</td></tr><tr><td class='width10'></td><td><b>Data / Hora</b></td><td COLSPAN='6'><b>Profissional</b></td><td COLSPAN='10'><b>CID / <span style='color:blue'>CIAP2</span> - PATOLOGIA</b></td></tr><tr class='tituloTabela'><td class='width10'></td><td COLSPAN='17' class='width10'>SOAP - AVALIAÇÃO</td></tr><tr><td class='width10'></td><td valign='top'>12/04/2023 11:19</td><td COLSPAN='5' class='width10'>KARINE SANTOS DE AZEVEDO</td><td class='width10'></td><td COLSPAN='10' valign='top'>CID - B342 - INFECÇÃO POR CORONAVÍRUS DE LOCALIZAÇÃO NÃO ESPECIFICADA</td></tr></tr><tr><td class='width10'></td></td><td></td><td COLSPAN='21' valign='top'>OBS./NOTA: </td></tr><tr><td class='width10'></td></td><td></td><td COLSPAN='21'><div class='divHpdnObs'>(Problema Detectado / Hipótese Diagnóstica) <br/># Nega comorbidades<br/># Nega alergias<br/><br/>Subjetivo:<br/>Paciente relata que está desde domingo com cefaleia, mialgia, tosse, coriza. Vários casos de covid na escola. Em uso de dipirona e ibuprofeno.<br/><br/>Objetivo:<br/>TAx 36,6 // FC 86 // SO2 98% AA // PA 120/90<br/>AC: BNF, 2T, RR, não ausculto sopros<br/>AP: MVUD, Sem ruídos adventícios<br/><br/>Impressão:<br/>Síndrome gripal<br/><br/>Conduta:<br/>TR covid POSITIVO<br/>Sintomáticos<br/>Lavagem nasal<br/>Atestado 4 dias<br/>ORIENTO, RETORNO PARA REAVALIAÇÃO SE PIORA DOS SINTOMAS / PERSISTENCIA DE SINTOMAS<br/>RECONSULTA SE TR POSITIVO SN <br/>Oriento sinais de alarme com baixo limiar para retorno à emergência, HBSC se necessário<br/>- Dispneia, febre alta, dor toracica, esforço respiratorio, tosse persistente<br/>Paciente ciente e concordante</div></td></tr><tr><td COLSPAN='18'><hr></td></tr><tr><td class='width10 nor'>NO</td><td class='width100'>Ag 09/03/2023<br>At 09/03/2023 11:15:21</td><td class='width200'>UNIDADE BASICA DE SAUDE AMERICA</td><td>MÉDICO DE FAMÍLIA E COMUNIDADE</td><td class='width200'>BIANCA GRACELLI BRUTTOMESSO<br/>Insc.: 49540</td><td class='width40 centralizado'></td><td class='width40 centralizado'></td><td class='width40 centralizado'></td><td class='width40 centralizado'></td><td class='width40 centralizado'></td><td class='width40 centralizado'>100/60</td><td class='width40 centralizado'></td><td class='width40 centralizado'></td><td class='width40 centralizado'>-/-</td><td class='width40 centralizado'></td><td class='width40 centralizado'></td><td class='width40 centralizado'></td><td class='width40 centralizado'></td></tr><tr><td></td><td COLSPAN=17 style='word-break: break-all;'>OBSERVAÇÃO DE ENFERMAGEM:<br/>REFERE TONTURA; MAL ESTAR; SOLICITA EXAMES</td></tr><tr><td></td><td COLSPAN='11'><hr></td></tr><tr class='tituloTabela'><td class='width10'></td><td COLSPAN='17' class='width10'>HIPÓTESE DIAGNÓSTICA</td></tr><tr><td class='width10'></td><td><b>Data / Hora</b></td><td COLSPAN='6'><b>Profissional</b></td><td COLSPAN='10'><b>CID / <span style='color:blue'>CIAP2</span> - PATOLOGIA</b></td></tr><tr class='tituloTabela'><td class='width10'></td><td COLSPAN='17' class='width10'>SOAP - AVALIAÇÃO</td></tr><tr><td class='width10'></td><td valign='top'>09/03/2023 11:15</td><td COLSPAN='5' class='width10'>BIANCA GRACELLI BRUTTOMESSO</td><td class='width10'></td><td COLSPAN='10' valign='top'>CID - Z000 - EXAME MÉDICO GERAL</td></tr></tr><tr><td class='width10'></td></td><td></td><td COLSPAN='21' valign='top'>OBS./NOTA: </td></tr><tr><td class='width10'></td></td><td></td><td COLSPAN='21'><div class='divHpdnObs'>(Problema Detectado / Hipótese Diagnóstica) <br/>ANDREI, 16 ANOS<br/><br/>HMP:<br/>- Nega comorbidades<br/>- Nega alergias<br/>- Nega tabagismo<br/><br/>S. paciente vem acompanhado pela mãe, refere tontura e mal estar eventualmente há cerca de 6 meses. Solicita exames. Relata dor de cabeça frequente, nega dificuldade visual. Nega demais queixas. <br/><br/>A. Mal estar/tontura / Cefaleia <br/><br/>C. Solicito laboratoriais<br/>Prescrevo sintomático<br/>Atestado do dia<br/>Oriento ingesta hídrica<br/>Retorno com exames</div></td></tr><tr><td COLSPAN='18'><hr></td></tr><tr><td class='width10 nor'>NO</td><td class='width100'>Ag 27/09/2011</td><td class='width200'>[INATIVO] UNIDADE BASICA DE SAUDE INDUSTRIAL</td><td>MÉDICO CLÍNICO</td><td class='width200'>PROFISSIONAL IMPORTAÇÃO</td><td COLSPAN=6 class='width210 textoVermelho'><b>FALTOU A CONSULTA</b></td></tr><tr><td COLSPAN='18'><hr></td></tr><tr><td class='width10 nor'>NO</td><td class='width100'>Ag 27/09/2011</td><td class='width200'>CENTRO ESPECIALIZADO DE SAUDE DE FARROUPILHA</td><td>MÉDICO CLÍNICO</td><td class='width200'>ARLENE MARIA COLOMBO</td><td COLSPAN=6 class='width210 textoVermelho'><b>FALTOU A CONSULTA</b></td></tr><tr><td COLSPAN='18'><hr></td></tr><tr><td class='width10 nor'>NO</td><td class='width100'>Ag 22/09/2011</td><td class='width200'>[INATIVO] UNIDADE BASICA DE SAUDE INDUSTRIAL</td><td>MÉDICO CLÍNICO</td><td class='width200'>LUIS GERALDO MELO</td><td COLSPAN=6 class='width210 textoVermelho'><b>FALTOU A CONSULTA</b></td></tr><tr><td COLSPAN='18'><hr></td></tr><tr><td class='width10 nor'>NO</td><td class='width100'>Ag 02/09/2011</td><td class='width200'>[INATIVO] UNIDADE BASICA DE SAUDE INDUSTRIAL</td><td>MÉDICO CLÍNICO</td><td class='width200'>LUIS GERALDO MELO</td><td COLSPAN=6 class='width210 textoVermelho'><b>FALTOU A CONSULTA</b></td></tr><tr><td COLSPAN='18'><hr></td></tr></tbody></table></div><br/>\"}"
+          },
+          "redirectURL": "",
+          "headersSize": 240,
+          "bodySize": 26633
+        },
+        "cache": {},
+        "timings": {
+          "blocked": -1,
+          "dns": 0,
+          "connect": 0,
+          "ssl": 0,
+          "send": 0,
+          "wait": 2449,
+          "receive": 35
+        },
+        "time": 2484,
+        "_securityState": "insecure",
+        "serverIPAddress": "150.230.89.212",
+        "connection": "80",
+        "pageref": "page_2"
+      }
+    ]
+  }
+}

@@ -1,0 +1,217 @@
+{
+  "log": {
+    "version": "1.2",
+    "creator": {
+      "name": "Firefox",
+      "version": "140.0.2"
+    },
+    "browser": {
+      "name": "Firefox",
+      "version": "140.0.2"
+    },
+    "pages": [
+      {
+        "id": "page_3",
+        "pageTimings": {
+          "onContentLoad": -147756,
+          "onLoad": -144292
+        },
+        "startedDateTime": "2025-06-30T19:40:37.006-03:00",
+        "title": "http://saudehml.farroupilha.rs.gov.br/sigss/atendimentoConsultaAgenda2.jsp"
+      }
+    ],
+    "entries": [
+      {
+        "startedDateTime": "2025-06-30T19:40:37.006-03:00",
+        "request": {
+          "bodySize": 0,
+          "method": "GET",
+          "url": "http://saudehml.farroupilha.rs.gov.br/sigss/exameRequisitado/findAllExam?filters%5B0%5D=dataInicial%3A01%2F01%2F1900&filters%5B1%5D=dataFinal%3A30%2F06%2F2025&filters%5B2%5D=isenPK%3A57430-1&exameSolicitadoMin=true&exameSolicitadoOutro=true&exameComResultado=false&exameSemResultado=false&tipoBusca=exam&_search=false&nd=1751323236991&rows=1000&page=1&sidx=exam.examDataCad&sord=asc",
+          "httpVersion": "HTTP/1.1",
+          "headers": [
+            {
+              "name": "Host",
+              "value": "saudehml.farroupilha.rs.gov.br"
+            },
+            {
+              "name": "User-Agent",
+              "value": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:140.0) Gecko/20100101 Firefox/140.0"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json, text/javascript, */*; q=0.01"
+            },
+            {
+              "name": "Accept-Language",
+              "value": "pt-BR,pt;q=0.8,en-US;q=0.5,en;q=0.3"
+            },
+            {
+              "name": "Accept-Encoding",
+              "value": "gzip, deflate"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json; charset=iso-8859-1"
+            },
+            {
+              "name": "X-Requested-With",
+              "value": "XMLHttpRequest"
+            },
+            {
+              "name": "Sec-GPC",
+              "value": "1"
+            },
+            {
+              "name": "Connection",
+              "value": "keep-alive"
+            },
+            {
+              "name": "Referer",
+              "value": "http://saudehml.farroupilha.rs.gov.br/sigss/atendimentoConsultaAgenda2.jsp"
+            },
+            {
+              "name": "Cookie",
+              "value": "JSESSIONID=717DC35780713F7C94A5A614E226D513.worker_28080; pac4jCsrfToken=004b98b0-8c11-41aa-a040-5eddc2994ea6; languageDefault=pt-BR"
+            },
+            {
+              "name": "Priority",
+              "value": "u=0"
+            }
+          ],
+          "cookies": [
+            {
+              "name": "JSESSIONID",
+              "value": "717DC35780713F7C94A5A614E226D513.worker_28080"
+            },
+            {
+              "name": "pac4jCsrfToken",
+              "value": "004b98b0-8c11-41aa-a040-5eddc2994ea6"
+            },
+            {
+              "name": "languageDefault",
+              "value": "pt-BR"
+            }
+          ],
+          "queryString": [
+            {
+              "name": "filters[0]",
+              "value": "dataInicial:01/01/1900"
+            },
+            {
+              "name": "filters[1]",
+              "value": "dataFinal:30/06/2025"
+            },
+            {
+              "name": "filters[2]",
+              "value": "isenPK:57430-1"
+            },
+            {
+              "name": "exameSolicitadoMin",
+              "value": "true"
+            },
+            {
+              "name": "exameSolicitadoOutro",
+              "value": "true"
+            },
+            {
+              "name": "exameComResultado",
+              "value": "false"
+            },
+            {
+              "name": "exameSemResultado",
+              "value": "false"
+            },
+            {
+              "name": "tipoBusca",
+              "value": "exam"
+            },
+            {
+              "name": "_search",
+              "value": "false"
+            },
+            {
+              "name": "nd",
+              "value": "1751323236991"
+            },
+            {
+              "name": "rows",
+              "value": "1000"
+            },
+            {
+              "name": "page",
+              "value": "1"
+            },
+            {
+              "name": "sidx",
+              "value": "exam.examDataCad"
+            },
+            {
+              "name": "sord",
+              "value": "asc"
+            }
+          ],
+          "headersSize": 1000
+        },
+        "response": {
+          "status": 200,
+          "statusText": "",
+          "httpVersion": "HTTP/1.1",
+          "headers": [
+            {
+              "name": "Server",
+              "value": "nginx/1.20.2"
+            },
+            {
+              "name": "Date",
+              "value": "Mon, 30 Jun 2025 22:40:36 GMT"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json;charset=UTF-8"
+            },
+            {
+              "name": "Transfer-Encoding",
+              "value": "chunked"
+            },
+            {
+              "name": "Connection",
+              "value": "keep-alive"
+            },
+            {
+              "name": "Cache-Control",
+              "value": "max-age=0"
+            },
+            {
+              "name": "Expires",
+              "value": "Mon, 30 Jun 2025 22:40:36 GMT"
+            }
+          ],
+          "cookies": [],
+          "content": {
+            "mimeType": "application/json; charset=UTF-8",
+            "size": 9528,
+            "text": "{\"page\":1,\"total\":1,\"records\":4,\"rows\":[{\"id\":\"itexAval-1338584-1\",\"cell\":[\"397284\",\"1\",\"20/04/2023\",\"NÃO\",\"\",\"ANALISE DE CARACTERES FISICOS, ELEMENTOS E SEDIMENTO DA URINA                                                                                                                                                                                             \",\"NÃO\",\"null\",\"BIANCA GRACELLI BRUTTOMESSO\",\"null\",\"\",\"\",\"\",\"null\",\"null\",\"1338584\",\"1\"]},{\"id\":\"itexAval-1338585-1\",\"cell\":[\"397284\",\"1\",\"20/04/2023\",\"NÃO\",\"\",\"DOSAGEM DE COLESTEROL HDL                                                                                                                                                                                                                                 \",\"NÃO\",\"null\",\"BIANCA GRACELLI BRUTTOMESSO\",\"null\",\"\",\"\",\"\",\"null\",\"null\",\"1338585\",\"1\"]},{\"id\":\"itexAval-1338586-1\",\"cell\":[\"397284\",\"1\",\"20/04/2023\",\"NÃO\",\"\",\"DOSAGEM DE COLESTEROL TOTAL                                                                                                                                                                                                                               \",\"NÃO\",\"null\",\"BIANCA GRACELLI BRUTTOMESSO\",\"null\",\"\",\"\",\"\",\"null\",\"null\",\"1338586\",\"1\"]},{\"id\":\"itexAval-1338587-1\",\"cell\":[\"397284\",\"1\",\"20/04/2023\",\"NÃO\",\"\",\"DOSAGEM DE CREATININA                                                                                                                                                                                                                                     \",\"NÃO\",\"null\",\"BIANCA GRACELLI BRUTTOMESSO\",\"null\",\"\",\"\",\"\",\"null\",\"null\",\"1338587\",\"1\"]},{\"id\":\"itexAval-1338588-1\",\"cell\":[\"397284\",\"1\",\"20/04/2023\",\"NÃO\",\"\",\"DOSAGEM DE GLICOSE                                                                                                                                                                                                                                        \",\"NÃO\",\"null\",\"BIANCA GRACELLI BRUTTOMESSO\",\"null\",\"\",\"\",\"\",\"null\",\"null\",\"1338588\",\"1\"]},{\"id\":\"itexAval-1338589-1\",\"cell\":[\"397284\",\"1\",\"20/04/2023\",\"NÃO\",\"\",\"DOSAGEM DE HORMONIO TIREOESTIMULANTE (TSH)                                                                                                                                                                                                                \",\"NÃO\",\"null\",\"BIANCA GRACELLI BRUTTOMESSO\",\"null\",\"\",\"\",\"\",\"null\",\"null\",\"1338589\",\"1\"]},{\"id\":\"itexAval-1338590-1\",\"cell\":[\"397284\",\"1\",\"20/04/2023\",\"NÃO\",\"\",\"DOSAGEM DE TRIGLICERIDEOS                                                                                                                                                                                                                                 \",\"NÃO\",\"null\",\"BIANCA GRACELLI BRUTTOMESSO\",\"null\",\"\",\"\",\"\",\"null\",\"null\",\"1338590\",\"1\"]},{\"id\":\"itexAval-1338591-1\",\"cell\":[\"397284\",\"1\",\"20/04/2023\",\"NÃO\",\"\",\"HEMOGRAMA COMPLETO                                                                                                                                                                                                                                        \",\"NÃO\",\"null\",\"BIANCA GRACELLI BRUTTOMESSO\",\"null\",\"\",\"\",\"\",\"null\",\"null\",\"1338591\",\"1\"]},{\"id\":\"itexAval-1338592-1\",\"cell\":[\"397284\",\"1\",\"20/04/2023\",\"NÃO\",\"\",\"PESQUISA DE OVOS E CISTOS DE PARASITAS                                                                                                                                                                                                                    \",\"NÃO\",\"null\",\"BIANCA GRACELLI BRUTTOMESSO\",\"null\",\"\",\"\",\"\",\"null\",\"null\",\"1338592\",\"1\"]},{\"id\":\"itexAval-1471120-1\",\"cell\":[\"426963\",\"1\",\"05/09/2023\",\"NÃO\",\"\",\"RADIOGRAFIA PANORAMICA                                                                                                                                                                                                                                    \",\"SIM\",\"null\",\"LUIS GUSTAVO FELTRIN\",\"null\",\"\",\"\",\"\",\"503138\",\"1\",\"1471120\",\"1\"]},{\"id\":\"itexAval-1853959-1\",\"cell\":[\"515734\",\"1\",\"18/09/2024\",\"NÃO\",\"\",\"ELETROCARDIOGRAMA                                                                                                                                                                                                                                         \",\"SIM\",\"null\",\"BIANCA GRACELLI BRUTTOMESSO\",\"null\",\"\",\"\",\"\",\"548452\",\"1\",\"1853959\",\"1\"]},{\"id\":\"itexAval-1864888-1\",\"cell\":[\"518919\",\"1\",\"01/10/2024\",\"NÃO\",\"\",\"ANALISE DE CARACTERES FISICOS, ELEMENTOS E SEDIMENTO DA URINA                                                                                                                                                                                             \",\"SIM\",\"null\",\"BIANCA GRACELLI BRUTTOMESSO\",\"null\",\"\",\"\",\"\",\"548952\",\"1\",\"1864888\",\"1\"]},{\"id\":\"itexAval-1864889-1\",\"cell\":[\"518919\",\"1\",\"01/10/2024\",\"NÃO\",\"\",\"DOSAGEM DE 25 HIDROXIVITAMINA D                                                                                                                                                                                                                           \",\"SIM\",\"null\",\"BIANCA GRACELLI BRUTTOMESSO\",\"null\",\"\",\"\",\"\",\"548952\",\"1\",\"1864889\",\"1\"]},{\"id\":\"itexAval-1864890-1\",\"cell\":[\"518919\",\"1\",\"01/10/2024\",\"NÃO\",\"\",\"DOSAGEM DE COLESTEROL HDL                                                                                                                                                                                                                                 \",\"SIM\",\"null\",\"BIANCA GRACELLI BRUTTOMESSO\",\"null\",\"\",\"\",\"\",\"548952\",\"1\",\"1864890\",\"1\"]},{\"id\":\"itexAval-1864891-1\",\"cell\":[\"518919\",\"1\",\"01/10/2024\",\"NÃO\",\"\",\"DOSAGEM DE COLESTEROL TOTAL                                                                                                                                                                                                                               \",\"SIM\",\"null\",\"BIANCA GRACELLI BRUTTOMESSO\",\"null\",\"\",\"\",\"\",\"548952\",\"1\",\"1864891\",\"1\"]},{\"id\":\"itexAval-1864892-1\",\"cell\":[\"518919\",\"1\",\"01/10/2024\",\"NÃO\",\"\",\"DOSAGEM DE CREATININA                                                                                                                                                                                                                                     \",\"SIM\",\"null\",\"BIANCA GRACELLI BRUTTOMESSO\",\"null\",\"\",\"\",\"\",\"548952\",\"1\",\"1864892\",\"1\"]},{\"id\":\"itexAval-1864893-1\",\"cell\":[\"518919\",\"1\",\"01/10/2024\",\"NÃO\",\"\",\"DOSAGEM DE FERRITINA                                                                                                                                                                                                                                      \",\"SIM\",\"null\",\"BIANCA GRACELLI BRUTTOMESSO\",\"null\",\"\",\"\",\"\",\"548952\",\"1\",\"1864893\",\"1\"]},{\"id\":\"itexAval-1864894-1\",\"cell\":[\"518919\",\"1\",\"01/10/2024\",\"NÃO\",\"\",\"DOSAGEM DE HEMOGLOBINA GLICOSILADA                                                                                                                                                                                                                        \",\"SIM\",\"null\",\"BIANCA GRACELLI BRUTTOMESSO\",\"null\",\"\",\"\",\"\",\"548952\",\"1\",\"1864894\",\"1\"]},{\"id\":\"itexAval-1864895-1\",\"cell\":[\"518919\",\"1\",\"01/10/2024\",\"NÃO\",\"\",\"DOSAGEM DE HORMONIO TIREOESTIMULANTE (TSH)                                                                                                                                                                                                                \",\"SIM\",\"null\",\"BIANCA GRACELLI BRUTTOMESSO\",\"null\",\"\",\"\",\"\",\"548952\",\"1\",\"1864895\",\"1\"]},{\"id\":\"itexAval-1864896-1\",\"cell\":[\"518919\",\"1\",\"01/10/2024\",\"NÃO\",\"\",\"DOSAGEM DE TIROXINA LIVRE (T4 LIVRE)                                                                                                                                                                                                                      \",\"SIM\",\"null\",\"BIANCA GRACELLI BRUTTOMESSO\",\"null\",\"\",\"\",\"\",\"548952\",\"1\",\"1864896\",\"1\"]},{\"id\":\"itexAval-1864897-1\",\"cell\":[\"518919\",\"1\",\"01/10/2024\",\"NÃO\",\"\",\"DOSAGEM DE TRIGLICERIDEOS                                                                                                                                                                                                                                 \",\"SIM\",\"null\",\"BIANCA GRACELLI BRUTTOMESSO\",\"null\",\"\",\"\",\"\",\"548952\",\"1\",\"1864897\",\"1\"]},{\"id\":\"itexAval-1864898-1\",\"cell\":[\"518919\",\"1\",\"01/10/2024\",\"NÃO\",\"\",\"DOSAGEM DE VITAMINA B12                                                                                                                                                                                                                                   \",\"SIM\",\"null\",\"BIANCA GRACELLI BRUTTOMESSO\",\"null\",\"\",\"\",\"\",\"548952\",\"1\",\"1864898\",\"1\"]},{\"id\":\"itexAval-1864899-1\",\"cell\":[\"518919\",\"1\",\"01/10/2024\",\"NÃO\",\"\",\"HEMOGRAMA COMPLETO                                                                                                                                                                                                                                        \",\"SIM\",\"null\",\"BIANCA GRACELLI BRUTTOMESSO\",\"null\",\"\",\"\",\"\",\"548952\",\"1\",\"1864899\",\"1\"]}]}"
+          },
+          "redirectURL": "",
+          "headersSize": 240,
+          "bodySize": 9768
+        },
+        "cache": {},
+        "timings": {
+          "blocked": -1,
+          "dns": 0,
+          "connect": 0,
+          "ssl": 0,
+          "send": 0,
+          "wait": 74,
+          "receive": 0
+        },
+        "time": 74,
+        "_securityState": "insecure",
+        "serverIPAddress": "150.230.89.212",
+        "connection": "80",
+        "pageref": "page_3"
+      }
+    ]
+  }
+}
