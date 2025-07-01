@@ -2,7 +2,7 @@
 import {
   searchPatients,
   fetchVisualizaUsuario,
-  fetchCadsusData, // <-- Importa a nova função
+  fetchCadsusData,
   fetchAllConsultations,
   fetchConsultasBasicas,
   fetchConsultasEspecializadas,
@@ -10,6 +10,8 @@ import {
   fetchResultadoExame,
   getBaseUrl,
 } from "./api.js";
+// Importa a configuração de campos e a função de busca de valores
+import { defaultFieldConfig, getNestedValue } from "./field-config.js";
 
 // --- Seletores de Elementos do DOM ---
 const searchInput = document.getElementById("patient-search-input");
@@ -54,6 +56,7 @@ let recentPatients = [];
 let currentFetchType = "all";
 let allFetchedConsultations = [];
 let currentExamFetchType = "all";
+let fieldConfig = []; // Armazena a configuração da ficha
 
 // --- Funções de Armazenamento ---
 async function loadRecentPatients() {
@@ -68,6 +71,19 @@ async function saveRecentPatient(patient) {
   const updatedList = [patient, ...filtered].slice(0, 5);
   recentPatients = updatedList;
   await chrome.storage.local.set({ recentPatients });
+}
+
+async function loadFieldConfig() {
+  return new Promise((resolve) => {
+    chrome.storage.sync.get({ patientFields: defaultFieldConfig }, (data) => {
+      const savedConfig = data.patientFields;
+      fieldConfig = defaultFieldConfig.map((defaultField) => {
+        const savedField = savedConfig.find((f) => f.id === defaultField.id);
+        return savedField ? { ...defaultField, ...savedField } : defaultField;
+      });
+      resolve();
+    });
+  });
 }
 
 // --- Funções Utilitárias ---
@@ -96,41 +112,49 @@ function clearMessage() {
 
 // --- Funções de Renderização ---
 
-// ATUALIZADO: renderPatientDetails agora exibe mais campos e faz a comparação
 function renderPatientDetails(patientData, cadsusData) {
   currentPatient = patientData;
-  const entidadeFisica = patientData.entidadeFisica || {};
-  const entidade = entidadeFisica.entidade || {};
-  const localidade = entidade.localidade || {};
-  const logradouro = entidade.logradouro || {};
-  const tipoLogradouro = logradouro.tipoLogradouro || {};
-  const cidade = localidade.cidade || {};
+  patientMainInfoDiv.innerHTML = "";
+  patientAdditionalInfoDiv.innerHTML = "";
 
-  // Função para normalizar telefones, removendo o DDI 55
-  const normalizePhone = (phone) => {
-    let digits = (phone || "").replace(/\D/g, "");
-    if (digits.startsWith("55") && digits.length > 11) {
-      return digits.substring(2);
+  const getLocalValue = (field, data) => {
+    if (typeof field.key === "function") {
+      return field.key(data);
     }
-    return digits;
+    return getNestedValue(data, field.key);
   };
 
-  // Função auxiliar para criar cada linha da ficha com o ícone de comparação
-  const createDetailRow = (label, localValue, cadsusValue) => {
-    const v1 = (localValue || "").trim();
-    const v2 = (cadsusValue || "").trim();
+  const getCadsusValue = (field, data) => {
+    if (!data || field.cadsusKey === null) return null;
+    if (typeof field.cadsusKey === "function") {
+      return field.cadsusKey(data);
+    }
+    return data[field.cadsusKey];
+  };
+
+  const sortedFields = [...fieldConfig].sort((a, b) => a.order - b.order);
+
+  sortedFields.forEach((field) => {
+    if (!field.enabled) return;
+
+    let localValue = getLocalValue(field, patientData);
+    if (field.formatter) {
+      localValue = field.formatter(localValue);
+    }
+    const cadsusValue = getCadsusValue(field, cadsusData);
+
+    // CORRIGIDO: Converte explicitamente para String antes de usar .trim()
+    const v1 = String(localValue || "").trim();
+    const v2 = String(cadsusValue || "").trim();
     let icon = "";
 
-    if (cadsusData && cadsusValue !== null) {
-      let areEqual;
-      // Lógica de comparação específica para cada campo
-      if (label === "Telefone") {
-        areEqual = normalizePhone(v1) === normalizePhone(v2);
-      } else {
-        areEqual = v1.toUpperCase() === v2.toUpperCase();
-      }
+    if (cadsusData && field.cadsusKey !== null) {
+      const normalizePhone = (phone) =>
+        (phone || "").replace(/\D/g, "").replace(/^55/, "");
+      const compareV1 = field.id === "telefone" ? normalizePhone(v1) : v1;
+      const compareV2 = field.id === "telefone" ? normalizePhone(v2) : v2;
 
-      if (areEqual) {
+      if (compareV1.toUpperCase() === compareV2.toUpperCase()) {
         icon = `<span class="comparison-icon" title="Dado confere com o CADSUS">✅</span>`;
       } else {
         const tooltipText = `Ficha: ${v1 || "Vazio"}\nCADSUS: ${v2 || "Vazio"}`;
@@ -138,101 +162,32 @@ function renderPatientDetails(patientData, cadsusData) {
       }
     }
 
-    return `<div class="flex justify-between items-center"><span class="font-medium text-slate-600">${label}:</span><span class="text-slate-900 text-right flex items-center">${
+    const valueClass =
+      field.id.toLowerCase().includes("alerg") && v1 && v1 !== "-"
+        ? "text-red-600 font-bold"
+        : "text-slate-900";
+
+    const rowHtml = `<div class="flex justify-between items-center py-1"><span class="font-medium text-slate-600">${
+      field.label
+    }:</span><span class="${valueClass} text-right flex items-center">${
       v1 || "-"
     }${icon}</span></div>`;
-  };
 
-  // Mapeamento de dados do CADSUS
-  const cadsusMap = {
-    nome: cadsusData ? cadsusData[2] : null,
-    nomeMae: cadsusData ? cadsusData[7] : null,
-    dtNasc: cadsusData ? cadsusData[3] : null,
-    cpf: cadsusData ? cadsusData[50] : null,
-    cns: cadsusData
-      ? (cadsusData[1] || "").split("\n")[0].replace(/\s*\(.*\)/, "")
-      : null,
-    telefone: cadsusData ? cadsusData[17] : null,
-    endereco: cadsusData
-      ? `${cadsusData[34] || ""} ${cadsusData[32] || ""}, ${
-          cadsusData[36] || ""
-        }`
-          .trim()
-          .replace(/,$/, "")
-      : null,
-  };
+    if (field.section === "main") {
+      patientMainInfoDiv.innerHTML += rowHtml;
+    } else {
+      patientAdditionalInfoDiv.innerHTML += rowHtml;
+    }
+  });
 
-  // Montando os dados locais
-  const localTelefone = `${entidade.entiTel1Pre || ""}${
-    entidade.entiTel1 || ""
-  }`;
-  const localEndereco = `${tipoLogradouro.tiloNome || ""} ${
-    logradouro.logrNome || ""
-  }, ${entidade.entiEndeNumero || ""}`
-    .trim()
-    .replace(/,$/, "");
-
-  // Exibição principal (patientMainInfoDiv)
-  patientMainInfoDiv.innerHTML = `
-    ${createDetailRow("Nome", entidade.entiNome, cadsusMap.nome)}
-    ${createDetailRow("CPF", entidadeFisica.entfCPF, cadsusMap.cpf)}
-    ${createDetailRow("CNS", patientData.isenNumCadSus, cadsusMap.cns)}
-    ${createDetailRow(
-      "Nascimento",
-      entidadeFisica.entfDtNasc,
-      cadsusMap.dtNasc
-    )}
-    ${createDetailRow(
-      "Nome da Mãe",
-      entidadeFisica.entfNomeMae,
-      cadsusMap.nomeMae
-    )}
-    ${createDetailRow("Telefone", localTelefone, cadsusMap.telefone)}
-  `;
-
-  // Função para criar linhas de alertas e condições especiais
-  const createAlertRow = (label, value) => {
-    if (!value || value === "f" || value.trim() === "") return "";
-    const displayValue = value === "t" ? "Sim" : value;
-    return `<div class="flex justify-between items-center"><span class="font-medium text-slate-600">${label}:</span><span class="text-red-600 font-bold text-right">${displayValue}</span></div>`;
-  };
-
-  // Exibição adicional (patientAdditionalInfoDiv)
-  patientAdditionalInfoDiv.innerHTML = `
-    <h3 class="font-semibold text-slate-600 mb-2 mt-2">Endereço</h3>
-    ${createDetailRow("Logradouro", localEndereco, cadsusMap.endereco)}
-    <div class="flex justify-between items-center"><span class="font-medium text-slate-600">Bairro:</span><span class="text-slate-900 text-right">${
-      localidade.locaNome || "-"
-    }</span></div>
-    <div class="flex justify-between items-center"><span class="font-medium text-slate-600">Cidade:</span><span class="text-slate-900 text-right">${
-      cidade.cidaNome || "-"
-    }</span></div>
-    <div class="flex justify-between items-center"><span class="font-medium text-slate-600">CEP:</span><span class="text-slate-900 text-right">${
-      entidade.entiEndeCEP || "-"
-    }</span></div>
-    
-    <h3 class="font-semibold text-slate-600 mb-2 mt-4">Outros Documentos</h3>
-    <div class="flex justify-between items-center"><span class="font-medium text-slate-600">RG:</span><span class="text-slate-900 text-right">${
-      entidadeFisica.entfRG || "-"
-    }</span></div>
-
-    <h3 class="font-semibold text-slate-600 mb-2 mt-4">Alertas e Condições</h3>
-    ${createAlertRow(
-      "Alergia a Medicamentos",
-      patientData.isenAlergMedicamentos
-    )}
-    ${createAlertRow("Alergia a Alimentos", patientData.isenAlergAlimentos)}
-    ${createAlertRow(
-      "Alergia a Elem. Químicos",
-      patientData.isenAlergElementosQuimicos
-    )}
-    ${createAlertRow("Acamado", patientData.isenIsAcamado)}
-    ${createAlertRow(
-      "Portador de Deficiência",
-      patientData.isenPessoaDeficiente
-    )}
-    ${createAlertRow("Possui Irmão Gêmeo", patientData.isenPossuiIrmaoGemeo)}
-  `;
+  const hasMoreFields = sortedFields.some(
+    (f) => f.enabled && f.section === "more"
+  );
+  toggleDetailsBtn.style.display = hasMoreFields ? "block" : "none";
+  if (!hasMoreFields) {
+    patientAdditionalInfoDiv.classList.remove("show");
+    toggleDetailsBtn.textContent = "Mostrar mais";
+  }
 
   patientDetailsSection.style.display = "block";
   consultationsSection.style.display = "block";
@@ -749,6 +704,7 @@ function handleExamFetchTypeChange(event) {
 // --- Inicialização ---
 document.addEventListener("DOMContentLoaded", async () => {
   await loadUserPreferences();
+  await loadFieldConfig();
   loadRecentPatients();
 });
 searchInput.addEventListener("input", debounce(handleSearchInput, 500));

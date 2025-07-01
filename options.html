@@ -15,47 +15,87 @@
       body {
         font-family: "Inter", sans-serif;
       }
-      .collapse-section {
-        max-height: 0;
-        overflow: hidden;
-        transition: max-height 0.5s ease-in-out;
-      }
-      /* ATUALIZADO: Aumentada a altura máxima para acomodar listas longas */
-      .collapse-section.show {
-        max-height: 10000px; /* Altura suficiente para muito mais conteúdo */
-      }
       .btn-active {
         background-color: #2563eb;
         color: white;
       }
+      .drop-zone {
+        background-color: #f8fafc;
+        border: 2px dashed #e2e8f0;
+        border-radius: 0.5rem;
+        padding: 1rem;
+        min-height: 200px;
+      }
+      .draggable {
+        background-color: white;
+        border: 1px solid #cbd5e1;
+        border-radius: 0.375rem;
+        padding: 0.75rem;
+        margin-bottom: 0.5rem;
+        cursor: grab;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+      }
+      .draggable.dragging {
+        opacity: 0.5;
+        background-color: #e0f2fe;
+      }
+      .drag-handle {
+        cursor: grab;
+        color: #94a3b8;
+      }
+      .field-label-input {
+        flex-grow: 1;
+        border: 1px solid #d1d5db;
+        border-radius: 0.25rem;
+        padding: 0.25rem 0.5rem;
+        font-size: 0.875rem;
+      }
     </style>
   </head>
-  <body class="bg-slate-50 text-slate-800 antialiased flex flex-col h-screen">
+  <body class="bg-slate-50 text-slate-800 antialiased">
     <header
-      class="p-4 flex-shrink-0 flex items-center space-x-2 pb-2 border-b border-slate-200"
+      class="p-4 flex-shrink-0 flex items-center space-x-2 pb-2 border-b border-slate-200 justify-between"
     >
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        width="24"
-        height="24"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="2"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-        class="text-blue-600"
+      <div class="flex items-center space-x-2">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="24"
+          height="24"
+          viewBox="0 0 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          class="text-blue-600"
+        >
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+        </svg>
+        <h1 class="text-lg font-bold text-slate-900">
+          Assistente de Regulação
+        </h1>
+      </div>
+      <!-- ATUALIZADO: O link agora é um botão para fechar a aba -->
+      <button
+        id="closeButton"
+        title="Fechar"
+        class="text-sm font-medium text-blue-600 hover:underline"
       >
-        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-      </svg>
-      <h1 class="text-lg font-bold text-slate-900">Assistente de Regulação</h1>
+        Fechar
+      </button>
     </header>
 
-    <main class="flex-grow p-4 space-y-4 overflow-y-auto">
+    <main class="p-6 space-y-6">
+      <!-- Seção de Configurações Gerais -->
       <section
-        class="bg-white p-4 rounded-lg border border-slate-200 shadow-sm mt-4"
+        class="bg-white p-4 rounded-lg border border-slate-200 shadow-sm"
       >
-        <h2 class="text-md font-semibold text-slate-700 mb-3">Configurações</h2>
+        <h2 class="text-md font-semibold text-slate-700 mb-3">
+          Configurações Gerais
+        </h2>
         <div class="space-y-4">
           <div>
             <label for="baseUrlInput" class="block font-medium mb-1">
@@ -73,7 +113,7 @@
             class="bg-white p-4 rounded-lg border border-slate-200 shadow-sm mt-4"
           >
             <h2 class="text-md font-semibold text-slate-700 mb-3">
-              Preferências
+              Preferências de Carregamento
             </h2>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
               <!-- Bloco Exames -->
@@ -101,26 +141,7 @@
                     id="autoLoadExamsCheckbox"
                     class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 mr-2"
                   />
-                  Carregar exames automaticamente ao selecionar paciente
-                </label>
-                <span class="block font-medium mb-1"
-                  >Filtros padrão de exames:</span
-                >
-                <label class="flex items-center mb-1">
-                  <input
-                    type="checkbox"
-                    id="examWithResultDefaultCheckbox"
-                    class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 mr-2"
-                  />
-                  Com resultado
-                </label>
-                <label class="flex items-center">
-                  <input
-                    type="checkbox"
-                    id="examWithoutResultDefaultCheckbox"
-                    class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 mr-2"
-                  />
-                  Sem resultado
+                  Carregar exames automaticamente
                 </label>
               </div>
               <!-- Bloco Consultas -->
@@ -148,7 +169,7 @@
                     id="autoLoadConsultationsCheckbox"
                     class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 mr-2"
                   />
-                  Carregar consultas automaticamente ao selecionar paciente
+                  Carregar consultas automaticamente
                 </label>
                 <label class="flex items-center">
                   <input
@@ -172,15 +193,41 @@
               </div>
             </div>
           </div>
-          <button
-            id="saveButton"
-            class="mt-4 w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 transition text-sm"
-          >
-            Salvar
-          </button>
-          <div id="statusMessage" class="mt-4 text-sm font-medium"></div>
         </div>
       </section>
+
+      <!-- Seção de Configuração da Ficha do Paciente -->
+      <section
+        class="bg-white p-4 rounded-lg border border-slate-200 shadow-sm"
+      >
+        <h2 class="text-md font-semibold text-slate-700 mb-3">
+          Configurar Ficha do Paciente
+        </h2>
+        <p class="text-sm text-slate-500 mb-4">
+          Arraste os campos para reordenar ou mover entre as seções. Desmarque
+          para ocultar um campo.
+        </p>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div>
+            <h3 class="font-semibold mb-2">
+              Campos Principais (Sempre Visíveis)
+            </h3>
+            <div id="main-fields-zone" class="drop-zone"></div>
+          </div>
+          <div>
+            <h3 class="font-semibold mb-2">Campos em "Mostrar Mais"</h3>
+            <div id="more-fields-zone" class="drop-zone"></div>
+          </div>
+        </div>
+      </section>
+
+      <button
+        id="saveButton"
+        class="mt-4 w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 transition text-sm"
+      >
+        Salvar Todas as Configurações
+      </button>
+      <div id="statusMessage" class="mt-4 text-sm font-medium"></div>
     </main>
 
     <script type="module" src="options.js"></script>
