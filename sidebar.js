@@ -29,7 +29,8 @@ const patientAdditionalInfoDiv = document.getElementById(
   "patient-additional-info"
 );
 const toggleDetailsBtn = document.getElementById("toggle-details-btn");
-// Seletores de Consultas
+
+// --- Seletores de Consultas ---
 const consultationsSection = document.getElementById("consultations-section");
 const consultationsWrapper = document.getElementById("consultations-wrapper");
 const toggleConsultationsListBtn = document.getElementById(
@@ -37,21 +38,57 @@ const toggleConsultationsListBtn = document.getElementById(
 );
 const dateInitialInput = document.getElementById("date-initial");
 const dateFinalInput = document.getElementById("date-final");
+const fetchConsultationsBtn = document.getElementById(
+  "fetch-consultations-btn"
+);
 const fetchTypeButtons = document.getElementById("fetch-type-buttons");
-const hideNoShowCheckbox = document.getElementById("hide-no-show-checkbox");
 const consultationsContent = document.getElementById("consultations-content");
 const debugSection = document.getElementById("debug-section");
 const toggleRawHtmlBtn = document.getElementById("toggle-raw-html-btn");
 const rawHtmlContent = document.getElementById("raw-html-content");
-// Seletores de Exames
+const toggleMoreConsultationFiltersBtn = document.getElementById(
+  "toggle-more-consultation-filters-btn"
+);
+const consultationMoreFiltersDiv = document.getElementById(
+  "consultation-more-filters"
+);
+const consultationFilterKeyword = document.getElementById(
+  "consultation-filter-keyword"
+);
+const hideNoShowCheckbox = document.getElementById("hide-no-show-checkbox");
+const consultationFilterCid = document.getElementById(
+  "consultation-filter-cid"
+);
+const consultationFilterSpecialty = document.getElementById(
+  "consultation-filter-specialty"
+);
+const consultationFilterProfessional = document.getElementById(
+  "consultation-filter-professional"
+);
+const consultationFilterUnit = document.getElementById(
+  "consultation-filter-unit"
+);
+
+// --- Seletores de Exames ---
 const examsSection = document.getElementById("exams-section");
 const examsWrapper = document.getElementById("exams-wrapper");
 const toggleExamsListBtn = document.getElementById("toggle-exams-list-btn");
 const examsContent = document.getElementById("exams-content");
 const examDateInitialInput = document.getElementById("exam-date-initial");
 const examDateFinalInput = document.getElementById("exam-date-final");
+const fetchExamsBtn = document.getElementById("fetch-exams-btn");
 const examFetchTypeButtons = document.getElementById("exam-fetch-type-buttons");
-// Seletores de Agendamentos
+const toggleMoreExamFiltersBtn = document.getElementById(
+  "toggle-more-exam-filters-btn"
+);
+const examMoreFiltersDiv = document.getElementById("exam-more-filters");
+const examFilterName = document.getElementById("exam-filter-name");
+const examFilterProfessional = document.getElementById(
+  "exam-filter-professional"
+);
+const examFilterSpecialty = document.getElementById("exam-filter-specialty");
+
+// --- Seletores de Agendamentos ---
 const appointmentsSection = document.getElementById("appointments-section");
 const appointmentsWrapper = document.getElementById("appointments-wrapper");
 const toggleAppointmentsListBtn = document.getElementById(
@@ -63,11 +100,28 @@ const appointmentDateInitialInput = document.getElementById(
 const appointmentDateFinalInput = document.getElementById(
   "appointment-date-final"
 );
+const fetchAppointmentsBtn = document.getElementById("fetch-appointments-btn");
 const appointmentsContent = document.getElementById("appointments-content");
 const appointmentFetchTypeButtons = document.getElementById(
   "appointment-fetch-type-buttons"
 );
-// --- INÍCIO: Seletores de Regulação (ATUALIZADO) ---
+const toggleMoreAppointmentFiltersBtn = document.getElementById(
+  "toggle-more-appointment-filters-btn"
+);
+const appointmentMoreFiltersDiv = document.getElementById(
+  "appointment-more-filters"
+);
+const appointmentFilterStatus = document.getElementById(
+  "appointment-filter-status"
+);
+const appointmentFilterTerm = document.getElementById(
+  "appointment-filter-term"
+);
+const appointmentFilterLocation = document.getElementById(
+  "appointment-filter-location"
+);
+
+// --- Seletores de Regulação ---
 const regulationsSection = document.getElementById("regulations-section");
 const regulationsWrapper = document.getElementById("regulations-wrapper");
 const toggleRegulationsListBtn = document.getElementById(
@@ -79,11 +133,11 @@ const regulationDateInitialInput = document.getElementById(
 const regulationDateFinalInput = document.getElementById(
   "regulation-date-final"
 );
+const fetchRegulationsBtn = document.getElementById("fetch-regulations-btn");
 const regulationsContent = document.getElementById("regulations-content");
 const regulationFetchTypeButtons = document.getElementById(
   "regulation-fetch-type-buttons"
 );
-// Novos seletores de filtros de Regulação
 const toggleMoreRegulationFiltersBtn = document.getElementById(
   "toggle-more-regulation-filters-btn"
 );
@@ -102,9 +156,8 @@ const regulationFilterProcedure = document.getElementById(
 const regulationFilterRequester = document.getElementById(
   "regulation-filter-requester"
 );
-// --- FIM: Seletores de Regulação ---
 
-// Seletores do Modal de Informações
+// --- Seletores do Modal ---
 const infoModal = document.getElementById("info-modal");
 const modalTitle = document.getElementById("modal-title");
 const modalContent = document.getElementById("modal-content");
@@ -114,18 +167,16 @@ const modalCloseBtn = document.getElementById("modal-close-btn");
 let currentPatient = null;
 let recentPatients = [];
 let fieldConfig = [];
-// Consultas
-let currentFetchType = "all";
+// Dados completos
 let allFetchedConsultations = [];
-// Exames
-let currentExamFetchType = "all";
-// Agendamentos
+let allFetchedExams = [];
 let allFetchedAppointments = [];
+let allFetchedRegulations = [];
+// Tipos de busca
+let currentFetchType = "all";
+let currentExamFetchType = "all";
 let currentAppointmentFetchType = "all";
-// --- INÍCIO: Variáveis de Estado de Regulação (ATUALIZADO) ---
 let currentRegulationFetchType = "all";
-let allFetchedRegulations = []; // Armazena todos os resultados da busca
-// --- FIM: Variáveis de Estado de Regulação ---
 
 // --- Funções de Armazenamento ---
 async function loadRecentPatients() {
@@ -328,17 +379,13 @@ function renderRecentPatients() {
   });
 }
 
-function renderConsultations() {
-  const hideNoShows = hideNoShowCheckbox.checked;
-  const consultationsToRender = hideNoShows
-    ? allFetchedConsultations.filter((c) => !c.isNoShow)
-    : allFetchedConsultations;
-  if (consultationsToRender.length === 0) {
+function renderConsultations(consultations) {
+  if (consultations.length === 0) {
     consultationsContent.innerHTML =
-      '<p class="text-slate-500">Nenhuma consulta encontrada no período.</p>';
+      '<p class="text-slate-500">Nenhuma consulta encontrada para os filtros aplicados.</p>';
     return;
   }
-  consultationsContent.innerHTML = consultationsToRender
+  consultationsContent.innerHTML = consultations
     .map(
       (c) => `
         <div class="p-3 mb-3 border rounded-lg ${
@@ -388,7 +435,7 @@ function renderConsultations() {
 function renderExams(exams) {
   if (exams.length === 0) {
     examsContent.innerHTML =
-      '<p class="text-slate-500">Nenhum exame encontrado no período.</p>';
+      '<p class="text-slate-500">Nenhum exame encontrado para os filtros aplicados.</p>';
     return;
   }
   const parseDate = (dateString) => {
@@ -441,20 +488,8 @@ function renderExams(exams) {
     .join("");
 }
 
-function renderAppointments() {
-  let appointmentsToRender = allFetchedAppointments;
-
-  if (currentAppointmentFetchType === "consultas") {
-    appointmentsToRender = allFetchedAppointments.filter(
-      (appt) => !appt.type.toUpperCase().includes("EXAME")
-    );
-  } else if (currentAppointmentFetchType === "exames") {
-    appointmentsToRender = allFetchedAppointments.filter((appt) =>
-      appt.type.toUpperCase().includes("EXAME")
-    );
-  }
-
-  if (appointmentsToRender.length === 0) {
+function renderAppointments(appointments) {
+  if (appointments.length === 0) {
     appointmentsContent.innerHTML =
       '<p class="text-slate-500">Nenhum agendamento encontrado para o filtro selecionado.</p>';
     return;
@@ -468,7 +503,7 @@ function renderAppointments() {
     ATENDIDO: "bg-purple-100 text-purple-800",
   };
 
-  appointmentsContent.innerHTML = appointmentsToRender
+  appointmentsContent.innerHTML = appointments
     .map((item) => {
       const style = statusStyles[item.status] || "bg-gray-100 text-gray-800";
       let typeText = item.type;
@@ -531,12 +566,6 @@ function renderAppointments() {
     .join("");
 }
 
-// --- INÍCIO: Funções de Regulação (ATUALIZADO) ---
-
-/**
- * Renderiza a lista de regulações na UI.
- * @param {Array<object>} regulations - A lista de regulações a ser renderizada (já filtrada).
- */
 function renderRegulations(regulations) {
   if (regulations.length === 0) {
     regulationsContent.innerHTML =
@@ -615,26 +644,209 @@ function renderRegulations(regulations) {
     .join("");
 }
 
-/**
- * Aplica os filtros selecionados à lista de regulações e renderiza o resultado.
- */
+// --- Funções de Filtragem e Renderização ---
+
+function applyConsultationFiltersAndRender() {
+  let filteredData = [...allFetchedConsultations];
+
+  const keyword = consultationFilterKeyword.value.toLowerCase().trim();
+  const hideNoShows = hideNoShowCheckbox.checked;
+  const cid = consultationFilterCid.value.toLowerCase().trim();
+  const specialty = consultationFilterSpecialty.value.toLowerCase().trim();
+  const professional = consultationFilterProfessional.value
+    .toLowerCase()
+    .trim();
+  const unit = consultationFilterUnit.value.toLowerCase().trim();
+
+  if (hideNoShows) {
+    filteredData = filteredData.filter((c) => !c.isNoShow);
+  }
+
+  if (keyword) {
+    const searchTerms = keyword
+      .split(",")
+      .map((t) => t.trim())
+      .filter((t) => t);
+    if (searchTerms.length > 0) {
+      filteredData = filteredData.filter((c) => {
+        const fullText = [
+          c.specialty,
+          c.professional,
+          c.unit,
+          ...c.details.map((d) => `${d.label} ${d.value}`),
+        ]
+          .join(" ")
+          .toLowerCase();
+        return searchTerms.some((term) => fullText.includes(term));
+      });
+    }
+  }
+
+  if (cid) {
+    const searchTerms = cid
+      .split(",")
+      .map((t) => t.trim())
+      .filter((t) => t);
+    if (searchTerms.length > 0) {
+      filteredData = filteredData.filter((c) => {
+        const itemCids = c.details
+          .map((d) => d.value)
+          .join(" ")
+          .toLowerCase();
+        return searchTerms.some((term) => itemCids.includes(term));
+      });
+    }
+  }
+
+  if (specialty) {
+    const searchTerms = specialty
+      .split(",")
+      .map((t) => t.trim())
+      .filter((t) => t);
+    if (searchTerms.length > 0) {
+      filteredData = filteredData.filter((c) => {
+        const itemSpecialty = (c.specialty || "").toLowerCase();
+        return searchTerms.some((term) => itemSpecialty.includes(term));
+      });
+    }
+  }
+
+  if (professional) {
+    const searchTerms = professional
+      .split(",")
+      .map((t) => t.trim())
+      .filter((t) => t);
+    if (searchTerms.length > 0) {
+      filteredData = filteredData.filter((c) => {
+        const itemProfessional = (c.professional || "").toLowerCase();
+        return searchTerms.some((term) => itemProfessional.includes(term));
+      });
+    }
+  }
+
+  if (unit) {
+    const searchTerms = unit
+      .split(",")
+      .map((t) => t.trim())
+      .filter((t) => t);
+    if (searchTerms.length > 0) {
+      filteredData = filteredData.filter((c) => {
+        const itemUnit = (c.unit || "").toLowerCase();
+        return searchTerms.some((term) => itemUnit.includes(term));
+      });
+    }
+  }
+
+  renderConsultations(filteredData);
+}
+
+function applyExamFiltersAndRender() {
+  let filteredData = [...allFetchedExams];
+
+  const name = examFilterName.value.toLowerCase().trim();
+  const professional = examFilterProfessional.value.toLowerCase().trim();
+  const specialty = examFilterSpecialty.value.toLowerCase().trim();
+
+  if (name) {
+    const searchTerms = name
+      .split(",")
+      .map((t) => t.trim())
+      .filter((t) => t);
+    if (searchTerms.length > 0) {
+      filteredData = filteredData.filter((e) => {
+        const itemName = (e.examName || "").toLowerCase();
+        return searchTerms.some((term) => itemName.includes(term));
+      });
+    }
+  }
+
+  if (professional) {
+    const searchTerms = professional
+      .split(",")
+      .map((t) => t.trim())
+      .filter((t) => t);
+    if (searchTerms.length > 0) {
+      filteredData = filteredData.filter((e) => {
+        const itemProfessional = (e.professional || "").toLowerCase();
+        return searchTerms.some((term) => itemProfessional.includes(term));
+      });
+    }
+  }
+
+  if (specialty) {
+    const searchTerms = specialty
+      .split(",")
+      .map((t) => t.trim())
+      .filter((t) => t);
+    if (searchTerms.length > 0) {
+      filteredData = filteredData.filter((e) => {
+        const itemSpecialty = (e.specialty || "").toLowerCase();
+        return searchTerms.some((term) => itemSpecialty.includes(term));
+      });
+    }
+  }
+
+  renderExams(filteredData);
+}
+
+function applyAppointmentFiltersAndRender() {
+  let filteredData = [...allFetchedAppointments];
+
+  const status = appointmentFilterStatus.value;
+  const term = appointmentFilterTerm.value.toLowerCase().trim();
+  const location = appointmentFilterLocation.value.toLowerCase().trim();
+
+  if (status !== "todos") {
+    filteredData = filteredData.filter(
+      (a) => (a.status || "").toUpperCase() === status.toUpperCase()
+    );
+  }
+
+  if (term) {
+    const searchTerms = term
+      .split(",")
+      .map((t) => t.trim())
+      .filter((t) => t);
+    if (searchTerms.length > 0) {
+      filteredData = filteredData.filter((a) => {
+        const fullText = [a.professional, a.specialty, a.description]
+          .join(" ")
+          .toLowerCase();
+        return searchTerms.some((t) => fullText.includes(t));
+      });
+    }
+  }
+
+  if (location) {
+    const searchTerms = location
+      .split(",")
+      .map((t) => t.trim())
+      .filter((t) => t);
+    if (searchTerms.length > 0) {
+      filteredData = filteredData.filter((a) => {
+        const itemLocation = (a.location || "").toLowerCase();
+        return searchTerms.some((t) => itemLocation.includes(t));
+      });
+    }
+  }
+
+  renderAppointments(filteredData);
+}
+
 function applyRegulationFiltersAndRender() {
   let filteredData = [...allFetchedRegulations];
 
-  // 1. Obter valores dos filtros
   const status = regulationFilterStatus.value;
   const priority = regulationFilterPriority.value;
   const procedureTerms = regulationFilterProcedure.value.toLowerCase().trim();
   const requesterTerms = regulationFilterRequester.value.toLowerCase().trim();
 
-  // 2. Aplicar filtro de Status
   if (status !== "todos") {
     filteredData = filteredData.filter(
       (item) => (item.status || "").toUpperCase() === status.toUpperCase()
     );
   }
 
-  // 3. Aplicar filtro de Prioridade
   if (priority !== "todas") {
     filteredData = filteredData.filter(
       (item) =>
@@ -643,7 +855,6 @@ function applyRegulationFiltersAndRender() {
     );
   }
 
-  // 4. Aplicar filtro de Procedimento/Especialidade (com múltiplos termos)
   if (procedureTerms) {
     const searchTerms = procedureTerms
       .split(",")
@@ -657,7 +868,6 @@ function applyRegulationFiltersAndRender() {
     }
   }
 
-  // 5. Aplicar filtro de Solicitante (com múltiplos termos)
   if (requesterTerms) {
     const searchTerms = requesterTerms
       .split(",")
@@ -671,11 +881,8 @@ function applyRegulationFiltersAndRender() {
     }
   }
 
-  // 6. Renderizar o resultado filtrado
   renderRegulations(filteredData);
 }
-
-// --- FIM: Funções de Regulação ---
 
 // --- Preferências do Usuário ---
 let userPreferences = {
@@ -829,7 +1036,7 @@ async function handleFetchConsultations() {
     ? new Date(dateFinalInput.value).toLocaleDateString("pt-BR")
     : new Date().toLocaleDateString("pt-BR");
   toggleLoader(true);
-  consultationsContent.innerHTML = "";
+  consultationsContent.innerHTML = "Carregando...";
   rawHtmlContent.textContent = "";
   debugSection.style.display = "none";
   try {
@@ -851,13 +1058,15 @@ async function handleFetchConsultations() {
     });
     jsonData.sort((a, b) => b.sortableDate - a.sortableDate);
     allFetchedConsultations = jsonData;
-    renderConsultations();
+    applyConsultationFiltersAndRender();
     if (htmlData) {
       rawHtmlContent.textContent = htmlData;
       debugSection.style.display = "block";
     }
   } catch (error) {
     showMessage(error.message);
+    allFetchedConsultations = [];
+    applyConsultationFiltersAndRender();
   } finally {
     toggleLoader(false);
   }
@@ -897,7 +1106,7 @@ async function handleFetchExams() {
   }
 
   toggleLoader(true);
-  examsContent.innerHTML = "";
+  examsContent.innerHTML = "Carregando...";
   try {
     const examsData = await fetchExamesSolicitados({
       isenPK: isenPK,
@@ -906,9 +1115,12 @@ async function handleFetchExams() {
       comResultado,
       semResultado,
     });
-    renderExams(examsData);
+    allFetchedExams = examsData;
+    applyExamFiltersAndRender();
   } catch (error) {
     showMessage(error.message);
+    allFetchedExams = [];
+    applyExamFiltersAndRender();
   } finally {
     toggleLoader(false);
   }
@@ -938,15 +1150,16 @@ async function handleFetchAppointments() {
       dataFinal,
     });
     allFetchedAppointments = appointmentsData;
-    renderAppointments();
+    applyAppointmentFiltersAndRender();
   } catch (error) {
     showMessage(error.message);
+    allFetchedAppointments = [];
+    applyAppointmentFiltersAndRender();
   } finally {
     toggleLoader(false);
   }
 }
 
-// --- INÍCIO: Manipulador de Eventos de Regulação (ATUALIZADO) ---
 async function handleFetchRegulations() {
   if (!currentPatient?.isenPK) {
     if (regulationsSection.style.display !== "none") {
@@ -973,8 +1186,8 @@ async function handleFetchRegulations() {
       dataFinal,
       type: currentRegulationFetchType,
     });
-    allFetchedRegulations = regulationsData; // Armazena os dados brutos
-    applyRegulationFiltersAndRender(); // Filtra e renderiza pela primeira vez
+    allFetchedRegulations = regulationsData;
+    applyRegulationFiltersAndRender();
   } catch (error) {
     showMessage(error.message);
     allFetchedRegulations = [];
@@ -983,7 +1196,6 @@ async function handleFetchRegulations() {
     toggleLoader(false);
   }
 }
-// --- FIM: Manipulador de Eventos de Regulação ---
 
 async function handleViewExamResult(event) {
   const button = event.target.closest(".view-exam-result-btn");
@@ -1153,7 +1365,7 @@ function handleExamFetchTypeChange(event) {
   button.classList.add("btn-active", "text-white");
   button.classList.remove("text-slate-600", "hover:bg-slate-200");
   currentExamFetchType = button.dataset.fetchType;
-  handleFetchExams();
+  applyExamFiltersAndRender();
 }
 
 function handleRegulationFetchTypeChange(event) {
@@ -1168,7 +1380,7 @@ function handleRegulationFetchTypeChange(event) {
   button.classList.add("btn-active", "text-white");
   button.classList.remove("text-slate-600", "hover:bg-slate-200");
   currentRegulationFetchType = button.dataset.fetchType;
-  handleFetchRegulations(); // Re-executa a busca da API com o novo tipo
+  handleFetchRegulations();
 }
 
 function handleAppointmentFetchTypeChange(event) {
@@ -1183,7 +1395,7 @@ function handleAppointmentFetchTypeChange(event) {
   button.classList.add("btn-active", "text-white");
   button.classList.remove("text-slate-600", "hover:bg-slate-200");
   currentAppointmentFetchType = button.dataset.fetchType;
-  handleFetchAppointments();
+  applyAppointmentFiltersAndRender();
 }
 
 // --- Inicialização ---
@@ -1200,39 +1412,119 @@ searchInput.addEventListener("focus", handleSearchFocus);
 searchResultsList.addEventListener("click", handleResultClick);
 recentPatientsList.addEventListener("click", handleResultClick);
 toggleDetailsBtn.addEventListener("click", handleToggleDetails);
-fetchTypeButtons.addEventListener("click", handleFetchTypeChange);
-hideNoShowCheckbox.addEventListener("change", renderConsultations);
-toggleRawHtmlBtn.addEventListener("click", handleToggleRawHtml);
+
+// Event Listeners para Consultas
 toggleConsultationsListBtn.addEventListener(
   "click",
   handleToggleConsultationsList
 );
 consultationsContent.addEventListener("click", handleConsultationClick);
+toggleRawHtmlBtn.addEventListener("click", handleToggleRawHtml);
+fetchConsultationsBtn.addEventListener("click", handleFetchConsultations);
+fetchTypeButtons.addEventListener("click", handleFetchTypeChange);
+consultationFilterKeyword.addEventListener(
+  "input",
+  debounce(applyConsultationFiltersAndRender, 500)
+);
+hideNoShowCheckbox.addEventListener(
+  "change",
+  applyConsultationFiltersAndRender
+);
+consultationFilterCid.addEventListener(
+  "input",
+  debounce(applyConsultationFiltersAndRender, 500)
+);
+consultationFilterSpecialty.addEventListener(
+  "input",
+  debounce(applyConsultationFiltersAndRender, 500)
+);
+consultationFilterProfessional.addEventListener(
+  "input",
+  debounce(applyConsultationFiltersAndRender, 500)
+);
+consultationFilterUnit.addEventListener(
+  "input",
+  debounce(applyConsultationFiltersAndRender, 500)
+);
+toggleMoreConsultationFiltersBtn.addEventListener("click", () => {
+  consultationMoreFiltersDiv.classList.toggle("show");
+  const isShown = consultationMoreFiltersDiv.classList.contains("show");
+  toggleMoreConsultationFiltersBtn.textContent = isShown
+    ? "Menos filtros"
+    : "Mais filtros";
+});
+
+// Event Listeners para Exames
 toggleExamsListBtn.addEventListener("click", handleToggleExamsList);
 examsContent.addEventListener("click", handleViewExamResult);
+fetchExamsBtn.addEventListener("click", handleFetchExams);
 examFetchTypeButtons.addEventListener("click", handleExamFetchTypeChange);
+examFilterName.addEventListener(
+  "input",
+  debounce(applyExamFiltersAndRender, 500)
+);
+examFilterProfessional.addEventListener(
+  "input",
+  debounce(applyExamFiltersAndRender, 500)
+);
+examFilterSpecialty.addEventListener(
+  "input",
+  debounce(applyExamFiltersAndRender, 500)
+);
+toggleMoreExamFiltersBtn.addEventListener("click", () => {
+  examMoreFiltersDiv.classList.toggle("show");
+  const isShown = examMoreFiltersDiv.classList.contains("show");
+  toggleMoreExamFiltersBtn.textContent = isShown
+    ? "Menos filtros"
+    : "Mais filtros";
+});
 
+// Event Listeners para Agendamentos
 toggleAppointmentsListBtn.addEventListener(
   "click",
   handleToggleAppointmentsList
 );
-appointmentDateInitialInput.addEventListener("change", handleFetchAppointments);
-appointmentDateFinalInput.addEventListener("change", handleFetchAppointments);
+fetchAppointmentsBtn.addEventListener("click", handleFetchAppointments);
 appointmentFetchTypeButtons.addEventListener(
   "click",
   handleAppointmentFetchTypeChange
 );
+appointmentFilterStatus.addEventListener(
+  "change",
+  applyAppointmentFiltersAndRender
+);
+appointmentFilterTerm.addEventListener(
+  "input",
+  debounce(applyAppointmentFiltersAndRender, 500)
+);
+appointmentFilterLocation.addEventListener(
+  "input",
+  debounce(applyAppointmentFiltersAndRender, 500)
+);
+toggleMoreAppointmentFiltersBtn.addEventListener("click", () => {
+  appointmentMoreFiltersDiv.classList.toggle("show");
+  const isShown = appointmentMoreFiltersDiv.classList.contains("show");
+  toggleMoreAppointmentFiltersBtn.textContent = isShown
+    ? "Menos filtros"
+    : "Mais filtros";
+});
+appointmentsContent.addEventListener("click", (event) => {
+  const openBtn = event.target.closest(".view-appointment-details-btn");
+  const infoBtn = event.target.closest(".appointment-info-btn");
+  if (openBtn) {
+    handleViewAppointmentDetails(event);
+  } else if (infoBtn) {
+    handleShowAppointmentInfo(event);
+  }
+});
 
-// --- INÍCIO: Event Listeners de Regulação (ATUALIZADO) ---
+// Event Listeners para Regulação
 toggleRegulationsListBtn.addEventListener("click", handleToggleRegulationsList);
-// A busca é disparada quando as datas ou o tipo (Consulta/Exame) mudam
-regulationDateInitialInput.addEventListener("change", handleFetchRegulations);
-regulationDateFinalInput.addEventListener("change", handleFetchRegulations);
+fetchRegulationsBtn.addEventListener("click", handleFetchRegulations);
 regulationFetchTypeButtons.addEventListener(
   "click",
   handleRegulationFetchTypeChange
 );
-// Os novos filtros apenas re-filtram os dados já carregados
 regulationFilterStatus.addEventListener(
   "change",
   applyRegulationFiltersAndRender
@@ -1249,7 +1541,6 @@ regulationFilterRequester.addEventListener(
   "input",
   debounce(applyRegulationFiltersAndRender, 500)
 );
-
 toggleMoreRegulationFiltersBtn.addEventListener("click", () => {
   regulationMoreFiltersDiv.classList.toggle("show");
   const isShown = regulationMoreFiltersDiv.classList.contains("show");
@@ -1257,21 +1548,9 @@ toggleMoreRegulationFiltersBtn.addEventListener("click", () => {
     ? "Menos filtros"
     : "Mais filtros";
 });
-// --- FIM: Event Listeners de Regulação ---
-
 regulationsContent.addEventListener("click", handleViewRegulationDetails);
 
-appointmentsContent.addEventListener("click", (event) => {
-  const openBtn = event.target.closest(".view-appointment-details-btn");
-  const infoBtn = event.target.closest(".appointment-info-btn");
-
-  if (openBtn) {
-    handleViewAppointmentDetails(event);
-  } else if (infoBtn) {
-    handleShowAppointmentInfo(event);
-  }
-});
-
+// Event Listeners do Modal
 modalCloseBtn.addEventListener("click", () =>
   infoModal.classList.add("hidden")
 );
