@@ -27,6 +27,18 @@ function handleFetchError(response) {
   throw new Error("Falha na comunicação com o servidor.");
 }
 
+/**
+ * Extrai o texto de uma string HTML.
+ * @param {string} htmlString - A string HTML.
+ * @returns {string} O texto extraído.
+ */
+function getTextFromHTML(htmlString) {
+  if (!htmlString) return "";
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(htmlString, "text/html");
+  return doc.body.textContent || "";
+}
+
 function parseConsultasHTML(htmlString) {
   const parser = new DOMParser();
   const doc = parser.parseFromString(htmlString, "text/html");
@@ -478,8 +490,6 @@ export async function fetchAppointmentDetails({ idp, ids }) {
   return data?.agendamentoConsulta || null;
 }
 
-// Substitua a função fetchAppointments inteira por esta versão.
-
 export async function fetchAppointments({ isenPK, dataInicial, dataFinal }) {
   if (!isenPK) throw new Error("ID (isenPK) do paciente é necessário.");
   const baseUrl = await getBaseUrl();
@@ -517,17 +527,16 @@ export async function fetchAppointments({ isenPK, dataInicial, dataFinal }) {
 
     return {
       id: row.id || "",
-      type: cell[1] || "N/A", // Importante para diferenciar EXAME de CONSULTA
+      type: cell[1] || "N/A",
       date: cell[2] || "",
       time: cell[3] || "",
       location: cell[4] || "",
       professional: cell[5] || "",
-      description: (cell[6] || "").trim(), // Para exames, isso é o "Nome do Procedimento (Código)"
+      description: (cell[6] || "").trim(),
       status: status,
     };
   });
 
-  // --- OTIMIZAÇÃO: Busca de detalhes em lotes paralelos ---
   const enrichedAppointments = [];
   const batchSize = 10;
 
@@ -535,29 +544,23 @@ export async function fetchAppointments({ isenPK, dataInicial, dataFinal }) {
     const batch = basicAppointments.slice(i, i + batchSize);
 
     const promises = batch.map(async (appt) => {
-      // REQUISIÇÃO 1 e 2: Tratamento diferenciado para EXAMES
-      // Verifica se o tipo do compromisso é um exame para tratá-lo de forma diferente.
       if (appt.type.toUpperCase().includes("EXAME")) {
         return {
           ...appt,
-          // Para exames, a "especialidade" será o nome do procedimento, que vem da descrição.
           specialty: appt.description || "Exame sem descrição",
         };
       }
 
-      // Se não for um exame, continua o fluxo normal para CONSULTAS
       const [idp, ids] = appt.id.split("-");
       if (!idp || !ids) return appt;
 
       try {
         const details = await fetchAppointmentDetails({ idp, ids });
         if (details) {
-          // REQUISIÇÃO 3: Adiciona o código da especialidade (apcnCod) para CONSULTAS
           let specialtyString = "Sem especialidade";
           const apcn = details.atividadeProfissionalCnes;
 
           if (apcn && apcn.apcnNome) {
-            // Constrói a string "Nome (Código)" se o código existir
             specialtyString = apcn.apcnCod
               ? `${apcn.apcnNome} (${apcn.apcnCod})`
               : apcn.apcnNome;
@@ -584,4 +587,139 @@ export async function fetchAppointments({ isenPK, dataInicial, dataFinal }) {
   }
 
   return enrichedAppointments;
+}
+
+/**
+ * Busca os registros de regulação (consultas ou exames) para um paciente.
+ * @param {object} options - Opções de busca.
+ * @param {string} options.isenPK - ID do paciente (ex: "12345-1").
+ * @param {string} options.modalidade - "ENC" para consultas, "EXA" para exames.
+ * @param {string} options.dataInicial - Data inicial no formato "dd/MM/yyyy".
+ * @param {string} options.dataFinal - Data final no formato "dd/MM/yyyy".
+ * @returns {Promise<Array<object>>} Uma lista de itens de regulação.
+ */
+async function fetchRegulations({
+  isenPK,
+  modalidade,
+  dataInicial,
+  dataFinal,
+}) {
+  if (!isenPK) throw new Error("ID (isenPK) do paciente é necessário.");
+  const baseUrl = await getBaseUrl();
+  const url = new URL(`${baseUrl}/sigss/regulacaoRegulador/lista`);
+
+  const params = {
+    "filters[0]": `isFiltrarData:${!!dataInicial}`,
+    "filters[1]": `dataInicial:${dataInicial || ""}`,
+    "filters[2]": `dataFinal:${dataFinal || ""}`,
+    "filters[3]": `modalidade:${modalidade}`,
+    "filters[4]": "solicitante:undefined",
+    "filters[5]": `usuarioServico:${isenPK}`,
+    "filters[6]": "autorizado:true",
+    "filters[7]": "pendente:true",
+    "filters[8]": "devolvido:true",
+    "filters[9]": "negado:true",
+    "filters[10]": "emAnalise:true",
+    "filters[11]": "cancelados:true",
+    "filters[12]": "cboFiltro:",
+    "filters[13]": "procedimentoFiltro:",
+    "filters[14]": "reguGravidade:",
+    "filters[15]": "reguIsRetorno:...",
+    "filters[16]": "codBarProtocolo:",
+    "filters[17]": "reguIsAgendadoFiltro:todos",
+    _search: "false",
+    nd: Date.now(),
+    rows: "1000",
+    page: "1",
+    sidx: "regu.reguDataPrevista",
+    sord: "desc",
+  };
+
+  url.search = new URLSearchParams(params).toString();
+
+  const response = await fetch(url, {
+    headers: {
+      Accept: "application/json, text/javascript, */*; q=0.01",
+      "X-Requested-With": "XMLHttpRequest",
+    },
+  });
+
+  if (!response.ok) handleFetchError(response);
+  const data = await response.json();
+
+  return (data?.rows || []).map((row) => {
+    const cell = row.cell || [];
+    const [idp, ids] = (row.id || "").replace("reguPK", "").split("-");
+
+    const descriptionHtml = cell[6] || "";
+    const [procedure, cid] = descriptionHtml.split("<br/>");
+
+    return {
+      id: row.id,
+      idp,
+      ids,
+      type: cell[2] || "N/A",
+      priority: getTextFromHTML(cell[3]),
+      date: cell[4] || "",
+      status: getTextFromHTML(cell[5]),
+      procedure: getTextFromHTML(procedure),
+      cid: cid ? cid.trim() : "",
+      requester: cell[7] || "",
+      provider: cell[8] || "",
+      isenFullPKCrypto: cell[9] || "",
+    };
+  });
+}
+
+/**
+ * Busca todos os registros de regulação (consultas e exames) para um paciente.
+ * @param {object} options - Opções de busca.
+ * @param {string} options.isenPK - ID do paciente (ex: "12345-1").
+ * @param {string} options.dataInicial - Data inicial no formato "dd/MM/yyyy".
+ * @param {string} options.dataFinal - Data final no formato "dd/MM/yyyy".
+ * @param {string} options.type - O tipo de regulação a buscar ('all', 'ENC', 'EXA').
+ * @returns {Promise<Array<object>>} Uma lista combinada e ordenada de itens de regulação.
+ */
+export async function fetchAllRegulations({
+  isenPK,
+  dataInicial,
+  dataFinal,
+  type = "all",
+}) {
+  let regulationsToFetch = [];
+
+  if (type === "all") {
+    regulationsToFetch = await Promise.all([
+      fetchRegulations({ isenPK, modalidade: "ENC", dataInicial, dataFinal }),
+      fetchRegulations({ isenPK, modalidade: "EXA", dataInicial, dataFinal }),
+    ]);
+  } else if (type === "ENC") {
+    regulationsToFetch = [
+      await fetchRegulations({
+        isenPK,
+        modalidade: "ENC",
+        dataInicial,
+        dataFinal,
+      }),
+    ];
+  } else if (type === "EXA") {
+    regulationsToFetch = [
+      await fetchRegulations({
+        isenPK,
+        modalidade: "EXA",
+        dataInicial,
+        dataFinal,
+      }),
+    ];
+  }
+
+  const allRegulations = regulationsToFetch.flat();
+
+  allRegulations.sort((a, b) => {
+    const dateA = a.date.split("/").reverse().join("-");
+    const dateB = b.date.split("/").reverse().join("-");
+    return new Date(dateB) - new Date(dateA);
+  });
+
+  return allRegulations;
 }

@@ -60,6 +60,8 @@ async function restoreOptions() {
     baseUrl: "",
     autoLoadExams: false,
     autoLoadConsultations: false,
+    autoLoadAppointments: false, // NOVO
+    autoLoadRegulations: false, // NOVO
     hideNoShowDefault: false,
     monthsBack: 6,
     patientFields: defaultFieldConfig,
@@ -71,6 +73,10 @@ async function restoreOptions() {
     items.autoLoadExams;
   document.getElementById("autoLoadConsultationsCheckbox").checked =
     items.autoLoadConsultations;
+  document.getElementById("autoLoadAppointmentsCheckbox").checked =
+    items.autoLoadAppointments; // NOVO
+  document.getElementById("autoLoadRegulationsCheckbox").checked =
+    items.autoLoadRegulations; // NOVO
   document.getElementById("hideNoShowDefaultCheckbox").checked =
     items.hideNoShowDefault;
   document.getElementById("monthsBackInput").value = items.monthsBack;
@@ -97,6 +103,14 @@ async function saveOptions() {
   const autoLoadConsultations = document.getElementById(
     "autoLoadConsultationsCheckbox"
   ).checked;
+  const autoLoadAppointments = document.getElementById(
+    // NOVO
+    "autoLoadAppointmentsCheckbox"
+  ).checked;
+  const autoLoadRegulations = document.getElementById(
+    // NOVO
+    "autoLoadRegulationsCheckbox"
+  ).checked;
   const hideNoShowDefault = document.getElementById(
     "hideNoShowDefaultCheckbox"
   ).checked;
@@ -120,6 +134,8 @@ async function saveOptions() {
     baseUrl: baseUrl.endsWith("/") ? baseUrl.slice(0, -1) : baseUrl,
     autoLoadExams,
     autoLoadConsultations,
+    autoLoadAppointments, // NOVO
+    autoLoadRegulations, // NOVO
     hideNoShowDefault,
     monthsBack,
     patientFields,

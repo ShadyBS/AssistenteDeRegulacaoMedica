@@ -9,6 +9,7 @@ import {
   fetchExamesSolicitados,
   fetchResultadoExame,
   fetchAppointments,
+  fetchAllRegulations,
   getBaseUrl,
 } from "./api.js";
 // Importa a configuração de campos e a função de busca de valores
@@ -63,6 +64,25 @@ const appointmentDateFinalInput = document.getElementById(
   "appointment-date-final"
 );
 const appointmentsContent = document.getElementById("appointments-content");
+const appointmentFetchTypeButtons = document.getElementById(
+  "appointment-fetch-type-buttons"
+);
+// Seletores de Regulação
+const regulationsSection = document.getElementById("regulations-section");
+const regulationsWrapper = document.getElementById("regulations-wrapper");
+const toggleRegulationsListBtn = document.getElementById(
+  "toggle-regulations-list-btn"
+);
+const regulationDateInitialInput = document.getElementById(
+  "regulation-date-initial"
+);
+const regulationDateFinalInput = document.getElementById(
+  "regulation-date-final"
+);
+const regulationsContent = document.getElementById("regulations-content");
+const regulationFetchTypeButtons = document.getElementById(
+  "regulation-fetch-type-buttons"
+);
 // Seletores do Modal de Informações
 const infoModal = document.getElementById("info-modal");
 const modalTitle = document.getElementById("modal-title");
@@ -74,7 +94,10 @@ let currentPatient = null;
 let recentPatients = [];
 let currentFetchType = "all";
 let allFetchedConsultations = [];
+let allFetchedAppointments = [];
 let currentExamFetchType = "all";
+let currentRegulationFetchType = "all";
+let currentAppointmentFetchType = "all";
 let fieldConfig = [];
 
 // --- Funções de Armazenamento ---
@@ -214,6 +237,7 @@ function renderPatientDetails(patientData, cadsusData) {
   }
 
   patientDetailsSection.style.display = "block";
+  regulationsSection.style.display = "block";
   consultationsSection.style.display = "block";
   examsSection.style.display = "block";
   appointmentsSection.style.display = "block";
@@ -390,10 +414,22 @@ function renderExams(exams) {
     .join("");
 }
 
-function renderAppointments(appointments) {
-  if (appointments.length === 0) {
+function renderAppointments() {
+  let appointmentsToRender = allFetchedAppointments;
+
+  if (currentAppointmentFetchType === "consultas") {
+    appointmentsToRender = allFetchedAppointments.filter(
+      (appt) => !appt.type.toUpperCase().includes("EXAME")
+    );
+  } else if (currentAppointmentFetchType === "exames") {
+    appointmentsToRender = allFetchedAppointments.filter((appt) =>
+      appt.type.toUpperCase().includes("EXAME")
+    );
+  }
+
+  if (appointmentsToRender.length === 0) {
     appointmentsContent.innerHTML =
-      '<p class="text-slate-500">Nenhum agendamento encontrado no período.</p>';
+      '<p class="text-slate-500">Nenhum agendamento encontrado para o filtro selecionado.</p>';
     return;
   }
 
@@ -405,7 +441,7 @@ function renderAppointments(appointments) {
     ATENDIDO: "bg-purple-100 text-purple-800",
   };
 
-  appointmentsContent.innerHTML = appointments
+  appointmentsContent.innerHTML = appointmentsToRender
     .map((item) => {
       const style = statusStyles[item.status] || "bg-gray-100 text-gray-800";
       let typeText = item.type;
@@ -417,17 +453,13 @@ function renderAppointments(appointments) {
         typeText = "EXAME";
       }
 
-      // --- CORREÇÃO FINAL APLICADA AQUI ---
-      // Extrai idp e ids corretamente com base no formato do 'item.id'.
       let idp, ids;
       const idParts = item.id.split("-");
 
       if (idParts[0].toLowerCase() === "exam") {
-        // Se o ID começa com "exam", o formato é "exam-idp-ids".
         idp = idParts[1];
         ids = idParts[2];
       } else {
-        // Para todos os outros casos (consultas), o formato é "idp-ids".
         idp = idParts[0];
         ids = idParts[1];
       }
@@ -471,10 +503,89 @@ function renderAppointments(appointments) {
     })
     .join("");
 }
+
+function renderRegulations(regulations) {
+  if (regulations.length === 0) {
+    regulationsContent.innerHTML =
+      '<p class="text-slate-500">Nenhum registro de regulação encontrado no período.</p>';
+    return;
+  }
+
+  const statusStyles = {
+    AUTORIZADO: "bg-green-100 text-green-800",
+    NEGADO: "bg-red-100 text-red-800",
+    CANCELADA: "bg-yellow-100 text-yellow-800",
+    DEVOLVIDO: "bg-orange-100 text-orange-800",
+    PENDENTE: "bg-blue-100 text-blue-800",
+    "EM ANÁLISE": "bg-purple-100 text-purple-800",
+  };
+
+  const priorityStyles = {
+    EMERGENCIA: "bg-red-500 text-white",
+    MUITOALTA: "bg-orange-500 text-white",
+    ALTA: "bg-yellow-500 text-black",
+    NORMAL: "bg-blue-500 text-white",
+    BAIXA: "bg-green-500 text-white",
+  };
+
+  regulationsContent.innerHTML = regulations
+    .map((item) => {
+      const statusKey = item.status.toUpperCase().replace("ANALISE", "ANÁLISE");
+      const style = statusStyles[statusKey] || "bg-gray-100 text-gray-800";
+
+      const priorityKey = item.priority.toUpperCase().replace(" ", "");
+      const priorityStyle =
+        priorityStyles[priorityKey] || "bg-gray-400 text-white";
+
+      const typeText = item.type.startsWith("CON") ? "CONSULTA" : "EXAME";
+      const typeColor =
+        typeText === "CONSULTA" ? "text-cyan-700" : "text-fuchsia-700";
+
+      return `
+            <div class="p-3 mb-3 border rounded-lg bg-white">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <div class="flex items-center gap-2 mb-1">
+                           <p class="font-bold ${typeColor}">${typeText}</p>
+                           <span class="text-xs font-bold px-2 py-0.5 rounded-full ${priorityStyle}">${
+        item.priority
+      }</span>
+                        </div>
+                        <p class="text-sm text-slate-800 font-medium">${
+                          item.procedure
+                        }</p>
+                        <p class="text-xs text-slate-500">${item.cid}</p>
+                    </div>
+                    <span class="text-xs font-bold px-2 py-1 rounded-full ${style}">${
+        item.status
+      }</span>
+                </div>
+                <div class="text-sm text-slate-500 mt-2 border-t pt-2 space-y-1">
+                    <p><strong>Data:</strong> ${item.date}</p>
+                    <p><strong>Solicitante:</strong> ${item.requester}</p>
+                    <p><strong>Executante:</strong> ${
+                      item.provider || "Não definido"
+                    }</p>
+                </div>
+                <div class="mt-2 pt-2 border-t">
+                     <button class="view-regulation-details-btn w-full text-sm bg-gray-100 text-gray-800 py-1 px-3 rounded hover:bg-gray-200" data-idp="${
+                       item.idp
+                     }" data-ids="${item.ids}">
+                        Visualizar Detalhes
+                    </button>
+                </div>
+            </div>
+      `;
+    })
+    .join("");
+}
+
 // --- Preferências do Usuário ---
 let userPreferences = {
   autoLoadExams: false,
   autoLoadConsultations: false,
+  autoLoadAppointments: false,
+  autoLoadRegulations: false,
   hideNoShowDefault: false,
   monthsBack: 6,
 };
@@ -483,6 +594,8 @@ async function loadUserPreferences() {
   userPreferences = await browser.storage.sync.get({
     autoLoadExams: false,
     autoLoadConsultations: false,
+    autoLoadAppointments: false,
+    autoLoadRegulations: false,
     hideNoShowDefault: false,
     monthsBack: 6,
   });
@@ -497,9 +610,11 @@ function applyUserPreferences() {
   dateInitialInput.valueAsDate = initial;
   examDateInitialInput.valueAsDate = initial;
   appointmentDateInitialInput.valueAsDate = initial;
+  regulationDateInitialInput.valueAsDate = initial;
   dateFinalInput.valueAsDate = now;
   examDateFinalInput.valueAsDate = now;
   appointmentDateFinalInput.valueAsDate = now;
+  regulationDateFinalInput.valueAsDate = now;
 }
 
 // --- Manipuladores de Eventos ---
@@ -512,6 +627,7 @@ async function handleResultClick(event) {
   consultationsContent.innerHTML = "";
   examsContent.innerHTML = "";
   appointmentsContent.innerHTML = "";
+  regulationsContent.innerHTML = "";
   rawHtmlContent.textContent = "";
   debugSection.style.display = "none";
   try {
@@ -546,7 +662,12 @@ async function handleResultClick(event) {
     searchResultsList.classList.add("hidden");
     recentPatientsList.classList.add("hidden");
 
-    await handleFetchAppointments();
+    if (userPreferences.autoLoadRegulations) {
+      await handleFetchRegulations();
+    }
+    if (userPreferences.autoLoadAppointments) {
+      await handleFetchAppointments();
+    }
     if (userPreferences.autoLoadConsultations) {
       await handleFetchConsultations();
     }
@@ -568,6 +689,7 @@ async function handleSearchInput(event) {
   consultationsSection.style.display = "none";
   examsSection.style.display = "none";
   appointmentsSection.style.display = "none";
+  regulationsSection.style.display = "none";
   debugSection.style.display = "none";
   currentPatient = null;
   recentPatientsList.classList.add("hidden");
@@ -598,7 +720,9 @@ function handleToggleDetails() {
 
 async function handleFetchConsultations() {
   if (!currentPatient?.isenFullPKCrypto) {
-    showMessage("ID criptografado não encontrado.");
+    if (consultationsSection.style.display !== "none") {
+      showMessage("ID criptografado não encontrado.");
+    }
     return;
   }
   const dataInicial = dateInitialInput.value
@@ -643,10 +767,13 @@ async function handleFetchConsultations() {
 }
 
 async function handleFetchExams() {
-  if (!currentPatient?.fullPK) {
-    showMessage("ID do paciente (isenPK) não encontrado.");
+  if (!currentPatient?.isenPK) {
+    if (examsSection.style.display !== "none") {
+      showMessage("ID do paciente (isenPK) não encontrado.");
+    }
     return;
   }
+  const isenPK = `${currentPatient.isenPK.idp}-${currentPatient.isenPK.ids}`;
   const dataInicial = examDateInitialInput.value
     ? new Date(examDateInitialInput.value).toLocaleDateString("pt-BR")
     : "01/01/1900";
@@ -676,7 +803,7 @@ async function handleFetchExams() {
   examsContent.innerHTML = "";
   try {
     const examsData = await fetchExamesSolicitados({
-      isenPK: currentPatient.fullPK,
+      isenPK: isenPK,
       dataInicial,
       dataFinal,
       comResultado,
@@ -691,10 +818,13 @@ async function handleFetchExams() {
 }
 
 async function handleFetchAppointments() {
-  if (!currentPatient?.fullPK) {
-    showMessage("ID do paciente (isenPK) não encontrado.");
+  if (!currentPatient?.isenPK) {
+    if (appointmentsSection.style.display !== "none") {
+      showMessage("ID do paciente (isenPK) não encontrado.");
+    }
     return;
   }
+  const isenPK = `${currentPatient.isenPK.idp}-${currentPatient.isenPK.ids}`;
   const dataInicial = appointmentDateInitialInput.value
     ? new Date(appointmentDateInitialInput.value).toLocaleDateString("pt-BR")
     : "01/01/1900";
@@ -703,14 +833,49 @@ async function handleFetchAppointments() {
     : new Date().toLocaleDateString("pt-BR");
 
   toggleLoader(true);
-  appointmentsContent.innerHTML = "";
+  appointmentsContent.innerHTML = "Carregando...";
   try {
     const appointmentsData = await fetchAppointments({
-      isenPK: currentPatient.fullPK,
+      isenPK: isenPK,
       dataInicial,
       dataFinal,
     });
-    renderAppointments(appointmentsData);
+    allFetchedAppointments = appointmentsData;
+    renderAppointments();
+  } catch (error) {
+    showMessage(error.message);
+  } finally {
+    toggleLoader(false);
+  }
+}
+
+async function handleFetchRegulations() {
+  if (!currentPatient?.isenPK) {
+    if (regulationsSection.style.display !== "none") {
+      showMessage(
+        "ID do paciente (isenPK) não encontrado para buscar regulações."
+      );
+    }
+    return;
+  }
+  const isenPK = `${currentPatient.isenPK.idp}-${currentPatient.isenPK.ids}`;
+  const dataInicial = regulationDateInitialInput.value
+    ? new Date(regulationDateInitialInput.value).toLocaleDateString("pt-BR")
+    : "";
+  const dataFinal = regulationDateFinalInput.value
+    ? new Date(regulationDateFinalInput.value).toLocaleDateString("pt-BR")
+    : "";
+
+  toggleLoader(true);
+  regulationsContent.innerHTML = "Carregando...";
+  try {
+    const regulationsData = await fetchAllRegulations({
+      isenPK: isenPK,
+      dataInicial,
+      dataFinal,
+      type: currentRegulationFetchType,
+    });
+    renderRegulations(regulationsData);
   } catch (error) {
     showMessage(error.message);
   } finally {
@@ -755,20 +920,15 @@ async function handleViewAppointmentDetails(event) {
   const button = event.target.closest(".view-appointment-details-btn");
   if (!button) return;
 
-  // Extrai o idp, ids e o tipo do botão
   const { idp, ids, type } = button.dataset;
 
   try {
     const baseUrl = await getBaseUrl();
     let finalUrl;
 
-    // Constrói a URL correta com base no tipo
     if (type && type.toUpperCase().includes("EXAME")) {
-      // --- CORREÇÃO APLICADA AQUI ---
-      // Para exames, abre a página de agendamento passando o IDP do exame.
       finalUrl = `${baseUrl}/sigss/agendamentoExame.jsp?id=${idp}`;
     } else {
-      // Para consultas, mantém o comportamento de abrir a consulta rápida.
       finalUrl = `${baseUrl}/sigss/consultaRapida.jsp?agcoPK.idp=${idp}&agcoPK.ids=${ids}`;
     }
 
@@ -779,12 +939,26 @@ async function handleViewAppointmentDetails(event) {
   }
 }
 
+async function handleViewRegulationDetails(event) {
+  const button = event.target.closest(".view-regulation-details-btn");
+  if (!button) return;
+  const { idp, ids } = button.dataset;
+  try {
+    const baseUrl = await getBaseUrl();
+    const url = `${baseUrl}/sigss/regulacaoRegulador/visualiza?reguPK.idp=${idp}&reguPK.ids=${ids}`;
+    window.open(url, "_blank");
+  } catch (error) {
+    showMessage("Não foi possível construir a URL para a regulação.");
+    console.error(error);
+  }
+}
+
 function handleShowAppointmentInfo(event) {
   const button = event.target.closest(".appointment-info-btn");
   if (!button) return;
 
   const appointmentData = JSON.parse(button.dataset.appointment);
-
+  modalTitle.textContent = "Detalhes do Agendamento";
   modalContent.innerHTML = `
         <p><strong>ID:</strong> ${appointmentData.id}</p>
         <p><strong>Tipo:</strong> ${
@@ -829,6 +1003,15 @@ function handleToggleAppointmentsList() {
     appointmentsWrapper.classList.contains("show") ? "Recolher" : "Expandir";
 }
 
+function handleToggleRegulationsList() {
+  regulationsWrapper.classList.toggle("show");
+  toggleRegulationsListBtn.textContent = regulationsWrapper.classList.contains(
+    "show"
+  )
+    ? "Recolher"
+    : "Expandir";
+}
+
 function handleConsultationClick(event) {
   const header = event.target.closest(".consultation-header");
   if (!header) return;
@@ -871,6 +1054,36 @@ function handleExamFetchTypeChange(event) {
   handleFetchExams();
 }
 
+function handleRegulationFetchTypeChange(event) {
+  const button = event.target.closest(".regulation-fetch-type-btn");
+  if (!button) return;
+  regulationFetchTypeButtons
+    .querySelectorAll(".regulation-fetch-type-btn")
+    .forEach((btn) => {
+      btn.classList.remove("btn-active", "text-white");
+      btn.classList.add("text-slate-600", "hover:bg-slate-200");
+    });
+  button.classList.add("btn-active", "text-white");
+  button.classList.remove("text-slate-600", "hover:bg-slate-200");
+  currentRegulationFetchType = button.dataset.fetchType;
+  handleFetchRegulations();
+}
+
+function handleAppointmentFetchTypeChange(event) {
+  const button = event.target.closest(".appointment-fetch-type-btn");
+  if (!button) return;
+  appointmentFetchTypeButtons
+    .querySelectorAll(".appointment-fetch-type-btn")
+    .forEach((btn) => {
+      btn.classList.remove("btn-active", "text-white");
+      btn.classList.add("text-slate-600", "hover:bg-slate-200");
+    });
+  button.classList.add("btn-active", "text-white");
+  button.classList.remove("text-slate-600", "hover:bg-slate-200");
+  currentAppointmentFetchType = button.dataset.fetchType;
+  handleFetchAppointments();
+}
+
 // --- Inicialização ---
 async function init() {
   await loadUserPreferences();
@@ -886,7 +1099,7 @@ searchResultsList.addEventListener("click", handleResultClick);
 recentPatientsList.addEventListener("click", handleResultClick);
 toggleDetailsBtn.addEventListener("click", handleToggleDetails);
 fetchTypeButtons.addEventListener("click", handleFetchTypeChange);
-hideNoShowCheckbox.addEventListener("change", () => renderConsultations());
+hideNoShowCheckbox.addEventListener("change", renderConsultations);
 toggleRawHtmlBtn.addEventListener("click", handleToggleRawHtml);
 toggleConsultationsListBtn.addEventListener(
   "click",
@@ -903,8 +1116,20 @@ toggleAppointmentsListBtn.addEventListener(
 );
 appointmentDateInitialInput.addEventListener("change", handleFetchAppointments);
 appointmentDateFinalInput.addEventListener("change", handleFetchAppointments);
+appointmentFetchTypeButtons.addEventListener(
+  "click",
+  handleAppointmentFetchTypeChange
+);
 
-// ATUALIZADO: Listener unificado para os botões da seção de agendamentos
+toggleRegulationsListBtn.addEventListener("click", handleToggleRegulationsList);
+regulationDateInitialInput.addEventListener("change", handleFetchRegulations);
+regulationDateFinalInput.addEventListener("change", handleFetchRegulations);
+regulationsContent.addEventListener("click", handleViewRegulationDetails);
+regulationFetchTypeButtons.addEventListener(
+  "click",
+  handleRegulationFetchTypeChange
+);
+
 appointmentsContent.addEventListener("click", (event) => {
   const openBtn = event.target.closest(".view-appointment-details-btn");
   const infoBtn = event.target.closest(".appointment-info-btn");
