@@ -16,6 +16,7 @@ import {
 import { defaultFieldConfig, getNestedValue } from "./field-config.js";
 
 // --- Seletores de Elementos do DOM ---
+const mainContent = document.getElementById("main-content");
 const searchInput = document.getElementById("patient-search-input");
 const searchResultsList = document.getElementById("search-results");
 const recentPatientsList = document.getElementById("recent-patients-list");
@@ -68,6 +69,12 @@ const consultationFilterProfessional = document.getElementById(
 const consultationFilterUnit = document.getElementById(
   "consultation-filter-unit"
 );
+const clearConsultationFiltersBtn = document.getElementById(
+  "clear-consultation-filters-btn"
+);
+const consultationActiveFiltersIndicator = document.getElementById(
+  "consultation-active-filters-indicator"
+);
 
 // --- Seletores de Exames ---
 const examsSection = document.getElementById("exams-section");
@@ -87,6 +94,10 @@ const examFilterProfessional = document.getElementById(
   "exam-filter-professional"
 );
 const examFilterSpecialty = document.getElementById("exam-filter-specialty");
+const clearExamFiltersBtn = document.getElementById("clear-exam-filters-btn");
+const examActiveFiltersIndicator = document.getElementById(
+  "exam-active-filters-indicator"
+);
 
 // --- Seletores de Agendamentos ---
 const appointmentsSection = document.getElementById("appointments-section");
@@ -119,6 +130,12 @@ const appointmentFilterTerm = document.getElementById(
 );
 const appointmentFilterLocation = document.getElementById(
   "appointment-filter-location"
+);
+const clearAppointmentFiltersBtn = document.getElementById(
+  "clear-appointment-filters-btn"
+);
+const appointmentActiveFiltersIndicator = document.getElementById(
+  "appointment-active-filters-indicator"
 );
 
 // --- Seletores de Regulação ---
@@ -156,6 +173,12 @@ const regulationFilterProcedure = document.getElementById(
 const regulationFilterRequester = document.getElementById(
   "regulation-filter-requester"
 );
+const clearRegulationFiltersBtn = document.getElementById(
+  "clear-regulation-filters-btn"
+);
+const regulationActiveFiltersIndicator = document.getElementById(
+  "regulation-active-filters-indicator"
+);
 
 // --- Seletores do Modal ---
 const infoModal = document.getElementById("info-modal");
@@ -177,6 +200,11 @@ let currentFetchType = "all";
 let currentExamFetchType = "all";
 let currentAppointmentFetchType = "all";
 let currentRegulationFetchType = "all";
+// Estados de ordenação
+let consultationSortState = { key: "date", order: "desc" };
+let examSortState = { key: "date", order: "desc" };
+let appointmentSortState = { key: "date", order: "desc" };
+let regulationSortState = { key: "date", order: "desc" };
 
 // --- Funções de Armazenamento ---
 async function loadRecentPatients() {
@@ -227,6 +255,14 @@ function showMessage(text, type = "error") {
 function clearMessage() {
   messageArea.style.display = "none";
 }
+
+const parseDate = (dateString) => {
+  if (!dateString || typeof dateString !== "string") return null;
+  const parts = dateString.split("/");
+  if (parts.length !== 3) return null;
+  // Assume dd/MM/yyyy
+  return new Date(parts[2], parts[1] - 1, parts[0]);
+};
 
 // --- Funções de Renderização ---
 
@@ -292,11 +328,13 @@ function renderPatientDetails(patientData, cadsusData) {
         ? "text-red-600 font-bold"
         : "text-slate-900";
 
+    const copyIcon = `<span class="copy-icon" title="Copiar" data-copy-text="${v1}">📄</span>`;
+
     const rowHtml = `<div class="flex justify-between items-center py-1"><span class="font-medium text-slate-600">${
       field.label
     }:</span><span class="${valueClass} text-right flex items-center">${
       v1 || "-"
-    }${icon}</span></div>`;
+    }${icon}${copyIcon}</span></div>`;
 
     if (field.section === "main") {
       patientMainInfoDiv.innerHTML += rowHtml;
@@ -379,15 +417,34 @@ function renderRecentPatients() {
   });
 }
 
+function getSortIndicator(key, state) {
+  if (state.key !== key) return "";
+  return state.order === "asc" ? "▲" : "▼";
+}
+
 function renderConsultations(consultations) {
   if (consultations.length === 0) {
     consultationsContent.innerHTML =
       '<p class="text-slate-500">Nenhuma consulta encontrada para os filtros aplicados.</p>';
     return;
   }
-  consultationsContent.innerHTML = consultations
-    .map(
-      (c) => `
+  const headers = `
+    <div class="flex justify-between text-xs font-bold text-slate-500 mb-2 px-3">
+        <span class="sort-header w-2/3" data-sort-key="specialty">Especialidade/Profissional <span class="sort-indicator">${getSortIndicator(
+          "specialty",
+          consultationSortState
+        )}</span></span>
+        <span class="sort-header w-1/3 text-right" data-sort-key="date">Data <span class="sort-indicator">${getSortIndicator(
+          "date",
+          consultationSortState
+        )}</span></span>
+    </div>
+  `;
+  consultationsContent.innerHTML =
+    headers +
+    consultations
+      .map(
+        (c) => `
         <div class="p-3 mb-3 border rounded-lg ${
           c.isNoShow ? "bg-red-50 border-red-200" : "bg-white"
         } consultation-item">
@@ -420,7 +477,9 @@ function renderConsultations(consultations) {
                           }</p><p class="text-sm text-slate-700 whitespace-pre-wrap">${d.value.replace(
                             /\n/g,
                             "<br>"
-                          )}</p>`
+                          )} <span class="copy-icon" title="Copiar" data-copy-text="${
+                            d.value
+                          }">📄</span></p>`
                       )
                       .join("")}
                 </div>`
@@ -428,8 +487,8 @@ function renderConsultations(consultations) {
             </div>
         </div>
     `
-    )
-    .join("");
+      )
+      .join("");
 }
 
 function renderExams(exams) {
@@ -438,43 +497,45 @@ function renderExams(exams) {
       '<p class="text-slate-500">Nenhum exame encontrado para os filtros aplicados.</p>';
     return;
   }
-  const parseDate = (dateString) => {
-    if (!dateString || typeof dateString !== "string") return null;
-    const parts = dateString.split("/");
-    if (parts.length !== 3) return null;
-    return new Date(`${parts[2]}-${parts[1]}-${parts[0]}`);
-  };
-  exams.sort((a, b) => {
-    const dateA = parseDate(a.date);
-    const dateB = parseDate(b.date);
-    if (dateA && dateB) return dateB - dateA;
-    if (dateA) return -1;
-    if (dateB) return 1;
-    return 0;
-  });
-  examsContent.innerHTML = exams
-    .map((exam) => {
-      const idp = exam.resultIdp;
-      const ids = exam.resultIds;
-      const idpStr = idp !== null && idp !== undefined ? String(idp) : "";
-      const idsStr = ids !== null && ids !== undefined ? String(ids) : "";
-      const showBtn =
-        exam.hasResult &&
-        idp !== null &&
-        idp !== undefined &&
-        ids !== null &&
-        ids !== undefined &&
-        idpStr !== "" &&
-        idsStr !== "";
-      return `
+  const headers = `
+    <div class="flex justify-between text-xs font-bold text-slate-500 mb-2 px-3">
+        <span class="sort-header w-2/3" data-sort-key="examName">Nome do Exame <span class="sort-indicator">${getSortIndicator(
+          "examName",
+          examSortState
+        )}</span></span>
+        <span class="sort-header w-1/3 text-right" data-sort-key="date">Data <span class="sort-indicator">${getSortIndicator(
+          "date",
+          examSortState
+        )}</span></span>
+    </div>
+  `;
+  examsContent.innerHTML =
+    headers +
+    exams
+      .map((exam) => {
+        const idp = exam.resultIdp;
+        const ids = exam.resultIds;
+        const idpStr = idp !== null && idp !== undefined ? String(idp) : "";
+        const idsStr = ids !== null && ids !== undefined ? String(ids) : "";
+        const showBtn =
+          exam.hasResult &&
+          idp !== null &&
+          idp !== undefined &&
+          ids !== null &&
+          ids !== undefined &&
+          idpStr !== "" &&
+          idsStr !== "";
+        return `
         <div class="p-3 mb-3 border rounded-lg bg-white">
             <p class="font-semibold text-indigo-700">${
               exam.examName || "Nome do exame não informado"
-            }</p>
+            } <span class="copy-icon" title="Copiar" data-copy-text="${
+          exam.examName
+        }">📄</span></p>
             <div class="text-sm text-slate-500 mt-1">
                 <p>Solicitado por: ${exam.professional || "Não informado"} (${
-        exam.specialty || "N/A"
-      })</p>
+          exam.specialty || "N/A"
+        })</p>
                 <p>Data: ${exam.date || "Não informada"}</p>
             </div>
             ${
@@ -484,9 +545,17 @@ function renderExams(exams) {
             }
         </div>
       `;
-    })
-    .join("");
+      })
+      .join("");
 }
+
+const statusStyles = {
+  AGENDADO: "bg-blue-100 text-blue-800",
+  PRESENTE: "bg-green-100 text-green-800",
+  FALTOU: "bg-red-100 text-red-800",
+  CANCELADO: "bg-yellow-100 text-yellow-800",
+  ATENDIDO: "bg-purple-100 text-purple-800",
+};
 
 function renderAppointments(appointments) {
   if (appointments.length === 0) {
@@ -494,41 +563,50 @@ function renderAppointments(appointments) {
       '<p class="text-slate-500">Nenhum agendamento encontrado para o filtro selecionado.</p>';
     return;
   }
+  const headers = `
+    <div class="flex justify-between text-xs font-bold text-slate-500 mb-2 px-3">
+        <span class="sort-header w-1/2" data-sort-key="specialty">Especialidade <span class="sort-indicator">${getSortIndicator(
+          "specialty",
+          appointmentSortState
+        )}</span></span>
+        <span class="sort-header w-1/4 text-center" data-sort-key="status">Status <span class="sort-indicator">${getSortIndicator(
+          "status",
+          appointmentSortState
+        )}</span></span>
+        <span class="sort-header w-1/4 text-right" data-sort-key="date">Data <span class="sort-indicator">${getSortIndicator(
+          "date",
+          appointmentSortState
+        )}</span></span>
+    </div>
+  `;
+  appointmentsContent.innerHTML =
+    headers +
+    appointments
+      .map((item) => {
+        const style = statusStyles[item.status] || "bg-gray-100 text-gray-800";
+        let typeText = item.type;
+        if (item.isSpecialized) {
+          typeText = "CONSULTA ESPECIALIZADA";
+        } else if (item.isOdonto) {
+          typeText = "CONSULTA ODONTO";
+        } else if (item.type.toUpperCase().includes("EXAME")) {
+          typeText = "EXAME";
+        }
 
-  const statusStyles = {
-    AGENDADO: "bg-blue-100 text-blue-800",
-    PRESENTE: "bg-green-100 text-green-800",
-    FALTOU: "bg-red-100 text-red-800",
-    CANCELADO: "bg-yellow-100 text-yellow-800",
-    ATENDIDO: "bg-purple-100 text-purple-800",
-  };
+        let idp, ids;
+        const idParts = item.id.split("-");
 
-  appointmentsContent.innerHTML = appointments
-    .map((item) => {
-      const style = statusStyles[item.status] || "bg-gray-100 text-gray-800";
-      let typeText = item.type;
-      if (item.isSpecialized) {
-        typeText = "CONSULTA ESPECIALIZADA";
-      } else if (item.isOdonto) {
-        typeText = "CONSULTA ODONTO";
-      } else if (item.type.toUpperCase().includes("EXAME")) {
-        typeText = "EXAME";
-      }
+        if (idParts[0].toLowerCase() === "exam") {
+          idp = idParts[1];
+          ids = idParts[2];
+        } else {
+          idp = idParts[0];
+          ids = idParts[1];
+        }
 
-      let idp, ids;
-      const idParts = item.id.split("-");
+        const appointmentDataString = JSON.stringify(item);
 
-      if (idParts[0].toLowerCase() === "exam") {
-        idp = idParts[1];
-        ids = idParts[2];
-      } else {
-        idp = idParts[0];
-        ids = idParts[1];
-      }
-
-      const appointmentDataString = JSON.stringify(item);
-
-      return `
+        return `
         <div class="p-3 mb-3 border rounded-lg bg-white">
             <div class="flex justify-between items-start">
                 <div>
@@ -538,8 +616,8 @@ function renderAppointments(appointments) {
                     }</p>
                 </div>
                 <span class="text-xs font-bold px-2 py-1 rounded-full ${style}">${
-        item.status
-      }</span>
+          item.status
+        }</span>
             </div>
             <div class="text-sm text-slate-500 mt-2 border-t pt-2">
                 <p><strong>Data:</strong> ${item.date} às ${item.time}</p>
@@ -562,8 +640,8 @@ function renderAppointments(appointments) {
             </div>
         </div>
       `;
-    })
-    .join("");
+      })
+      .join("");
 }
 
 function renderRegulations(regulations) {
@@ -573,15 +651,6 @@ function renderRegulations(regulations) {
     return;
   }
 
-  const statusStyles = {
-    AUTORIZADO: "bg-green-100 text-green-800",
-    NEGADO: "bg-red-100 text-red-800",
-    CANCELADA: "bg-yellow-100 text-yellow-800",
-    DEVOLVIDO: "bg-orange-100 text-orange-800",
-    PENDENTE: "bg-blue-100 text-blue-800",
-    "EM ANÁLISE": "bg-purple-100 text-purple-800",
-  };
-
   const priorityStyles = {
     EMERGENCIA: "bg-red-500 text-white",
     MUITOALTA: "bg-orange-500 text-white",
@@ -590,39 +659,68 @@ function renderRegulations(regulations) {
     BAIXA: "bg-green-500 text-white",
   };
 
-  regulationsContent.innerHTML = regulations
-    .map((item) => {
-      const statusKey = item.status.toUpperCase().replace("ANALISE", "ANÁLISE");
-      const style = statusStyles[statusKey] || "bg-gray-100 text-gray-800";
+  const headers = `
+    <div class="flex justify-between text-xs font-bold text-slate-500 mb-2 px-3">
+        <span class="sort-header w-1/2" data-sort-key="procedure">Procedimento <span class="sort-indicator">${getSortIndicator(
+          "procedure",
+          regulationSortState
+        )}</span></span>
+        <span class="sort-header w-1/4 text-center" data-sort-key="status">Status <span class="sort-indicator">${getSortIndicator(
+          "status",
+          regulationSortState
+        )}</span></span>
+        <span class="sort-header w-1/4 text-right" data-sort-key="date">Data <span class="sort-indicator">${getSortIndicator(
+          "date",
+          regulationSortState
+        )}</span></span>
+    </div>
+  `;
 
-      const priorityKey = (item.priority || "").toUpperCase().replace(" ", "");
-      const priorityStyle =
-        priorityStyles[priorityKey] || "bg-gray-400 text-white";
+  regulationsContent.innerHTML =
+    headers +
+    regulations
+      .map((item) => {
+        const statusKey = item.status
+          .toUpperCase()
+          .replace("ANALISE", "ANÁLISE");
+        const style = statusStyles[statusKey] || "bg-gray-100 text-gray-800";
 
-      const typeText = (item.type || "").startsWith("CON")
-        ? "CONSULTA"
-        : "EXAME";
-      const typeColor =
-        typeText === "CONSULTA" ? "text-cyan-700" : "text-fuchsia-700";
+        const priorityKey = (item.priority || "")
+          .toUpperCase()
+          .replace(" ", "");
+        const priorityStyle =
+          priorityStyles[priorityKey] || "bg-gray-400 text-white";
 
-      return `
+        const typeText = (item.type || "").startsWith("CON")
+          ? "CONSULTA"
+          : "EXAME";
+        const typeColor =
+          typeText === "CONSULTA" ? "text-cyan-700" : "text-fuchsia-700";
+
+        return `
             <div class="p-3 mb-3 border rounded-lg bg-white">
                 <div class="flex justify-between items-start">
                     <div>
                         <div class="flex items-center gap-2 mb-1">
                            <p class="font-bold ${typeColor}">${typeText}</p>
                            <span class="text-xs font-bold px-2 py-0.5 rounded-full ${priorityStyle}">${
-        item.priority
-      }</span>
+          item.priority
+        }</span>
                         </div>
                         <p class="text-sm text-slate-800 font-medium">${
                           item.procedure
-                        }</p>
-                        <p class="text-xs text-slate-500">${item.cid}</p>
+                        } <span class="copy-icon" title="Copiar" data-copy-text="${
+          item.procedure
+        }">📄</span></p>
+                        <p class="text-xs text-slate-500">${
+                          item.cid
+                        } <span class="copy-icon" title="Copiar" data-copy-text="${
+          item.cid
+        }">📄</span></p>
                     </div>
                     <span class="text-xs font-bold px-2 py-1 rounded-full ${style}">${
-        item.status
-      }</span>
+          item.status
+        }</span>
                 </div>
                 <div class="text-sm text-slate-500 mt-2 border-t pt-2 space-y-1">
                     <p><strong>Data:</strong> ${item.date}</p>
@@ -640,11 +738,66 @@ function renderRegulations(regulations) {
                 </div>
             </div>
       `;
-    })
-    .join("");
+      })
+      .join("");
 }
 
-// --- Funções de Filtragem e Renderização ---
+// --- Funções de Filtragem, Ordenação e Renderização ---
+
+function sortData(data, state) {
+  const { key, order } = state;
+  const sortedData = [...data];
+
+  sortedData.sort((a, b) => {
+    let valA, valB;
+
+    if (key === "date") {
+      valA = parseDate(a.date);
+      valB = parseDate(b.date);
+    } else if (key === "specialty" && a.sortableDate) {
+      // Specific for consultations
+      valA = a.sortableDate;
+      valB = b.sortableDate;
+    } else {
+      valA = (a[key] || "").toString().toLowerCase();
+      valB = (b[key] || "").toString().toLowerCase();
+    }
+
+    if (valA < valB) return order === "asc" ? -1 : 1;
+    if (valA > valB) return order === "asc" ? 1 : -1;
+    return 0;
+  });
+  return sortedData;
+}
+
+function updateActiveFiltersIndicator(
+  moreFiltersDiv,
+  indicator,
+  filterElements
+) {
+  const isShown = moreFiltersDiv.classList.contains("show");
+  let activeCount = 0;
+  filterElements.forEach((el) => {
+    if (
+      el.type === "select-one" &&
+      el.value !== "todos" &&
+      el.value !== "todas"
+    ) {
+      activeCount++;
+    } else if (el.type === "text" && el.value.trim() !== "") {
+      activeCount++;
+    } else if (el.type === "checkbox" && el.checked) {
+      // Specific case for checkboxes if needed, not currently in "more filters"
+    }
+  });
+
+  if (activeCount > 0 && !isShown) {
+    indicator.textContent = activeCount;
+    indicator.classList.remove("hidden");
+  } else {
+    indicator.classList.add("hidden");
+  }
+}
 
 function applyConsultationFiltersAndRender() {
   let filteredData = [...allFetchedConsultations];
@@ -737,7 +890,19 @@ function applyConsultationFiltersAndRender() {
     }
   }
 
-  renderConsultations(filteredData);
+  const sortedData = sortData(filteredData, consultationSortState);
+  renderConsultations(sortedData);
+  updateActiveFiltersIndicator(
+    consultationMoreFiltersDiv,
+    consultationActiveFiltersIndicator,
+    [
+      fetchTypeButtons,
+      consultationFilterCid,
+      consultationFilterSpecialty,
+      consultationFilterProfessional,
+      consultationFilterUnit,
+    ]
+  );
 }
 
 function applyExamFiltersAndRender() {
@@ -786,7 +951,12 @@ function applyExamFiltersAndRender() {
     }
   }
 
-  renderExams(filteredData);
+  const sortedData = sortData(filteredData, examSortState);
+  renderExams(sortedData);
+  updateActiveFiltersIndicator(examMoreFiltersDiv, examActiveFiltersIndicator, [
+    examFilterProfessional,
+    examFilterSpecialty,
+  ]);
 }
 
 function applyAppointmentFiltersAndRender() {
@@ -799,6 +969,16 @@ function applyAppointmentFiltersAndRender() {
   if (status !== "todos") {
     filteredData = filteredData.filter(
       (a) => (a.status || "").toUpperCase() === status.toUpperCase()
+    );
+  }
+
+  if (currentAppointmentFetchType === "consultas") {
+    filteredData = filteredData.filter(
+      (a) => !a.type.toUpperCase().includes("EXAME")
+    );
+  } else if (currentAppointmentFetchType === "exames") {
+    filteredData = filteredData.filter((a) =>
+      a.type.toUpperCase().includes("EXAME")
     );
   }
 
@@ -830,7 +1010,13 @@ function applyAppointmentFiltersAndRender() {
     }
   }
 
-  renderAppointments(filteredData);
+  const sortedData = sortData(filteredData, appointmentSortState);
+  renderAppointments(sortedData);
+  updateActiveFiltersIndicator(
+    appointmentMoreFiltersDiv,
+    appointmentActiveFiltersIndicator,
+    [appointmentFilterTerm, appointmentFilterLocation]
+  );
 }
 
 function applyRegulationFiltersAndRender() {
@@ -881,7 +1067,17 @@ function applyRegulationFiltersAndRender() {
     }
   }
 
-  renderRegulations(filteredData);
+  const sortedData = sortData(filteredData, regulationSortState);
+  renderRegulations(sortedData);
+  updateActiveFiltersIndicator(
+    regulationMoreFiltersDiv,
+    regulationActiveFiltersIndicator,
+    [
+      regulationFilterPriority,
+      regulationFilterProcedure,
+      regulationFilterRequester,
+    ]
+  );
 }
 
 // --- Preferências do Usuário ---
@@ -1056,7 +1252,6 @@ async function handleFetchConsultations() {
       dataInicial,
       dataFinal,
     });
-    jsonData.sort((a, b) => b.sortableDate - a.sortableDate);
     allFetchedConsultations = jsonData;
     applyConsultationFiltersAndRender();
     if (htmlData) {
@@ -1398,6 +1593,19 @@ function handleAppointmentFetchTypeChange(event) {
   applyAppointmentFiltersAndRender();
 }
 
+function handleSort(event, state, renderFunc) {
+  const sortKey = event.target.closest("[data-sort-key]")?.dataset.sortKey;
+  if (!sortKey) return;
+
+  if (state.key === sortKey) {
+    state.order = state.order === "asc" ? "desc" : "asc";
+  } else {
+    state.key = sortKey;
+    state.order = "desc";
+  }
+  renderFunc();
+}
+
 // --- Inicialização ---
 async function init() {
   await loadUserPreferences();
@@ -1418,7 +1626,10 @@ toggleConsultationsListBtn.addEventListener(
   "click",
   handleToggleConsultationsList
 );
-consultationsContent.addEventListener("click", handleConsultationClick);
+consultationsContent.addEventListener("click", (e) => {
+  handleConsultationClick(e);
+  handleSort(e, consultationSortState, applyConsultationFiltersAndRender);
+});
 toggleRawHtmlBtn.addEventListener("click", handleToggleRawHtml);
 fetchConsultationsBtn.addEventListener("click", handleFetchConsultations);
 fetchTypeButtons.addEventListener("click", handleFetchTypeChange);
@@ -1448,15 +1659,29 @@ consultationFilterUnit.addEventListener(
 );
 toggleMoreConsultationFiltersBtn.addEventListener("click", () => {
   consultationMoreFiltersDiv.classList.toggle("show");
-  const isShown = consultationMoreFiltersDiv.classList.contains("show");
-  toggleMoreConsultationFiltersBtn.textContent = isShown
+  const buttonText =
+    toggleMoreConsultationFiltersBtn.querySelector(".button-text");
+  buttonText.textContent = consultationMoreFiltersDiv.classList.contains("show")
     ? "Menos filtros"
     : "Mais filtros";
+  applyConsultationFiltersAndRender();
+});
+clearConsultationFiltersBtn.addEventListener("click", () => {
+  consultationFilterKeyword.value = "";
+  hideNoShowCheckbox.checked = false;
+  consultationFilterCid.value = "";
+  consultationFilterSpecialty.value = "";
+  consultationFilterProfessional.value = "";
+  consultationFilterUnit.value = "";
+  applyConsultationFiltersAndRender();
 });
 
 // Event Listeners para Exames
 toggleExamsListBtn.addEventListener("click", handleToggleExamsList);
-examsContent.addEventListener("click", handleViewExamResult);
+examsContent.addEventListener("click", (e) => {
+  handleViewExamResult(e);
+  handleSort(e, examSortState, applyExamFiltersAndRender);
+});
 fetchExamsBtn.addEventListener("click", handleFetchExams);
 examFetchTypeButtons.addEventListener("click", handleExamFetchTypeChange);
 examFilterName.addEventListener(
@@ -1473,10 +1698,17 @@ examFilterSpecialty.addEventListener(
 );
 toggleMoreExamFiltersBtn.addEventListener("click", () => {
   examMoreFiltersDiv.classList.toggle("show");
-  const isShown = examMoreFiltersDiv.classList.contains("show");
-  toggleMoreExamFiltersBtn.textContent = isShown
+  const buttonText = toggleMoreExamFiltersBtn.querySelector(".button-text");
+  buttonText.textContent = examMoreFiltersDiv.classList.contains("show")
     ? "Menos filtros"
     : "Mais filtros";
+  applyExamFiltersAndRender();
+});
+clearExamFiltersBtn.addEventListener("click", () => {
+  examFilterName.value = "";
+  examFilterProfessional.value = "";
+  examFilterSpecialty.value = "";
+  applyExamFiltersAndRender();
 });
 
 // Event Listeners para Agendamentos
@@ -1503,10 +1735,12 @@ appointmentFilterLocation.addEventListener(
 );
 toggleMoreAppointmentFiltersBtn.addEventListener("click", () => {
   appointmentMoreFiltersDiv.classList.toggle("show");
-  const isShown = appointmentMoreFiltersDiv.classList.contains("show");
-  toggleMoreAppointmentFiltersBtn.textContent = isShown
+  const buttonText =
+    toggleMoreAppointmentFiltersBtn.querySelector(".button-text");
+  buttonText.textContent = appointmentMoreFiltersDiv.classList.contains("show")
     ? "Menos filtros"
     : "Mais filtros";
+  applyAppointmentFiltersAndRender();
 });
 appointmentsContent.addEventListener("click", (event) => {
   const openBtn = event.target.closest(".view-appointment-details-btn");
@@ -1516,6 +1750,13 @@ appointmentsContent.addEventListener("click", (event) => {
   } else if (infoBtn) {
     handleShowAppointmentInfo(event);
   }
+  handleSort(event, appointmentSortState, applyAppointmentFiltersAndRender);
+});
+clearAppointmentFiltersBtn.addEventListener("click", () => {
+  appointmentFilterStatus.value = "todos";
+  appointmentFilterTerm.value = "";
+  appointmentFilterLocation.value = "";
+  applyAppointmentFiltersAndRender();
 });
 
 // Event Listeners para Regulação
@@ -1543,14 +1784,48 @@ regulationFilterRequester.addEventListener(
 );
 toggleMoreRegulationFiltersBtn.addEventListener("click", () => {
   regulationMoreFiltersDiv.classList.toggle("show");
-  const isShown = regulationMoreFiltersDiv.classList.contains("show");
-  toggleMoreRegulationFiltersBtn.textContent = isShown
+  const buttonText =
+    toggleMoreRegulationFiltersBtn.querySelector(".button-text");
+  buttonText.textContent = regulationMoreFiltersDiv.classList.contains("show")
     ? "Menos filtros"
     : "Mais filtros";
+  applyRegulationFiltersAndRender();
 });
-regulationsContent.addEventListener("click", handleViewRegulationDetails);
+regulationsContent.addEventListener("click", (e) => {
+  handleViewRegulationDetails(e);
+  handleSort(e, regulationSortState, applyRegulationFiltersAndRender);
+});
+clearRegulationFiltersBtn.addEventListener("click", () => {
+  regulationFilterStatus.value = "todos";
+  regulationFilterPriority.value = "todas";
+  regulationFilterProcedure.value = "";
+  regulationFilterRequester.value = "";
+  applyRegulationFiltersAndRender();
+});
 
-// Event Listeners do Modal
+// Event Listeners Gerais
+mainContent.addEventListener("click", async (event) => {
+  const copyBtn = event.target.closest(".copy-icon");
+  if (copyBtn) {
+    const textToCopy = copyBtn.dataset.copyText;
+    if (textToCopy) {
+      try {
+        await navigator.clipboard.writeText(textToCopy);
+        copyBtn.textContent = "✅";
+        setTimeout(() => {
+          copyBtn.textContent = "📄";
+        }, 1000);
+      } catch (err) {
+        console.error("Falha ao copiar texto: ", err);
+        copyBtn.textContent = "❌";
+        setTimeout(() => {
+          copyBtn.textContent = "📄";
+        }, 1000);
+      }
+    }
+  }
+});
+
 modalCloseBtn.addEventListener("click", () =>
   infoModal.classList.add("hidden")
 );

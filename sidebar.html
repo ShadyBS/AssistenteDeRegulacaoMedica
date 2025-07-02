@@ -27,11 +27,12 @@
         background-color: #2563eb;
         color: white;
       }
-      .comparison-icon {
+      .comparison-icon,
+      .copy-icon {
         display: inline-block;
         margin-left: 8px;
         font-size: 14px;
-        cursor: help;
+        cursor: pointer;
         position: relative;
       }
       .comparison-icon[data-tooltip]:hover::after {
@@ -56,6 +57,19 @@
       }
       .comparison-icon[data-tooltip]::after {
         display: none;
+      }
+      .sort-header {
+        cursor: pointer;
+        user-select: none;
+      }
+      .sort-header:hover {
+        color: #2563eb;
+      }
+      .sort-indicator {
+        display: inline-block;
+        margin-left: 4px;
+        font-size: 1.2em;
+        line-height: 1;
       }
     </style>
   </head>
@@ -105,6 +119,7 @@
     </header>
 
     <main
+      id="main-content"
       class="flex-grow p-4 space-y-4 overflow-y-auto"
       style="min-height: 0; max-height: 100vh"
     >
@@ -223,34 +238,35 @@
           >
             Buscar Regulações
           </button>
-          <div
-            id="regulation-fetch-type-buttons"
-            class="grid grid-cols-3 gap-1 mt-4 p-1 bg-slate-100 rounded-lg"
-          >
-            <button
-              data-fetch-type="all"
-              class="regulation-fetch-type-btn btn-active px-2 py-1 text-sm rounded-md transition-colors"
-            >
-              Todos
-            </button>
-            <button
-              data-fetch-type="ENC"
-              class="regulation-fetch-type-btn px-2 py-1 text-sm rounded-md transition-colors text-slate-600 hover:bg-slate-200"
-            >
-              Consultas
-            </button>
-            <button
-              data-fetch-type="EXA"
-              class="regulation-fetch-type-btn px-2 py-1 text-sm rounded-md transition-colors text-slate-600 hover:bg-slate-200"
-            >
-              Exames
-            </button>
-          </div>
+
           <div
             id="regulation-filters-container"
             class="mt-4 pt-4 border-t border-slate-200 space-y-4"
           >
             <div id="regulation-main-filters" class="space-y-3">
+              <div
+                id="regulation-fetch-type-buttons"
+                class="grid grid-cols-3 gap-1 p-1 bg-slate-100 rounded-lg"
+              >
+                <button
+                  data-fetch-type="all"
+                  class="regulation-fetch-type-btn btn-active px-2 py-1 text-sm rounded-md transition-colors"
+                >
+                  Todos
+                </button>
+                <button
+                  data-fetch-type="ENC"
+                  class="regulation-fetch-type-btn px-2 py-1 text-sm rounded-md transition-colors text-slate-600 hover:bg-slate-200"
+                >
+                  Consultas
+                </button>
+                <button
+                  data-fetch-type="EXA"
+                  class="regulation-fetch-type-btn px-2 py-1 text-sm rounded-md transition-colors text-slate-600 hover:bg-slate-200"
+                >
+                  Exames
+                </button>
+              </div>
               <div class="text-sm">
                 <label
                   for="regulation-filter-status"
@@ -271,12 +287,22 @@
                 </select>
               </div>
             </div>
-            <div class="text-sm">
+            <div class="flex justify-between items-center text-sm mt-2">
               <button
                 id="toggle-more-regulation-filters-btn"
                 class="text-blue-600 hover:underline"
               >
-                Mais filtros
+                <span class="button-text">Mais filtros</span
+                ><span
+                  id="regulation-active-filters-indicator"
+                  class="hidden ml-1 text-xs bg-blue-500 text-white rounded-full px-1.5 py-0.5"
+                ></span>
+              </button>
+              <button
+                id="clear-regulation-filters-btn"
+                class="text-slate-500 hover:text-red-600"
+              >
+                Limpar
               </button>
             </div>
             <div
@@ -406,16 +432,24 @@
                 >
               </div>
             </div>
-
-            <div class="text-sm">
+            <div class="flex justify-between items-center text-sm mt-2">
               <button
                 id="toggle-more-consultation-filters-btn"
                 class="text-blue-600 hover:underline"
               >
-                Mais filtros
+                <span class="button-text">Mais filtros</span
+                ><span
+                  id="consultation-active-filters-indicator"
+                  class="hidden ml-1 text-xs bg-blue-500 text-white rounded-full px-1.5 py-0.5"
+                ></span>
+              </button>
+              <button
+                id="clear-consultation-filters-btn"
+                class="text-slate-500 hover:text-red-600"
+              >
+                Limpar
               </button>
             </div>
-
             <div
               id="consultation-more-filters"
               class="collapse-section space-y-3 text-sm"
@@ -600,16 +634,24 @@
                 />
               </div>
             </div>
-
-            <div class="text-sm">
+            <div class="flex justify-between items-center text-sm mt-2">
               <button
                 id="toggle-more-exam-filters-btn"
                 class="text-blue-600 hover:underline"
               >
-                Mais filtros
+                <span class="button-text">Mais filtros</span
+                ><span
+                  id="exam-active-filters-indicator"
+                  class="hidden ml-1 text-xs bg-blue-500 text-white rounded-full px-1.5 py-0.5"
+                ></span>
+              </button>
+              <button
+                id="clear-exam-filters-btn"
+                class="text-slate-500 hover:text-red-600"
+              >
+                Limpar
               </button>
             </div>
-
             <div
               id="exam-more-filters"
               class="collapse-section space-y-3 text-sm"
@@ -742,16 +784,24 @@
                 </select>
               </div>
             </div>
-
-            <div class="text-sm">
+            <div class="flex justify-between items-center text-sm mt-2">
               <button
                 id="toggle-more-appointment-filters-btn"
                 class="text-blue-600 hover:underline"
               >
-                Mais filtros
+                <span class="button-text">Mais filtros</span
+                ><span
+                  id="appointment-active-filters-indicator"
+                  class="hidden ml-1 text-xs bg-blue-500 text-white rounded-full px-1.5 py-0.5"
+                ></span>
+              </button>
+              <button
+                id="clear-appointment-filters-btn"
+                class="text-slate-500 hover:text-red-600"
+              >
+                Limpar
               </button>
             </div>
-
             <div
               id="appointment-more-filters"
               class="collapse-section space-y-3 text-sm"
