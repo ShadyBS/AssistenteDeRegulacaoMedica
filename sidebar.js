@@ -67,7 +67,7 @@ const appointmentsContent = document.getElementById("appointments-content");
 const appointmentFetchTypeButtons = document.getElementById(
   "appointment-fetch-type-buttons"
 );
-// Seletores de Regulação
+// --- INÍCIO: Seletores de Regulação (ATUALIZADO) ---
 const regulationsSection = document.getElementById("regulations-section");
 const regulationsWrapper = document.getElementById("regulations-wrapper");
 const toggleRegulationsListBtn = document.getElementById(
@@ -83,6 +83,27 @@ const regulationsContent = document.getElementById("regulations-content");
 const regulationFetchTypeButtons = document.getElementById(
   "regulation-fetch-type-buttons"
 );
+// Novos seletores de filtros de Regulação
+const toggleMoreRegulationFiltersBtn = document.getElementById(
+  "toggle-more-regulation-filters-btn"
+);
+const regulationMoreFiltersDiv = document.getElementById(
+  "regulation-more-filters"
+);
+const regulationFilterStatus = document.getElementById(
+  "regulation-filter-status"
+);
+const regulationFilterPriority = document.getElementById(
+  "regulation-filter-priority"
+);
+const regulationFilterProcedure = document.getElementById(
+  "regulation-filter-procedure"
+);
+const regulationFilterRequester = document.getElementById(
+  "regulation-filter-requester"
+);
+// --- FIM: Seletores de Regulação ---
+
 // Seletores do Modal de Informações
 const infoModal = document.getElementById("info-modal");
 const modalTitle = document.getElementById("modal-title");
@@ -92,13 +113,19 @@ const modalCloseBtn = document.getElementById("modal-close-btn");
 // --- Variáveis de Estado ---
 let currentPatient = null;
 let recentPatients = [];
+let fieldConfig = [];
+// Consultas
 let currentFetchType = "all";
 let allFetchedConsultations = [];
-let allFetchedAppointments = [];
+// Exames
 let currentExamFetchType = "all";
-let currentRegulationFetchType = "all";
+// Agendamentos
+let allFetchedAppointments = [];
 let currentAppointmentFetchType = "all";
-let fieldConfig = [];
+// --- INÍCIO: Variáveis de Estado de Regulação (ATUALIZADO) ---
+let currentRegulationFetchType = "all";
+let allFetchedRegulations = []; // Armazena todos os resultados da busca
+// --- FIM: Variáveis de Estado de Regulação ---
 
 // --- Funções de Armazenamento ---
 async function loadRecentPatients() {
@@ -504,10 +531,16 @@ function renderAppointments() {
     .join("");
 }
 
+// --- INÍCIO: Funções de Regulação (ATUALIZADO) ---
+
+/**
+ * Renderiza a lista de regulações na UI.
+ * @param {Array<object>} regulations - A lista de regulações a ser renderizada (já filtrada).
+ */
 function renderRegulations(regulations) {
   if (regulations.length === 0) {
     regulationsContent.innerHTML =
-      '<p class="text-slate-500">Nenhum registro de regulação encontrado no período.</p>';
+      '<p class="text-slate-500">Nenhum resultado encontrado para os filtros aplicados.</p>';
     return;
   }
 
@@ -533,11 +566,13 @@ function renderRegulations(regulations) {
       const statusKey = item.status.toUpperCase().replace("ANALISE", "ANÁLISE");
       const style = statusStyles[statusKey] || "bg-gray-100 text-gray-800";
 
-      const priorityKey = item.priority.toUpperCase().replace(" ", "");
+      const priorityKey = (item.priority || "").toUpperCase().replace(" ", "");
       const priorityStyle =
         priorityStyles[priorityKey] || "bg-gray-400 text-white";
 
-      const typeText = item.type.startsWith("CON") ? "CONSULTA" : "EXAME";
+      const typeText = (item.type || "").startsWith("CON")
+        ? "CONSULTA"
+        : "EXAME";
       const typeColor =
         typeText === "CONSULTA" ? "text-cyan-700" : "text-fuchsia-700";
 
@@ -579,6 +614,68 @@ function renderRegulations(regulations) {
     })
     .join("");
 }
+
+/**
+ * Aplica os filtros selecionados à lista de regulações e renderiza o resultado.
+ */
+function applyRegulationFiltersAndRender() {
+  let filteredData = [...allFetchedRegulations];
+
+  // 1. Obter valores dos filtros
+  const status = regulationFilterStatus.value;
+  const priority = regulationFilterPriority.value;
+  const procedureTerms = regulationFilterProcedure.value.toLowerCase().trim();
+  const requesterTerms = regulationFilterRequester.value.toLowerCase().trim();
+
+  // 2. Aplicar filtro de Status
+  if (status !== "todos") {
+    filteredData = filteredData.filter(
+      (item) => (item.status || "").toUpperCase() === status.toUpperCase()
+    );
+  }
+
+  // 3. Aplicar filtro de Prioridade
+  if (priority !== "todas") {
+    filteredData = filteredData.filter(
+      (item) =>
+        (item.priority || "").toUpperCase().replace(" ", "") ===
+        priority.toUpperCase()
+    );
+  }
+
+  // 4. Aplicar filtro de Procedimento/Especialidade (com múltiplos termos)
+  if (procedureTerms) {
+    const searchTerms = procedureTerms
+      .split(",")
+      .map((t) => t.trim())
+      .filter((t) => t);
+    if (searchTerms.length > 0) {
+      filteredData = filteredData.filter((item) => {
+        const itemProcedure = (item.procedure || "").toLowerCase();
+        return searchTerms.some((term) => itemProcedure.includes(term));
+      });
+    }
+  }
+
+  // 5. Aplicar filtro de Solicitante (com múltiplos termos)
+  if (requesterTerms) {
+    const searchTerms = requesterTerms
+      .split(",")
+      .map((t) => t.trim())
+      .filter((t) => t);
+    if (searchTerms.length > 0) {
+      filteredData = filteredData.filter((item) => {
+        const itemRequester = (item.requester || "").toLowerCase();
+        return searchTerms.some((term) => itemRequester.includes(term));
+      });
+    }
+  }
+
+  // 6. Renderizar o resultado filtrado
+  renderRegulations(filteredData);
+}
+
+// --- FIM: Funções de Regulação ---
 
 // --- Preferências do Usuário ---
 let userPreferences = {
@@ -849,6 +946,7 @@ async function handleFetchAppointments() {
   }
 }
 
+// --- INÍCIO: Manipulador de Eventos de Regulação (ATUALIZADO) ---
 async function handleFetchRegulations() {
   if (!currentPatient?.isenPK) {
     if (regulationsSection.style.display !== "none") {
@@ -875,13 +973,17 @@ async function handleFetchRegulations() {
       dataFinal,
       type: currentRegulationFetchType,
     });
-    renderRegulations(regulationsData);
+    allFetchedRegulations = regulationsData; // Armazena os dados brutos
+    applyRegulationFiltersAndRender(); // Filtra e renderiza pela primeira vez
   } catch (error) {
     showMessage(error.message);
+    allFetchedRegulations = [];
+    applyRegulationFiltersAndRender();
   } finally {
     toggleLoader(false);
   }
 }
+// --- FIM: Manipulador de Eventos de Regulação ---
 
 async function handleViewExamResult(event) {
   const button = event.target.closest(".view-exam-result-btn");
@@ -1066,7 +1168,7 @@ function handleRegulationFetchTypeChange(event) {
   button.classList.add("btn-active", "text-white");
   button.classList.remove("text-slate-600", "hover:bg-slate-200");
   currentRegulationFetchType = button.dataset.fetchType;
-  handleFetchRegulations();
+  handleFetchRegulations(); // Re-executa a busca da API com o novo tipo
 }
 
 function handleAppointmentFetchTypeChange(event) {
@@ -1121,14 +1223,43 @@ appointmentFetchTypeButtons.addEventListener(
   handleAppointmentFetchTypeChange
 );
 
+// --- INÍCIO: Event Listeners de Regulação (ATUALIZADO) ---
 toggleRegulationsListBtn.addEventListener("click", handleToggleRegulationsList);
+// A busca é disparada quando as datas ou o tipo (Consulta/Exame) mudam
 regulationDateInitialInput.addEventListener("change", handleFetchRegulations);
 regulationDateFinalInput.addEventListener("change", handleFetchRegulations);
-regulationsContent.addEventListener("click", handleViewRegulationDetails);
 regulationFetchTypeButtons.addEventListener(
   "click",
   handleRegulationFetchTypeChange
 );
+// Os novos filtros apenas re-filtram os dados já carregados
+regulationFilterStatus.addEventListener(
+  "change",
+  applyRegulationFiltersAndRender
+);
+regulationFilterPriority.addEventListener(
+  "change",
+  applyRegulationFiltersAndRender
+);
+regulationFilterProcedure.addEventListener(
+  "input",
+  debounce(applyRegulationFiltersAndRender, 500)
+);
+regulationFilterRequester.addEventListener(
+  "input",
+  debounce(applyRegulationFiltersAndRender, 500)
+);
+
+toggleMoreRegulationFiltersBtn.addEventListener("click", () => {
+  regulationMoreFiltersDiv.classList.toggle("show");
+  const isShown = regulationMoreFiltersDiv.classList.contains("show");
+  toggleMoreRegulationFiltersBtn.textContent = isShown
+    ? "Menos filtros"
+    : "Mais filtros";
+});
+// --- FIM: Event Listeners de Regulação ---
+
+regulationsContent.addEventListener("click", handleViewRegulationDetails);
 
 appointmentsContent.addEventListener("click", (event) => {
   const openBtn = event.target.closest(".view-appointment-details-btn");

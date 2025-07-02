@@ -240,10 +240,94 @@
               Exames
             </button>
           </div>
+          <div
+            id="regulation-filters-container"
+            class="mt-4 pt-4 border-t border-slate-200 space-y-4"
+          >
+            <div id="regulation-main-filters" class="space-y-3">
+              <div class="text-sm">
+                <label
+                  for="regulation-filter-status"
+                  class="block font-medium mb-1"
+                  >Status</label
+                >
+                <select
+                  id="regulation-filter-status"
+                  class="w-full px-2 py-1 border border-slate-300 rounded-md bg-white"
+                >
+                  <option value="todos">Todos</option>
+                  <option value="AUTORIZADO">Autorizado</option>
+                  <option value="PENDENTE">Pendente</option>
+                  <option value="NEGADO">Negado</option>
+                  <option value="DEVOLVIDO">Devolvido</option>
+                  <option value="CANCELADA">Cancelada</option>
+                  <option value="EM ANÁLISE">Em Análise</option>
+                </select>
+              </div>
+            </div>
+            <div class="text-sm">
+              <button
+                id="toggle-more-regulation-filters-btn"
+                class="text-blue-600 hover:underline"
+              >
+                Mais filtros
+              </button>
+            </div>
+            <div
+              id="regulation-more-filters"
+              class="collapse-section space-y-3 text-sm"
+            >
+              <div>
+                <label
+                  for="regulation-filter-priority"
+                  class="block font-medium mb-1"
+                  >Prioridade</label
+                >
+                <select
+                  id="regulation-filter-priority"
+                  class="w-full px-2 py-1 border border-slate-300 rounded-md bg-white"
+                >
+                  <option value="todas">Todas</option>
+                  <option value="EMERGENCIA">Emergência</option>
+                  <option value="MUITO ALTA">Muito Alta</option>
+                  <option value="ALTA">Alta</option>
+                  <option value="NORMAL">Normal</option>
+                  <option value="BAIXA">Baixa</option>
+                </select>
+              </div>
+              <div>
+                <label
+                  for="regulation-filter-procedure"
+                  class="block font-medium mb-1"
+                  >Procedimento/Especialidade</label
+                >
+                <input
+                  type="text"
+                  id="regulation-filter-procedure"
+                  placeholder="Ex: Ortopedia, Raio X..."
+                  class="w-full px-2 py-1 border border-slate-300 rounded-md"
+                />
+              </div>
+              <div>
+                <label
+                  for="regulation-filter-requester"
+                  class="block font-medium mb-1"
+                  >Profissional/Unidade Solicitante</label
+                >
+                <input
+                  type="text"
+                  id="regulation-filter-requester"
+                  placeholder="Digite nomes, separe por vírgula..."
+                  class="w-full px-2 py-1 border border-slate-300 rounded-md"
+                />
+              </div>
+            </div>
+          </div>
           <div id="regulations-content" class="mt-4 border-t pt-4"></div>
         </div>
       </section>
 
+      <!-- SEÇÃO DE CONSULTAS ATUALIZADA -->
       <section
         id="consultations-section"
         class="bg-white p-4 rounded-lg border border-slate-200 shadow-sm"
@@ -279,40 +363,130 @@
               />
             </div>
           </div>
-          <div class="mt-4 flex items-center">
-            <input
-              id="hide-no-show-checkbox"
-              type="checkbox"
-              class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-            /><label
-              for="hide-no-show-checkbox"
-              class="ml-2 block text-sm text-slate-700"
-              >Ocultar faltas</label
-            >
-          </div>
+
           <div
-            id="fetch-type-buttons"
-            class="grid grid-cols-3 gap-1 mt-2 p-1 bg-slate-100 rounded-lg"
+            id="consultation-filters-container"
+            class="mt-4 pt-4 border-t border-slate-200 space-y-4"
           >
-            <button
-              data-fetch-type="all"
-              class="fetch-type-btn btn-active px-2 py-1 text-sm rounded-md transition-colors"
+            <div id="consultation-main-filters" class="space-y-3 text-sm">
+              <div>
+                <label
+                  for="consultation-filter-keyword"
+                  class="block font-medium mb-1"
+                  >Busca por Palavra-chave</label
+                >
+                <input
+                  type="text"
+                  id="consultation-filter-keyword"
+                  placeholder="Busque em todo o conteúdo..."
+                  class="w-full px-2 py-1 border border-slate-300 rounded-md"
+                />
+              </div>
+              <div class="flex items-center">
+                <input
+                  id="hide-no-show-checkbox"
+                  type="checkbox"
+                  class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                />
+                <label
+                  for="hide-no-show-checkbox"
+                  class="ml-2 block text-sm text-slate-700"
+                  >Ocultar faltas</label
+                >
+              </div>
+            </div>
+
+            <div class="text-sm">
+              <button
+                id="toggle-more-consultation-filters-btn"
+                class="text-blue-600 hover:underline"
+              >
+                Mais filtros
+              </button>
+            </div>
+
+            <div
+              id="consultation-more-filters"
+              class="collapse-section space-y-3 text-sm"
             >
-              Todas
-            </button>
-            <button
-              data-fetch-type="basic"
-              class="fetch-type-btn px-2 py-1 text-sm rounded-md transition-colors text-slate-600 hover:bg-slate-200"
-            >
-              Básicas
-            </button>
-            <button
-              data-fetch-type="specialized"
-              class="fetch-type-btn px-2 py-1 text-sm rounded-md transition-colors text-slate-600 hover:bg-slate-200"
-            >
-              Especializadas
-            </button>
+              <div
+                id="fetch-type-buttons"
+                class="grid grid-cols-3 gap-1 p-1 bg-slate-100 rounded-lg"
+              >
+                <button
+                  data-fetch-type="all"
+                  class="fetch-type-btn btn-active px-2 py-1 text-sm rounded-md transition-colors"
+                >
+                  Todas
+                </button>
+                <button
+                  data-fetch-type="basic"
+                  class="fetch-type-btn px-2 py-1 text-sm rounded-md transition-colors text-slate-600 hover:bg-slate-200"
+                >
+                  Básicas
+                </button>
+                <button
+                  data-fetch-type="specialized"
+                  class="fetch-type-btn px-2 py-1 text-sm rounded-md transition-colors text-slate-600 hover:bg-slate-200"
+                >
+                  Especializadas
+                </button>
+              </div>
+              <div>
+                <label
+                  for="consultation-filter-cid"
+                  class="block font-medium mb-1"
+                  >CID/CIAP</label
+                >
+                <input
+                  type="text"
+                  id="consultation-filter-cid"
+                  placeholder="Ex: A09, Z00..."
+                  class="w-full px-2 py-1 border border-slate-300 rounded-md"
+                />
+              </div>
+              <div>
+                <label
+                  for="consultation-filter-specialty"
+                  class="block font-medium mb-1"
+                  >Especialidade</label
+                >
+                <input
+                  type="text"
+                  id="consultation-filter-specialty"
+                  placeholder="Digite especialidades, separe por vírgula..."
+                  class="w-full px-2 py-1 border border-slate-300 rounded-md"
+                />
+              </div>
+              <div>
+                <label
+                  for="consultation-filter-professional"
+                  class="block font-medium mb-1"
+                  >Profissional</label
+                >
+                <input
+                  type="text"
+                  id="consultation-filter-professional"
+                  placeholder="Digite nomes, separe por vírgula..."
+                  class="w-full px-2 py-1 border border-slate-300 rounded-md"
+                />
+              </div>
+              <div>
+                <label
+                  for="consultation-filter-unit"
+                  class="block font-medium mb-1"
+                  >Unidade de Saúde</label
+                >
+                <input
+                  type="text"
+                  id="consultation-filter-unit"
+                  placeholder="Digite unidades, separe por vírgula..."
+                  class="w-full px-2 py-1 border border-slate-300 rounded-md"
+                />
+              </div>
+            </div>
           </div>
+
           <div id="consultations-content" class="mt-4 border-t pt-4"></div>
           <div id="debug-section" class="mt-4" style="display: none">
             <button
@@ -329,6 +503,7 @@
         </div>
       </section>
 
+      <!-- SEÇÃO DE EXAMES ATUALIZADA -->
       <section
         id="exams-section"
         class="bg-white p-4 rounded-lg border border-slate-200 shadow-sm"
@@ -368,29 +543,90 @@
               />
             </div>
           </div>
+
           <div
-            id="exam-fetch-type-buttons"
-            class="grid grid-cols-3 gap-1 mt-4 p-1 bg-slate-100 rounded-lg"
+            id="exam-filters-container"
+            class="mt-4 pt-4 border-t border-slate-200 space-y-4"
           >
-            <button
-              data-fetch-type="all"
-              class="exam-fetch-type-btn btn-active px-2 py-1 text-sm rounded-md transition-colors"
+            <div id="exam-main-filters" class="space-y-3 text-sm">
+              <div
+                id="exam-fetch-type-buttons"
+                class="grid grid-cols-3 gap-1 p-1 bg-slate-100 rounded-lg"
+              >
+                <button
+                  data-fetch-type="all"
+                  class="exam-fetch-type-btn btn-active px-2 py-1 text-sm rounded-md transition-colors"
+                >
+                  Todos
+                </button>
+                <button
+                  data-fetch-type="withResult"
+                  class="exam-fetch-type-btn px-2 py-1 text-sm rounded-md transition-colors text-slate-600 hover:bg-slate-200"
+                >
+                  Com Resultado
+                </button>
+                <button
+                  data-fetch-type="withoutResult"
+                  class="exam-fetch-type-btn px-2 py-1 text-sm rounded-md transition-colors text-slate-600 hover:bg-slate-200"
+                >
+                  Sem Resultado
+                </button>
+              </div>
+              <div>
+                <label for="exam-filter-name" class="block font-medium mb-1"
+                  >Nome do Exame</label
+                >
+                <input
+                  type="text"
+                  id="exam-filter-name"
+                  placeholder="Digite nomes, separe por vírgula..."
+                  class="w-full px-2 py-1 border border-slate-300 rounded-md"
+                />
+              </div>
+            </div>
+
+            <div class="text-sm">
+              <button
+                id="toggle-more-exam-filters-btn"
+                class="text-blue-600 hover:underline"
+              >
+                Mais filtros
+              </button>
+            </div>
+
+            <div
+              id="exam-more-filters"
+              class="collapse-section space-y-3 text-sm"
             >
-              Todos
-            </button>
-            <button
-              data-fetch-type="withResult"
-              class="exam-fetch-type-btn px-2 py-1 text-sm rounded-md transition-colors text-slate-600 hover:bg-slate-200"
-            >
-              Com Resultado
-            </button>
-            <button
-              data-fetch-type="withoutResult"
-              class="exam-fetch-type-btn px-2 py-1 text-sm rounded-md transition-colors text-slate-600 hover:bg-slate-200"
-            >
-              Sem Resultado
-            </button>
+              <div>
+                <label
+                  for="exam-filter-professional"
+                  class="block font-medium mb-1"
+                  >Profissional Solicitante</label
+                >
+                <input
+                  type="text"
+                  id="exam-filter-professional"
+                  placeholder="Digite nomes, separe por vírgula..."
+                  class="w-full px-2 py-1 border border-slate-300 rounded-md"
+                />
+              </div>
+              <div>
+                <label
+                  for="exam-filter-specialty"
+                  class="block font-medium mb-1"
+                  >Especialidade Solicitante</label
+                >
+                <input
+                  type="text"
+                  id="exam-filter-specialty"
+                  placeholder="Digite especialidades, separe por vírgula..."
+                  class="w-full px-2 py-1 border border-slate-300 rounded-md"
+                />
+              </div>
+            </div>
           </div>
+
           <div
             id="exams-content"
             class="mt-4 border-t pt-4"
@@ -437,30 +673,97 @@
               />
             </div>
           </div>
-          <!-- BOTÕES DE FILTRO ADICIONADOS -->
+
           <div
-            id="appointment-fetch-type-buttons"
-            class="grid grid-cols-3 gap-1 mt-4 p-1 bg-slate-100 rounded-lg"
+            id="appointment-filters-container"
+            class="mt-4 pt-4 border-t border-slate-200 space-y-4"
           >
-            <button
-              data-fetch-type="all"
-              class="appointment-fetch-type-btn btn-active px-2 py-1 text-sm rounded-md transition-colors"
+            <div id="appointment-main-filters" class="space-y-3 text-sm">
+              <div
+                id="appointment-fetch-type-buttons"
+                class="grid grid-cols-3 gap-1 p-1 bg-slate-100 rounded-lg"
+              >
+                <button
+                  data-fetch-type="all"
+                  class="appointment-fetch-type-btn btn-active px-2 py-1 text-sm rounded-md transition-colors"
+                >
+                  Todos
+                </button>
+                <button
+                  data-fetch-type="consultas"
+                  class="appointment-fetch-type-btn px-2 py-1 text-sm rounded-md transition-colors text-slate-600 hover:bg-slate-200"
+                >
+                  Consultas
+                </button>
+                <button
+                  data-fetch-type="exames"
+                  class="appointment-fetch-type-btn px-2 py-1 text-sm rounded-md transition-colors text-slate-600 hover:bg-slate-200"
+                >
+                  Exames
+                </button>
+              </div>
+              <div>
+                <label
+                  for="appointment-filter-status"
+                  class="block font-medium mb-1"
+                  >Status</label
+                >
+                <select
+                  id="appointment-filter-status"
+                  class="w-full px-2 py-1 border border-slate-300 rounded-md bg-white"
+                >
+                  <option value="todos">Todos</option>
+                  <option value="AGENDADO">Agendado</option>
+                  <option value="PRESENTE">Presente</option>
+                  <option value="FALTOU">Faltou</option>
+                  <option value="CANCELADO">Cancelado</option>
+                  <option value="ATENDIDO">Atendido</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="text-sm">
+              <button
+                id="toggle-more-appointment-filters-btn"
+                class="text-blue-600 hover:underline"
+              >
+                Mais filtros
+              </button>
+            </div>
+
+            <div
+              id="appointment-more-filters"
+              class="collapse-section space-y-3 text-sm"
             >
-              Todos
-            </button>
-            <button
-              data-fetch-type="consultas"
-              class="appointment-fetch-type-btn px-2 py-1 text-sm rounded-md transition-colors text-slate-600 hover:bg-slate-200"
-            >
-              Consultas
-            </button>
-            <button
-              data-fetch-type="exames"
-              class="appointment-fetch-type-btn px-2 py-1 text-sm rounded-md transition-colors text-slate-600 hover:bg-slate-200"
-            >
-              Exames
-            </button>
+              <div>
+                <label
+                  for="appointment-filter-term"
+                  class="block font-medium mb-1"
+                  >Busca por Termo</label
+                >
+                <input
+                  type="text"
+                  id="appointment-filter-term"
+                  placeholder="Profissional, especialidade..."
+                  class="w-full px-2 py-1 border border-slate-300 rounded-md"
+                />
+              </div>
+              <div>
+                <label
+                  for="appointment-filter-location"
+                  class="block font-medium mb-1"
+                  >Local</label
+                >
+                <input
+                  type="text"
+                  id="appointment-filter-location"
+                  placeholder="Digite locais, separe por vírgula..."
+                  class="w-full px-2 py-1 border border-slate-300 rounded-md"
+                />
+              </div>
+            </div>
           </div>
+
           <div id="appointments-content" class="mt-4 border-t pt-4"></div>
         </div>
       </section>
