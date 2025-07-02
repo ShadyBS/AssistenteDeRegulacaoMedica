@@ -4,7 +4,7 @@
  */
 export async function getBaseUrl() {
   try {
-    const data = await chrome.storage.sync.get("baseUrl");
+    const data = await browser.storage.sync.get("baseUrl");
     if (data.baseUrl) return data.baseUrl;
     console.error(
       "URL base não configurada. Vá em 'Opções' para configurá-la."
@@ -390,16 +390,8 @@ export async function fetchResultadoExame({ idp, ids }) {
   return data?.path || null;
 }
 
-/**
- * ATUALIZADO: Busca dados do paciente no CADSUS, com formatação de CPF.
- * @param {object} options - Opções contendo cpf e cns do paciente.
- * @param {string} options.cpf - O CPF do paciente.
- * @param {string} options.cns - O CNS do paciente.
- * @returns {Promise<Array|null>} Os dados do paciente (o array 'cell') ou null se não encontrado.
- */
 export async function fetchCadsusData({ cpf, cns }) {
   if (!cpf && !cns) {
-    // Não é um erro, apenas não há dados para buscar. Retorna null silenciosamente.
     return null;
   }
 
@@ -408,7 +400,6 @@ export async function fetchCadsusData({ cpf, cns }) {
     `${baseUrl}/sigss/usuarioServicoConsultaPDQ/consultarPaciente`
   );
 
-  // CORRIGIDO: Inclui todos os parâmetros, mesmo que vazios, para evitar erro no servidor.
   const params = new URLSearchParams({
     _search: "false",
     rows: "50",
@@ -425,7 +416,6 @@ export async function fetchCadsusData({ cpf, cns }) {
   });
 
   if (cpf) {
-    // Garante que o CPF está no formato XXX.XXX.XXX-XX, que a API espera
     const formattedCpf = String(cpf)
       .replace(/\D/g, "")
       .replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
@@ -444,8 +434,6 @@ export async function fetchCadsusData({ cpf, cns }) {
   });
 
   if (!response.ok) {
-    // Um erro 400 aqui pode significar "não encontrado" ou um erro de servidor.
-    // Tratamos como "não encontrado" para não quebrar a aplicação.
     console.warn(`A busca no CADSUS falhou com status ${response.status}.`);
     return null;
   }
@@ -457,4 +445,143 @@ export async function fetchCadsusData({ cpf, cns }) {
   }
 
   return null;
+}
+
+/**
+ * Busca os detalhes de um agendamento específico.
+ * @param {object} options - Opções de busca.
+ * @param {string} options.idp - IDP do agendamento.
+ * @param {string} options.ids - IDS do agendamento.
+ * @returns {Promise<object|null>} Os detalhes do agendamento ou null.
+ */
+export async function fetchAppointmentDetails({ idp, ids }) {
+  if (!idp || !ids) throw new Error("ID do agendamento é necessário.");
+  const baseUrl = await getBaseUrl();
+  const url = new URL(`${baseUrl}/sigss/agendamentoConsulta/visualiza`);
+  url.search = new URLSearchParams({
+    "agcoPK.idp": idp,
+    "agcoPK.ids": ids,
+  }).toString();
+
+  const response = await fetch(url, {
+    headers: {
+      Accept: "application/json, text/javascript, */*; q=0.01",
+      "X-Requested-With": "XMLHttpRequest",
+    },
+  });
+
+  if (!response.ok) {
+    console.error(`Falha ao buscar detalhes do agendamento ${idp}-${ids}`);
+    return null;
+  }
+  const data = await response.json();
+  return data?.agendamentoConsulta || null;
+}
+
+// Substitua a função fetchAppointments inteira por esta versão.
+
+export async function fetchAppointments({ isenPK, dataInicial, dataFinal }) {
+  if (!isenPK) throw new Error("ID (isenPK) do paciente é necessário.");
+  const baseUrl = await getBaseUrl();
+  const url = new URL(`${baseUrl}/sigss/resumoCompromisso/lista`);
+  const params = {
+    isenPK,
+    dataInicial,
+    dataFinal,
+    _search: "false",
+    nd: Date.now(),
+    rows: "1000",
+    page: "1",
+    sidx: "data",
+    sord: "desc",
+  };
+  url.search = new URLSearchParams(params).toString();
+
+  const response = await fetch(url, {
+    headers: {
+      Accept: "application/json, text/javascript, */*; q=0.01",
+      "X-Requested-With": "XMLHttpRequest",
+    },
+  });
+
+  if (!response.ok) handleFetchError(response);
+  const data = await response.json();
+
+  const basicAppointments = (data?.rows || []).map((row) => {
+    const cell = row.cell || [];
+    let status = "AGENDADO";
+    if (String(cell[10]).includes("red")) status = "FALTOU";
+    else if (String(cell[7]).includes("blue")) status = "PRESENTE";
+    else if (String(cell[8]).includes("red")) status = "CANCELADO";
+    else if (String(cell[11]).includes("blue")) status = "ATENDIDO";
+
+    return {
+      id: row.id || "",
+      type: cell[1] || "N/A", // Importante para diferenciar EXAME de CONSULTA
+      date: cell[2] || "",
+      time: cell[3] || "",
+      location: cell[4] || "",
+      professional: cell[5] || "",
+      description: (cell[6] || "").trim(), // Para exames, isso é o "Nome do Procedimento (Código)"
+      status: status,
+    };
+  });
+
+  // --- OTIMIZAÇÃO: Busca de detalhes em lotes paralelos ---
+  const enrichedAppointments = [];
+  const batchSize = 10;
+
+  for (let i = 0; i < basicAppointments.length; i += batchSize) {
+    const batch = basicAppointments.slice(i, i + batchSize);
+
+    const promises = batch.map(async (appt) => {
+      // REQUISIÇÃO 1 e 2: Tratamento diferenciado para EXAMES
+      // Verifica se o tipo do compromisso é um exame para tratá-lo de forma diferente.
+      if (appt.type.toUpperCase().includes("EXAME")) {
+        return {
+          ...appt,
+          // Para exames, a "especialidade" será o nome do procedimento, que vem da descrição.
+          specialty: appt.description || "Exame sem descrição",
+        };
+      }
+
+      // Se não for um exame, continua o fluxo normal para CONSULTAS
+      const [idp, ids] = appt.id.split("-");
+      if (!idp || !ids) return appt;
+
+      try {
+        const details = await fetchAppointmentDetails({ idp, ids });
+        if (details) {
+          // REQUISIÇÃO 3: Adiciona o código da especialidade (apcnCod) para CONSULTAS
+          let specialtyString = "Sem especialidade";
+          const apcn = details.atividadeProfissionalCnes;
+
+          if (apcn && apcn.apcnNome) {
+            // Constrói a string "Nome (Código)" se o código existir
+            specialtyString = apcn.apcnCod
+              ? `${apcn.apcnNome} (${apcn.apcnCod})`
+              : apcn.apcnNome;
+          }
+
+          return {
+            ...appt,
+            isSpecialized: details.agcoIsEspecializada === "t",
+            isOdonto: details.agcoIsOdonto === "t",
+            specialty: specialtyString,
+          };
+        }
+      } catch (error) {
+        console.warn(
+          `Falha ao buscar detalhes para o agendamento ${appt.id}`,
+          error
+        );
+      }
+      return appt;
+    });
+
+    const settledBatch = await Promise.all(promises);
+    enrichedAppointments.push(...settledBatch);
+  }
+
+  return enrichedAppointments;
 }

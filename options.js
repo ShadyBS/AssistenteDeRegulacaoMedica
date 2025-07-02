@@ -55,44 +55,40 @@ function renderFields(config) {
 /**
  * Carrega a configuração salva ou usa a padrão.
  */
-function restoreOptions() {
-  // ATUALIZADO: Remove as chaves obsoletas dos filtros de exame
-  chrome.storage.sync.get(
-    {
-      baseUrl: "",
-      autoLoadExams: false,
-      autoLoadConsultations: false,
-      hideNoShowDefault: false,
-      monthsBack: 6,
-      patientFields: defaultFieldConfig,
-    },
-    (items) => {
-      // Restaura configurações gerais
-      document.getElementById("baseUrlInput").value = items.baseUrl;
-      document.getElementById("autoLoadExamsCheckbox").checked =
-        items.autoLoadExams;
-      document.getElementById("autoLoadConsultationsCheckbox").checked =
-        items.autoLoadConsultations;
-      document.getElementById("hideNoShowDefaultCheckbox").checked =
-        items.hideNoShowDefault;
-      document.getElementById("monthsBackInput").value = items.monthsBack;
+async function restoreOptions() {
+  const items = await browser.storage.sync.get({
+    baseUrl: "",
+    autoLoadExams: false,
+    autoLoadConsultations: false,
+    hideNoShowDefault: false,
+    monthsBack: 6,
+    patientFields: defaultFieldConfig,
+  });
 
-      // Restaura configuração da ficha do paciente
-      const currentConfig = defaultFieldConfig.map((defaultField) => {
-        const savedField = items.patientFields.find(
-          (f) => f.id === defaultField.id
-        );
-        return savedField ? { ...defaultField, ...savedField } : defaultField;
-      });
-      renderFields(currentConfig);
-    }
-  );
+  // Restaura configurações gerais
+  document.getElementById("baseUrlInput").value = items.baseUrl;
+  document.getElementById("autoLoadExamsCheckbox").checked =
+    items.autoLoadExams;
+  document.getElementById("autoLoadConsultationsCheckbox").checked =
+    items.autoLoadConsultations;
+  document.getElementById("hideNoShowDefaultCheckbox").checked =
+    items.hideNoShowDefault;
+  document.getElementById("monthsBackInput").value = items.monthsBack;
+
+  // Restaura configuração da ficha do paciente
+  const currentConfig = defaultFieldConfig.map((defaultField) => {
+    const savedField = items.patientFields.find(
+      (f) => f.id === defaultField.id
+    );
+    return savedField ? { ...defaultField, ...savedField } : defaultField;
+  });
+  renderFields(currentConfig);
 }
 
 /**
  * Salva todas as configurações.
  */
-function saveOptions() {
+async function saveOptions() {
   // Coleta as configurações gerais
   const baseUrl = document.getElementById("baseUrlInput").value;
   const autoLoadExams = document.getElementById(
@@ -120,24 +116,20 @@ function saveOptions() {
     patientFields.push({ id: fieldId, label, enabled, section, order });
   });
 
-  // ATUALIZADO: Remove as chaves obsoletas dos filtros de exame
-  chrome.storage.sync.set(
-    {
-      baseUrl: baseUrl.endsWith("/") ? baseUrl.slice(0, -1) : baseUrl,
-      autoLoadExams,
-      autoLoadConsultations,
-      hideNoShowDefault,
-      monthsBack,
-      patientFields,
-    },
-    () => {
-      statusMessage.textContent = "Configurações salvas com sucesso!";
-      statusMessage.className = "mt-4 text-sm font-medium text-green-600";
-      setTimeout(() => {
-        statusMessage.textContent = "";
-      }, 2000);
-    }
-  );
+  await browser.storage.sync.set({
+    baseUrl: baseUrl.endsWith("/") ? baseUrl.slice(0, -1) : baseUrl,
+    autoLoadExams,
+    autoLoadConsultations,
+    hideNoShowDefault,
+    monthsBack,
+    patientFields,
+  });
+
+  statusMessage.textContent = "Configurações salvas com sucesso!";
+  statusMessage.className = "mt-4 text-sm font-medium text-green-600";
+  setTimeout(() => {
+    statusMessage.textContent = "";
+  }, 2000);
 }
 
 // --- Lógica de Arrastar e Soltar (Drag and Drop) ---
@@ -198,7 +190,6 @@ moreFieldsZone.addEventListener("dragover", handleDragOver);
 mainFieldsZone.addEventListener("drop", handleDrop);
 moreFieldsZone.addEventListener("drop", handleDrop);
 
-// ATUALIZADO: Corrige a lógica para fechar a aba de opções
 closeButton.addEventListener("click", () => {
   window.close();
 });

@@ -27,7 +27,6 @@
         background-color: #2563eb;
         color: white;
       }
-      /* ATUALIZADO: Estilos do tooltip para evitar cortes */
       .comparison-icon {
         display: inline-block;
         margin-left: 8px;
@@ -38,25 +37,25 @@
       .comparison-icon[data-tooltip]:hover::after {
         content: attr(data-tooltip);
         position: absolute;
-        bottom: 120%; /* Posiciona um pouco mais acima */
+        bottom: 120%;
         left: 50%;
         transform: translateX(-50%);
-        background-color: #1f2937; /* Cor mais escura */
+        background-color: #1f2937;
         color: white;
-        padding: 8px 12px; /* Mais espaçamento interno */
+        padding: 8px 12px;
         border-radius: 6px;
         font-size: 12px;
         white-space: pre-wrap;
-        z-index: 9999; /* Garante que fique sobre todos os elementos */
+        z-index: 9999;
         display: block;
-        min-width: 280px; /* Largura mínima maior */
-        max-width: 320px; /* Largura máxima */
+        min-width: 280px;
+        max-width: 320px;
         text-align: left;
         pointer-events: none;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Sombra suave */
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
       }
       .comparison-icon[data-tooltip]::after {
-        display: none; /* Escondido por padrão */
+        display: none;
       }
     </style>
   </head>
@@ -336,12 +335,78 @@
         </div>
       </section>
 
+      <section
+        id="appointments-section"
+        class="bg-white p-4 rounded-lg border border-slate-200 shadow-sm"
+        style="display: none"
+      >
+        <div class="flex justify-between items-center mb-3">
+          <h2 class="text-md font-semibold text-slate-700">Agendamentos</h2>
+          <button
+            id="toggle-appointments-list-btn"
+            class="text-xs text-slate-500 hover:text-blue-600"
+          >
+            Recolher
+          </button>
+        </div>
+        <div id="appointments-wrapper" class="collapse-section show">
+          <div class="grid grid-cols-2 gap-4 text-sm">
+            <div>
+              <label for="appointment-date-initial" class="block font-medium"
+                >Data Inicial</label
+              >
+              <input
+                type="date"
+                id="appointment-date-initial"
+                class="mt-1 w-full px-2 py-1 border border-slate-300 rounded-md"
+              />
+            </div>
+            <div>
+              <label for="appointment-date-final" class="block font-medium"
+                >Data Final</label
+              >
+              <input
+                type="date"
+                id="appointment-date-final"
+                class="mt-1 w-full px-2 py-1 border border-slate-300 rounded-md"
+              />
+            </div>
+          </div>
+          <div id="appointments-content" class="mt-4 border-t pt-4"></div>
+        </div>
+      </section>
+
       <div
         id="message-area"
         class="p-3 rounded-md text-sm"
         style="display: none"
       ></div>
     </main>
+
+    <!-- NOVA ESTRUTURA: Modal para detalhes do agendamento -->
+    <div
+      id="info-modal"
+      class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4"
+    >
+      <div
+        class="bg-white rounded-lg shadow-xl p-6 w-full max-w-md max-h-full overflow-y-auto"
+      >
+        <div class="flex justify-between items-center mb-4">
+          <h3 id="modal-title" class="text-lg font-bold text-slate-800">
+            Detalhes do Agendamento
+          </h3>
+          <button
+            id="modal-close-btn"
+            class="text-gray-500 hover:text-gray-800 text-2xl leading-none"
+          >
+            &times;
+          </button>
+        </div>
+        <div id="modal-content" class="text-sm space-y-2">
+          <!-- O conteúdo será injetado aqui pelo JavaScript -->
+        </div>
+      </div>
+    </div>
 
     <script type="module" src="sidebar.js"></script>
   </body>

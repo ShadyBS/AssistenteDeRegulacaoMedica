@@ -8,6 +8,7 @@ import {
   fetchConsultasEspecializadas,
   fetchExamesSolicitados,
   fetchResultadoExame,
+  fetchAppointments,
   getBaseUrl,
 } from "./api.js";
 // Importa a configuração de campos e a função de busca de valores
@@ -49,6 +50,24 @@ const examsContent = document.getElementById("exams-content");
 const examDateInitialInput = document.getElementById("exam-date-initial");
 const examDateFinalInput = document.getElementById("exam-date-final");
 const examFetchTypeButtons = document.getElementById("exam-fetch-type-buttons");
+// Seletores de Agendamentos
+const appointmentsSection = document.getElementById("appointments-section");
+const appointmentsWrapper = document.getElementById("appointments-wrapper");
+const toggleAppointmentsListBtn = document.getElementById(
+  "toggle-appointments-list-btn"
+);
+const appointmentDateInitialInput = document.getElementById(
+  "appointment-date-initial"
+);
+const appointmentDateFinalInput = document.getElementById(
+  "appointment-date-final"
+);
+const appointmentsContent = document.getElementById("appointments-content");
+// Seletores do Modal de Informações
+const infoModal = document.getElementById("info-modal");
+const modalTitle = document.getElementById("modal-title");
+const modalContent = document.getElementById("modal-content");
+const modalCloseBtn = document.getElementById("modal-close-btn");
 
 // --- Variáveis de Estado ---
 let currentPatient = null;
@@ -56,11 +75,11 @@ let recentPatients = [];
 let currentFetchType = "all";
 let allFetchedConsultations = [];
 let currentExamFetchType = "all";
-let fieldConfig = []; // Armazena a configuração da ficha
+let fieldConfig = [];
 
 // --- Funções de Armazenamento ---
 async function loadRecentPatients() {
-  const data = await chrome.storage.local.get({ recentPatients: [] });
+  const data = await browser.storage.local.get({ recentPatients: [] });
   recentPatients = data.recentPatients;
 }
 
@@ -70,19 +89,17 @@ async function saveRecentPatient(patient) {
   );
   const updatedList = [patient, ...filtered].slice(0, 5);
   recentPatients = updatedList;
-  await chrome.storage.local.set({ recentPatients });
+  await browser.storage.local.set({ recentPatients });
 }
 
 async function loadFieldConfig() {
-  return new Promise((resolve) => {
-    chrome.storage.sync.get({ patientFields: defaultFieldConfig }, (data) => {
-      const savedConfig = data.patientFields;
-      fieldConfig = defaultFieldConfig.map((defaultField) => {
-        const savedField = savedConfig.find((f) => f.id === defaultField.id);
-        return savedField ? { ...defaultField, ...savedField } : defaultField;
-      });
-      resolve();
-    });
+  const data = await browser.storage.sync.get({
+    patientFields: defaultFieldConfig,
+  });
+  const savedConfig = data.patientFields;
+  fieldConfig = defaultFieldConfig.map((defaultField) => {
+    const savedField = savedConfig.find((f) => f.id === defaultField.id);
+    return savedField ? { ...defaultField, ...savedField } : defaultField;
   });
 }
 
@@ -143,7 +160,6 @@ function renderPatientDetails(patientData, cadsusData) {
     }
     const cadsusValue = getCadsusValue(field, cadsusData);
 
-    // CORRIGIDO: Converte explicitamente para String antes de usar .trim()
     const v1 = String(localValue || "").trim();
     const v2 = String(cadsusValue || "").trim();
     let icon = "";
@@ -151,8 +167,16 @@ function renderPatientDetails(patientData, cadsusData) {
     if (cadsusData && field.cadsusKey !== null) {
       const normalizePhone = (phone) =>
         (phone || "").replace(/\D/g, "").replace(/^55/, "");
-      const compareV1 = field.id === "telefone" ? normalizePhone(v1) : v1;
-      const compareV2 = field.id === "telefone" ? normalizePhone(v2) : v2;
+      let compareV1 = v1;
+      let compareV2 = v2;
+
+      if (field.id === "telefone") {
+        compareV1 = normalizePhone(v1);
+        compareV2 = normalizePhone(v2);
+      } else if (field.id === "cpf" || field.id === "cep") {
+        compareV1 = v1.replace(/\D/g, "");
+        compareV2 = v2.replace(/\D/g, "");
+      }
 
       if (compareV1.toUpperCase() === compareV2.toUpperCase()) {
         icon = `<span class="comparison-icon" title="Dado confere com o CADSUS">✅</span>`;
@@ -192,6 +216,7 @@ function renderPatientDetails(patientData, cadsusData) {
   patientDetailsSection.style.display = "block";
   consultationsSection.style.display = "block";
   examsSection.style.display = "block";
+  appointmentsSection.style.display = "block";
 }
 
 function renderPatientListItem(patient) {
@@ -365,37 +390,105 @@ function renderExams(exams) {
     .join("");
 }
 
+function renderAppointments(appointments) {
+  if (appointments.length === 0) {
+    appointmentsContent.innerHTML =
+      '<p class="text-slate-500">Nenhum agendamento encontrado no período.</p>';
+    return;
+  }
+
+  const statusStyles = {
+    AGENDADO: "bg-blue-100 text-blue-800",
+    PRESENTE: "bg-green-100 text-green-800",
+    FALTOU: "bg-red-100 text-red-800",
+    CANCELADO: "bg-yellow-100 text-yellow-800",
+    ATENDIDO: "bg-purple-100 text-purple-800",
+  };
+
+  appointmentsContent.innerHTML = appointments
+    .map((item) => {
+      const style = statusStyles[item.status] || "bg-gray-100 text-gray-800";
+      let typeText = item.type;
+      if (item.isSpecialized) {
+        typeText = "CONSULTA ESPECIALIZADA";
+      } else if (item.isOdonto) {
+        typeText = "CONSULTA ODONTO";
+      } else if (item.type.toUpperCase().includes("EXAME")) {
+        typeText = "EXAME";
+      }
+
+      // --- CORREÇÃO FINAL APLICADA AQUI ---
+      // Extrai idp e ids corretamente com base no formato do 'item.id'.
+      let idp, ids;
+      const idParts = item.id.split("-");
+
+      if (idParts[0].toLowerCase() === "exam") {
+        // Se o ID começa com "exam", o formato é "exam-idp-ids".
+        idp = idParts[1];
+        ids = idParts[2];
+      } else {
+        // Para todos os outros casos (consultas), o formato é "idp-ids".
+        idp = idParts[0];
+        ids = idParts[1];
+      }
+
+      const appointmentDataString = JSON.stringify(item);
+
+      return `
+        <div class="p-3 mb-3 border rounded-lg bg-white">
+            <div class="flex justify-between items-start">
+                <div>
+                    <p class="font-semibold text-gray-800">${typeText}</p>
+                    <p class="text-sm text-indigo-600 font-medium">${
+                      item.specialty || "Sem especialidade"
+                    }</p>
+                </div>
+                <span class="text-xs font-bold px-2 py-1 rounded-full ${style}">${
+        item.status
+      }</span>
+            </div>
+            <div class="text-sm text-slate-500 mt-2 border-t pt-2">
+                <p><strong>Data:</strong> ${item.date} às ${item.time}</p>
+                <p><strong>Local:</strong> ${item.location}</p>
+                <p><strong>Profissional:</strong> ${item.professional}</p>
+            </div>
+            <div class="flex items-center justify-between mt-2 pt-2 border-t">
+                 <button class="view-appointment-details-btn text-sm bg-gray-100 text-gray-800 py-1 px-3 rounded hover:bg-gray-200" data-idp="${
+                   idp || ""
+                 }" data-ids="${ids || ""}" data-type="${item.type}">
+                    Abrir
+                </button>
+                <button class="appointment-info-btn text-blue-600 hover:text-blue-800 p-1 rounded-full hover:bg-blue-100" data-appointment='${appointmentDataString}'>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="16" x2="12" y2="12"></line>
+                        <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                    </svg>
+                </button>
+            </div>
+        </div>
+      `;
+    })
+    .join("");
+}
 // --- Preferências do Usuário ---
 let userPreferences = {
   autoLoadExams: false,
   autoLoadConsultations: false,
-  examWithResultDefault: true,
-  examWithoutResultDefault: true,
   hideNoShowDefault: false,
   monthsBack: 6,
 };
 
+async function loadUserPreferences() {
+  userPreferences = await browser.storage.sync.get({
+    autoLoadExams: false,
+    autoLoadConsultations: false,
+    hideNoShowDefault: false,
+    monthsBack: 6,
+  });
+}
+
 function applyUserPreferences() {
-  if (
-    userPreferences.examWithResultDefault &&
-    userPreferences.examWithoutResultDefault
-  ) {
-    currentExamFetchType = "all";
-  } else if (userPreferences.examWithResultDefault) {
-    currentExamFetchType = "withResult";
-  } else if (userPreferences.examWithoutResultDefault) {
-    currentExamFetchType = "withoutResult";
-  }
-
-  examFetchTypeButtons
-    .querySelectorAll(".exam-fetch-type-btn")
-    .forEach((btn) => {
-      btn.classList.remove("btn-active");
-      if (btn.dataset.fetchType === currentExamFetchType) {
-        btn.classList.add("btn-active");
-      }
-    });
-
   hideNoShowCheckbox.checked = userPreferences.hideNoShowDefault;
   const months = userPreferences.monthsBack || 6;
   const now = new Date();
@@ -403,28 +496,10 @@ function applyUserPreferences() {
   initial.setMonth(now.getMonth() - months);
   dateInitialInput.valueAsDate = initial;
   examDateInitialInput.valueAsDate = initial;
+  appointmentDateInitialInput.valueAsDate = initial;
   dateFinalInput.valueAsDate = now;
   examDateFinalInput.valueAsDate = now;
-}
-
-async function loadUserPreferences() {
-  return new Promise((resolve) => {
-    chrome.storage.sync.get(
-      {
-        autoLoadExams: false,
-        autoLoadConsultations: false,
-        examWithResultDefault: true,
-        examWithoutResultDefault: true,
-        hideNoShowDefault: false,
-        monthsBack: 6,
-      },
-      (prefs) => {
-        userPreferences = prefs;
-        applyUserPreferences();
-        resolve();
-      }
-    );
-  });
+  appointmentDateFinalInput.valueAsDate = now;
 }
 
 // --- Manipuladores de Eventos ---
@@ -436,6 +511,7 @@ async function handleResultClick(event) {
   clearMessage();
   consultationsContent.innerHTML = "";
   examsContent.innerHTML = "";
+  appointmentsContent.innerHTML = "";
   rawHtmlContent.textContent = "";
   debugSection.style.display = "none";
   try {
@@ -469,6 +545,8 @@ async function handleResultClick(event) {
     searchInput.value = "";
     searchResultsList.classList.add("hidden");
     recentPatientsList.classList.add("hidden");
+
+    await handleFetchAppointments();
     if (userPreferences.autoLoadConsultations) {
       await handleFetchConsultations();
     }
@@ -489,6 +567,7 @@ async function handleSearchInput(event) {
   patientDetailsSection.style.display = "none";
   consultationsSection.style.display = "none";
   examsSection.style.display = "none";
+  appointmentsSection.style.display = "none";
   debugSection.style.display = "none";
   currentPatient = null;
   recentPatientsList.classList.add("hidden");
@@ -603,8 +682,35 @@ async function handleFetchExams() {
       comResultado,
       semResultado,
     });
-    console.log("[DEBUG] Exames retornados:", examsData.length, examsData);
     renderExams(examsData);
+  } catch (error) {
+    showMessage(error.message);
+  } finally {
+    toggleLoader(false);
+  }
+}
+
+async function handleFetchAppointments() {
+  if (!currentPatient?.fullPK) {
+    showMessage("ID do paciente (isenPK) não encontrado.");
+    return;
+  }
+  const dataInicial = appointmentDateInitialInput.value
+    ? new Date(appointmentDateInitialInput.value).toLocaleDateString("pt-BR")
+    : "01/01/1900";
+  const dataFinal = appointmentDateFinalInput.value
+    ? new Date(appointmentDateFinalInput.value).toLocaleDateString("pt-BR")
+    : new Date().toLocaleDateString("pt-BR");
+
+  toggleLoader(true);
+  appointmentsContent.innerHTML = "";
+  try {
+    const appointmentsData = await fetchAppointments({
+      isenPK: currentPatient.fullPK,
+      dataInicial,
+      dataFinal,
+    });
+    renderAppointments(appointmentsData);
   } catch (error) {
     showMessage(error.message);
   } finally {
@@ -645,6 +751,64 @@ async function handleViewExamResult(event) {
   }
 }
 
+async function handleViewAppointmentDetails(event) {
+  const button = event.target.closest(".view-appointment-details-btn");
+  if (!button) return;
+
+  // Extrai o idp, ids e o tipo do botão
+  const { idp, ids, type } = button.dataset;
+
+  try {
+    const baseUrl = await getBaseUrl();
+    let finalUrl;
+
+    // Constrói a URL correta com base no tipo
+    if (type && type.toUpperCase().includes("EXAME")) {
+      // --- CORREÇÃO APLICADA AQUI ---
+      // Para exames, abre a página de agendamento passando o IDP do exame.
+      finalUrl = `${baseUrl}/sigss/agendamentoExame.jsp?id=${idp}`;
+    } else {
+      // Para consultas, mantém o comportamento de abrir a consulta rápida.
+      finalUrl = `${baseUrl}/sigss/consultaRapida.jsp?agcoPK.idp=${idp}&agcoPK.ids=${ids}`;
+    }
+
+    window.open(finalUrl, "_blank");
+  } catch (error) {
+    showMessage("Não foi possível construir a URL para o agendamento.");
+    console.error(error);
+  }
+}
+
+function handleShowAppointmentInfo(event) {
+  const button = event.target.closest(".appointment-info-btn");
+  if (!button) return;
+
+  const appointmentData = JSON.parse(button.dataset.appointment);
+
+  modalContent.innerHTML = `
+        <p><strong>ID:</strong> ${appointmentData.id}</p>
+        <p><strong>Tipo:</strong> ${
+          appointmentData.isSpecialized
+            ? "Especializada"
+            : appointmentData.isOdonto
+            ? "Odontológica"
+            : appointmentData.type
+        }</p>
+        <p><strong>Status:</strong> ${appointmentData.status}</p>
+        <p><strong>Data:</strong> ${appointmentData.date} às ${
+    appointmentData.time
+  }</p>
+        <p><strong>Local:</strong> ${appointmentData.location}</p>
+        <p><strong>Profissional:</strong> ${appointmentData.professional}</p>
+        <p><strong>Especialidade:</strong> ${
+          appointmentData.specialty || "N/A"
+        }</p>
+        <p><strong>Procedimento:</strong> ${appointmentData.description}</p>
+    `;
+
+  infoModal.classList.remove("hidden");
+}
+
 function handleToggleRawHtml() {
   rawHtmlContent.classList.toggle("show");
 }
@@ -659,6 +823,12 @@ function handleToggleExamsList() {
     ? "Recolher"
     : "Expandir";
 }
+function handleToggleAppointmentsList() {
+  appointmentsWrapper.classList.toggle("show");
+  toggleAppointmentsListBtn.textContent =
+    appointmentsWrapper.classList.contains("show") ? "Recolher" : "Expandir";
+}
+
 function handleConsultationClick(event) {
   const header = event.target.closest(".consultation-header");
   if (!header) return;
@@ -702,11 +872,14 @@ function handleExamFetchTypeChange(event) {
 }
 
 // --- Inicialização ---
-document.addEventListener("DOMContentLoaded", async () => {
+async function init() {
   await loadUserPreferences();
+  applyUserPreferences();
   await loadFieldConfig();
-  loadRecentPatients();
-});
+  await loadRecentPatients();
+}
+
+document.addEventListener("DOMContentLoaded", init);
 searchInput.addEventListener("input", debounce(handleSearchInput, 500));
 searchInput.addEventListener("focus", handleSearchFocus);
 searchResultsList.addEventListener("click", handleResultClick);
@@ -724,9 +897,30 @@ toggleExamsListBtn.addEventListener("click", handleToggleExamsList);
 examsContent.addEventListener("click", handleViewExamResult);
 examFetchTypeButtons.addEventListener("click", handleExamFetchTypeChange);
 
-dateFinalInput.valueAsDate = new Date();
-const fiveYearsAgo = new Date();
-fiveYearsAgo.setFullYear(fiveYearsAgo.getFullYear() - 5);
-dateInitialInput.valueAsDate = fiveYearsAgo;
-examDateFinalInput.valueAsDate = new Date();
-examDateInitialInput.valueAsDate = fiveYearsAgo;
+toggleAppointmentsListBtn.addEventListener(
+  "click",
+  handleToggleAppointmentsList
+);
+appointmentDateInitialInput.addEventListener("change", handleFetchAppointments);
+appointmentDateFinalInput.addEventListener("change", handleFetchAppointments);
+
+// ATUALIZADO: Listener unificado para os botões da seção de agendamentos
+appointmentsContent.addEventListener("click", (event) => {
+  const openBtn = event.target.closest(".view-appointment-details-btn");
+  const infoBtn = event.target.closest(".appointment-info-btn");
+
+  if (openBtn) {
+    handleViewAppointmentDetails(event);
+  } else if (infoBtn) {
+    handleShowAppointmentInfo(event);
+  }
+});
+
+modalCloseBtn.addEventListener("click", () =>
+  infoModal.classList.add("hidden")
+);
+infoModal.addEventListener("click", (event) => {
+  if (event.target === infoModal) {
+    infoModal.classList.add("hidden");
+  }
+});

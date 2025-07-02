@@ -1,15 +1,16 @@
-/**
- * Este é o Service Worker da extensão.
- * Ele roda em segundo plano e gerencia eventos do navegador.
- */
-
-// Função para abrir e fechar (alternar) a barra lateral.
-function toggleSidebar() {
-  // Usamos a API browser.sidebarAction, específica para o Firefox.
-  browser.sidebarAction.toggle();
+// Função para alternar a barra lateral (sidebar/sidePanel)
+async function toggleSidebar() {
+  // Para Chrome e navegadores baseados em Chromium
+  if (browser.sidePanel) {
+    await browser.sidePanel.toggle();
+  }
+  // Para Firefox
+  else if (browser.sidebarAction) {
+    await browser.sidebarAction.toggle();
+  }
 }
 
-// Adiciona um listener que é acionado quando o usuário clica no ícone da extensão na barra de ferramentas.
+// Listener para o clique no ícone da extensão
 browser.action.onClicked.addListener(toggleSidebar);
 
 // ----- Código do Menu de Contexto (clique com o botão direito) -----
@@ -24,7 +25,7 @@ browser.runtime.onInstalled.addListener(() => {
 });
 
 // Listener para o clique na opção do menu de contexto.
-browser.contextMenus.onClicked.addListener((info, tab) => {
+browser.contextMenus.onClicked.addListener((info) => {
   if (info.menuItemId === "openSidePanel") {
     toggleSidebar();
   }
