@@ -54,7 +54,6 @@
         padding: 0.25rem 0.5rem;
         font-size: 0.875rem;
       }
-      /* NOVO: Estilos para os inputs de valor padrão */
       .filter-default-value-input {
         flex-grow: 1;
         border: 1px solid #e5e7eb;
@@ -67,7 +66,6 @@
         outline: 1px solid #3b82f6;
         background-color: white;
       }
-      /* Estilos para abas */
       .tabs {
         display: flex;
         border-bottom: 1px solid #e2e8f0;
@@ -413,6 +411,41 @@
               </div>
             </div>
           </div>
+        </div>
+      </section>
+
+      <!-- NOVO: Seção de Gestão de Dados -->
+      <section
+        id="data-management-section"
+        class="bg-white p-4 rounded-lg border border-slate-200 shadow-sm"
+      >
+        <h2 class="text-md font-semibold text-slate-700 mb-3">
+          Gestão de Dados
+        </h2>
+        <p class="text-sm text-slate-500 mb-4">
+          Exporte as suas configurações para fazer um backup ou partilhar com
+          colegas. Importe um ficheiro para aplicar configurações de outra
+          pessoa.
+        </p>
+        <div class="flex items-center gap-4">
+          <button
+            id="exportButton"
+            class="px-4 py-2 bg-slate-600 text-white rounded-md hover:bg-slate-700 transition text-sm font-medium"
+          >
+            Exportar Configurações
+          </button>
+          <label
+            for="import-file-input"
+            class="cursor-pointer px-4 py-2 bg-slate-100 text-slate-700 rounded-md hover:bg-slate-200 transition text-sm font-medium"
+          >
+            Importar Configurações
+          </label>
+          <input
+            type="file"
+            id="import-file-input"
+            class="hidden"
+            accept=".json"
+          />
         </div>
       </section>
 

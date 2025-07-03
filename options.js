@@ -1,11 +1,16 @@
 import { defaultFieldConfig } from "./field-config.js";
 import { filterConfig } from "./filter-config.js";
 
+// --- Constantes ---
+const CONFIG_VERSION = "1.0";
+
 // --- Elementos do DOM ---
 const saveButton = document.getElementById("saveButton");
 const statusMessage = document.getElementById("statusMessage");
 const closeButton = document.getElementById("closeButton");
 const restoreDefaultsButton = document.getElementById("restoreDefaultsButton");
+const exportButton = document.getElementById("exportButton"); // NOVO
+const importFileInput = document.getElementById("import-file-input"); // NOVO
 
 // Ficha do Paciente
 const mainFieldsZone = document.getElementById("main-fields-zone");
@@ -51,11 +56,9 @@ function createDraggableFilter(filter) {
   div.dataset.filterId = filter.id;
   div.draggable = true;
 
-  // ALTERADO: Trata o novo tipo 'component'
   const displayType = filter.type === "selectGroup" ? "select" : filter.type;
 
   let defaultValueControl = "";
-  // ALTERADO: Não cria controlo de valor padrão para componentes
   if (filter.type !== "component") {
     switch (filter.type) {
       case "text":
@@ -74,7 +77,6 @@ function createDraggableFilter(filter) {
     }
   }
 
-  // Layout principal do item arrastável
   div.innerHTML = `
     <span class="drag-handle">⠿</span>
     <div class="flex-grow flex flex-col gap-2">
@@ -97,7 +99,6 @@ function createDraggableFilter(filter) {
     </div>
   `;
 
-  // Adiciona uma classe especial para componentes para estilização se necessário
   if (filter.type === "component") {
     div.classList.add("draggable-component");
   }
@@ -133,7 +134,6 @@ function renderPatientFields(config) {
  * @param {object} layout - A configuração de layout dos filtros.
  */
 function renderFilterLayout(layout) {
-  // Limpa todas as zonas de drop de filtros
   Object.keys(filterConfig).forEach((section) => {
     document.getElementById(`${section}-main-filters-zone`).innerHTML = "";
     document.getElementById(`${section}-more-filters-zone`).innerHTML = "";
@@ -447,6 +447,85 @@ async function handleRestoreDefaults() {
   }
 }
 
+// --- NOVO: Lógica de Exportação e Importação ---
+async function handleExport() {
+  try {
+    const settings = await browser.storage.sync.get(null);
+    settings.configVersion = CONFIG_VERSION;
+
+    const settingsString = JSON.stringify(settings, null, 2);
+    const blob = new Blob([settingsString], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    const date = new Date().toISOString().slice(0, 10);
+    a.download = `assistente-regulacao-config-${date}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    statusMessage.textContent = "Configurações exportadas com sucesso!";
+    statusMessage.className = "mt-4 text-sm font-medium text-green-600";
+  } catch (error) {
+    console.error("Erro ao exportar configurações:", error);
+    statusMessage.textContent = "Erro ao exportar configurações.";
+    statusMessage.className = "mt-4 text-sm font-medium text-red-600";
+  } finally {
+    setTimeout(() => {
+      statusMessage.textContent = "";
+    }, 3000);
+  }
+}
+
+function handleImport(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = async (e) => {
+    try {
+      const importedSettings = JSON.parse(e.target.result);
+
+      // Validação simples
+      if (
+        !importedSettings.configVersion ||
+        !importedSettings.baseUrl ||
+        !importedSettings.filterLayout
+      ) {
+        throw new Error("Ficheiro de configuração inválido ou corrompido.");
+      }
+
+      // Validação de versão (opcional, mas bom para o futuro)
+      if (importedSettings.configVersion !== CONFIG_VERSION) {
+        const goOn = window.confirm(
+          "A versão do ficheiro de configuração é diferente da versão da extensão. Deseja continuar mesmo assim?"
+        );
+        if (!goOn) return;
+      }
+
+      await browser.storage.sync.set(importedSettings);
+      restoreOptions(); // Recarrega a UI com as novas configurações
+
+      statusMessage.textContent =
+        "Configurações importadas e aplicadas com sucesso!";
+      statusMessage.className = "mt-4 text-sm font-medium text-green-600";
+    } catch (error) {
+      console.error("Erro ao importar configurações:", error);
+      statusMessage.textContent = `Erro ao importar: ${error.message}`;
+      statusMessage.className = "mt-4 text-sm font-medium text-red-600";
+    } finally {
+      // Limpa o valor do input para permitir importar o mesmo ficheiro novamente
+      importFileInput.value = "";
+      setTimeout(() => {
+        statusMessage.textContent = "";
+      }, 5000);
+    }
+  };
+  reader.readAsText(file);
+}
+
 // --- Inicialização ---
 document.addEventListener("DOMContentLoaded", () => {
   restoreOptions();
@@ -457,6 +536,8 @@ closeButton.addEventListener("click", () => {
   window.close();
 });
 restoreDefaultsButton.addEventListener("click", handleRestoreDefaults);
+exportButton.addEventListener("click", handleExport); // NOVO
+importFileInput.addEventListener("change", handleImport); // NOVO
 
 allDropZones.forEach((zone) => {
   zone.addEventListener("dragover", handleDragOver);
