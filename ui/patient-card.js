@@ -3,30 +3,28 @@
  */
 import { getNestedValue } from "../utils.js";
 import { store } from "../store.js";
-import * as API from "../api.js";
 
-// --- Elementos do DOM ---
-let patientDetailsSection;
-let patientMainInfoDiv;
-let patientAdditionalInfoDiv;
-let toggleDetailsBtn;
+let patientDetailsSection,
+  patientMainInfoDiv,
+  patientAdditionalInfoDiv,
+  toggleDetailsBtn,
+  patientCardFooter,
+  cadsusTimestamp,
+  refreshCadsusBtn;
 let fieldConfigLayout = [];
+let onForceRefresh; // Callback para forçar a atualização
 
 /**
  * Renderiza os detalhes do paciente no card.
- * @param {object} patientData - Os dados da ficha do paciente.
+ * @param {object} patientData - O objeto completo do paciente vindo do store.
  */
-async function render(patientData) {
-  if (!patientDetailsSection || !patientData) {
+function render(patientData) {
+  if (!patientDetailsSection || !patientData || !patientData.ficha) {
     hide();
     return;
   }
 
-  // Busca os dados do CADSUS apenas quando for renderizar
-  const cadsusData = await API.fetchCadsusData({
-    cpf: getNestedValue(patientData, "entidadeFisica.entfCPF"),
-    cns: patientData.isenNumCadSus,
-  });
+  const { ficha, cadsus, lastCadsusCheck, isUpdating } = patientData;
 
   patientMainInfoDiv.innerHTML = "";
   patientAdditionalInfoDiv.innerHTML = "";
@@ -47,23 +45,24 @@ async function render(patientData) {
   sortedFields.forEach((field) => {
     if (!field.enabled) return;
 
-    let localValue = getLocalValue(field, patientData);
+    let localValue = getLocalValue(field, ficha);
     if (field.formatter) localValue = field.formatter(localValue);
 
-    const cadsusValue = getCadsusValue(field, cadsusData);
+    let cadsusValue = getCadsusValue(field, cadsus);
+    if (field.formatter) cadsusValue = field.formatter(cadsusValue);
 
     const v1 = String(localValue || "").trim();
     const v2 = String(cadsusValue || "").trim();
     let icon = "";
 
-    if (cadsusData && field.cadsusKey !== null) {
+    if (cadsus) {
       let compareV1 = v1,
         compareV2 = v2;
       if (field.id === "telefone") {
         compareV1 = v1.replace(/\D/g, "").replace(/^55/, "");
         compareV2 = v2.replace(/\D/g, "").replace(/^55/, "");
       }
-      if (compareV1.toUpperCase() === compareV2.toUpperCase()) {
+      if (compareV1 && compareV1.toUpperCase() === compareV2.toUpperCase()) {
         icon = `<span class="comparison-icon" title="Dado confere com o CADSUS">✅</span>`;
       } else {
         const tooltipText = `Ficha: ${v1 || "Vazio"}\nCADSUS: ${v2 || "Vazio"}`;
@@ -75,7 +74,9 @@ async function render(patientData) {
       field.id.toLowerCase().includes("alerg") && v1 && v1 !== "-"
         ? "text-red-600 font-bold"
         : "text-slate-900";
-    const copyIcon = `<span class="copy-icon" title="Copiar" data-copy-text="${v1}">📄</span>`;
+    const copyIcon = v1
+      ? `<span class="copy-icon" title="Copiar" data-copy-text="${v1}">📄</span>`
+      : "";
     const rowHtml = `<div class="flex justify-between items-center py-1"><span class="font-medium text-slate-600">${
       field.label
     }:</span><span class="${valueClass} text-right flex items-center">${
@@ -89,6 +90,21 @@ async function render(patientData) {
     }
   });
 
+  // Atualiza o rodapé do card
+  if (lastCadsusCheck) {
+    cadsusTimestamp.textContent = `CADSUS verificado em: ${lastCadsusCheck.toLocaleString()}`;
+    patientCardFooter.style.display = "flex";
+  } else {
+    cadsusTimestamp.textContent = "Não foi possível verificar dados do CADSUS.";
+    patientCardFooter.style.display = "flex";
+  }
+
+  // Controla o estado do botão de refresh
+  refreshCadsusBtn
+    .querySelector(".refresh-icon")
+    .classList.toggle("spinning", isUpdating);
+  refreshCadsusBtn.disabled = isUpdating;
+
   toggleDetailsBtn.style.display = sortedFields.some(
     (f) => f.enabled && f.section === "more"
   )
@@ -97,16 +113,10 @@ async function render(patientData) {
   patientDetailsSection.style.display = "block";
 }
 
-/**
- * Esconde o card de detalhes do paciente.
- */
-export function hide() {
+function hide() {
   if (patientDetailsSection) patientDetailsSection.style.display = "none";
 }
 
-/**
- * Manipula o clique no botão "Mostrar mais/menos".
- */
 function handleToggleDetails() {
   patientAdditionalInfoDiv.classList.toggle("show");
   toggleDetailsBtn.textContent = patientAdditionalInfoDiv.classList.contains(
@@ -116,12 +126,20 @@ function handleToggleDetails() {
     : "Mostrar mais";
 }
 
-/**
- * Função chamada quando o estado global muda.
- */
+function handleForceRefresh() {
+  const patient = store.getPatient();
+  if (patient && patient.ficha && onForceRefresh) {
+    onForceRefresh(
+      { idp: patient.ficha.isenPK.idp, ids: patient.ficha.isenPK.ids },
+      true
+    );
+  }
+}
+
 function onStateChange() {
   const patient = store.getPatient();
   if (patient) {
+    // PASSO 2.1: A função render não é mais async, eliminando a race condition.
     render(patient);
   } else {
     hide();
@@ -131,17 +149,24 @@ function onStateChange() {
 /**
  * Inicializa o módulo do card de paciente.
  * @param {Array<object>} config - A configuração dos campos da ficha.
+ * @param {object} callbacks - Funções de callback.
+ * @param {Function} callbacks.onForceRefresh - Função para forçar a atualização.
  */
-export function init(config) {
+export function init(config, callbacks) {
   patientDetailsSection = document.getElementById("patient-details-section");
   patientMainInfoDiv = document.getElementById("patient-main-info");
   patientAdditionalInfoDiv = document.getElementById("patient-additional-info");
   toggleDetailsBtn = document.getElementById("toggle-details-btn");
+  // PASSO 2.1: Elementos do rodapé
+  patientCardFooter = document.getElementById("patient-card-footer");
+  cadsusTimestamp = document.getElementById("cadsus-timestamp");
+  refreshCadsusBtn = document.getElementById("refresh-cadsus-btn");
 
   fieldConfigLayout = config;
+  onForceRefresh = callbacks.onForceRefresh;
 
   toggleDetailsBtn.addEventListener("click", handleToggleDetails);
+  refreshCadsusBtn.addEventListener("click", handleForceRefresh);
 
-  // Subscreve às mudanças do store
   store.subscribe(onStateChange);
 }

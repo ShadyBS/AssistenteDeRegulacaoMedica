@@ -376,8 +376,9 @@ export async function fetchExamesSolicitados({
       hasResult: (cell[6] || "") === "SIM",
       professional: cell[8] || "",
       specialty: cell[9] || "",
-      resultIdp: cell[13] ? String(cell[13]) : "",
-      resultIds: cell[14] ? String(cell[14]) : "",
+      // PASSO 3.3: Tornar a conversão de ID mais segura para não falhar com o valor 0.
+      resultIdp: cell[13] != null ? String(cell[13]) : "",
+      resultIds: cell[14] != null ? String(cell[14]) : "",
     };
   });
 }
@@ -402,6 +403,13 @@ export async function fetchResultadoExame({ idp, ids }) {
   return data?.path || null;
 }
 
+/**
+ * Busca dados no CADSUS. A busca prioriza o CPF se ambos forem fornecidos.
+ * @param {object} options
+ * @param {string} [options.cpf] - CPF do paciente.
+ * @param {string} [options.cns] - CNS do paciente.
+ * @returns {Promise<object|null>}
+ */
 export async function fetchCadsusData({ cpf, cns }) {
   if (!cpf && !cns) {
     return null;
@@ -459,13 +467,6 @@ export async function fetchCadsusData({ cpf, cns }) {
   return null;
 }
 
-/**
- * Busca os detalhes de um agendamento específico.
- * @param {object} options - Opções de busca.
- * @param {string} options.idp - IDP do agendamento.
- * @param {string} options.ids - IDS do agendamento.
- * @returns {Promise<object|null>} Os detalhes do agendamento ou null.
- */
 export async function fetchAppointmentDetails({ idp, ids }) {
   if (!idp || !ids) throw new Error("ID do agendamento é necessário.");
   const baseUrl = await getBaseUrl();
@@ -589,15 +590,6 @@ export async function fetchAppointments({ isenPK, dataInicial, dataFinal }) {
   return enrichedAppointments;
 }
 
-/**
- * Busca os registros de regulação (consultas ou exames) para um paciente.
- * @param {object} options - Opções de busca.
- * @param {string} options.isenPK - ID do paciente (ex: "12345-1").
- * @param {string} options.modalidade - "ENC" para consultas, "EXA" para exames.
- * @param {string} options.dataInicial - Data inicial no formato "dd/MM/yyyy".
- * @param {string} options.dataFinal - Data final no formato "dd/MM/yyyy".
- * @returns {Promise<Array<object>>} Uma lista de itens de regulação.
- */
 async function fetchRegulations({
   isenPK,
   modalidade,
@@ -649,7 +641,14 @@ async function fetchRegulations({
 
   return (data?.rows || []).map((row) => {
     const cell = row.cell || [];
-    const [idp, ids] = (row.id || "").replace("reguPK", "").split("-");
+    // PASSO 3.3: Tornar a extração de ID mais robusta com regex.
+    let idp = null,
+      ids = null;
+    const idMatch = (row.id || "").match(/reguPK(\d+)-(\d+)/);
+    if (idMatch && idMatch.length === 3) {
+      idp = idMatch[1];
+      ids = idMatch[2];
+    }
 
     const descriptionHtml = cell[6] || "";
     const [procedure, cid] = descriptionHtml.split("<br/>");
@@ -671,15 +670,6 @@ async function fetchRegulations({
   });
 }
 
-/**
- * Busca todos os registros de regulação (consultas e exames) para um paciente.
- * @param {object} options - Opções de busca.
- * @param {string} options.isenPK - ID do paciente (ex: "12345-1").
- * @param {string} options.dataInicial - Data inicial no formato "dd/MM/yyyy".
- * @param {string} options.dataFinal - Data final no formato "dd/MM/yyyy".
- * @param {string} options.type - O tipo de regulação a buscar ('all', 'ENC', 'EXA').
- * @returns {Promise<Array<object>>} Uma lista combinada e ordenada de itens de regulação.
- */
 export async function fetchAllRegulations({
   isenPK,
   dataInicial,

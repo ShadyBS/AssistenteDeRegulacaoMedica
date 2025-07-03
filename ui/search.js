@@ -3,25 +3,17 @@
  */
 import * as API from "../api.js";
 import * as Utils from "../utils.js";
-import { store } from "../store.js"; // Importa o store
+import { store } from "../store.js";
 
-// --- Elementos do DOM ---
 let searchInput;
 let searchResultsList;
 let recentPatientsList;
+let onSelectPatient; // Callback para notificar o sidebar sobre a seleção
 
-// --- Estado do Módulo ---
-let recentPatients = [];
-
-/**
- * Renderiza a lista de resultados da busca.
- * @param {Array<object>} patients - Lista de pacientes encontrados.
- */
 function renderSearchResults(patients) {
   if (!searchResultsList) return;
   if (patients.length === 0) {
-    searchResultsList.innerHTML =
-      '<li class="px-4 py-3 text-sm text-slate-500">Nenhum paciente encontrado.</li>';
+    searchResultsList.innerHTML = `<li class="px-4 py-3 text-sm text-slate-500">Nenhum paciente encontrado.</li>`;
     return;
   }
   searchResultsList.innerHTML = patients
@@ -35,67 +27,66 @@ function renderSearchResults(patients) {
 }
 
 /**
- * Renderiza a lista de pacientes recentes.
+ * Renderiza a lista de pacientes recentes a partir do store.
  */
 function renderRecentPatients() {
   if (!recentPatientsList) return;
-  const recents = recentPatients || [];
+  const recents = store.getRecentPatients() || [];
   recentPatientsList.innerHTML =
     '<li class="px-4 pt-3 pb-1 text-xs font-semibold text-slate-400">PACIENTES RECENTES</li>' +
     (recents.length === 0
-      ? '<li class="px-4 py-3 text-sm text-slate-500">Nenhum paciente recente.</li>'
+      ? `<li class="px-4 py-3 text-sm text-slate-500">Nenhum paciente recente.</li>`
       : recents
-          .map(
-            (p) =>
-              `<li class="px-4 py-3 border-b border-slate-100 hover:bg-slate-50 cursor-pointer transition recent-patient-item" data-patient='${JSON.stringify(
-                p
-              )}'>${renderPatientListItem(p)}</li>`
-          )
+          .map((p) => {
+            // CORREÇÃO: Lida com a estrutura de dados antiga e nova dos pacientes recentes.
+            const fichaData = p.ficha || p; // Se p.ficha não existe, 'p' é o próprio objeto da ficha.
+            const idp = fichaData.isenPK?.idp || fichaData.idp;
+            const ids = fichaData.isenPK?.ids || fichaData.ids;
+
+            if (!idp || !ids) return ""; // Pula a renderização se o item estiver malformado.
+
+            return `<li class="px-4 py-3 border-b border-slate-100 hover:bg-slate-50 cursor-pointer transition recent-patient-item" data-idp="${idp}" data-ids="${ids}">${renderPatientListItem(
+              fichaData
+            )}</li>`;
+          })
           .join(""));
 }
 
-/**
- * Gera o HTML para um item da lista de pacientes.
- * @param {object} patient - O objeto do paciente.
- * @returns {string} O HTML do item.
- */
 function renderPatientListItem(patient) {
+  const nome =
+    patient.value ||
+    Utils.getNestedValue(patient, "entidadeFisica.entidade.entiNome") ||
+    "Nome não informado";
+  const idp = patient.idp || patient.isenPK?.idp;
+  const ids = patient.ids || patient.isenPK?.ids;
+  const dataNascimento =
+    patient.dataNascimento ||
+    Utils.getNestedValue(patient, "entidadeFisica.entfDtNasc");
+  const cpf =
+    patient.cpf || Utils.getNestedValue(patient, "entidadeFisica.entfCPF");
+  const cns = patient.cns || patient.isenNumCadSus;
   return `
-      <div class="font-medium text-slate-800">${
-        patient.value || "Nome não informado"
-      }</div>
+      <div class="font-medium text-slate-800">${nome}</div>
       <div class="grid grid-cols-2 gap-x-4 text-xs text-slate-500 mt-1">
-        <span><strong class="font-semibold">Cód:</strong> ${patient.idp}-${
-    patient.ids
-  }</span>
+        <span><strong class="font-semibold">Cód:</strong> ${idp}-${ids}</span>
         <span><strong class="font-semibold">Nasc:</strong> ${
-          patient.dataNascimento || "-"
+          dataNascimento || "-"
         }</span>
-        <span><strong class="font-semibold">CPF:</strong> ${
-          patient.cpf || "-"
-        }</span>
-        <span><strong class="font-semibold">CNS:</strong> ${
-          patient.cns || "-"
-        }</span>
+        <span><strong class="font-semibold">CPF:</strong> ${cpf || "-"}</span>
+        <span><strong class="font-semibold">CNS:</strong> ${cns || "-"}</span>
       </div>
     `;
 }
 
-/**
- * Manipulador para o input de busca.
- */
-async function handleSearchInput() {
+const handleSearchInput = Utils.debounce(async () => {
   const searchTerm = searchInput.value.trim();
-  store.setPatient(null); // Limpa o paciente atual ao iniciar uma nova busca
-
+  store.clearPatient();
   recentPatientsList.classList.add("hidden");
   searchResultsList.classList.remove("hidden");
-
   if (searchTerm.length < 1) {
     searchResultsList.innerHTML = "";
     return;
   }
-
   Utils.toggleLoader(true);
   try {
     const patients = await API.searchPatients(searchTerm);
@@ -105,11 +96,8 @@ async function handleSearchInput() {
   } finally {
     Utils.toggleLoader(false);
   }
-}
+}, 500);
 
-/**
- * Manipulador para o foco no input de busca, mostra os recentes.
- */
 function handleSearchFocus() {
   if (searchInput.value.length > 0) return;
   renderRecentPatients();
@@ -117,50 +105,61 @@ function handleSearchFocus() {
   recentPatientsList.classList.remove("hidden");
 }
 
-/**
- * Manipulador para o clique num resultado de busca ou paciente recente.
- * @param {Event} event - O evento de clique.
- */
-async function handleResultClick(event) {
-  const listItem = event.target.closest("li");
-  if (!listItem || (!listItem.dataset.idp && !listItem.dataset.patient)) return;
-
-  Utils.toggleLoader(true);
-  Utils.clearMessage();
-
-  try {
-    const patientData = listItem.dataset.patient
-      ? JSON.parse(listItem.dataset.patient)
-      : { idp: listItem.dataset.idp, ids: listItem.dataset.ids };
-
-    const fullPatientData = await API.fetchVisualizaUsuario(patientData);
-    store.setPatient(fullPatientData); // Define o paciente no store global
-  } catch (error) {
-    Utils.showMessage("Erro ao carregar os dados do paciente.");
-    console.error(error);
-    store.setPatient(null); // Garante que o estado seja limpo em caso de erro
-  } finally {
-    Utils.toggleLoader(false);
-    searchInput.value = "";
+function handleSearchBlur() {
+  setTimeout(() => {
     searchResultsList.classList.add("hidden");
     recentPatientsList.classList.add("hidden");
-  }
+  }, 200);
 }
 
-/**
- * Inicializa o módulo de busca.
- * @param {object} config - Configuração com as dependências do módulo.
- * @param {Array} config.recentPatients - A lista de pacientes recentes.
- */
+async function handleResultClick(event) {
+  const listItem = event.target.closest("li[data-idp]");
+  if (!listItem) return;
+
+  const { idp, ids } = listItem.dataset;
+
+  if (listItem.classList.contains("recent-patient-item")) {
+    const recentPatient = store.getRecentPatients().find((p) => {
+      // CORREÇÃO: Lida com a estrutura de dados antiga e nova.
+      const patientIdp = p.ficha ? p.ficha.isenPK.idp : p.idp;
+      return patientIdp == idp;
+    });
+
+    // Se o paciente foi encontrado e tem a nova estrutura (com cache), usa os dados do cache.
+    if (recentPatient && recentPatient.ficha) {
+      store.setPatient(recentPatient.ficha, recentPatient.cadsus);
+      searchInput.value = "";
+      searchResultsList.classList.add("hidden");
+      recentPatientsList.classList.add("hidden");
+      return;
+    }
+  }
+
+  // Para pacientes novos ou pacientes recentes com a estrutura antiga (que precisam ser re-buscados).
+  if (onSelectPatient) {
+    onSelectPatient({ idp, ids });
+  }
+
+  searchInput.value = "";
+  searchResultsList.classList.add("hidden");
+  recentPatientsList.classList.add("hidden");
+}
+
 export function init(config) {
   searchInput = document.getElementById("patient-search-input");
   searchResultsList = document.getElementById("search-results");
   recentPatientsList = document.getElementById("recent-patients-list");
+  onSelectPatient = config.onSelectPatient;
 
-  recentPatients = config.recentPatients || [];
+  store.subscribe(() => {
+    if (!recentPatientsList.classList.contains("hidden")) {
+      renderRecentPatients();
+    }
+  });
 
-  searchInput.addEventListener("input", Utils.debounce(handleSearchInput, 500));
+  searchInput.addEventListener("input", handleSearchInput);
   searchInput.addEventListener("focus", handleSearchFocus);
+  searchInput.addEventListener("blur", handleSearchBlur);
   searchResultsList.addEventListener("click", handleResultClick);
   recentPatientsList.addEventListener("click", handleResultClick);
 }

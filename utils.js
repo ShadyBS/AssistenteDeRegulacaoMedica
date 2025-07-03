@@ -58,16 +58,37 @@ export function clearMessage() {
 }
 
 /**
- * Converte uma string de data "dd/MM/yyyy" para um objeto Date.
- * @param {string} dateString A data no formato "dd/MM/yyyy".
+ * Converte uma string de data em vários formatos para um objeto Date.
+ * @param {string} dateString A data no formato "dd/MM/yyyy" ou "yyyy-MM-dd".
  * @returns {Date|null} O objeto Date ou null se a string for inválida.
  */
 export function parseDate(dateString) {
   if (!dateString || typeof dateString !== "string") return null;
-  const parts = dateString.split("/");
-  if (parts.length !== 3) return null;
-  // Assume dd/MM/yyyy
-  return new Date(parts[2], parts[1] - 1, parts[0]);
+
+  // PASSO 3.3: Tornar a função mais robusta para aceitar múltiplos formatos.
+  // Teste para yyyy-MM-dd (padrão ISO)
+  if (dateString.includes("-")) {
+    const parts = dateString.split("T")[0].split("-");
+    if (parts.length === 3) {
+      const [year, month, day] = parts.map(Number);
+      if (!isNaN(year) && !isNaN(month) && !isNaN(day)) {
+        return new Date(Date.UTC(year, month - 1, day));
+      }
+    }
+  }
+
+  // Teste para dd/MM/yyyy
+  if (dateString.includes("/")) {
+    const parts = dateString.split("/");
+    if (parts.length === 3) {
+      const [day, month, year] = parts.map(Number);
+      if (!isNaN(day) && !isNaN(month) && !isNaN(year)) {
+        return new Date(Date.UTC(year, month - 1, day));
+      }
+    }
+  }
+
+  return null; // Retorna null se nenhum formato válido for encontrado
 }
 
 /**

@@ -7,20 +7,9 @@ import * as Search from "./ui/search.js";
 import * as PatientCard from "./ui/patient-card.js";
 import { store } from "./store.js";
 
-// Objeto para encapsular as variáveis globais da aplicação
-const App = {};
-
-// --- LÓGICA DE FILTRAGEM ESPECÍFICA POR SECÇÃO ---
-
-/**
- * Aplica os filtros para a secção de Consultas.
- * @param {Array<object>} data - Os dados brutos.
- * @param {object} filters - Os valores dos filtros atuais.
- * @returns {Array<object>} Os dados filtrados.
- */
+// --- LÓGICA DE FILTRAGEM (sem alterações) ---
 const consultationFilterLogic = (data, filters) => {
   let filteredData = [...data];
-
   const keyword = (filters["consultation-filter-keyword"] || "")
     .toLowerCase()
     .trim();
@@ -33,11 +22,9 @@ const consultationFilterLogic = (data, filters) => {
     .toLowerCase()
     .trim();
   const unit = (filters["consultation-filter-unit"] || "").toLowerCase().trim();
-
   if (hideNoShows) {
     filteredData = filteredData.filter((c) => !c.isNoShow);
   }
-
   const applyTextFilter = (items, text, getFieldContent) => {
     const searchTerms = text
       .split(",")
@@ -49,7 +36,6 @@ const consultationFilterLogic = (data, filters) => {
       return searchTerms.some((term) => content.includes(term));
     });
   };
-
   filteredData = applyTextFilter(filteredData, keyword, (c) =>
     [
       c.specialty,
@@ -72,16 +58,8 @@ const consultationFilterLogic = (data, filters) => {
     (c) => c.professional || ""
   );
   filteredData = applyTextFilter(filteredData, unit, (c) => c.unit || "");
-
   return filteredData;
 };
-
-/**
- * Aplica os filtros para a secção de Exames.
- * @param {Array<object>} data - Os dados brutos.
- * @param {object} filters - Os valores dos filtros atuais.
- * @returns {Array<object>} Os dados filtrados.
- */
 const examFilterLogic = (data, filters) => {
   let filteredData = [...data];
   const name = (filters["exam-filter-name"] || "").toLowerCase().trim();
@@ -91,7 +69,6 @@ const examFilterLogic = (data, filters) => {
   const specialty = (filters["exam-filter-specialty"] || "")
     .toLowerCase()
     .trim();
-
   const applyTextFilter = (items, text, field) => {
     const searchTerms = text
       .split(",")
@@ -103,21 +80,11 @@ const examFilterLogic = (data, filters) => {
       return searchTerms.some((term) => content.includes(term));
     });
   };
-
   filteredData = applyTextFilter(filteredData, name, "examName");
   filteredData = applyTextFilter(filteredData, professional, "professional");
   filteredData = applyTextFilter(filteredData, specialty, "specialty");
-
   return filteredData;
 };
-
-/**
- * Aplica os filtros para a secção de Agendamentos.
- * @param {Array<object>} data - Os dados brutos.
- * @param {object} filters - Os valores dos filtros atuais.
- * @param {string} fetchType - O tipo de busca ('all', 'consultas', 'exames').
- * @returns {Array<object>} Os dados filtrados.
- */
 const appointmentFilterLogic = (data, filters, fetchType) => {
   let filteredData = [...data];
   const status = filters["appointment-filter-status"] || "todos";
@@ -125,7 +92,6 @@ const appointmentFilterLogic = (data, filters, fetchType) => {
   const location = (filters["appointment-filter-location"] || "")
     .toLowerCase()
     .trim();
-
   if (status !== "todos") {
     filteredData = filteredData.filter(
       (a) => (a.status || "").toUpperCase() === status.toUpperCase()
@@ -163,13 +129,6 @@ const appointmentFilterLogic = (data, filters, fetchType) => {
   }
   return filteredData;
 };
-
-/**
- * Aplica os filtros para a secção de Regulação.
- * @param {Array<object>} data - Os dados brutos.
- * @param {object} filters - Os valores dos filtros atuais.
- * @returns {Array<object>} Os dados filtrados.
- */
 const regulationFilterLogic = (data, filters) => {
   let filteredData = [...data];
   const status = filters["regulation-filter-status"] || "todos";
@@ -180,7 +139,6 @@ const regulationFilterLogic = (data, filters) => {
   const requesterTerms = (filters["regulation-filter-requester"] || "")
     .toLowerCase()
     .trim();
-
   if (status !== "todos") {
     filteredData = filteredData.filter(
       (item) => (item.status || "").toUpperCase() === status.toUpperCase()
@@ -214,7 +172,7 @@ const regulationFilterLogic = (data, filters) => {
   return filteredData;
 };
 
-// --- CONFIGURAÇÃO DAS SECÇÕES ---
+// --- CONFIGURAÇÃO DAS SECÇÕES (sem alterações) ---
 const sectionConfigurations = {
   consultations: {
     fetchFunction: API.fetchAllConsultations,
@@ -242,23 +200,52 @@ const sectionConfigurations = {
   },
 };
 
+// --- LÓGICA DE SELEÇÃO E ATUALIZAÇÃO DE PACIENTE ---
+
+async function selectPatient(patientInfo, forceRefresh = false) {
+  const currentPatient = store.getPatient();
+  if (
+    currentPatient &&
+    currentPatient.ficha.isenPK.idp === patientInfo.idp &&
+    !forceRefresh
+  ) {
+    return;
+  }
+  Utils.toggleLoader(true);
+  Utils.clearMessage();
+  store.setPatientUpdating();
+  try {
+    const ficha = await API.fetchVisualizaUsuario(patientInfo);
+    let cadsus = currentPatient?.cadsus;
+    if (forceRefresh || !cadsus) {
+      cadsus = await API.fetchCadsusData({
+        cpf: Utils.getNestedValue(ficha, "entidadeFisica.entfCPF"),
+        cns: ficha.isenNumCadSus,
+      });
+    }
+    store.setPatient(ficha, cadsus);
+  } catch (error) {
+    Utils.showMessage("Erro ao carregar os dados do paciente.");
+    console.error(error);
+    store.clearPatient();
+  } finally {
+    Utils.toggleLoader(false);
+  }
+}
+
 // --- INICIALIZAÇÃO ---
 
-/**
- * Função principal que inicializa a aplicação.
- */
 async function init() {
-  await loadConfigAndData();
-  Search.init({ recentPatients: App.recentPatients });
-  PatientCard.init(App.fieldConfigLayout);
-  initializeSections();
-  applyUserPreferences();
+  const globalSettings = await loadConfigAndData();
+  Search.init({ onSelectPatient: selectPatient });
+  PatientCard.init(globalSettings.fieldConfigLayout, {
+    onForceRefresh: selectPatient,
+  });
+  initializeSections(globalSettings);
+  applyUserPreferences(globalSettings.userPreferences);
   addGlobalEventListeners();
 }
 
-/**
- * Carrega todas as configurações e dados do storage.
- */
 async function loadConfigAndData() {
   const syncData = await browser.storage.sync.get({
     patientFields: defaultFieldConfig,
@@ -270,91 +257,66 @@ async function loadConfigAndData() {
     hideNoShowDefault: false,
     monthsBack: 6,
   });
-
-  App.fieldConfigLayout = defaultFieldConfig.map((defaultField) => {
-    const savedField = syncData.patientFields.find(
-      (f) => f.id === defaultField.id
-    );
-    return savedField ? { ...defaultField, ...savedField } : defaultField;
-  });
-
-  App.filterLayout = syncData.filterLayout;
-
-  App.userPreferences = {
-    autoLoadExams: syncData.autoLoadExams,
-    autoLoadConsultations: syncData.autoLoadConsultations,
-    autoLoadAppointments: syncData.autoLoadAppointments,
-    autoLoadRegulations: syncData.autoLoadRegulations,
-    hideNoShowDefault: syncData.hideNoShowDefault,
-    monthsBack: syncData.monthsBack,
-  };
-
   const localData = await browser.storage.local.get({
     recentPatients: [],
     savedFilterSets: {},
   });
-  App.recentPatients = localData.recentPatients;
-  App.savedFilterSets = localData.savedFilterSets;
+  store.setRecentPatients(localData.recentPatients);
+  store.setSavedFilterSets(localData.savedFilterSets);
+  return {
+    fieldConfigLayout: defaultFieldConfig.map((defaultField) => {
+      const savedField = syncData.patientFields.find(
+        (f) => f.id === defaultField.id
+      );
+      return savedField ? { ...defaultField, ...savedField } : defaultField;
+    }),
+    filterLayout: syncData.filterLayout,
+    userPreferences: {
+      autoLoadExams: syncData.autoLoadExams,
+      autoLoadConsultations: syncData.autoLoadConsultations,
+      autoLoadAppointments: syncData.autoLoadAppointments,
+      autoLoadRegulations: syncData.autoLoadRegulations,
+      hideNoShowDefault: syncData.hideNoShowDefault,
+      monthsBack: syncData.monthsBack,
+    },
+    savedFilterSets: localData.savedFilterSets,
+  };
 }
 
-/**
- * Cria uma instância de SectionManager para cada secção configurada.
- */
-function initializeSections() {
-  App.allSectionManagers = {};
+function initializeSections(globalSettings) {
+  const allSectionManagers = {};
   Object.keys(sectionConfigurations).forEach((key) => {
-    const manager = new SectionManager(key, sectionConfigurations[key], {
-      savedFilterSets: App.savedFilterSets,
-      filterLayout: App.filterLayout,
-      userPreferences: App.userPreferences,
-    });
-    App.allSectionManagers[key] = manager;
+    allSectionManagers[key] = new SectionManager(
+      key,
+      sectionConfigurations[key],
+      globalSettings
+    );
   });
 }
 
-/**
- * Aplica as preferências de data e filtros padrão guardadas pelo utilizador.
- */
-function applyUserPreferences() {
-  const { hideNoShowDefault, monthsBack } = App.userPreferences;
+function applyUserPreferences(userPreferences) {
+  const { hideNoShowDefault, monthsBack } = userPreferences;
   const hideCheckbox = document.getElementById("hide-no-show-checkbox");
   if (hideCheckbox) hideCheckbox.checked = hideNoShowDefault;
-
   const months = monthsBack || 6;
   const now = new Date();
   const initial = new Date();
   initial.setMonth(now.getMonth() - months);
-
-  [
-    "consultation-date-initial",
-    "exam-date-initial",
-    "appointment-date-initial",
-    "regulation-date-initial",
-  ].forEach((id) => {
-    const el = document.getElementById(id);
-    if (el) el.valueAsDate = initial;
-  });
-  [
-    "consultation-date-final",
-    "exam-date-final",
-    "appointment-date-final",
-    "regulation-date-final",
-  ].forEach((id) => {
-    const el = document.getElementById(id);
-    if (el) el.valueAsDate = now;
+  const dateFields = ["consultation", "exam", "appointment", "regulation"];
+  dateFields.forEach((prefix) => {
+    const initialEl = document.getElementById(`${prefix}-date-initial`);
+    const finalEl = document.getElementById(`${prefix}-date-final`);
+    if (initialEl) initialEl.valueAsDate = initial;
+    if (finalEl) finalEl.valueAsDate = now;
   });
 }
 
 // --- MANIPULADORES DE EVENTOS GLOBAIS ---
 
-/**
- * Adiciona event listeners que não pertencem a uma secção específica.
- */
 function addGlobalEventListeners() {
   const mainContent = document.getElementById("main-content");
   const infoModal = document.getElementById("info-modal");
   const modalCloseBtn = document.getElementById("modal-close-btn");
-
   modalCloseBtn.addEventListener("click", () =>
     infoModal.classList.add("hidden")
   );
@@ -362,20 +324,16 @@ function addGlobalEventListeners() {
     if (e.target === infoModal) infoModal.classList.add("hidden");
   });
   mainContent.addEventListener("click", handleGlobalActions);
-
-  // Subscreve à mudança de paciente para atualizar a lista de recentes
-  store.subscribe(async () => {
-    const patient = store.getPatient();
-    if (patient) {
-      await updateRecentPatients(patient);
-    }
-  });
+  store.subscribe(handlePatientChange);
 }
 
-/**
- * Lida com cliques em ações globais como copiar texto ou abrir detalhes de itens.
- * @param {Event} event O evento de clique.
- */
+async function handlePatientChange() {
+  const patient = store.getPatient();
+  if (patient && patient.ficha) {
+    await updateRecentPatients(patient);
+  }
+}
+
 async function handleGlobalActions(event) {
   const target = event.target;
   const copyBtn = target.closest(".copy-icon");
@@ -383,25 +341,26 @@ async function handleGlobalActions(event) {
     await copyToClipboard(copyBtn);
     return;
   }
-
   const examResultBtn = target.closest(".view-exam-result-btn");
   if (examResultBtn) await handleViewExamResult(examResultBtn);
-
   const appointmentDetailsBtn = target.closest(".view-appointment-details-btn");
   if (appointmentDetailsBtn)
     await handleViewAppointmentDetails(appointmentDetailsBtn);
-
   const regulationDetailsBtn = target.closest(".view-regulation-details-btn");
   if (regulationDetailsBtn)
     await handleViewRegulationDetails(regulationDetailsBtn);
-
   const appointmentInfoBtn = target.closest(".appointment-info-btn");
   if (appointmentInfoBtn) handleShowAppointmentInfo(appointmentInfoBtn);
 }
 
+/**
+ * PASSO 3.2: Melhorar o feedback visual e prevenir múltiplos cliques.
+ */
 async function copyToClipboard(button) {
+  if (button.dataset.inProgress === "true") return;
   const textToCopy = button.dataset.copyText;
   if (!textToCopy) return;
+  button.dataset.inProgress = "true";
   try {
     await navigator.clipboard.writeText(textToCopy);
     button.textContent = "✅";
@@ -411,35 +370,21 @@ async function copyToClipboard(button) {
   } finally {
     setTimeout(() => {
       button.textContent = "📄";
-    }, 1000);
+      button.dataset.inProgress = "false";
+    }, 1200);
   }
 }
 
-// --- LÓGICA DE GESTÃO DE PACIENTE ---
-
 async function updateRecentPatients(patientData) {
-  const newRecent = {
-    idp: patientData.isenPK.idp,
-    ids: patientData.isenPK.ids,
-    value: Utils.getNestedValue(
-      patientData,
-      "entidadeFisica.entidade.entiNome"
-    ),
-    cns: patientData.isenNumCadSus,
-    dataNascimento: Utils.getNestedValue(
-      patientData,
-      "entidadeFisica.entfDtNasc"
-    ),
-    cpf: Utils.getNestedValue(patientData, "entidadeFisica.entfCPF"),
-  };
-  const filtered = (App.recentPatients || []).filter(
-    (p) => p.idp !== newRecent.idp || p.ids !== newRecent.ids
+  const newRecent = { ...patientData };
+  const currentRecents = store.getRecentPatients();
+  const filtered = (currentRecents || []).filter(
+    (p) => p.ficha.isenPK.idp !== newRecent.ficha.isenPK.idp
   );
-  App.recentPatients = [newRecent, ...filtered].slice(0, 5);
-  await browser.storage.local.set({ recentPatients: App.recentPatients });
+  const updatedRecents = [newRecent, ...filtered].slice(0, 5);
+  await browser.storage.local.set({ recentPatients: updatedRecents });
+  store.setRecentPatients(updatedRecents);
 }
-
-// --- HANDLERS PARA AÇÕES ESPECÍFICAS DE ITENS ---
 
 async function handleViewExamResult(button) {
   const { idp, ids } = button.dataset;
@@ -492,7 +437,6 @@ function handleShowAppointmentInfo(button) {
   const modalTitle = document.getElementById("modal-title");
   const modalContent = document.getElementById("modal-content");
   const infoModal = document.getElementById("info-modal");
-
   modalTitle.textContent = "Detalhes do Agendamento";
   modalContent.innerHTML = `
         <p><strong>ID:</strong> ${data.id}</p>
@@ -513,5 +457,4 @@ function handleShowAppointmentInfo(button) {
   infoModal.classList.remove("hidden");
 }
 
-// --- INICIA A APLICAÇÃO ---
 document.addEventListener("DOMContentLoaded", init);

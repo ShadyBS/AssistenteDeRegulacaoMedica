@@ -3,7 +3,8 @@
  */
 
 import { filterConfig } from "./filter-config.js";
-import { debounce, parseDate, showMessage } from "./utils.js";
+// PASSO DE CORREÇÃO: Alterada a forma de importação para ser mais robusta.
+import * as Utils from "./utils.js";
 import * as API from "./api.js";
 import { store } from "./store.js";
 
@@ -38,9 +39,9 @@ export class SectionManager {
     this.currentPatient = null;
     this.isLoading = false;
     this.sortState = { ...config.initialSortState };
-    this.fetchType = "all"; // Padrão para grupos de botões
+    this.fetchType = "all";
 
-    this.elements = {}; // Para armazenar referências do DOM
+    this.elements = {};
 
     this.init();
   }
@@ -55,30 +56,22 @@ export class SectionManager {
     return map[sectionKey] || sectionKey;
   }
 
-  /**
-   * Encontra e armazena os elementos do DOM e adiciona os event listeners.
-   */
   init() {
     this.cacheDomElements();
     this.addEventListeners();
     this.renderFilterControls();
-    store.subscribe(() => this.onStateChange()); // Subscreve ao store
+    store.subscribe(() => this.onStateChange());
   }
 
-  /**
-   * Função chamada sempre que o estado global muda.
-   */
   onStateChange() {
-    const newPatient = store.getPatient();
-    // Verifica se o paciente realmente mudou para evitar re-renderizações desnecessárias
+    const patientState = store.getPatient();
+    const newPatient = patientState ? patientState.ficha : null;
+
     if (this.currentPatient?.isenPK?.idp !== newPatient?.isenPK?.idp) {
       this.setPatient(newPatient);
     }
   }
 
-  /**
-   * Mapeia os elementos do DOM para acesso fácil.
-   */
   cacheDomElements() {
     const { sectionKey, prefix } = this;
     this.elements = {
@@ -101,9 +94,6 @@ export class SectionManager {
     };
   }
 
-  /**
-   * Adiciona todos os event listeners para a secção.
-   */
   addEventListeners() {
     this.elements.fetchBtn?.addEventListener("click", () => this.fetchData());
     this.elements.toggleBtn?.addEventListener("click", () =>
@@ -118,7 +108,8 @@ export class SectionManager {
 
     this.elements.section?.addEventListener(
       "input",
-      debounce((e) => {
+      // PASSO DE CORREÇÃO: Usar a função importada através do namespace Utils.
+      Utils.debounce((e) => {
         if (e.target.matches("input[type='text']"))
           this.applyFiltersAndRender();
       }, 300)
@@ -150,10 +141,6 @@ export class SectionManager {
     });
   }
 
-  /**
-   * Define o paciente atual para esta secção e decide se deve buscar dados.
-   * @param {object|null} patient - O objeto do paciente ou null para limpar.
-   */
   setPatient(patient) {
     this.currentPatient = patient;
     this.allData = [];
@@ -175,13 +162,11 @@ export class SectionManager {
     }
   }
 
-  /**
-   * Busca os dados da API para a secção.
-   */
   async fetchData() {
     if (!this.currentPatient) {
       if (this.elements.section.style.display !== "none")
-        showMessage("Nenhum paciente selecionado.");
+        // PASSO DE CORREÇÃO: Usar a função importada através do namespace Utils.
+        Utils.showMessage("Nenhum paciente selecionado.");
       return;
     }
     if (this.isLoading) return;
@@ -216,7 +201,17 @@ export class SectionManager {
       this.allData = Array.isArray(result) ? result : result.jsonData || [];
     } catch (error) {
       console.error(`Erro ao buscar dados para ${this.sectionKey}:`, error);
-      showMessage(`Erro ao buscar ${this.sectionKey}.`);
+      const sectionNameMap = {
+        consultations: "consultas",
+        exams: "exames",
+        appointments: "agendamentos",
+        regulations: "regulações",
+      };
+      const friendlyName = sectionNameMap[this.sectionKey] || this.sectionKey;
+      // PASSO DE CORREÇÃO: Usar a função importada através do namespace Utils.
+      Utils.showMessage(
+        `Erro ao buscar ${friendlyName}. Verifique a conexão e a URL base.`
+      );
       this.allData = [];
     } finally {
       this.isLoading = false;
@@ -224,12 +219,8 @@ export class SectionManager {
     }
   }
 
-  /**
-   * Aplica os filtros atuais aos dados e renderiza o resultado.
-   */
   applyFiltersAndRender() {
     let filteredData = [...this.allData];
-
     if (this.config.filterLogic) {
       filteredData = this.config.filterLogic(
         filteredData,
@@ -237,9 +228,7 @@ export class SectionManager {
         this.fetchType
       );
     }
-
     const sortedData = this.sortData(filteredData);
-
     this.config.renderFunction(sortedData, this.sortState);
     this.updateActiveFiltersIndicator();
   }
@@ -248,15 +237,14 @@ export class SectionManager {
     const { key, order } = this.sortState;
     return [...data].sort((a, b) => {
       let valA, valB;
-
       if (key === "date" || key === "sortableDate") {
-        valA = a.sortableDate || parseDate(a.date);
-        valB = b.sortableDate || parseDate(b.date);
+        // PASSO DE CORREÇÃO: Usar a função importada através do namespace Utils.
+        valA = a.sortableDate || Utils.parseDate(a.date);
+        valB = b.sortableDate || Utils.parseDate(b.date);
       } else {
         valA = (a[key] || "").toString().toLowerCase();
         valB = (b[key] || "").toString().toLowerCase();
       }
-
       if (valA < valB) return order === "asc" ? -1 : 1;
       if (valA > valB) return order === "asc" ? 1 : -1;
       return 0;
@@ -274,8 +262,6 @@ export class SectionManager {
     });
     return values;
   }
-
-  // --- Handlers de Eventos ---
 
   toggleSection() {
     this.elements.wrapper?.classList.toggle("show");
@@ -323,9 +309,6 @@ export class SectionManager {
       .querySelectorAll("button")
       .forEach((btn) => btn.classList.remove("btn-active"));
     button.classList.add("btn-active");
-
-    // CORREÇÃO: A mudança de tipo de busca sempre deve chamar fetchData,
-    // pois pode alterar os parâmetros da API (ex: exames com/sem resultado).
     this.fetchData();
   }
 
@@ -334,12 +317,10 @@ export class SectionManager {
       "span:not(.button-text)"
     );
     if (!indicator || !this.elements.moreFilters) return;
-
     const isShown = this.elements.moreFilters.classList.contains("show");
     let activeCount = 0;
     const filterElements =
       this.elements.moreFilters.querySelectorAll("input, select");
-
     filterElements.forEach((el) => {
       if (
         el.type === "select-one" &&
@@ -351,7 +332,6 @@ export class SectionManager {
       else if (el.type === "text" && el.value.trim() !== "") activeCount++;
       else if (el.type === "checkbox" && el.checked) activeCount++;
     });
-
     if (activeCount > 0 && !isShown) {
       indicator.textContent = activeCount;
       indicator.classList.remove("hidden");
@@ -360,40 +340,37 @@ export class SectionManager {
     }
   }
 
-  // --- Lógica de Filtros Salvos ---
-
   saveFilterSet() {
     const nameInput = document.getElementById(
       `${this.prefix}-save-filter-name-input`
     );
     const name = nameInput.value.trim();
     if (!name) {
-      showMessage("Por favor, insira um nome para o conjunto de filtros.");
+      // PASSO DE CORREÇÃO: Usar a função importada através do namespace Utils.
+      Utils.showMessage(
+        "Por favor, insira um nome para o conjunto de filtros."
+      );
       return;
     }
-
-    const savedSets = this.globalSettings.savedFilterSets;
+    const savedSets = store.getSavedFilterSets();
     if (!savedSets[this.sectionKey]) {
       savedSets[this.sectionKey] = [];
     }
-
     const existingIndex = savedSets[this.sectionKey].findIndex(
       (set) => set.name === name
     );
     const filterValues = this.getFilterValues();
     const newSet = { name, values: filterValues };
-
     if (existingIndex > -1) {
       savedSets[this.sectionKey][existingIndex] = newSet;
     } else {
       savedSets[this.sectionKey].push(newSet);
     }
-
     browser.storage.local.set({ savedFilterSets: savedSets });
-    this.populateSavedFilterDropdown();
-    document.getElementById(`${this.prefix}-saved-filters-select`).value = name;
+    store.setSavedFilterSets(savedSets); // Atualiza o store
     nameInput.value = "";
-    showMessage(`Filtro "${name}" salvo com sucesso.`, "success");
+    // PASSO DE CORREÇÃO: Usar a função importada através do namespace Utils.
+    Utils.showMessage(`Filtro "${name}" salvo com sucesso.`, "success");
   }
 
   loadFilterSet() {
@@ -402,12 +379,10 @@ export class SectionManager {
     );
     const name = select.value;
     if (!name) return;
-
-    const set = (
-      this.globalSettings.savedFilterSets[this.sectionKey] || []
-    ).find((s) => s.name === name);
+    const set = (store.getSavedFilterSets()[this.sectionKey] || []).find(
+      (s) => s.name === name
+    );
     if (!set) return;
-
     Object.entries(set.values).forEach(([id, value]) => {
       const el = document.getElementById(id);
       if (el) {
@@ -415,7 +390,6 @@ export class SectionManager {
         else el.value = value;
       }
     });
-
     this.applyFiltersAndRender();
   }
 
@@ -425,17 +399,18 @@ export class SectionManager {
     );
     const name = select.value;
     if (!name) {
-      showMessage("Selecione um filtro para apagar.");
+      // PASSO DE CORREÇÃO: Usar a função importada através do namespace Utils.
+      Utils.showMessage("Selecione um filtro para apagar.");
       return;
     }
-
-    const savedSets = this.globalSettings.savedFilterSets;
+    const savedSets = store.getSavedFilterSets();
     savedSets[this.sectionKey] = (savedSets[this.sectionKey] || []).filter(
       (set) => set.name !== name
     );
     browser.storage.local.set({ savedFilterSets: savedSets });
-    this.populateSavedFilterDropdown();
-    showMessage(`Filtro "${name}" apagado.`, "success");
+    store.setSavedFilterSets(savedSets);
+    // PASSO DE CORREÇÃO: Usar a função importada através do namespace Utils.
+    Utils.showMessage(`Filtro "${name}" apagado.`, "success");
   }
 
   populateSavedFilterDropdown() {
@@ -443,11 +418,9 @@ export class SectionManager {
       `${this.prefix}-saved-filters-select`
     );
     if (!select) return;
-
     const currentSelection = select.value;
     select.innerHTML = '<option value="">Carregar um filtro...</option>';
-
-    const sets = this.globalSettings.savedFilterSets[this.sectionKey] || [];
+    const sets = store.getSavedFilterSets()[this.sectionKey] || [];
     sets.forEach((set) => {
       const option = document.createElement("option");
       option.value = set.name;
@@ -463,16 +436,13 @@ export class SectionManager {
       const sectionLayout =
         this.globalSettings.filterLayout[this.sectionKey] || [];
       const layoutMap = new Map(sectionLayout.map((f) => [f.id, f]));
-
       const sortedFilters = [...sectionFilters].sort((a, b) => {
         const orderA = layoutMap.get(a.id)?.order ?? Infinity;
         const orderB = layoutMap.get(b.id)?.order ?? Infinity;
         return orderA - orderB;
       });
-
       if (this.elements.mainFilters) this.elements.mainFilters.innerHTML = "";
       if (this.elements.moreFilters) this.elements.moreFilters.innerHTML = "";
-
       sortedFilters.forEach((filter) => {
         const location =
           layoutMap.get(filter.id)?.location || filter.defaultLocation;
@@ -485,7 +455,6 @@ export class SectionManager {
           container.appendChild(filterElement);
         }
       });
-
       this.renderSavedFiltersUI();
     } catch (e) {
       console.error(`Erro ao renderizar filtros para ${this.sectionKey}:`, e);
@@ -495,11 +464,9 @@ export class SectionManager {
   createFilterElement(filter) {
     const container = document.createElement("div");
     let elementHtml = "";
-
     if (filter.type !== "checkbox") {
       elementHtml += `<label for="${filter.id}" class="block font-medium mb-1 text-sm">${filter.label}</label>`;
     }
-
     switch (filter.type) {
       case "text":
         elementHtml += `<input type="text" id="${filter.id}" placeholder="${
@@ -548,7 +515,6 @@ export class SectionManager {
   renderSavedFiltersUI() {
     const container = this.elements.savedFiltersContainer;
     if (!container) return;
-
     container.innerHTML = `
         <h3 class="text-sm font-semibold text-slate-600 mt-3 mb-2">Filtros Salvos</h3>
         <div class="flex items-center gap-2">

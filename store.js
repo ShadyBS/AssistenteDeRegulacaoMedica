@@ -1,35 +1,38 @@
 /**
  * @file store.js - Gestor de estado centralizado para a aplicação.
- * Implementa um padrão simples de "publish-subscribe" para gerir o estado global,
- * como o paciente atualmente selecionado.
+ * Implementa um padrão simples de "publish-subscribe" para gerir o estado global.
  */
 
-// O estado privado do nosso armazém.
 const state = {
-  currentPatient: null,
-  // Outros estados globais podem ser adicionados aqui no futuro.
+  currentPatient: {
+    ficha: null,
+    cadsus: null,
+    lastCadsusCheck: null,
+    isUpdating: false,
+  },
+  recentPatients: [],
+  savedFilterSets: {},
 };
 
-// Uma lista de funções (listeners) a serem chamadas quando o estado muda.
 const listeners = [];
 
-/**
- * O objeto 'store' exportado que fornece a interface para interagir com o estado.
- */
 export const store = {
   /**
    * Adiciona uma função de callback à lista de listeners.
-   * Esta função será chamada sempre que o estado for alterado.
    * @param {Function} listener A função a ser adicionada.
+   * @returns {Function} Uma função para remover o listener (unsubscribe).
    */
   subscribe(listener) {
     listeners.push(listener);
+    // PASSO 3.3: Retorna uma função de unsubscribe para melhor gestão de memória.
+    return () => {
+      const index = listeners.indexOf(listener);
+      if (index > -1) {
+        listeners.splice(index, 1);
+      }
+    };
   },
 
-  /**
-   * Notifica todos os listeners de que o estado mudou.
-   * @private
-   */
   _notify() {
     for (const listener of listeners) {
       try {
@@ -40,28 +43,54 @@ export const store = {
     }
   },
 
-  /**
-   * Define o paciente atual no estado e notifica todos os listeners.
-   * @param {object | null} patient - O objeto do paciente ou null para limpar.
-   */
-  setPatient(patient) {
-    state.currentPatient = patient;
+  setPatient(fichaData, cadsusData) {
+    state.currentPatient.ficha = fichaData;
+    state.currentPatient.cadsus = cadsusData;
+    state.currentPatient.lastCadsusCheck = cadsusData ? new Date() : null;
+    state.currentPatient.isUpdating = false;
     this._notify();
   },
 
-  /**
-   * Retorna o objeto do paciente atualmente no estado.
-   * @returns {object | null} O paciente atual.
-   */
-  getPatient() {
-    return state.currentPatient;
+  clearPatient() {
+    state.currentPatient.ficha = null;
+    state.currentPatient.cadsus = null;
+    state.currentPatient.lastCadsusCheck = null;
+    state.currentPatient.isUpdating = false;
+    this._notify();
   },
 
-  /**
-   * Retorna uma cópia completa do estado atual.
-   * @returns {object} O estado da aplicação.
-   */
+  setPatientUpdating() {
+    state.currentPatient.isUpdating = true;
+    this._notify();
+  },
+
+  getPatient() {
+    return state.currentPatient.ficha ? state.currentPatient : null;
+  },
+
+  setRecentPatients(patients) {
+    state.recentPatients = patients;
+    this._notify();
+  },
+
+  getRecentPatients() {
+    return state.recentPatients;
+  },
+
+  setSavedFilterSets(sets) {
+    state.savedFilterSets = sets;
+    this._notify();
+  },
+
+  getSavedFilterSets() {
+    return state.savedFilterSets;
+  },
+
   getState() {
-    return { ...state };
+    return {
+      currentPatient: { ...state.currentPatient },
+      recentPatients: [...state.recentPatients],
+      savedFilterSets: { ...state.savedFilterSets },
+    };
   },
 };
