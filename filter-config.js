@@ -7,16 +7,26 @@
  * Estrutura de cada objeto de filtro:
  * - id: Identificador único do elemento HTML.
  * - label: O texto que descreve o filtro na interface.
- * - type: O tipo de elemento de input ('text', 'select', 'checkbox', 'buttonGroup', 'selectGroup').
- * - section: A qual seção principal o filtro pertence ('consultations', 'exams', 'appointments', 'regulations').
+ * - type: O tipo de elemento ('text', 'select', 'checkbox', 'selectGroup', 'component').
+ * - section: A qual seção principal o filtro pertence.
  * - defaultLocation: Onde o filtro aparece por padrão ('main' ou 'more').
+ * - componentName: (Apenas para type 'component') O nome do componente a ser renderizado.
  * - placeholder: (Opcional) Texto de exemplo para campos de texto.
- * - options: (Opcional) Um array de objetos {value, text} para elementos 'select' ou 'selectGroup'.
+ * - options: (Opcional) Um array de objetos {value, text} para 'select' ou 'selectGroup'.
  * - defaultChecked: (Opcional) Estado padrão para 'checkbox'.
  */
 
 export const filterConfig = {
   consultations: [
+    // NOVO: Filtro de data como um componente configurável
+    {
+      id: "consultation-date-range",
+      label: "Filtro de Datas",
+      type: "component",
+      componentName: "date-range",
+      section: "consultations",
+      defaultLocation: "main",
+    },
     {
       id: "consultation-filter-keyword",
       label: "Busca por Palavra-chave",
@@ -34,7 +44,6 @@ export const filterConfig = {
       defaultChecked: false,
     },
     {
-      // ALTERADO: De buttonGroup para selectGroup para economizar espaço.
       id: "fetch-type-buttons",
       label: "Tipo de Consulta",
       type: "selectGroup",
@@ -78,10 +87,26 @@ export const filterConfig = {
       defaultLocation: "more",
       placeholder: "Digite unidades, separe por vírgula...",
     },
+    // NOVO: Filtros salvos como um componente configurável
+    {
+      id: "consultation-saved-filters",
+      label: "Filtros Salvos",
+      type: "component",
+      componentName: "saved-filters",
+      section: "consultations",
+      defaultLocation: "more",
+    },
   ],
   exams: [
     {
-      // ALTERADO: De buttonGroup para selectGroup.
+      id: "exam-date-range",
+      label: "Filtro de Datas",
+      type: "component",
+      componentName: "date-range",
+      section: "exams",
+      defaultLocation: "main",
+    },
+    {
       id: "exam-fetch-type-buttons",
       label: "Status do Resultado",
       type: "selectGroup",
@@ -117,10 +142,25 @@ export const filterConfig = {
       defaultLocation: "more",
       placeholder: "Digite especialidades, separe por vírgula...",
     },
+    {
+      id: "exam-saved-filters",
+      label: "Filtros Salvos",
+      type: "component",
+      componentName: "saved-filters",
+      section: "exams",
+      defaultLocation: "more",
+    },
   ],
   appointments: [
     {
-      // ALTERADO: De buttonGroup para selectGroup.
+      id: "appointment-date-range",
+      label: "Filtro de Datas",
+      type: "component",
+      componentName: "date-range",
+      section: "appointments",
+      defaultLocation: "main",
+    },
+    {
       id: "appointment-fetch-type-buttons",
       label: "Tipo de Agendamento",
       type: "selectGroup",
@@ -163,10 +203,25 @@ export const filterConfig = {
       defaultLocation: "more",
       placeholder: "Digite locais, separe por vírgula...",
     },
+    {
+      id: "appointment-saved-filters",
+      label: "Filtros Salvos",
+      type: "component",
+      componentName: "saved-filters",
+      section: "appointments",
+      defaultLocation: "more",
+    },
   ],
   regulations: [
     {
-      // ALTERADO: De buttonGroup para selectGroup.
+      id: "regulation-date-range",
+      label: "Filtro de Datas",
+      type: "component",
+      componentName: "date-range",
+      section: "regulations",
+      defaultLocation: "main",
+    },
+    {
       id: "regulation-fetch-type-buttons",
       label: "Modalidade",
       type: "selectGroup",
@@ -224,6 +279,14 @@ export const filterConfig = {
       section: "regulations",
       defaultLocation: "more",
       placeholder: "Digite nomes, separe por vírgula...",
+    },
+    {
+      id: "regulation-saved-filters",
+      label: "Filtros Salvos",
+      type: "component",
+      componentName: "saved-filters",
+      section: "regulations",
+      defaultLocation: "more",
     },
   ],
 };

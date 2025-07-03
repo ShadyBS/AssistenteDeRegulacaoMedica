@@ -57,8 +57,8 @@ export class SectionManager {
 
   init() {
     this.cacheDomElements();
+    this.renderFilterControls(); // ALTERADO: Renderiza antes para que os elementos dinâmicos existam
     this.addEventListeners();
-    this.renderFilterControls();
     store.subscribe(() => this.onStateChange());
   }
 
@@ -87,11 +87,7 @@ export class SectionManager {
       clearBtn: document.getElementById(`clear-${prefix}-filters-btn`),
       mainFilters: document.getElementById(`${prefix}-main-filters`),
       moreFilters: document.getElementById(`${prefix}-more-filters`),
-      savedFiltersContainer: document.getElementById(
-        `${prefix}-saved-filters-container`
-      ),
-      dateInitial: document.getElementById(`${prefix}-date-initial`),
-      dateFinal: document.getElementById(`${prefix}-date-final`),
+      // ALTERADO: Elementos de data e filtros salvos são removidos daqui, pois são dinâmicos
     };
   }
 
@@ -107,6 +103,7 @@ export class SectionManager {
       this.clearFilters()
     );
 
+    // A delegação de eventos no elemento da seção principal lida com os elementos dinâmicos
     this.elements.section?.addEventListener(
       "input",
       Utils.debounce((e) => {
@@ -172,16 +169,22 @@ export class SectionManager {
       '<p class="text-slate-500">Carregando...</p>';
 
     try {
+      // Certifica que os elementos de data estão cacheados antes de usar
+      const dataInicialValue = this.elements.dateInitial
+        ? this.elements.dateInitial.value
+        : null;
+      const dataFinalValue = this.elements.dateFinal
+        ? this.elements.dateFinal.value
+        : null;
+
       const params = {
         isenPK: `${this.currentPatient.isenPK.idp}-${this.currentPatient.isenPK.ids}`,
         isenFullPKCrypto: this.currentPatient.isenFullPKCrypto,
-        dataInicial: this.elements.dateInitial.value
-          ? new Date(this.elements.dateInitial.value).toLocaleDateString(
-              "pt-BR"
-            )
+        dataInicial: dataInicialValue
+          ? new Date(dataInicialValue).toLocaleDateString("pt-BR")
           : "01/01/1900",
-        dataFinal: this.elements.dateFinal.value
-          ? new Date(this.elements.dateFinal.value).toLocaleDateString("pt-BR")
+        dataFinal: dataFinalValue
+          ? new Date(dataFinalValue).toLocaleDateString("pt-BR")
           : new Date().toLocaleDateString("pt-BR"),
         type: this.fetchType,
       };
@@ -249,6 +252,9 @@ export class SectionManager {
     const values = {};
     const filters = filterConfig[this.sectionKey] || [];
     filters.forEach((filter) => {
+      // Ignora componentes que não são filtros de valor
+      if (filter.type === "component") return;
+
       const el = document.getElementById(filter.id);
       if (el) {
         values[filter.id] = el.type === "checkbox" ? el.checked : el.value;
@@ -268,34 +274,30 @@ export class SectionManager {
   toggleMoreFilters() {
     const shouldShow = !this.elements.moreFilters.classList.contains("show");
     this.elements.moreFilters.classList.toggle("show", shouldShow);
-    this.elements.savedFiltersContainer?.classList.toggle("show", shouldShow);
     this.elements.toggleMoreBtn.querySelector(".button-text").textContent =
       shouldShow ? "Menos filtros" : "Mais filtros";
     this.updateActiveFiltersIndicator();
   }
 
-  /**
-   * Limpa os filtros, revertendo para os valores padrão definidos pelo utilizador.
-   */
   clearFilters() {
     const sectionLayout =
       this.globalSettings.filterLayout[this.sectionKey] || [];
     const layoutMap = new Map(sectionLayout.map((f) => [f.id, f]));
 
     (filterConfig[this.sectionKey] || []).forEach((filter) => {
+      if (filter.type === "component") return;
+
       const el = document.getElementById(filter.id);
       if (el) {
         const savedFilterSettings = layoutMap.get(filter.id);
         let defaultValue;
 
-        // Usa o valor padrão salvo se existir
         if (
           savedFilterSettings &&
           savedFilterSettings.defaultValue !== undefined
         ) {
           defaultValue = savedFilterSettings.defaultValue;
         } else {
-          // Fallback para o padrão do sistema se não houver configuração salva
           defaultValue =
             filter.defaultChecked ??
             (filter.options ? filter.options[0].value : "");
@@ -307,7 +309,6 @@ export class SectionManager {
           el.value = defaultValue;
         }
 
-        // Se for um selectGroup, a mudança de valor deve acionar a busca
         if (el.classList.contains("filter-select-group")) {
           this.handleFetchTypeChange(el);
         }
@@ -435,6 +436,7 @@ export class SectionManager {
   }
 
   populateSavedFilterDropdown() {
+    // O dropdown agora é dinâmico, então precisamos encontrá-lo
     const select = document.getElementById(
       `${this.prefix}-saved-filters-select`
     );
@@ -451,35 +453,105 @@ export class SectionManager {
     select.value = currentSelection;
   }
 
+  // MÉTODO PRINCIPAL DE RENDERIZAÇÃO DINÂMICA
   renderFilterControls() {
     try {
       const sectionFilters = filterConfig[this.sectionKey] || [];
       const sectionLayout =
         this.globalSettings.filterLayout[this.sectionKey] || [];
       const layoutMap = new Map(sectionLayout.map((f) => [f.id, f]));
-      const sortedFilters = [...sectionFilters].sort((a, b) => {
+
+      const sortedItems = [...sectionFilters].sort((a, b) => {
         const orderA = layoutMap.get(a.id)?.order ?? Infinity;
         const orderB = layoutMap.get(b.id)?.order ?? Infinity;
         return orderA - orderB;
       });
+
       if (this.elements.mainFilters) this.elements.mainFilters.innerHTML = "";
       if (this.elements.moreFilters) this.elements.moreFilters.innerHTML = "";
-      sortedFilters.forEach((filter) => {
+
+      sortedItems.forEach((item) => {
         const location =
-          layoutMap.get(filter.id)?.location || filter.defaultLocation;
+          layoutMap.get(item.id)?.location || item.defaultLocation;
         const container =
           location === "main"
             ? this.elements.mainFilters
             : this.elements.moreFilters;
+
         if (container) {
-          const filterElement = this.createFilterElement(filter);
-          container.appendChild(filterElement);
+          let element;
+          if (item.type === "component") {
+            element = this.createUiComponent(item.componentName);
+          } else {
+            element = this.createFilterElement(item);
+          }
+          if (element) {
+            container.appendChild(element);
+          }
         }
       });
-      this.renderSavedFiltersUI();
     } catch (e) {
       console.error(`Erro ao renderizar filtros para ${this.sectionKey}:`, e);
     }
+  }
+
+  // NOVO: Cria componentes de UI não-filtros
+  createUiComponent(componentName) {
+    switch (componentName) {
+      case "date-range":
+        return this.renderDateRangeComponent();
+      case "saved-filters":
+        return this.renderSavedFiltersComponent();
+      default:
+        return null;
+    }
+  }
+
+  renderDateRangeComponent() {
+    const container = document.createElement("div");
+    container.className = "grid grid-cols-2 gap-4 text-sm";
+    container.innerHTML = `
+        <div>
+            <label for="${this.prefix}-date-initial" class="block font-medium">Data Inicial</label>
+            <input type="date" id="${this.prefix}-date-initial" class="mt-1 w-full px-2 py-1 border border-slate-300 rounded-md"/>
+        </div>
+        <div>
+            <label for="${this.prefix}-date-final" class="block font-medium">Data Final</label>
+            <input type="date" id="${this.prefix}-date-final" class="mt-1 w-full px-2 py-1 border border-slate-300 rounded-md"/>
+        </div>
+      `;
+    // Cacheia os elementos após a criação
+    this.elements.dateInitial = container.querySelector(
+      `#${this.prefix}-date-initial`
+    );
+    this.elements.dateFinal = container.querySelector(
+      `#${this.prefix}-date-final`
+    );
+    return container;
+  }
+
+  renderSavedFiltersComponent() {
+    const container = document.createElement("div");
+    container.className = "mt-4 pt-4 border-t";
+    // Este ID é usado pelo toggleMoreFilters
+    container.id = `${this.prefix}-saved-filters-container`;
+    container.innerHTML = `
+        <h3 class="text-sm font-semibold text-slate-600 mt-3 mb-2">Filtros Salvos</h3>
+        <div class="flex items-center gap-2">
+            <select id="${this.prefix}-saved-filters-select" class="flex-grow w-full px-2 py-1 border border-slate-300 rounded-md bg-white text-sm" title="Carregar um filtro salvo">
+                <option value="">Carregar filtro...</option>
+            </select>
+            <button id="${this.prefix}-save-filter-btn" title="Salvar filtros atuais" class="p-1.5 text-slate-500 hover:bg-blue-100 hover:text-blue-600 rounded">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M2 1a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H9.5a1 1 0 0 0-1 1v4.5h2a.5.5 0 0 1 .354.854l-2.5 2.5a.5.5 0 0 1-.708 0l-2.5-2.5A.5.5 0 0 1 5.5 6.5h2V2a2 2 0 0 1 2-2H14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2h2.5a.5.5 0 0 1 0 1H2z"/></svg>
+            </button>
+            <button id="${this.prefix}-delete-filter-btn" title="Apagar filtro selecionado" class="p-1.5 text-slate-500 hover:bg-red-100 hover:text-red-600 rounded">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/><path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/></svg>
+            </button>
+        </div>
+      `;
+    this.elements.savedFiltersContainer = container;
+    this.populateSavedFilterDropdown();
+    return container;
   }
 
   createFilterElement(filter) {
@@ -516,25 +588,5 @@ export class SectionManager {
     }
     container.innerHTML = elementHtml;
     return container;
-  }
-
-  renderSavedFiltersUI() {
-    const container = this.elements.savedFiltersContainer;
-    if (!container) return;
-    container.innerHTML = `
-        <h3 class="text-sm font-semibold text-slate-600 mt-3 mb-2">Filtros Salvos</h3>
-        <div class="flex items-center gap-2">
-            <select id="${this.prefix}-saved-filters-select" class="flex-grow w-full px-2 py-1 border border-slate-300 rounded-md bg-white text-sm" title="Carregar um filtro salvo">
-                <option value="">Carregar filtro...</option>
-            </select>
-            <button id="${this.prefix}-save-filter-btn" title="Salvar filtros atuais" class="p-1.5 text-slate-500 hover:bg-blue-100 hover:text-blue-600 rounded">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M2 1a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H9.5a1 1 0 0 0-1 1v4.5h2a.5.5 0 0 1 .354.854l-2.5 2.5a.5.5 0 0 1-.708 0l-2.5-2.5A.5.5 0 0 1 5.5 6.5h2V2a2 2 0 0 1 2-2H14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2h2.5a.5.5 0 0 1 0 1H2z"/></svg>
-            </button>
-            <button id="${this.prefix}-delete-filter-btn" title="Apagar filtro selecionado" class="p-1.5 text-slate-500 hover:bg-red-100 hover:text-red-600 rounded">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/><path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/></svg>
-            </button>
-        </div>
-    `;
-    this.populateSavedFilterDropdown();
   }
 }

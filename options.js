@@ -51,23 +51,27 @@ function createDraggableFilter(filter) {
   div.dataset.filterId = filter.id;
   div.draggable = true;
 
+  // ALTERADO: Trata o novo tipo 'component'
   const displayType = filter.type === "selectGroup" ? "select" : filter.type;
 
   let defaultValueControl = "";
-  switch (filter.type) {
-    case "text":
-      defaultValueControl = `<input type="text" class="filter-default-value-input w-full" placeholder="Valor padrão...">`;
-      break;
-    case "select":
-    case "selectGroup":
-      const optionsHtml = filter.options
-        .map((opt) => `<option value="${opt.value}">${opt.text}</option>`)
-        .join("");
-      defaultValueControl = `<select class="filter-default-value-input w-full">${optionsHtml}</select>`;
-      break;
-    case "checkbox":
-      defaultValueControl = `<input type="checkbox" class="filter-default-value-input h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500">`;
-      break;
+  // ALTERADO: Não cria controlo de valor padrão para componentes
+  if (filter.type !== "component") {
+    switch (filter.type) {
+      case "text":
+        defaultValueControl = `<input type="text" class="filter-default-value-input w-full" placeholder="Valor padrão...">`;
+        break;
+      case "select":
+      case "selectGroup":
+        const optionsHtml = filter.options
+          .map((opt) => `<option value="${opt.value}">${opt.text}</option>`)
+          .join("");
+        defaultValueControl = `<select class="filter-default-value-input w-full">${optionsHtml}</select>`;
+        break;
+      case "checkbox":
+        defaultValueControl = `<input type="checkbox" class="filter-default-value-input h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500">`;
+        break;
+    }
   }
 
   // Layout principal do item arrastável
@@ -92,6 +96,11 @@ function createDraggableFilter(filter) {
         }
     </div>
   `;
+
+  // Adiciona uma classe especial para componentes para estilização se necessário
+  if (filter.type === "component") {
+    div.classList.add("draggable-component");
+  }
 
   div.addEventListener("dragstart", handleDragStart);
   div.addEventListener("dragend", handleDragEnd);
@@ -152,8 +161,11 @@ function renderFilterLayout(layout) {
         const filterElement = createDraggableFilter(filter);
         zone.appendChild(filterElement);
 
-        // Define o valor do controlo de valor padrão
-        if (filterLayoutData && filterLayoutData.defaultValue !== undefined) {
+        if (
+          filter.type !== "component" &&
+          filterLayoutData &&
+          filterLayoutData.defaultValue !== undefined
+        ) {
           const defaultValueInput = filterElement.querySelector(
             ".filter-default-value-input"
           );
@@ -185,7 +197,6 @@ async function restoreOptions() {
     filterLayout: {},
   });
 
-  // Restaura configurações gerais
   document.getElementById("baseUrlInput").value = items.baseUrl;
   document.getElementById("autoLoadExamsCheckbox").checked =
     items.autoLoadExams;
@@ -197,7 +208,6 @@ async function restoreOptions() {
     items.autoLoadRegulations;
   document.getElementById("monthsBackInput").value = items.monthsBack;
 
-  // Restaura configuração da ficha do paciente
   const currentPatientFieldsConfig = defaultFieldConfig.map((defaultField) => {
     const savedField = items.patientFields.find(
       (f) => f.id === defaultField.id
@@ -206,7 +216,6 @@ async function restoreOptions() {
   });
   renderPatientFields(currentPatientFieldsConfig);
 
-  // LÓGICA DE MIGRAÇÃO: Garante que o filterLayout tem a estrutura nova.
   const migratedFilterLayout = items.filterLayout || {};
   let needsSave = false;
   Object.entries(filterConfig).forEach(([sectionKey, filtersInSection]) => {
@@ -217,7 +226,10 @@ async function restoreOptions() {
     filtersInSection.forEach((filter) => {
       let savedFilter = savedLayout.find((f) => f.id === filter.id);
       if (savedFilter) {
-        if (savedFilter.defaultValue === undefined) {
+        if (
+          filter.type !== "component" &&
+          savedFilter.defaultValue === undefined
+        ) {
           needsSave = true;
           savedFilter.defaultValue =
             filter.defaultChecked ??
@@ -225,19 +237,21 @@ async function restoreOptions() {
         }
       } else {
         needsSave = true;
-        savedLayout.push({
+        const newFilterData = {
           id: filter.id,
           location: filter.defaultLocation,
           order: Infinity,
-          defaultValue:
+        };
+        if (filter.type !== "component") {
+          newFilterData.defaultValue =
             filter.defaultChecked ??
-            (filter.options ? filter.options[0].value : ""),
-        });
+            (filter.options ? filter.options[0].value : "");
+        }
+        savedLayout.push(newFilterData);
       }
     });
   });
 
-  // Se a migração ocorreu, salva silenciosamente a nova estrutura
   if (needsSave) {
     await browser.storage.sync.set({ filterLayout: migratedFilterLayout });
   }
@@ -249,7 +263,6 @@ async function restoreOptions() {
  * Salva todas as configurações.
  */
 async function saveOptions() {
-  // Coleta as configurações gerais
   const baseUrl = document.getElementById("baseUrlInput").value;
   const autoLoadExams = document.getElementById(
     "autoLoadExamsCheckbox"
@@ -266,7 +279,6 @@ async function saveOptions() {
   const monthsBack =
     parseInt(document.getElementById("monthsBackInput").value, 10) || 6;
 
-  // Coleta a configuração da ficha do paciente
   const patientFields = [];
   mainFieldsZone.querySelectorAll(".draggable").forEach((div, index) => {
     const fieldId = div.dataset.fieldId;
@@ -293,7 +305,6 @@ async function saveOptions() {
     });
   });
 
-  // Coleta a configuração de layout e valores padrão dos filtros
   const filterLayout = {};
   document
     .querySelectorAll("#layout-config-section .drop-zone")
@@ -306,22 +317,30 @@ async function saveOptions() {
       const location = zone.id.includes("-main-") ? "main" : "more";
       zone.querySelectorAll(".draggable").forEach((div, index) => {
         const filterId = div.dataset.filterId;
-        const defaultValueInput = div.querySelector(
-          ".filter-default-value-input"
+        const originalFilter = filterConfig[section].find(
+          (f) => f.id === filterId
         );
-        let defaultValue = null;
-        if (defaultValueInput) {
-          defaultValue =
-            defaultValueInput.type === "checkbox"
-              ? defaultValueInput.checked
-              : defaultValueInput.value;
-        }
-        filterLayout[section].push({
+
+        const newFilterData = {
           id: filterId,
           location: location,
           order: index + 1,
-          defaultValue: defaultValue,
-        });
+        };
+
+        if (originalFilter.type !== "component") {
+          const defaultValueInput = div.querySelector(
+            ".filter-default-value-input"
+          );
+          let defaultValue = null;
+          if (defaultValueInput) {
+            defaultValue =
+              defaultValueInput.type === "checkbox"
+                ? defaultValueInput.checked
+                : defaultValueInput.value;
+          }
+          newFilterData.defaultValue = defaultValue;
+        }
+        filterLayout[section].push(newFilterData);
       });
     });
 
