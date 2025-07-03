@@ -7,6 +7,9 @@ import * as Search from "./ui/search.js";
 import * as PatientCard from "./ui/patient-card.js";
 import { store } from "./store.js";
 
+// Objeto para encapsular as variáveis globais da aplicação
+const App = {};
+
 // --- LÓGICA DE FILTRAGEM ESPECÍFICA POR SECÇÃO ---
 
 /**
@@ -246,8 +249,8 @@ const sectionConfigurations = {
  */
 async function init() {
   await loadConfigAndData();
-  Search.init();
-  PatientCard.init(window.fieldConfigLayout);
+  Search.init({ recentPatients: App.recentPatients });
+  PatientCard.init(App.fieldConfigLayout);
   initializeSections();
   applyUserPreferences();
   addGlobalEventListeners();
@@ -268,16 +271,16 @@ async function loadConfigAndData() {
     monthsBack: 6,
   });
 
-  window.fieldConfigLayout = defaultFieldConfig.map((defaultField) => {
+  App.fieldConfigLayout = defaultFieldConfig.map((defaultField) => {
     const savedField = syncData.patientFields.find(
       (f) => f.id === defaultField.id
     );
     return savedField ? { ...defaultField, ...savedField } : defaultField;
   });
 
-  window.filterLayout = syncData.filterLayout;
+  App.filterLayout = syncData.filterLayout;
 
-  window.userPreferences = {
+  App.userPreferences = {
     autoLoadExams: syncData.autoLoadExams,
     autoLoadConsultations: syncData.autoLoadConsultations,
     autoLoadAppointments: syncData.autoLoadAppointments,
@@ -290,18 +293,22 @@ async function loadConfigAndData() {
     recentPatients: [],
     savedFilterSets: {},
   });
-  window.recentPatients = localData.recentPatients;
-  window.savedFilterSets = localData.savedFilterSets;
+  App.recentPatients = localData.recentPatients;
+  App.savedFilterSets = localData.savedFilterSets;
 }
 
 /**
  * Cria uma instância de SectionManager para cada secção configurada.
  */
 function initializeSections() {
-  window.allSectionManagers = {};
+  App.allSectionManagers = {};
   Object.keys(sectionConfigurations).forEach((key) => {
-    const manager = new SectionManager(key, sectionConfigurations[key]);
-    window.allSectionManagers[key] = manager;
+    const manager = new SectionManager(key, sectionConfigurations[key], {
+      savedFilterSets: App.savedFilterSets,
+      filterLayout: App.filterLayout,
+      userPreferences: App.userPreferences,
+    });
+    App.allSectionManagers[key] = manager;
   });
 }
 
@@ -309,7 +316,7 @@ function initializeSections() {
  * Aplica as preferências de data e filtros padrão guardadas pelo utilizador.
  */
 function applyUserPreferences() {
-  const { hideNoShowDefault, monthsBack } = window.userPreferences;
+  const { hideNoShowDefault, monthsBack } = App.userPreferences;
   const hideCheckbox = document.getElementById("hide-no-show-checkbox");
   if (hideCheckbox) hideCheckbox.checked = hideNoShowDefault;
 
@@ -319,7 +326,7 @@ function applyUserPreferences() {
   initial.setMonth(now.getMonth() - months);
 
   [
-    "date-initial",
+    "consultation-date-initial",
     "exam-date-initial",
     "appointment-date-initial",
     "regulation-date-initial",
@@ -328,7 +335,7 @@ function applyUserPreferences() {
     if (el) el.valueAsDate = initial;
   });
   [
-    "date-final",
+    "consultation-date-final",
     "exam-date-final",
     "appointment-date-final",
     "regulation-date-final",
@@ -425,11 +432,11 @@ async function updateRecentPatients(patientData) {
     ),
     cpf: Utils.getNestedValue(patientData, "entidadeFisica.entfCPF"),
   };
-  const filtered = (window.recentPatients || []).filter(
+  const filtered = (App.recentPatients || []).filter(
     (p) => p.idp !== newRecent.idp || p.ids !== newRecent.ids
   );
-  window.recentPatients = [newRecent, ...filtered].slice(0, 5);
-  await browser.storage.local.set({ recentPatients: window.recentPatients });
+  App.recentPatients = [newRecent, ...filtered].slice(0, 5);
+  await browser.storage.local.set({ recentPatients: App.recentPatients });
 }
 
 // --- HANDLERS PARA AÇÕES ESPECÍFICAS DE ITENS ---

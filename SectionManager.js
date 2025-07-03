@@ -26,11 +26,13 @@ export class SectionManager {
    * @param {Function} config.fetchFunction - A função da API para buscar dados.
    * @param {Function} config.renderFunction - A função para renderizar os dados.
    * @param {object} config.initialSortState - O estado inicial de ordenação.
+   * @param {object} globalSettings - Configurações globais da aplicação.
    */
-  constructor(sectionKey, config) {
+  constructor(sectionKey, config, globalSettings) {
     this.sectionKey = sectionKey;
     this.prefix = this.getPrefix(sectionKey);
     this.config = config;
+    this.globalSettings = globalSettings;
 
     this.allData = [];
     this.currentPatient = null;
@@ -94,14 +96,8 @@ export class SectionManager {
       savedFiltersContainer: document.getElementById(
         `${prefix}-saved-filters-container`
       ),
-      dateInitial: document.getElementById(
-        sectionKey === "consultations"
-          ? "date-initial"
-          : `${prefix}-date-initial`
-      ),
-      dateFinal: document.getElementById(
-        sectionKey === "consultations" ? "date-final" : `${prefix}-date-final`
-      ),
+      dateInitial: document.getElementById(`${prefix}-date-initial`),
+      dateFinal: document.getElementById(`${prefix}-date-final`),
     };
   }
 
@@ -169,7 +165,7 @@ export class SectionManager {
 
     if (
       patient &&
-      window.userPreferences[
+      this.globalSettings.userPreferences[
         `autoLoad${
           this.sectionKey.charAt(0).toUpperCase() + this.sectionKey.slice(1)
         }`
@@ -376,23 +372,24 @@ export class SectionManager {
       return;
     }
 
-    if (!window.savedFilterSets[this.sectionKey]) {
-      window.savedFilterSets[this.sectionKey] = [];
+    const savedSets = this.globalSettings.savedFilterSets;
+    if (!savedSets[this.sectionKey]) {
+      savedSets[this.sectionKey] = [];
     }
 
-    const existingIndex = window.savedFilterSets[this.sectionKey].findIndex(
+    const existingIndex = savedSets[this.sectionKey].findIndex(
       (set) => set.name === name
     );
     const filterValues = this.getFilterValues();
     const newSet = { name, values: filterValues };
 
     if (existingIndex > -1) {
-      window.savedFilterSets[this.sectionKey][existingIndex] = newSet;
+      savedSets[this.sectionKey][existingIndex] = newSet;
     } else {
-      window.savedFilterSets[this.sectionKey].push(newSet);
+      savedSets[this.sectionKey].push(newSet);
     }
 
-    browser.storage.local.set({ savedFilterSets: window.savedFilterSets });
+    browser.storage.local.set({ savedFilterSets: savedSets });
     this.populateSavedFilterDropdown();
     document.getElementById(`${this.prefix}-saved-filters-select`).value = name;
     nameInput.value = "";
@@ -406,9 +403,9 @@ export class SectionManager {
     const name = select.value;
     if (!name) return;
 
-    const set = (window.savedFilterSets[this.sectionKey] || []).find(
-      (s) => s.name === name
-    );
+    const set = (
+      this.globalSettings.savedFilterSets[this.sectionKey] || []
+    ).find((s) => s.name === name);
     if (!set) return;
 
     Object.entries(set.values).forEach(([id, value]) => {
@@ -432,10 +429,11 @@ export class SectionManager {
       return;
     }
 
-    window.savedFilterSets[this.sectionKey] = (
-      window.savedFilterSets[this.sectionKey] || []
-    ).filter((set) => set.name !== name);
-    browser.storage.local.set({ savedFilterSets: window.savedFilterSets });
+    const savedSets = this.globalSettings.savedFilterSets;
+    savedSets[this.sectionKey] = (savedSets[this.sectionKey] || []).filter(
+      (set) => set.name !== name
+    );
+    browser.storage.local.set({ savedFilterSets: savedSets });
     this.populateSavedFilterDropdown();
     showMessage(`Filtro "${name}" apagado.`, "success");
   }
@@ -449,7 +447,7 @@ export class SectionManager {
     const currentSelection = select.value;
     select.innerHTML = '<option value="">Carregar um filtro...</option>';
 
-    const sets = window.savedFilterSets[this.sectionKey] || [];
+    const sets = this.globalSettings.savedFilterSets[this.sectionKey] || [];
     sets.forEach((set) => {
       const option = document.createElement("option");
       option.value = set.name;
@@ -462,7 +460,8 @@ export class SectionManager {
   renderFilterControls() {
     try {
       const sectionFilters = filterConfig[this.sectionKey] || [];
-      const sectionLayout = window.filterLayout[this.sectionKey] || [];
+      const sectionLayout =
+        this.globalSettings.filterLayout[this.sectionKey] || [];
       const layoutMap = new Map(sectionLayout.map((f) => [f.id, f]));
 
       const sortedFilters = [...sectionFilters].sort((a, b) => {

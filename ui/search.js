@@ -10,6 +10,9 @@ let searchInput;
 let searchResultsList;
 let recentPatientsList;
 
+// --- Estado do Módulo ---
+let recentPatients = [];
+
 /**
  * Renderiza a lista de resultados da busca.
  * @param {Array<object>} patients - Lista de pacientes encontrados.
@@ -36,7 +39,7 @@ function renderSearchResults(patients) {
  */
 function renderRecentPatients() {
   if (!recentPatientsList) return;
-  const recents = window.recentPatients || [];
+  const recents = recentPatients || [];
   recentPatientsList.innerHTML =
     '<li class="px-4 pt-3 pb-1 text-xs font-semibold text-slate-400">PACIENTES RECENTES</li>' +
     (recents.length === 0
@@ -146,11 +149,15 @@ async function handleResultClick(event) {
 
 /**
  * Inicializa o módulo de busca.
+ * @param {object} config - Configuração com as dependências do módulo.
+ * @param {Array} config.recentPatients - A lista de pacientes recentes.
  */
-export function init() {
+export function init(config) {
   searchInput = document.getElementById("patient-search-input");
   searchResultsList = document.getElementById("search-results");
   recentPatientsList = document.getElementById("recent-patients-list");
+
+  recentPatients = config.recentPatients || [];
 
   searchInput.addEventListener("input", Utils.debounce(handleSearchInput, 500));
   searchInput.addEventListener("focus", handleSearchFocus);
