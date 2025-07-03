@@ -53,6 +53,31 @@
         padding: 0.25rem 0.5rem;
         font-size: 0.875rem;
       }
+      /* Estilos para abas */
+      .tabs {
+        display: flex;
+        border-bottom: 1px solid #e2e8f0;
+        margin-bottom: 1rem;
+      }
+      .tab-button {
+        padding: 0.75rem 1rem;
+        cursor: pointer;
+        border: none;
+        background-color: transparent;
+        border-bottom: 2px solid transparent;
+        font-weight: 500;
+        color: #64748b;
+      }
+      .tab-button.active {
+        color: #2563eb;
+        border-bottom-color: #2563eb;
+      }
+      .tab-content {
+        display: none;
+      }
+      .tab-content.active {
+        display: block;
+      }
     </style>
   </head>
   <body class="bg-slate-50 text-slate-800 antialiased">
@@ -78,7 +103,6 @@
           Assistente de Regulação
         </h1>
       </div>
-      <!-- ATUALIZADO: O link agora é um botão para fechar a aba -->
       <button
         id="closeButton"
         title="Fechar"
@@ -108,7 +132,6 @@
               placeholder="https://exemplo.com"
             />
           </div>
-          <!-- Preferências -->
           <div
             class="bg-white p-4 rounded-lg border border-slate-200 shadow-sm mt-4"
           >
@@ -275,6 +298,113 @@
           <div>
             <h3 class="font-semibold mb-2">Campos em "Mostrar Mais"</h3>
             <div id="more-fields-zone" class="drop-zone"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- NOVA Seção de Configuração de Filtros -->
+      <section
+        id="filter-config-section"
+        class="bg-white p-4 rounded-lg border border-slate-200 shadow-sm"
+      >
+        <h2 class="text-md font-semibold text-slate-700 mb-3">
+          Configurar Filtros das Seções
+        </h2>
+        <p class="text-sm text-slate-500 mb-4">
+          Arraste os filtros para definir quais aparecerão na visão principal e
+          quais ficarão em "Mais filtros" em cada seção da barra lateral.
+        </p>
+        <div id="filter-tabs-container">
+          <div class="tabs">
+            <button class="tab-button active" data-tab="consultations">
+              Consultas
+            </button>
+            <button class="tab-button" data-tab="exams">Exames</button>
+            <button class="tab-button" data-tab="appointments">
+              Agendamentos
+            </button>
+            <button class="tab-button" data-tab="regulations">Regulação</button>
+          </div>
+          <!-- Conteúdo das Abas de Filtros -->
+          <div id="consultations-tab" class="tab-content active">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-4">
+              <div>
+                <h3 class="font-semibold mb-2">Filtros Principais</h3>
+                <div
+                  id="consultations-main-filters-zone"
+                  class="drop-zone"
+                  data-section="consultations"
+                ></div>
+              </div>
+              <div>
+                <h3 class="font-semibold mb-2">Demais Filtros</h3>
+                <div
+                  id="consultations-more-filters-zone"
+                  class="drop-zone"
+                  data-section="consultations"
+                ></div>
+              </div>
+            </div>
+          </div>
+          <div id="exams-tab" class="tab-content">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-4">
+              <div>
+                <h3 class="font-semibold mb-2">Filtros Principais</h3>
+                <div
+                  id="exams-main-filters-zone"
+                  class="drop-zone"
+                  data-section="exams"
+                ></div>
+              </div>
+              <div>
+                <h3 class="font-semibold mb-2">Demais Filtros</h3>
+                <div
+                  id="exams-more-filters-zone"
+                  class="drop-zone"
+                  data-section="exams"
+                ></div>
+              </div>
+            </div>
+          </div>
+          <div id="appointments-tab" class="tab-content">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-4">
+              <div>
+                <h3 class="font-semibold mb-2">Filtros Principais</h3>
+                <div
+                  id="appointments-main-filters-zone"
+                  class="drop-zone"
+                  data-section="appointments"
+                ></div>
+              </div>
+              <div>
+                <h3 class="font-semibold mb-2">Demais Filtros</h3>
+                <div
+                  id="appointments-more-filters-zone"
+                  class="drop-zone"
+                  data-section="appointments"
+                ></div>
+              </div>
+            </div>
+          </div>
+          <div id="regulations-tab" class="tab-content">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-4">
+              <div>
+                <h3 class="font-semibold mb-2">Filtros Principais</h3>
+                <div
+                  id="regulations-main-filters-zone"
+                  class="drop-zone"
+                  data-section="regulations"
+                ></div>
+              </div>
+              <div>
+                <h3 class="font-semibold mb-2">Demais Filtros</h3>
+                <div
+                  id="regulations-more-filters-zone"
+                  class="drop-zone"
+                  data-section="regulations"
+                ></div>
+              </div>
+            </div>
           </div>
         </div>
       </section>

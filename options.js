@@ -1,14 +1,21 @@
 import { defaultFieldConfig } from "./field-config.js";
+import { filterConfig } from "./filter-config.js"; // NOVO
 
 // --- Elementos do DOM ---
 const saveButton = document.getElementById("saveButton");
 const statusMessage = document.getElementById("statusMessage");
-const mainFieldsZone = document.getElementById("main-fields-zone");
-const moreFieldsZone = document.getElementById("more-fields-zone");
 const closeButton = document.getElementById("closeButton");
 
+// Ficha do Paciente
+const mainFieldsZone = document.getElementById("main-fields-zone");
+const moreFieldsZone = document.getElementById("more-fields-zone");
+
+// Abas e Zonas de Filtros (NOVO)
+const filterTabsContainer = document.getElementById("filter-tabs-container");
+const allDropZones = document.querySelectorAll(".drop-zone");
+
 /**
- * Cria um elemento de campo arrastável.
+ * Cria um elemento de campo arrastável para a Ficha do Paciente.
  * @param {object} field - O objeto de configuração do campo.
  * @returns {HTMLElement} O elemento <div> do campo.
  */
@@ -33,10 +40,33 @@ function createDraggableField(field) {
 }
 
 /**
- * Renderiza os campos nas zonas corretas (principal e 'mais').
+ * Cria um elemento de filtro arrastável para as Configurações de Filtro.
+ * @param {object} filter - O objeto de configuração do filtro.
+ * @returns {HTMLElement} O elemento <div> do filtro.
+ */
+function createDraggableFilter(filter) {
+  const div = document.createElement("div");
+  div.className = "draggable";
+  div.dataset.filterId = filter.id;
+  div.draggable = true;
+
+  div.innerHTML = `
+    <span class="drag-handle">⠿</span>
+    <span class="flex-grow font-medium text-sm">${filter.label}</span>
+    <span class="text-xs text-slate-400 p-1 bg-slate-100 rounded">${filter.type}</span>
+  `;
+
+  div.addEventListener("dragstart", handleDragStart);
+  div.addEventListener("dragend", handleDragEnd);
+
+  return div;
+}
+
+/**
+ * Renderiza os campos da Ficha do Paciente nas zonas corretas.
  * @param {Array<object>} config - A configuração de campos.
  */
-function renderFields(config) {
+function renderPatientFields(config) {
   mainFieldsZone.innerHTML = "";
   moreFieldsZone.innerHTML = "";
 
@@ -53,6 +83,45 @@ function renderFields(config) {
 }
 
 /**
+ * Renderiza os filtros de seção nas zonas corretas. (NOVO)
+ * @param {object} layout - A configuração de layout dos filtros.
+ */
+function renderFilterLayout(layout) {
+  // Limpa todas as zonas de drop de filtros
+  Object.keys(filterConfig).forEach((section) => {
+    document.getElementById(`${section}-main-filters-zone`).innerHTML = "";
+    document.getElementById(`${section}-more-filters-zone`).innerHTML = "";
+  });
+
+  // Itera sobre cada seção definida em filterConfig
+  Object.entries(filterConfig).forEach(([sectionKey, filters]) => {
+    const sectionLayout = layout[sectionKey] || [];
+
+    // Cria um mapa para acesso rápido ao layout de cada filtro
+    const layoutMap = new Map(sectionLayout.map((f) => [f.id, f]));
+
+    // Ordena os filtros com base na ordem salva, tratando filtros novos
+    const sortedFilters = [...filters].sort((a, b) => {
+      const orderA = layoutMap.get(a.id)?.order ?? Infinity;
+      const orderB = layoutMap.get(b.id)?.order ?? Infinity;
+      return orderA - orderB;
+    });
+
+    // Renderiza cada filtro na sua zona
+    sortedFilters.forEach((filter) => {
+      const filterLayout = layoutMap.get(filter.id);
+      const location = filterLayout?.location || filter.defaultLocation;
+      const zoneId = `${sectionKey}-${location}-filters-zone`;
+      const zone = document.getElementById(zoneId);
+      if (zone) {
+        const filterElement = createDraggableFilter(filter);
+        zone.appendChild(filterElement);
+      }
+    });
+  });
+}
+
+/**
  * Carrega a configuração salva ou usa a padrão.
  */
 async function restoreOptions() {
@@ -60,11 +129,12 @@ async function restoreOptions() {
     baseUrl: "",
     autoLoadExams: false,
     autoLoadConsultations: false,
-    autoLoadAppointments: false, // NOVO
-    autoLoadRegulations: false, // NOVO
+    autoLoadAppointments: false,
+    autoLoadRegulations: false,
     hideNoShowDefault: false,
     monthsBack: 6,
     patientFields: defaultFieldConfig,
+    filterLayout: {}, // NOVO
   });
 
   // Restaura configurações gerais
@@ -74,21 +144,24 @@ async function restoreOptions() {
   document.getElementById("autoLoadConsultationsCheckbox").checked =
     items.autoLoadConsultations;
   document.getElementById("autoLoadAppointmentsCheckbox").checked =
-    items.autoLoadAppointments; // NOVO
+    items.autoLoadAppointments;
   document.getElementById("autoLoadRegulationsCheckbox").checked =
-    items.autoLoadRegulations; // NOVO
+    items.autoLoadRegulations;
   document.getElementById("hideNoShowDefaultCheckbox").checked =
     items.hideNoShowDefault;
   document.getElementById("monthsBackInput").value = items.monthsBack;
 
   // Restaura configuração da ficha do paciente
-  const currentConfig = defaultFieldConfig.map((defaultField) => {
+  const currentPatientFieldsConfig = defaultFieldConfig.map((defaultField) => {
     const savedField = items.patientFields.find(
       (f) => f.id === defaultField.id
     );
     return savedField ? { ...defaultField, ...savedField } : defaultField;
   });
-  renderFields(currentConfig);
+  renderPatientFields(currentPatientFieldsConfig);
+
+  // Restaura configuração de layout dos filtros (NOVO)
+  renderFilterLayout(items.filterLayout);
 }
 
 /**
@@ -104,11 +177,9 @@ async function saveOptions() {
     "autoLoadConsultationsCheckbox"
   ).checked;
   const autoLoadAppointments = document.getElementById(
-    // NOVO
     "autoLoadAppointmentsCheckbox"
   ).checked;
   const autoLoadRegulations = document.getElementById(
-    // NOVO
     "autoLoadRegulationsCheckbox"
   ).checked;
   const hideNoShowDefault = document.getElementById(
@@ -119,26 +190,61 @@ async function saveOptions() {
 
   // Coleta a configuração da ficha do paciente
   const patientFields = [];
-  document.querySelectorAll(".draggable").forEach((div) => {
+  mainFieldsZone.querySelectorAll(".draggable").forEach((div, index) => {
     const fieldId = div.dataset.fieldId;
     const label = div.querySelector(".field-label-input").value;
     const enabled = div.querySelector(".field-enabled-checkbox").checked;
-    const section =
-      div.closest(".drop-zone").id === "main-fields-zone" ? "main" : "more";
-    const order = Array.from(div.parentNode.children).indexOf(div) + 1;
-
-    patientFields.push({ id: fieldId, label, enabled, section, order });
+    patientFields.push({
+      id: fieldId,
+      label,
+      enabled,
+      section: "main",
+      order: index + 1,
+    });
   });
+  moreFieldsZone.querySelectorAll(".draggable").forEach((div, index) => {
+    const fieldId = div.dataset.fieldId;
+    const label = div.querySelector(".field-label-input").value;
+    const enabled = div.querySelector(".field-enabled-checkbox").checked;
+    patientFields.push({
+      id: fieldId,
+      label,
+      enabled,
+      section: "more",
+      order: index + 1,
+    });
+  });
+
+  // Coleta a configuração de layout dos filtros (NOVO)
+  const filterLayout = {};
+  document
+    .querySelectorAll("#filter-config-section .drop-zone")
+    .forEach((zone) => {
+      const section = zone.dataset.section;
+      if (!filterLayout[section]) {
+        filterLayout[section] = [];
+      }
+      const location = zone.id.includes("-main-") ? "main" : "more";
+      zone.querySelectorAll(".draggable").forEach((div, index) => {
+        const filterId = div.dataset.filterId;
+        filterLayout[section].push({
+          id: filterId,
+          location: location,
+          order: index + 1,
+        });
+      });
+    });
 
   await browser.storage.sync.set({
     baseUrl: baseUrl.endsWith("/") ? baseUrl.slice(0, -1) : baseUrl,
     autoLoadExams,
     autoLoadConsultations,
-    autoLoadAppointments, // NOVO
-    autoLoadRegulations, // NOVO
+    autoLoadAppointments,
+    autoLoadRegulations,
     hideNoShowDefault,
     monthsBack,
     patientFields,
+    filterLayout, // NOVO
   });
 
   statusMessage.textContent = "Configurações salvas com sucesso!";
@@ -198,14 +304,35 @@ function getDragAfterElement(container, y) {
   ).element;
 }
 
-// --- Inicialização ---
-document.addEventListener("DOMContentLoaded", restoreOptions);
-saveButton.addEventListener("click", saveOptions);
-mainFieldsZone.addEventListener("dragover", handleDragOver);
-moreFieldsZone.addEventListener("dragover", handleDragOver);
-mainFieldsZone.addEventListener("drop", handleDrop);
-moreFieldsZone.addEventListener("drop", handleDrop);
+// --- Lógica das Abas (Tabs) --- (NOVO)
+function setupTabs() {
+  const tabButtons = filterTabsContainer.querySelectorAll(".tab-button");
+  const tabContents = filterTabsContainer.querySelectorAll(".tab-content");
 
+  tabButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+      tabButtons.forEach((btn) => btn.classList.remove("active"));
+      tabContents.forEach((content) => content.classList.remove("active"));
+
+      button.classList.add("active");
+      document
+        .getElementById(`${button.dataset.tab}-tab`)
+        .classList.add("active");
+    });
+  });
+}
+
+// --- Inicialização ---
+document.addEventListener("DOMContentLoaded", () => {
+  restoreOptions();
+  setupTabs();
+});
+saveButton.addEventListener("click", saveOptions);
 closeButton.addEventListener("click", () => {
   window.close();
+});
+
+allDropZones.forEach((zone) => {
+  zone.addEventListener("dragover", handleDragOver);
+  zone.addEventListener("drop", handleDrop);
 });

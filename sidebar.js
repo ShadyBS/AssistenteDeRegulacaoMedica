@@ -12,16 +12,19 @@ import {
   fetchAllRegulations,
   getBaseUrl,
 } from "./api.js";
-// Importa a configuração de campos e a função de busca de valores
+// Importa as configurações
 import { defaultFieldConfig, getNestedValue } from "./field-config.js";
+import { filterConfig } from "./filter-config.js";
 
-// --- Seletores de Elementos do DOM ---
+// --- Seletores de Elementos do DOM (Gerais) ---
 const mainContent = document.getElementById("main-content");
+const loader = document.getElementById("loader");
+const messageArea = document.getElementById("message-area");
+
+// --- Seletores de Busca e Paciente ---
 const searchInput = document.getElementById("patient-search-input");
 const searchResultsList = document.getElementById("search-results");
 const recentPatientsList = document.getElementById("recent-patients-list");
-const loader = document.getElementById("loader");
-const messageArea = document.getElementById("message-area");
 const patientDetailsSection = document.getElementById(
   "patient-details-section"
 );
@@ -31,154 +34,17 @@ const patientAdditionalInfoDiv = document.getElementById(
 );
 const toggleDetailsBtn = document.getElementById("toggle-details-btn");
 
-// --- Seletores de Consultas ---
+// --- Seletores de Seções ---
 const consultationsSection = document.getElementById("consultations-section");
-const consultationsWrapper = document.getElementById("consultations-wrapper");
-const toggleConsultationsListBtn = document.getElementById(
-  "toggle-consultations-list-btn"
-);
-const dateInitialInput = document.getElementById("date-initial");
-const dateFinalInput = document.getElementById("date-final");
-const fetchConsultationsBtn = document.getElementById(
-  "fetch-consultations-btn"
-);
-const fetchTypeButtons = document.getElementById("fetch-type-buttons");
-const consultationsContent = document.getElementById("consultations-content");
-const debugSection = document.getElementById("debug-section");
-const toggleRawHtmlBtn = document.getElementById("toggle-raw-html-btn");
-const rawHtmlContent = document.getElementById("raw-html-content");
-const toggleMoreConsultationFiltersBtn = document.getElementById(
-  "toggle-more-consultation-filters-btn"
-);
-const consultationMoreFiltersDiv = document.getElementById(
-  "consultation-more-filters"
-);
-const consultationFilterKeyword = document.getElementById(
-  "consultation-filter-keyword"
-);
-const hideNoShowCheckbox = document.getElementById("hide-no-show-checkbox");
-const consultationFilterCid = document.getElementById(
-  "consultation-filter-cid"
-);
-const consultationFilterSpecialty = document.getElementById(
-  "consultation-filter-specialty"
-);
-const consultationFilterProfessional = document.getElementById(
-  "consultation-filter-professional"
-);
-const consultationFilterUnit = document.getElementById(
-  "consultation-filter-unit"
-);
-const clearConsultationFiltersBtn = document.getElementById(
-  "clear-consultation-filters-btn"
-);
-const consultationActiveFiltersIndicator = document.getElementById(
-  "consultation-active-filters-indicator"
-);
-
-// --- Seletores de Exames ---
 const examsSection = document.getElementById("exams-section");
-const examsWrapper = document.getElementById("exams-wrapper");
-const toggleExamsListBtn = document.getElementById("toggle-exams-list-btn");
-const examsContent = document.getElementById("exams-content");
-const examDateInitialInput = document.getElementById("exam-date-initial");
-const examDateFinalInput = document.getElementById("exam-date-final");
-const fetchExamsBtn = document.getElementById("fetch-exams-btn");
-const examFetchTypeButtons = document.getElementById("exam-fetch-type-buttons");
-const toggleMoreExamFiltersBtn = document.getElementById(
-  "toggle-more-exam-filters-btn"
-);
-const examMoreFiltersDiv = document.getElementById("exam-more-filters");
-const examFilterName = document.getElementById("exam-filter-name");
-const examFilterProfessional = document.getElementById(
-  "exam-filter-professional"
-);
-const examFilterSpecialty = document.getElementById("exam-filter-specialty");
-const clearExamFiltersBtn = document.getElementById("clear-exam-filters-btn");
-const examActiveFiltersIndicator = document.getElementById(
-  "exam-active-filters-indicator"
-);
-
-// --- Seletores de Agendamentos ---
 const appointmentsSection = document.getElementById("appointments-section");
-const appointmentsWrapper = document.getElementById("appointments-wrapper");
-const toggleAppointmentsListBtn = document.getElementById(
-  "toggle-appointments-list-btn"
-);
-const appointmentDateInitialInput = document.getElementById(
-  "appointment-date-initial"
-);
-const appointmentDateFinalInput = document.getElementById(
-  "appointment-date-final"
-);
-const fetchAppointmentsBtn = document.getElementById("fetch-appointments-btn");
-const appointmentsContent = document.getElementById("appointments-content");
-const appointmentFetchTypeButtons = document.getElementById(
-  "appointment-fetch-type-buttons"
-);
-const toggleMoreAppointmentFiltersBtn = document.getElementById(
-  "toggle-more-appointment-filters-btn"
-);
-const appointmentMoreFiltersDiv = document.getElementById(
-  "appointment-more-filters"
-);
-const appointmentFilterStatus = document.getElementById(
-  "appointment-filter-status"
-);
-const appointmentFilterTerm = document.getElementById(
-  "appointment-filter-term"
-);
-const appointmentFilterLocation = document.getElementById(
-  "appointment-filter-location"
-);
-const clearAppointmentFiltersBtn = document.getElementById(
-  "clear-appointment-filters-btn"
-);
-const appointmentActiveFiltersIndicator = document.getElementById(
-  "appointment-active-filters-indicator"
-);
-
-// --- Seletores de Regulação ---
 const regulationsSection = document.getElementById("regulations-section");
-const regulationsWrapper = document.getElementById("regulations-wrapper");
-const toggleRegulationsListBtn = document.getElementById(
-  "toggle-regulations-list-btn"
-);
-const regulationDateInitialInput = document.getElementById(
-  "regulation-date-initial"
-);
-const regulationDateFinalInput = document.getElementById(
-  "regulation-date-final"
-);
-const fetchRegulationsBtn = document.getElementById("fetch-regulations-btn");
+
+// --- Seletores de Conteúdo ---
+const consultationsContent = document.getElementById("consultations-content");
+const examsContent = document.getElementById("exams-content");
+const appointmentsContent = document.getElementById("appointments-content");
 const regulationsContent = document.getElementById("regulations-content");
-const regulationFetchTypeButtons = document.getElementById(
-  "regulation-fetch-type-buttons"
-);
-const toggleMoreRegulationFiltersBtn = document.getElementById(
-  "toggle-more-regulation-filters-btn"
-);
-const regulationMoreFiltersDiv = document.getElementById(
-  "regulation-more-filters"
-);
-const regulationFilterStatus = document.getElementById(
-  "regulation-filter-status"
-);
-const regulationFilterPriority = document.getElementById(
-  "regulation-filter-priority"
-);
-const regulationFilterProcedure = document.getElementById(
-  "regulation-filter-procedure"
-);
-const regulationFilterRequester = document.getElementById(
-  "regulation-filter-requester"
-);
-const clearRegulationFiltersBtn = document.getElementById(
-  "clear-regulation-filters-btn"
-);
-const regulationActiveFiltersIndicator = document.getElementById(
-  "regulation-active-filters-indicator"
-);
 
 // --- Seletores do Modal ---
 const infoModal = document.getElementById("info-modal");
@@ -189,27 +55,92 @@ const modalCloseBtn = document.getElementById("modal-close-btn");
 // --- Variáveis de Estado ---
 let currentPatient = null;
 let recentPatients = [];
-let fieldConfig = [];
+let fieldConfigLayout = [];
+let filterLayout = {}; // Layout dos filtros (main/more, order)
+let savedFilterSets = {}; // Conjuntos de filtros salvos pelo usuário
+
 // Dados completos
 let allFetchedConsultations = [];
 let allFetchedExams = [];
 let allFetchedAppointments = [];
 let allFetchedRegulations = [];
-// Tipos de busca
-let currentFetchType = "all";
+
+// Tipos de busca (para botões de grupo)
+let currentConsultationFetchType = "all";
 let currentExamFetchType = "all";
 let currentAppointmentFetchType = "all";
 let currentRegulationFetchType = "all";
+
 // Estados de ordenação
-let consultationSortState = { key: "date", order: "desc" };
+let consultationSortState = { key: "sortableDate", order: "desc" };
 let examSortState = { key: "date", order: "desc" };
 let appointmentSortState = { key: "date", order: "desc" };
 let regulationSortState = { key: "date", order: "desc" };
 
-// --- Funções de Armazenamento ---
-async function loadRecentPatients() {
-  const data = await browser.storage.local.get({ recentPatients: [] });
-  recentPatients = data.recentPatients;
+// --- Mapas para Chamadas de Função Dinâmicas ---
+const fetchHandlers = {
+  consultations: handleFetchConsultations,
+  exams: handleFetchExams,
+  appointments: handleFetchAppointments,
+  regulations: handleFetchRegulations,
+};
+
+const applyFilterHandlers = {
+  consultations: applyConsultationFiltersAndRender,
+  exams: applyExamFiltersAndRender,
+  appointments: applyAppointmentFiltersAndRender,
+  regulations: applyRegulationFiltersAndRender,
+};
+
+// CORREÇÃO: Mapa para lidar com inconsistências de ID (singular vs plural)
+const idPrefixMap = {
+  consultations: "consultation",
+  exams: "exam",
+  appointments: "appointment",
+  regulations: "regulation",
+};
+
+// --- Funções de Armazenamento e Configuração ---
+
+async function loadConfigAndData() {
+  const data = await browser.storage.sync.get({
+    patientFields: defaultFieldConfig,
+    filterLayout: {},
+    // Preferências de usuário
+    autoLoadExams: false,
+    autoLoadConsultations: false,
+    autoLoadAppointments: false,
+    autoLoadRegulations: false,
+    hideNoShowDefault: false,
+    monthsBack: 6,
+  });
+
+  // Configuração da Ficha do Paciente
+  fieldConfigLayout = defaultFieldConfig.map((defaultField) => {
+    const savedField = data.patientFields.find((f) => f.id === defaultField.id);
+    return savedField ? { ...defaultField, ...savedField } : defaultField;
+  });
+
+  // Configuração do Layout dos Filtros
+  filterLayout = data.filterLayout;
+
+  // Preferências do Usuário
+  window.userPreferences = {
+    autoLoadExams: data.autoLoadExams,
+    autoLoadConsultations: data.autoLoadConsultations,
+    autoLoadAppointments: data.autoLoadAppointments,
+    autoLoadRegulations: data.autoLoadRegulations,
+    hideNoShowDefault: data.hideNoShowDefault,
+    monthsBack: data.monthsBack,
+  };
+
+  // Carregar Pacientes Recentes e Filtros Salvos (do storage.local)
+  const localData = await browser.storage.local.get({
+    recentPatients: [],
+    savedFilterSets: {},
+  });
+  recentPatients = localData.recentPatients;
+  savedFilterSets = localData.savedFilterSets;
 }
 
 async function saveRecentPatient(patient) {
@@ -221,15 +152,8 @@ async function saveRecentPatient(patient) {
   await browser.storage.local.set({ recentPatients });
 }
 
-async function loadFieldConfig() {
-  const data = await browser.storage.sync.get({
-    patientFields: defaultFieldConfig,
-  });
-  const savedConfig = data.patientFields;
-  fieldConfig = defaultFieldConfig.map((defaultField) => {
-    const savedField = savedConfig.find((f) => f.id === defaultField.id);
-    return savedField ? { ...defaultField, ...savedField } : defaultField;
-  });
+async function saveFilterSetsToStorage() {
+  await browser.storage.local.set({ savedFilterSets });
 }
 
 // --- Funções Utilitárias ---
@@ -255,16 +179,171 @@ function showMessage(text, type = "error") {
 function clearMessage() {
   messageArea.style.display = "none";
 }
-
 const parseDate = (dateString) => {
   if (!dateString || typeof dateString !== "string") return null;
   const parts = dateString.split("/");
   if (parts.length !== 3) return null;
-  // Assume dd/MM/yyyy
   return new Date(parts[2], parts[1] - 1, parts[0]);
 };
 
-// --- Funções de Renderização ---
+// --- Funções de Renderização Dinâmica (Fase 4) ---
+
+/**
+ * Cria e renderiza os controles de filtro para todas as seções dinamicamente.
+ */
+function renderAllFilterControls() {
+  try {
+    Object.keys(filterConfig).forEach((sectionKey) => {
+      const sectionFilters = filterConfig[sectionKey];
+      const sectionLayout = filterLayout[sectionKey] || [];
+      const layoutMap = new Map(sectionLayout.map((f) => [f.id, f]));
+
+      const sortedFilters = [...sectionFilters].sort((a, b) => {
+        const orderA = layoutMap.get(a.id)?.order ?? Infinity;
+        const orderB = layoutMap.get(b.id)?.order ?? Infinity;
+        return orderA - orderB;
+      });
+
+      // CORREÇÃO: Usa o mapa de prefixos para encontrar os containers
+      const prefix = idPrefixMap[sectionKey];
+      const mainContainer = document.getElementById(`${prefix}-main-filters`);
+      const moreContainer = document.getElementById(`${prefix}-more-filters`);
+
+      if (mainContainer) mainContainer.innerHTML = "";
+      if (moreContainer) moreContainer.innerHTML = "";
+
+      sortedFilters.forEach((filter) => {
+        const location =
+          layoutMap.get(filter.id)?.location || filter.defaultLocation;
+        const container = location === "main" ? mainContainer : moreContainer;
+        if (container) {
+          container.appendChild(createFilterElement(filter));
+        } else {
+          console.warn(`Container para o filtro ${filter.id} não encontrado.`);
+        }
+      });
+
+      renderSavedFiltersUI(sectionKey);
+    });
+  } catch (e) {
+    console.error("Erro crítico ao renderizar os filtros:", e);
+    showMessage("Falha ao criar interface de filtros.", "error");
+  }
+}
+
+/**
+ * Cria um único elemento de filtro (label, input, etc.) com base na sua configuração.
+ * @param {object} filter - O objeto de configuração do filtro.
+ * @returns {HTMLElement} O elemento container do filtro (ex: <div>).
+ */
+function createFilterElement(filter) {
+  const container = document.createElement("div");
+  let elementHtml = "";
+
+  if (filter.type !== "checkbox") {
+    elementHtml += `<label for="${filter.id}" class="block font-medium mb-1 text-sm">${filter.label}</label>`;
+  }
+
+  switch (filter.type) {
+    case "text":
+      elementHtml += `<input type="text" id="${filter.id}" placeholder="${
+        filter.placeholder || ""
+      }" class="w-full px-2 py-1 border border-slate-300 rounded-md">`;
+      break;
+    case "select":
+      elementHtml += `<select id="${filter.id}" class="w-full px-2 py-1 border border-slate-300 rounded-md bg-white">`;
+      filter.options.forEach((opt) => {
+        elementHtml += `<option value="${opt.value}">${opt.text}</option>`;
+      });
+      elementHtml += `</select>`;
+      break;
+    case "checkbox":
+      container.className = "flex items-center";
+      elementHtml += `<input id="${
+        filter.id
+      }" type="checkbox" class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" ${
+        filter.defaultChecked ? "checked" : ""
+      }>
+            <label for="${
+              filter.id
+            }" class="ml-2 block text-sm text-slate-700">${
+        filter.label
+      }</label>`;
+      break;
+    case "buttonGroup":
+      elementHtml += `<div id="${filter.id}" class="grid grid-cols-${filter.buttons.length} gap-1 p-1 bg-slate-100 rounded-lg">`;
+      filter.buttons.forEach((btn, index) => {
+        const isActive = index === 0;
+        elementHtml += `<button data-fetch-type="${btn.value}"
+                    class="${filter.id}-btn ${
+          isActive ? "btn-active" : "text-slate-600 hover:bg-slate-200"
+        } px-2 py-1 text-sm rounded-md transition-colors">
+                    ${btn.text}
+                </button>`;
+      });
+      elementHtml += `</div>`;
+      break;
+  }
+
+  container.innerHTML = elementHtml;
+  return container;
+}
+
+/**
+ * Renderiza a UI para salvar, carregar e deletar conjuntos de filtros.
+ * @param {string} sectionKey - A chave da seção (ex: 'consultations').
+ */
+function renderSavedFiltersUI(sectionKey) {
+  const prefix = idPrefixMap[sectionKey];
+  const container = document.getElementById(
+    `${prefix}-saved-filters-container`
+  );
+  if (!container) return;
+
+  container.innerHTML = `
+        <h3 class="text-sm font-semibold text-slate-600 mt-3 mb-2">Filtros Salvos</h3>
+        <div class="flex items-center gap-2">
+            <select id="${prefix}-saved-filters-select" class="flex-grow w-full px-2 py-1 border border-slate-300 rounded-md bg-white text-sm">
+                <option value="">Carregar um filtro...</option>
+            </select>
+            <button id="${prefix}-delete-filter-btn" title="Deletar selecionado" class="p-1.5 text-slate-500 hover:bg-red-100 hover:text-red-600 rounded">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>
+                    <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/>
+                </svg>
+            </button>
+        </div>
+        <div class="flex items-center gap-2 mt-2">
+            <input type="text" id="${prefix}-save-filter-name-input" placeholder="Nome para o novo filtro..." class="flex-grow w-full px-2 py-1 border border-slate-300 rounded-md text-sm">
+            <button id="${prefix}-save-filter-btn" class="px-3 py-1 bg-blue-100 text-blue-700 hover:bg-blue-200 rounded text-sm font-medium">Salvar</button>
+        </div>
+    `;
+  populateSavedFilterDropdown(sectionKey);
+}
+
+/**
+ * Popula o dropdown de filtros salvos para uma seção específica.
+ * @param {string} sectionKey
+ */
+function populateSavedFilterDropdown(sectionKey) {
+  const prefix = idPrefixMap[sectionKey];
+  const select = document.getElementById(`${prefix}-saved-filters-select`);
+  if (!select) return;
+
+  const currentSelection = select.value;
+  select.innerHTML = '<option value="">Carregar um filtro...</option>';
+
+  const sets = savedFilterSets[sectionKey] || [];
+  sets.forEach((set) => {
+    const option = document.createElement("option");
+    option.value = set.name;
+    option.textContent = set.name;
+    select.appendChild(option);
+  });
+  select.value = currentSelection;
+}
+
+// --- Funções de Renderização de Conteúdo (Resultados) ---
 
 function renderPatientDetails(patientData, cadsusData) {
   currentPatient = patientData;
@@ -286,7 +365,7 @@ function renderPatientDetails(patientData, cadsusData) {
     return data[field.cadsusKey];
   };
 
-  const sortedFields = [...fieldConfig].sort((a, b) => a.order - b.order);
+  const sortedFields = [...fieldConfigLayout].sort((a, b) => a.order - b.order);
 
   sortedFields.forEach((field) => {
     if (!field.enabled) return;
@@ -434,8 +513,8 @@ function renderConsultations(consultations) {
           "specialty",
           consultationSortState
         )}</span></span>
-        <span class="sort-header w-1/3 text-right" data-sort-key="date">Data <span class="sort-indicator">${getSortIndicator(
-          "date",
+        <span class="sort-header w-1/3 text-right" data-sort-key="sortableDate">Data <span class="sort-indicator">${getSortIndicator(
+          "sortableDate",
           consultationSortState
         )}</span></span>
     </div>
@@ -653,10 +732,19 @@ function renderRegulations(regulations) {
 
   const priorityStyles = {
     EMERGENCIA: "bg-red-500 text-white",
-    MUITOALTA: "bg-orange-500 text-white",
+    "MUITO ALTA": "bg-orange-500 text-white",
     ALTA: "bg-yellow-500 text-black",
     NORMAL: "bg-blue-500 text-white",
     BAIXA: "bg-green-500 text-white",
+  };
+
+  const statusStyles = {
+    AUTORIZADO: "bg-green-100 text-green-800",
+    PENDENTE: "bg-yellow-100 text-yellow-800",
+    NEGADO: "bg-red-100 text-red-800",
+    DEVOLVIDO: "bg-orange-100 text-orange-800",
+    CANCELADA: "bg-gray-100 text-gray-800",
+    "EM ANÁLISE": "bg-blue-100 text-blue-800",
   };
 
   const headers = `
@@ -680,14 +768,10 @@ function renderRegulations(regulations) {
     headers +
     regulations
       .map((item) => {
-        const statusKey = item.status
-          .toUpperCase()
-          .replace("ANALISE", "ANÁLISE");
+        const statusKey = (item.status || "").toUpperCase();
         const style = statusStyles[statusKey] || "bg-gray-100 text-gray-800";
 
-        const priorityKey = (item.priority || "")
-          .toUpperCase()
-          .replace(" ", "");
+        const priorityKey = (item.priority || "").toUpperCase();
         const priorityStyle =
           priorityStyles[priorityKey] || "bg-gray-400 text-white";
 
@@ -751,13 +835,9 @@ function sortData(data, state) {
   sortedData.sort((a, b) => {
     let valA, valB;
 
-    if (key === "date") {
-      valA = parseDate(a.date);
-      valB = parseDate(b.date);
-    } else if (key === "specialty" && a.sortableDate) {
-      // Specific for consultations
-      valA = a.sortableDate;
-      valB = b.sortableDate;
+    if (key === "date" || key === "sortableDate") {
+      valA = a.sortableDate || parseDate(a.date);
+      valB = b.sortableDate || parseDate(b.date);
     } else {
       valA = (a[key] || "").toString().toLowerCase();
       valB = (b[key] || "").toString().toLowerCase();
@@ -770,24 +850,33 @@ function sortData(data, state) {
   return sortedData;
 }
 
-function updateActiveFiltersIndicator(
-  moreFiltersDiv,
-  indicator,
-  filterElements
-) {
+function updateActiveFiltersIndicator(sectionKey) {
+  const prefix = idPrefixMap[sectionKey];
+  const moreFiltersDiv = document.getElementById(`${prefix}-more-filters`);
+  const indicator = document.getElementById(
+    `${prefix}-active-filters-indicator`
+  );
+  if (!moreFiltersDiv || !indicator) return;
+
   const isShown = moreFiltersDiv.classList.contains("show");
   let activeCount = 0;
+
+  const filterElements = Array.from(
+    moreFiltersDiv.querySelectorAll("input, select")
+  );
+
   filterElements.forEach((el) => {
     if (
       el.type === "select-one" &&
       el.value !== "todos" &&
-      el.value !== "todas"
+      el.value !== "todas" &&
+      el.value !== ""
     ) {
       activeCount++;
     } else if (el.type === "text" && el.value.trim() !== "") {
       activeCount++;
     } else if (el.type === "checkbox" && el.checked) {
-      // Specific case for checkboxes if needed, not currently in "more filters"
+      activeCount++;
     }
   });
 
@@ -799,17 +888,40 @@ function updateActiveFiltersIndicator(
   }
 }
 
+function getFilterValues(sectionKey) {
+  const values = {};
+  const filters = filterConfig[sectionKey] || [];
+  filters.forEach((filter) => {
+    const el = document.getElementById(filter.id);
+    if (!el) return;
+
+    if (filter.type === "checkbox") {
+      values[filter.id] = el.checked;
+    } else if (filter.type === "buttonGroup") {
+      // Este valor é tratado por uma variável de estado global
+    } else {
+      values[filter.id] = el.value;
+    }
+  });
+  return values;
+}
+
 function applyConsultationFiltersAndRender() {
   let filteredData = [...allFetchedConsultations];
+  const filters = getFilterValues("consultations");
 
-  const keyword = consultationFilterKeyword.value.toLowerCase().trim();
-  const hideNoShows = hideNoShowCheckbox.checked;
-  const cid = consultationFilterCid.value.toLowerCase().trim();
-  const specialty = consultationFilterSpecialty.value.toLowerCase().trim();
-  const professional = consultationFilterProfessional.value
+  const keyword = (filters["consultation-filter-keyword"] || "")
     .toLowerCase()
     .trim();
-  const unit = consultationFilterUnit.value.toLowerCase().trim();
+  const hideNoShows = filters["hide-no-show-checkbox"];
+  const cid = (filters["consultation-filter-cid"] || "").toLowerCase().trim();
+  const specialty = (filters["consultation-filter-specialty"] || "")
+    .toLowerCase()
+    .trim();
+  const professional = (filters["consultation-filter-professional"] || "")
+    .toLowerCase()
+    .trim();
+  const unit = (filters["consultation-filter-unit"] || "").toLowerCase().trim();
 
   if (hideNoShows) {
     filteredData = filteredData.filter((c) => !c.isNoShow);
@@ -892,25 +1004,26 @@ function applyConsultationFiltersAndRender() {
 
   const sortedData = sortData(filteredData, consultationSortState);
   renderConsultations(sortedData);
-  updateActiveFiltersIndicator(
-    consultationMoreFiltersDiv,
-    consultationActiveFiltersIndicator,
-    [
-      fetchTypeButtons,
-      consultationFilterCid,
-      consultationFilterSpecialty,
-      consultationFilterProfessional,
-      consultationFilterUnit,
-    ]
-  );
+  updateActiveFiltersIndicator("consultations");
 }
 
 function applyExamFiltersAndRender() {
   let filteredData = [...allFetchedExams];
+  const filters = getFilterValues("exams");
 
-  const name = examFilterName.value.toLowerCase().trim();
-  const professional = examFilterProfessional.value.toLowerCase().trim();
-  const specialty = examFilterSpecialty.value.toLowerCase().trim();
+  const name = (filters["exam-filter-name"] || "").toLowerCase().trim();
+  const professional = (filters["exam-filter-professional"] || "")
+    .toLowerCase()
+    .trim();
+  const specialty = (filters["exam-filter-specialty"] || "")
+    .toLowerCase()
+    .trim();
+
+  if (currentExamFetchType === "withResult") {
+    filteredData = filteredData.filter((e) => e.hasResult);
+  } else if (currentExamFetchType === "withoutResult") {
+    filteredData = filteredData.filter((e) => !e.hasResult);
+  }
 
   if (name) {
     const searchTerms = name
@@ -953,18 +1066,18 @@ function applyExamFiltersAndRender() {
 
   const sortedData = sortData(filteredData, examSortState);
   renderExams(sortedData);
-  updateActiveFiltersIndicator(examMoreFiltersDiv, examActiveFiltersIndicator, [
-    examFilterProfessional,
-    examFilterSpecialty,
-  ]);
+  updateActiveFiltersIndicator("exams");
 }
 
 function applyAppointmentFiltersAndRender() {
   let filteredData = [...allFetchedAppointments];
+  const filters = getFilterValues("appointments");
 
-  const status = appointmentFilterStatus.value;
-  const term = appointmentFilterTerm.value.toLowerCase().trim();
-  const location = appointmentFilterLocation.value.toLowerCase().trim();
+  const status = filters["appointment-filter-status"] || "todos";
+  const term = (filters["appointment-filter-term"] || "").toLowerCase().trim();
+  const location = (filters["appointment-filter-location"] || "")
+    .toLowerCase()
+    .trim();
 
   if (status !== "todos") {
     filteredData = filteredData.filter(
@@ -1012,20 +1125,21 @@ function applyAppointmentFiltersAndRender() {
 
   const sortedData = sortData(filteredData, appointmentSortState);
   renderAppointments(sortedData);
-  updateActiveFiltersIndicator(
-    appointmentMoreFiltersDiv,
-    appointmentActiveFiltersIndicator,
-    [appointmentFilterTerm, appointmentFilterLocation]
-  );
+  updateActiveFiltersIndicator("appointments");
 }
 
 function applyRegulationFiltersAndRender() {
   let filteredData = [...allFetchedRegulations];
+  const filters = getFilterValues("regulations");
 
-  const status = regulationFilterStatus.value;
-  const priority = regulationFilterPriority.value;
-  const procedureTerms = regulationFilterProcedure.value.toLowerCase().trim();
-  const requesterTerms = regulationFilterRequester.value.toLowerCase().trim();
+  const status = filters["regulation-filter-status"] || "todos";
+  const priority = filters["regulation-filter-priority"] || "todas";
+  const procedureTerms = (filters["regulation-filter-procedure"] || "")
+    .toLowerCase()
+    .trim();
+  const requesterTerms = (filters["regulation-filter-requester"] || "")
+    .toLowerCase()
+    .trim();
 
   if (status !== "todos") {
     filteredData = filteredData.filter(
@@ -1069,55 +1183,10 @@ function applyRegulationFiltersAndRender() {
 
   const sortedData = sortData(filteredData, regulationSortState);
   renderRegulations(sortedData);
-  updateActiveFiltersIndicator(
-    regulationMoreFiltersDiv,
-    regulationActiveFiltersIndicator,
-    [
-      regulationFilterPriority,
-      regulationFilterProcedure,
-      regulationFilterRequester,
-    ]
-  );
+  updateActiveFiltersIndicator("regulations");
 }
 
-// --- Preferências do Usuário ---
-let userPreferences = {
-  autoLoadExams: false,
-  autoLoadConsultations: false,
-  autoLoadAppointments: false,
-  autoLoadRegulations: false,
-  hideNoShowDefault: false,
-  monthsBack: 6,
-};
-
-async function loadUserPreferences() {
-  userPreferences = await browser.storage.sync.get({
-    autoLoadExams: false,
-    autoLoadConsultations: false,
-    autoLoadAppointments: false,
-    autoLoadRegulations: false,
-    hideNoShowDefault: false,
-    monthsBack: 6,
-  });
-}
-
-function applyUserPreferences() {
-  hideNoShowCheckbox.checked = userPreferences.hideNoShowDefault;
-  const months = userPreferences.monthsBack || 6;
-  const now = new Date();
-  const initial = new Date();
-  initial.setMonth(now.getMonth() - months);
-  dateInitialInput.valueAsDate = initial;
-  examDateInitialInput.valueAsDate = initial;
-  appointmentDateInitialInput.valueAsDate = initial;
-  regulationDateInitialInput.valueAsDate = initial;
-  dateFinalInput.valueAsDate = now;
-  examDateFinalInput.valueAsDate = now;
-  appointmentDateFinalInput.valueAsDate = now;
-  regulationDateFinalInput.valueAsDate = now;
-}
-
-// --- Manipuladores de Eventos ---
+// --- Funções de Manipulação de Eventos (Handlers) ---
 
 async function handleResultClick(event) {
   const listItem = event.target.closest("li");
@@ -1128,8 +1197,7 @@ async function handleResultClick(event) {
   examsContent.innerHTML = "";
   appointmentsContent.innerHTML = "";
   regulationsContent.innerHTML = "";
-  rawHtmlContent.textContent = "";
-  debugSection.style.display = "none";
+
   try {
     let initialPatientData;
     if (listItem.dataset.patient) {
@@ -1162,18 +1230,13 @@ async function handleResultClick(event) {
     searchResultsList.classList.add("hidden");
     recentPatientsList.classList.add("hidden");
 
-    if (userPreferences.autoLoadRegulations) {
+    if (window.userPreferences.autoLoadRegulations)
       await handleFetchRegulations();
-    }
-    if (userPreferences.autoLoadAppointments) {
+    if (window.userPreferences.autoLoadAppointments)
       await handleFetchAppointments();
-    }
-    if (userPreferences.autoLoadConsultations) {
+    if (window.userPreferences.autoLoadConsultations)
       await handleFetchConsultations();
-    }
-    if (userPreferences.autoLoadExams) {
-      await handleFetchExams();
-    }
+    if (window.userPreferences.autoLoadExams) await handleFetchExams();
   } catch (error) {
     showMessage("Erro ao carregar os dados do paciente.");
     console.error(error);
@@ -1190,7 +1253,6 @@ async function handleSearchInput(event) {
   examsSection.style.display = "none";
   appointmentsSection.style.display = "none";
   regulationsSection.style.display = "none";
-  debugSection.style.display = "none";
   currentPatient = null;
   recentPatientsList.classList.add("hidden");
   searchResultsList.classList.remove("hidden");
@@ -1220,24 +1282,29 @@ function handleToggleDetails() {
 
 async function handleFetchConsultations() {
   if (!currentPatient?.isenFullPKCrypto) {
-    if (consultationsSection.style.display !== "none") {
+    if (consultationsSection.style.display !== "none")
       showMessage("ID criptografado não encontrado.");
-    }
     return;
   }
-  const dataInicial = dateInitialInput.value
-    ? new Date(dateInitialInput.value).toLocaleDateString("pt-BR")
+  const dataInicial = document.getElementById("date-initial").value
+    ? new Date(
+        document.getElementById("date-initial").value
+      ).toLocaleDateString("pt-BR")
     : "01/01/1900";
-  const dataFinal = dateFinalInput.value
-    ? new Date(dateFinalInput.value).toLocaleDateString("pt-BR")
+  const dataFinal = document.getElementById("date-final").value
+    ? new Date(document.getElementById("date-final").value).toLocaleDateString(
+        "pt-BR"
+      )
     : new Date().toLocaleDateString("pt-BR");
+
   toggleLoader(true);
   consultationsContent.innerHTML = "Carregando...";
-  rawHtmlContent.textContent = "";
-  debugSection.style.display = "none";
+  document.getElementById("raw-html-content").textContent = "";
+  document.getElementById("debug-section").style.display = "none";
+
   try {
     let fetchFunction;
-    switch (currentFetchType) {
+    switch (currentConsultationFetchType) {
       case "basic":
         fetchFunction = fetchConsultasBasicas;
         break;
@@ -1255,8 +1322,8 @@ async function handleFetchConsultations() {
     allFetchedConsultations = jsonData;
     applyConsultationFiltersAndRender();
     if (htmlData) {
-      rawHtmlContent.textContent = htmlData;
-      debugSection.style.display = "block";
+      document.getElementById("raw-html-content").textContent = htmlData;
+      document.getElementById("debug-section").style.display = "block";
     }
   } catch (error) {
     showMessage(error.message);
@@ -1269,42 +1336,32 @@ async function handleFetchConsultations() {
 
 async function handleFetchExams() {
   if (!currentPatient?.isenPK) {
-    if (examsSection.style.display !== "none") {
+    if (examsSection.style.display !== "none")
       showMessage("ID do paciente (isenPK) não encontrado.");
-    }
     return;
   }
   const isenPK = `${currentPatient.isenPK.idp}-${currentPatient.isenPK.ids}`;
-  const dataInicial = examDateInitialInput.value
-    ? new Date(examDateInitialInput.value).toLocaleDateString("pt-BR")
+  const dataInicial = document.getElementById("exam-date-initial").value
+    ? new Date(
+        document.getElementById("exam-date-initial").value
+      ).toLocaleDateString("pt-BR")
     : "01/01/1900";
-  const dataFinal = examDateFinalInput.value
-    ? new Date(examDateFinalInput.value).toLocaleDateString("pt-BR")
+  const dataFinal = document.getElementById("exam-date-final").value
+    ? new Date(
+        document.getElementById("exam-date-final").value
+      ).toLocaleDateString("pt-BR")
     : new Date().toLocaleDateString("pt-BR");
 
-  let comResultado = false;
-  let semResultado = false;
-
-  switch (currentExamFetchType) {
-    case "withResult":
-      comResultado = true;
-      semResultado = false;
-      break;
-    case "withoutResult":
-      comResultado = false;
-      semResultado = true;
-      break;
-    default: // 'all'
-      comResultado = true;
-      semResultado = true;
-      break;
-  }
+  let comResultado =
+    currentExamFetchType === "withResult" || currentExamFetchType === "all";
+  let semResultado =
+    currentExamFetchType === "withoutResult" || currentExamFetchType === "all";
 
   toggleLoader(true);
   examsContent.innerHTML = "Carregando...";
   try {
     const examsData = await fetchExamesSolicitados({
-      isenPK: isenPK,
+      isenPK,
       dataInicial,
       dataFinal,
       comResultado,
@@ -1323,24 +1380,27 @@ async function handleFetchExams() {
 
 async function handleFetchAppointments() {
   if (!currentPatient?.isenPK) {
-    if (appointmentsSection.style.display !== "none") {
+    if (appointmentsSection.style.display !== "none")
       showMessage("ID do paciente (isenPK) não encontrado.");
-    }
     return;
   }
   const isenPK = `${currentPatient.isenPK.idp}-${currentPatient.isenPK.ids}`;
-  const dataInicial = appointmentDateInitialInput.value
-    ? new Date(appointmentDateInitialInput.value).toLocaleDateString("pt-BR")
+  const dataInicial = document.getElementById("appointment-date-initial").value
+    ? new Date(
+        document.getElementById("appointment-date-initial").value
+      ).toLocaleDateString("pt-BR")
     : "01/01/1900";
-  const dataFinal = appointmentDateFinalInput.value
-    ? new Date(appointmentDateFinalInput.value).toLocaleDateString("pt-BR")
+  const dataFinal = document.getElementById("appointment-date-final").value
+    ? new Date(
+        document.getElementById("appointment-date-final").value
+      ).toLocaleDateString("pt-BR")
     : new Date().toLocaleDateString("pt-BR");
 
   toggleLoader(true);
   appointmentsContent.innerHTML = "Carregando...";
   try {
     const appointmentsData = await fetchAppointments({
-      isenPK: isenPK,
+      isenPK,
       dataInicial,
       dataFinal,
     });
@@ -1357,26 +1417,29 @@ async function handleFetchAppointments() {
 
 async function handleFetchRegulations() {
   if (!currentPatient?.isenPK) {
-    if (regulationsSection.style.display !== "none") {
+    if (regulationsSection.style.display !== "none")
       showMessage(
         "ID do paciente (isenPK) não encontrado para buscar regulações."
       );
-    }
     return;
   }
   const isenPK = `${currentPatient.isenPK.idp}-${currentPatient.isenPK.ids}`;
-  const dataInicial = regulationDateInitialInput.value
-    ? new Date(regulationDateInitialInput.value).toLocaleDateString("pt-BR")
+  const dataInicial = document.getElementById("regulation-date-initial").value
+    ? new Date(
+        document.getElementById("regulation-date-initial").value
+      ).toLocaleDateString("pt-BR")
     : "";
-  const dataFinal = regulationDateFinalInput.value
-    ? new Date(regulationDateFinalInput.value).toLocaleDateString("pt-BR")
+  const dataFinal = document.getElementById("regulation-date-final").value
+    ? new Date(
+        document.getElementById("regulation-date-final").value
+      ).toLocaleDateString("pt-BR")
     : "";
 
   toggleLoader(true);
   regulationsContent.innerHTML = "Carregando...";
   try {
     const regulationsData = await fetchAllRegulations({
-      isenPK: isenPK,
+      isenPK,
       dataInicial,
       dataFinal,
       type: currentRegulationFetchType,
@@ -1419,7 +1482,7 @@ async function handleViewExamResult(event) {
         '<div style="font-family:sans-serif;padding:2em;text-align:center;color:#b91c1c;">Nenhum arquivo de resultado encontrado.</div>';
     }
   } catch (error) {
-    newTab.document.body.innerHTML = `<div style=\"font-family:sans-serif;padding:2em;text-align:center;color:#b91c1c;\">Erro ao buscar resultado do exame:<br>${error.message}</div>`;
+    newTab.document.body.innerHTML = `<div style="font-family:sans-serif;padding:2em;text-align:center;color:#b91c1c;">Erro ao buscar resultado do exame:<br>${error.message}</div>`;
   } finally {
     toggleLoader(false);
   }
@@ -1492,107 +1555,6 @@ function handleShowAppointmentInfo(event) {
   infoModal.classList.remove("hidden");
 }
 
-function handleToggleRawHtml() {
-  rawHtmlContent.classList.toggle("show");
-}
-function handleToggleConsultationsList() {
-  consultationsWrapper.classList.toggle("show");
-  toggleConsultationsListBtn.textContent =
-    consultationsWrapper.classList.contains("show") ? "Recolher" : "Expandir";
-}
-function handleToggleExamsList() {
-  examsWrapper.classList.toggle("show");
-  toggleExamsListBtn.textContent = examsWrapper.classList.contains("show")
-    ? "Recolher"
-    : "Expandir";
-}
-function handleToggleAppointmentsList() {
-  appointmentsWrapper.classList.toggle("show");
-  toggleAppointmentsListBtn.textContent =
-    appointmentsWrapper.classList.contains("show") ? "Recolher" : "Expandir";
-}
-
-function handleToggleRegulationsList() {
-  regulationsWrapper.classList.toggle("show");
-  toggleRegulationsListBtn.textContent = regulationsWrapper.classList.contains(
-    "show"
-  )
-    ? "Recolher"
-    : "Expandir";
-}
-
-function handleConsultationClick(event) {
-  const header = event.target.closest(".consultation-header");
-  if (!header) return;
-  const body = header.nextElementSibling;
-  body.classList.toggle("show");
-}
-async function handleSearchFocus() {
-  if (searchInput.value.length > 0) return;
-  await loadRecentPatients();
-  renderRecentPatients();
-  searchResultsList.classList.add("hidden");
-  recentPatientsList.classList.remove("hidden");
-}
-
-function handleFetchTypeChange(event) {
-  const button = event.target.closest(".fetch-type-btn");
-  if (!button) return;
-  fetchTypeButtons.querySelectorAll(".fetch-type-btn").forEach((btn) => {
-    btn.classList.remove("btn-active", "text-white");
-    btn.classList.add("text-slate-600", "hover:bg-slate-200");
-  });
-  button.classList.add("btn-active", "text-white");
-  button.classList.remove("text-slate-600", "hover:bg-slate-200");
-  currentFetchType = button.dataset.fetchType;
-  handleFetchConsultations();
-}
-
-function handleExamFetchTypeChange(event) {
-  const button = event.target.closest(".exam-fetch-type-btn");
-  if (!button) return;
-  examFetchTypeButtons
-    .querySelectorAll(".exam-fetch-type-btn")
-    .forEach((btn) => {
-      btn.classList.remove("btn-active", "text-white");
-      btn.classList.add("text-slate-600", "hover:bg-slate-200");
-    });
-  button.classList.add("btn-active", "text-white");
-  button.classList.remove("text-slate-600", "hover:bg-slate-200");
-  currentExamFetchType = button.dataset.fetchType;
-  applyExamFiltersAndRender();
-}
-
-function handleRegulationFetchTypeChange(event) {
-  const button = event.target.closest(".regulation-fetch-type-btn");
-  if (!button) return;
-  regulationFetchTypeButtons
-    .querySelectorAll(".regulation-fetch-type-btn")
-    .forEach((btn) => {
-      btn.classList.remove("btn-active", "text-white");
-      btn.classList.add("text-slate-600", "hover:bg-slate-200");
-    });
-  button.classList.add("btn-active", "text-white");
-  button.classList.remove("text-slate-600", "hover:bg-slate-200");
-  currentRegulationFetchType = button.dataset.fetchType;
-  handleFetchRegulations();
-}
-
-function handleAppointmentFetchTypeChange(event) {
-  const button = event.target.closest(".appointment-fetch-type-btn");
-  if (!button) return;
-  appointmentFetchTypeButtons
-    .querySelectorAll(".appointment-fetch-type-btn")
-    .forEach((btn) => {
-      btn.classList.remove("btn-active", "text-white");
-      btn.classList.add("text-slate-600", "hover:bg-slate-200");
-    });
-  button.classList.add("btn-active", "text-white");
-  button.classList.remove("text-slate-600", "hover:bg-slate-200");
-  currentAppointmentFetchType = button.dataset.fetchType;
-  applyAppointmentFiltersAndRender();
-}
-
 function handleSort(event, state, renderFunc) {
   const sortKey = event.target.closest("[data-sort-key]")?.dataset.sortKey;
   if (!sortKey) return;
@@ -1606,231 +1568,356 @@ function handleSort(event, state, renderFunc) {
   renderFunc();
 }
 
-// --- Inicialização ---
+function handleSaveFilterSet(sectionKey) {
+  const prefix = idPrefixMap[sectionKey];
+  const nameInput = document.getElementById(`${prefix}-save-filter-name-input`);
+  const name = nameInput.value.trim();
+  if (!name) {
+    showMessage("Por favor, insira um nome para o conjunto de filtros.");
+    return;
+  }
+
+  if (!savedFilterSets[sectionKey]) {
+    savedFilterSets[sectionKey] = [];
+  }
+
+  const existingIndex = savedFilterSets[sectionKey].findIndex(
+    (set) => set.name === name
+  );
+  const filterValues = getFilterValues(sectionKey);
+
+  const newSet = { name, values: filterValues };
+
+  if (existingIndex > -1) {
+    savedFilterSets[sectionKey][existingIndex] = newSet;
+  } else {
+    savedFilterSets[sectionKey].push(newSet);
+  }
+
+  saveFilterSetsToStorage();
+  populateSavedFilterDropdown(sectionKey);
+  document.getElementById(`${prefix}-saved-filters-select`).value = name;
+  nameInput.value = "";
+  showMessage(`Filtro "${name}" salvo com sucesso.`, "success");
+}
+
+function handleLoadFilterSet(sectionKey) {
+  const prefix = idPrefixMap[sectionKey];
+  const select = document.getElementById(`${prefix}-saved-filters-select`);
+  const name = select.value;
+  if (!name) return;
+
+  const set = (savedFilterSets[sectionKey] || []).find((s) => s.name === name);
+  if (!set) return;
+
+  Object.entries(set.values).forEach(([id, value]) => {
+    const el = document.getElementById(id);
+    if (el) {
+      if (el.type === "checkbox") {
+        el.checked = value;
+      } else {
+        el.value = value;
+      }
+    }
+  });
+
+  const renderFunc = applyFilterHandlers[sectionKey];
+  if (typeof renderFunc === "function") {
+    renderFunc();
+  }
+}
+
+function handleDeleteFilterSet(sectionKey) {
+  const prefix = idPrefixMap[sectionKey];
+  const select = document.getElementById(`${prefix}-saved-filters-select`);
+  const name = select.value;
+  if (!name) {
+    showMessage("Selecione um filtro para deletar.");
+    return;
+  }
+
+  savedFilterSets[sectionKey] = (savedFilterSets[sectionKey] || []).filter(
+    (set) => set.name !== name
+  );
+  saveFilterSetsToStorage();
+  populateSavedFilterDropdown(sectionKey);
+  showMessage(`Filtro "${name}" deletado.`, "success");
+}
+
+// --- Inicialização e Adição de Event Listeners ---
+
+function applyUserPreferences() {
+  const { hideNoShowDefault, monthsBack } = window.userPreferences;
+  const hideCheckbox = document.getElementById("hide-no-show-checkbox");
+  if (hideCheckbox) hideCheckbox.checked = hideNoShowDefault;
+
+  const months = monthsBack || 6;
+  const now = new Date();
+  const initial = new Date();
+  initial.setMonth(now.getMonth() - months);
+
+  [
+    "date-initial",
+    "exam-date-initial",
+    "appointment-date-initial",
+    "regulation-date-initial",
+  ].forEach((id) => {
+    const el = document.getElementById(id);
+    if (el) el.valueAsDate = initial;
+  });
+  [
+    "date-final",
+    "exam-date-final",
+    "appointment-date-final",
+    "regulation-date-final",
+  ].forEach((id) => {
+    const el = document.getElementById(id);
+    if (el) el.valueAsDate = now;
+  });
+}
+
+function addAllEventListeners() {
+  // Busca
+  searchInput.addEventListener("input", debounce(handleSearchInput, 500));
+  searchInput.addEventListener("focus", async () => {
+    if (searchInput.value.length > 0) return;
+    renderRecentPatients();
+    searchResultsList.classList.add("hidden");
+    recentPatientsList.classList.remove("hidden");
+  });
+  searchResultsList.addEventListener("click", handleResultClick);
+  recentPatientsList.addEventListener("click", handleResultClick);
+
+  // Detalhes do Paciente
+  toggleDetailsBtn.addEventListener("click", handleToggleDetails);
+
+  // Eventos para cada seção usando delegação
+  mainContent.addEventListener("click", (e) => {
+    const target = e.target;
+    const button = target.closest("button"); // Pega o botão mais próximo
+    if (!button && !target.matches("button")) return; // Sai se não for um botão ou dentro de um
+
+    const id = button ? button.id : target.id;
+
+    // Botões de busca
+    if (id.startsWith("fetch-")) {
+      const sectionKey = id.split("-")[1];
+      const fetchHandler = fetchHandlers[sectionKey];
+      if (fetchHandler) fetchHandler();
+      return;
+    }
+
+    // Botões de expandir/recolher
+    if (id.startsWith("toggle-") && id.endsWith("-list-btn")) {
+      const sectionKey = id.split("-")[1];
+      const wrapper = document.getElementById(`${sectionKey}-wrapper`);
+      if (wrapper) {
+        wrapper.classList.toggle("show");
+        target.textContent = wrapper.classList.contains("show")
+          ? "Recolher"
+          : "Expandir";
+      }
+      return;
+    }
+
+    // Botões de "Mais/Menos Filtros"
+    if (id.startsWith("toggle-more-")) {
+      const prefix = id.split("-")[2];
+      const sectionKey = Object.keys(idPrefixMap).find(
+        (key) => idPrefixMap[key] === prefix
+      );
+      const moreFiltersDiv = document.getElementById(`${prefix}-more-filters`);
+      if (moreFiltersDiv && sectionKey) {
+        moreFiltersDiv.classList.toggle("show");
+        button.querySelector(".button-text").textContent =
+          moreFiltersDiv.classList.contains("show")
+            ? "Menos filtros"
+            : "Mais filtros";
+        const renderFunc = applyFilterHandlers[sectionKey];
+        if (renderFunc) renderFunc();
+      }
+      return;
+    }
+
+    // Botões de Limpar Filtros
+    if (id.startsWith("clear-")) {
+      const prefix = id.split("-")[1];
+      const sectionKey = Object.keys(idPrefixMap).find(
+        (key) => idPrefixMap[key] === prefix
+      );
+      if (sectionKey) {
+        (filterConfig[sectionKey] || []).forEach((filter) => {
+          const el = document.getElementById(filter.id);
+          if (el) {
+            if (filter.type === "checkbox")
+              el.checked = filter.defaultChecked || false;
+            else if (filter.type === "select")
+              el.value = filter.options[0].value;
+            else el.value = "";
+          }
+        });
+        const renderFunc = applyFilterHandlers[sectionKey];
+        if (renderFunc) renderFunc();
+      }
+      return;
+    }
+
+    // Botões de Grupo (Tipo de busca, etc)
+    if (target.matches("[class*='-btn']")) {
+      const buttonGroup = target.parentElement;
+      const filterId = buttonGroup.id;
+      const sectionKey = Object.keys(filterConfig).find((key) =>
+        filterConfig[key].some((f) => f.id === filterId)
+      );
+
+      if (sectionKey) {
+        const fetchHandler = fetchHandlers[sectionKey];
+        const renderFunc = applyFilterHandlers[sectionKey];
+
+        if (filterId.includes("fetch-type")) {
+          if (sectionKey === "consultations")
+            currentConsultationFetchType = target.dataset.fetchType;
+          if (sectionKey === "exams")
+            currentExamFetchType = target.dataset.fetchType;
+          if (sectionKey === "appointments")
+            currentAppointmentFetchType = target.dataset.fetchType;
+          if (sectionKey === "regulations")
+            currentRegulationFetchType = target.dataset.fetchType;
+
+          buttonGroup
+            .querySelectorAll("button")
+            .forEach((btn) => btn.classList.remove("btn-active"));
+          target.classList.add("btn-active");
+
+          if (fetchHandler) {
+            fetchHandler();
+          } else if (renderFunc) {
+            // Se não houver fetch, apenas refiltra (ex: filtro de resultado de exames)
+            renderFunc();
+          }
+        }
+      }
+      return;
+    }
+
+    // Listeners para salvar/deletar filtros
+    if (id.endsWith("-save-filter-btn")) {
+      const prefix = id.split("-")[0];
+      const sectionKey = Object.keys(idPrefixMap).find(
+        (key) => idPrefixMap[key] === prefix
+      );
+      if (sectionKey) handleSaveFilterSet(sectionKey);
+    }
+    if (id.endsWith("-delete-filter-btn")) {
+      const prefix = id.split("-")[0];
+      const sectionKey = Object.keys(idPrefixMap).find(
+        (key) => idPrefixMap[key] === prefix
+      );
+      if (sectionKey) handleDeleteFilterSet(sectionKey);
+    }
+  });
+
+  // Listeners para inputs e selects (com debounce)
+  mainContent.addEventListener(
+    "input",
+    debounce((e) => {
+      if (e.target.matches("input[type='text']")) {
+        const prefix = e.target.id.split("-")[0];
+        const sectionKey = Object.keys(idPrefixMap).find(
+          (key) => idPrefixMap[key] === prefix
+        );
+        if (sectionKey) {
+          const renderFunc = applyFilterHandlers[sectionKey];
+          if (renderFunc) renderFunc();
+        }
+      }
+    }, 300)
+  );
+
+  mainContent.addEventListener("change", (e) => {
+    const target = e.target;
+    const prefix = target.id.split("-")[0];
+    const sectionKey = Object.keys(idPrefixMap).find(
+      (key) => idPrefixMap[key] === prefix
+    );
+
+    if (sectionKey) {
+      if (
+        target.matches("select") ||
+        target.matches("input[type='checkbox']")
+      ) {
+        const renderFunc = applyFilterHandlers[sectionKey];
+        if (renderFunc) renderFunc();
+      }
+      if (target.id.endsWith("-saved-filters-select")) {
+        handleLoadFilterSet(sectionKey);
+      }
+    }
+  });
+
+  // Listeners de conteúdo (ordenação e cliques em itens)
+  consultationsContent.addEventListener("click", (e) => {
+    const header = e.target.closest(".consultation-header");
+    if (header) header.nextElementSibling.classList.toggle("show");
+    handleSort(e, consultationSortState, applyConsultationFiltersAndRender);
+  });
+  examsContent.addEventListener("click", (e) => {
+    handleViewExamResult(e);
+    handleSort(e, examSortState, applyExamFiltersAndRender);
+  });
+  appointmentsContent.addEventListener("click", (e) => {
+    if (e.target.closest(".view-appointment-details-btn"))
+      handleViewAppointmentDetails(e);
+    if (e.target.closest(".appointment-info-btn")) handleShowAppointmentInfo(e);
+    handleSort(e, appointmentSortState, applyAppointmentFiltersAndRender);
+  });
+  regulationsContent.addEventListener("click", (e) => {
+    handleViewRegulationDetails(e);
+    handleSort(e, regulationSortState, applyRegulationFiltersAndRender);
+  });
+
+  // Listeners gerais
+  document
+    .getElementById("toggle-raw-html-btn")
+    ?.addEventListener("click", () => {
+      document.getElementById("raw-html-content").classList.toggle("show");
+    });
+  mainContent.addEventListener("click", async (event) => {
+    const copyBtn = event.target.closest(".copy-icon");
+    if (copyBtn) {
+      const textToCopy = copyBtn.dataset.copyText;
+      if (textToCopy) {
+        try {
+          await navigator.clipboard.writeText(textToCopy);
+          copyBtn.textContent = "✅";
+          setTimeout(() => {
+            copyBtn.textContent = "📄";
+          }, 1000);
+        } catch (err) {
+          console.error("Falha ao copiar texto: ", err);
+          copyBtn.textContent = "❌";
+          setTimeout(() => {
+            copyBtn.textContent = "📄";
+          }, 1000);
+        }
+      }
+    }
+  });
+  modalCloseBtn.addEventListener("click", () =>
+    infoModal.classList.add("hidden")
+  );
+  infoModal.addEventListener("click", (event) => {
+    if (event.target === infoModal) {
+      infoModal.classList.add("hidden");
+    }
+  });
+}
+
 async function init() {
-  await loadUserPreferences();
+  await loadConfigAndData();
+  renderAllFilterControls();
   applyUserPreferences();
-  await loadFieldConfig();
-  await loadRecentPatients();
+  addAllEventListeners();
 }
 
 document.addEventListener("DOMContentLoaded", init);
-searchInput.addEventListener("input", debounce(handleSearchInput, 500));
-searchInput.addEventListener("focus", handleSearchFocus);
-searchResultsList.addEventListener("click", handleResultClick);
-recentPatientsList.addEventListener("click", handleResultClick);
-toggleDetailsBtn.addEventListener("click", handleToggleDetails);
-
-// Event Listeners para Consultas
-toggleConsultationsListBtn.addEventListener(
-  "click",
-  handleToggleConsultationsList
-);
-consultationsContent.addEventListener("click", (e) => {
-  handleConsultationClick(e);
-  handleSort(e, consultationSortState, applyConsultationFiltersAndRender);
-});
-toggleRawHtmlBtn.addEventListener("click", handleToggleRawHtml);
-fetchConsultationsBtn.addEventListener("click", handleFetchConsultations);
-fetchTypeButtons.addEventListener("click", handleFetchTypeChange);
-consultationFilterKeyword.addEventListener(
-  "input",
-  debounce(applyConsultationFiltersAndRender, 500)
-);
-hideNoShowCheckbox.addEventListener(
-  "change",
-  applyConsultationFiltersAndRender
-);
-consultationFilterCid.addEventListener(
-  "input",
-  debounce(applyConsultationFiltersAndRender, 500)
-);
-consultationFilterSpecialty.addEventListener(
-  "input",
-  debounce(applyConsultationFiltersAndRender, 500)
-);
-consultationFilterProfessional.addEventListener(
-  "input",
-  debounce(applyConsultationFiltersAndRender, 500)
-);
-consultationFilterUnit.addEventListener(
-  "input",
-  debounce(applyConsultationFiltersAndRender, 500)
-);
-toggleMoreConsultationFiltersBtn.addEventListener("click", () => {
-  consultationMoreFiltersDiv.classList.toggle("show");
-  const buttonText =
-    toggleMoreConsultationFiltersBtn.querySelector(".button-text");
-  buttonText.textContent = consultationMoreFiltersDiv.classList.contains("show")
-    ? "Menos filtros"
-    : "Mais filtros";
-  applyConsultationFiltersAndRender();
-});
-clearConsultationFiltersBtn.addEventListener("click", () => {
-  consultationFilterKeyword.value = "";
-  hideNoShowCheckbox.checked = false;
-  consultationFilterCid.value = "";
-  consultationFilterSpecialty.value = "";
-  consultationFilterProfessional.value = "";
-  consultationFilterUnit.value = "";
-  applyConsultationFiltersAndRender();
-});
-
-// Event Listeners para Exames
-toggleExamsListBtn.addEventListener("click", handleToggleExamsList);
-examsContent.addEventListener("click", (e) => {
-  handleViewExamResult(e);
-  handleSort(e, examSortState, applyExamFiltersAndRender);
-});
-fetchExamsBtn.addEventListener("click", handleFetchExams);
-examFetchTypeButtons.addEventListener("click", handleExamFetchTypeChange);
-examFilterName.addEventListener(
-  "input",
-  debounce(applyExamFiltersAndRender, 500)
-);
-examFilterProfessional.addEventListener(
-  "input",
-  debounce(applyExamFiltersAndRender, 500)
-);
-examFilterSpecialty.addEventListener(
-  "input",
-  debounce(applyExamFiltersAndRender, 500)
-);
-toggleMoreExamFiltersBtn.addEventListener("click", () => {
-  examMoreFiltersDiv.classList.toggle("show");
-  const buttonText = toggleMoreExamFiltersBtn.querySelector(".button-text");
-  buttonText.textContent = examMoreFiltersDiv.classList.contains("show")
-    ? "Menos filtros"
-    : "Mais filtros";
-  applyExamFiltersAndRender();
-});
-clearExamFiltersBtn.addEventListener("click", () => {
-  examFilterName.value = "";
-  examFilterProfessional.value = "";
-  examFilterSpecialty.value = "";
-  applyExamFiltersAndRender();
-});
-
-// Event Listeners para Agendamentos
-toggleAppointmentsListBtn.addEventListener(
-  "click",
-  handleToggleAppointmentsList
-);
-fetchAppointmentsBtn.addEventListener("click", handleFetchAppointments);
-appointmentFetchTypeButtons.addEventListener(
-  "click",
-  handleAppointmentFetchTypeChange
-);
-appointmentFilterStatus.addEventListener(
-  "change",
-  applyAppointmentFiltersAndRender
-);
-appointmentFilterTerm.addEventListener(
-  "input",
-  debounce(applyAppointmentFiltersAndRender, 500)
-);
-appointmentFilterLocation.addEventListener(
-  "input",
-  debounce(applyAppointmentFiltersAndRender, 500)
-);
-toggleMoreAppointmentFiltersBtn.addEventListener("click", () => {
-  appointmentMoreFiltersDiv.classList.toggle("show");
-  const buttonText =
-    toggleMoreAppointmentFiltersBtn.querySelector(".button-text");
-  buttonText.textContent = appointmentMoreFiltersDiv.classList.contains("show")
-    ? "Menos filtros"
-    : "Mais filtros";
-  applyAppointmentFiltersAndRender();
-});
-appointmentsContent.addEventListener("click", (event) => {
-  const openBtn = event.target.closest(".view-appointment-details-btn");
-  const infoBtn = event.target.closest(".appointment-info-btn");
-  if (openBtn) {
-    handleViewAppointmentDetails(event);
-  } else if (infoBtn) {
-    handleShowAppointmentInfo(event);
-  }
-  handleSort(event, appointmentSortState, applyAppointmentFiltersAndRender);
-});
-clearAppointmentFiltersBtn.addEventListener("click", () => {
-  appointmentFilterStatus.value = "todos";
-  appointmentFilterTerm.value = "";
-  appointmentFilterLocation.value = "";
-  applyAppointmentFiltersAndRender();
-});
-
-// Event Listeners para Regulação
-toggleRegulationsListBtn.addEventListener("click", handleToggleRegulationsList);
-fetchRegulationsBtn.addEventListener("click", handleFetchRegulations);
-regulationFetchTypeButtons.addEventListener(
-  "click",
-  handleRegulationFetchTypeChange
-);
-regulationFilterStatus.addEventListener(
-  "change",
-  applyRegulationFiltersAndRender
-);
-regulationFilterPriority.addEventListener(
-  "change",
-  applyRegulationFiltersAndRender
-);
-regulationFilterProcedure.addEventListener(
-  "input",
-  debounce(applyRegulationFiltersAndRender, 500)
-);
-regulationFilterRequester.addEventListener(
-  "input",
-  debounce(applyRegulationFiltersAndRender, 500)
-);
-toggleMoreRegulationFiltersBtn.addEventListener("click", () => {
-  regulationMoreFiltersDiv.classList.toggle("show");
-  const buttonText =
-    toggleMoreRegulationFiltersBtn.querySelector(".button-text");
-  buttonText.textContent = regulationMoreFiltersDiv.classList.contains("show")
-    ? "Menos filtros"
-    : "Mais filtros";
-  applyRegulationFiltersAndRender();
-});
-regulationsContent.addEventListener("click", (e) => {
-  handleViewRegulationDetails(e);
-  handleSort(e, regulationSortState, applyRegulationFiltersAndRender);
-});
-clearRegulationFiltersBtn.addEventListener("click", () => {
-  regulationFilterStatus.value = "todos";
-  regulationFilterPriority.value = "todas";
-  regulationFilterProcedure.value = "";
-  regulationFilterRequester.value = "";
-  applyRegulationFiltersAndRender();
-});
-
-// Event Listeners Gerais
-mainContent.addEventListener("click", async (event) => {
-  const copyBtn = event.target.closest(".copy-icon");
-  if (copyBtn) {
-    const textToCopy = copyBtn.dataset.copyText;
-    if (textToCopy) {
-      try {
-        await navigator.clipboard.writeText(textToCopy);
-        copyBtn.textContent = "✅";
-        setTimeout(() => {
-          copyBtn.textContent = "📄";
-        }, 1000);
-      } catch (err) {
-        console.error("Falha ao copiar texto: ", err);
-        copyBtn.textContent = "❌";
-        setTimeout(() => {
-          copyBtn.textContent = "📄";
-        }, 1000);
-      }
-    }
-  }
-});
-
-modalCloseBtn.addEventListener("click", () =>
-  infoModal.classList.add("hidden")
-);
-infoModal.addEventListener("click", (event) => {
-  if (event.target === infoModal) {
-    infoModal.classList.add("hidden");
-  }
-});
