@@ -1,16 +1,17 @@
 import { defaultFieldConfig } from "./field-config.js";
-import { filterConfig } from "./filter-config.js"; // NOVO
+import { filterConfig } from "./filter-config.js";
 
 // --- Elementos do DOM ---
 const saveButton = document.getElementById("saveButton");
 const statusMessage = document.getElementById("statusMessage");
 const closeButton = document.getElementById("closeButton");
+const restoreDefaultsButton = document.getElementById("restoreDefaultsButton"); // NOVO
 
 // Ficha do Paciente
 const mainFieldsZone = document.getElementById("main-fields-zone");
 const moreFieldsZone = document.getElementById("more-fields-zone");
 
-// Abas e Zonas de Filtros (NOVO)
+// Abas e Zonas de Filtros
 const filterTabsContainer = document.getElementById("filter-tabs-container");
 const allDropZones = document.querySelectorAll(".drop-zone");
 
@@ -50,10 +51,13 @@ function createDraggableFilter(filter) {
   div.dataset.filterId = filter.id;
   div.draggable = true;
 
+  // ALTERADO: O tipo 'selectGroup' é tratado como 'select' para fins de exibição aqui.
+  const displayType = filter.type === "selectGroup" ? "select" : filter.type;
+
   div.innerHTML = `
     <span class="drag-handle">⠿</span>
     <span class="flex-grow font-medium text-sm">${filter.label}</span>
-    <span class="text-xs text-slate-400 p-1 bg-slate-100 rounded">${filter.type}</span>
+    <span class="text-xs text-slate-400 p-1 bg-slate-100 rounded">${displayType}</span>
   `;
 
   div.addEventListener("dragstart", handleDragStart);
@@ -83,7 +87,7 @@ function renderPatientFields(config) {
 }
 
 /**
- * Renderiza os filtros de seção nas zonas corretas. (NOVO)
+ * Renderiza os filtros de seção nas zonas corretas.
  * @param {object} layout - A configuração de layout dos filtros.
  */
 function renderFilterLayout(layout) {
@@ -104,13 +108,15 @@ function renderFilterLayout(layout) {
     const sortedFilters = [...filters].sort((a, b) => {
       const orderA = layoutMap.get(a.id)?.order ?? Infinity;
       const orderB = layoutMap.get(b.id)?.order ?? Infinity;
-      return orderA - orderB;
+      return orderA - b.order;
     });
 
     // Renderiza cada filtro na sua zona
     sortedFilters.forEach((filter) => {
       const filterLayout = layoutMap.get(filter.id);
       const location = filterLayout?.location || filter.defaultLocation;
+      // ALTERADO: a aba da ficha do paciente não tem filtros
+      if (sectionKey === "patient-card") return;
       const zoneId = `${sectionKey}-${location}-filters-zone`;
       const zone = document.getElementById(zoneId);
       if (zone) {
@@ -134,7 +140,7 @@ async function restoreOptions() {
     hideNoShowDefault: false,
     monthsBack: 6,
     patientFields: defaultFieldConfig,
-    filterLayout: {}, // NOVO
+    filterLayout: {},
   });
 
   // Restaura configurações gerais
@@ -160,7 +166,7 @@ async function restoreOptions() {
   });
   renderPatientFields(currentPatientFieldsConfig);
 
-  // Restaura configuração de layout dos filtros (NOVO)
+  // Restaura configuração de layout dos filtros
   renderFilterLayout(items.filterLayout);
 }
 
@@ -215,11 +221,14 @@ async function saveOptions() {
     });
   });
 
-  // Coleta a configuração de layout dos filtros (NOVO)
+  // Coleta a configuração de layout dos filtros
   const filterLayout = {};
   document
-    .querySelectorAll("#filter-config-section .drop-zone")
+    .querySelectorAll("#layout-config-section .drop-zone")
     .forEach((zone) => {
+      // Ignora as zonas da ficha do paciente que não são de filtros
+      if (!zone.dataset.section) return;
+
       const section = zone.dataset.section;
       if (!filterLayout[section]) {
         filterLayout[section] = [];
@@ -244,7 +253,7 @@ async function saveOptions() {
     hideNoShowDefault,
     monthsBack,
     patientFields,
-    filterLayout, // NOVO
+    filterLayout,
   });
 
   statusMessage.textContent = "Configurações salvas com sucesso!";
@@ -304,7 +313,7 @@ function getDragAfterElement(container, y) {
   ).element;
 }
 
-// --- Lógica das Abas (Tabs) --- (NOVO)
+// --- Lógica das Abas (Tabs) ---
 function setupTabs() {
   const tabButtons = filterTabsContainer.querySelectorAll(".tab-button");
   const tabContents = filterTabsContainer.querySelectorAll(".tab-content");
@@ -322,6 +331,29 @@ function setupTabs() {
   });
 }
 
+// --- NOVO: Lógica para Restaurar Padrões ---
+async function handleRestoreDefaults() {
+  const confirmation = window.confirm(
+    "Tem certeza de que deseja restaurar todas as configurações de layout para o padrão? Esta ação não pode ser desfeita."
+  );
+  if (confirmation) {
+    // Limpa apenas as configurações de layout do storage.
+    await browser.storage.sync.remove(["patientFields", "filterLayout"]);
+
+    // Recarrega as opções da página para refletir os padrões.
+    mainFieldsZone.innerHTML = "";
+    moreFieldsZone.innerHTML = "";
+    restoreOptions();
+
+    statusMessage.textContent =
+      "Configurações de layout restauradas para o padrão.";
+    statusMessage.className = "mt-4 text-sm font-medium text-blue-600";
+    setTimeout(() => {
+      statusMessage.textContent = "";
+    }, 3000);
+  }
+}
+
 // --- Inicialização ---
 document.addEventListener("DOMContentLoaded", () => {
   restoreOptions();
@@ -331,6 +363,7 @@ saveButton.addEventListener("click", saveOptions);
 closeButton.addEventListener("click", () => {
   window.close();
 });
+restoreDefaultsButton.addEventListener("click", handleRestoreDefaults); // NOVO
 
 allDropZones.forEach((zone) => {
   zone.addEventListener("dragover", handleDragOver);

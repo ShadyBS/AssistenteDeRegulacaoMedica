@@ -7,12 +7,11 @@
  * Estrutura de cada objeto de filtro:
  * - id: Identificador único do elemento HTML.
  * - label: O texto que descreve o filtro na interface.
- * - type: O tipo de elemento de input ('text', 'select', 'checkbox', 'buttonGroup').
+ * - type: O tipo de elemento de input ('text', 'select', 'checkbox', 'buttonGroup', 'selectGroup').
  * - section: A qual seção principal o filtro pertence ('consultations', 'exams', 'appointments', 'regulations').
  * - defaultLocation: Onde o filtro aparece por padrão ('main' ou 'more').
  * - placeholder: (Opcional) Texto de exemplo para campos de texto.
- * - options: (Opcional) Um array de objetos {value, text} para elementos 'select'.
- * - buttons: (Opcional) Um array de objetos {value, text} para 'buttonGroup'.
+ * - options: (Opcional) Um array de objetos {value, text} para elementos 'select' ou 'selectGroup'.
  * - defaultChecked: (Opcional) Estado padrão para 'checkbox'.
  */
 
@@ -35,12 +34,13 @@ export const filterConfig = {
       defaultChecked: false,
     },
     {
+      // ALTERADO: De buttonGroup para selectGroup para economizar espaço.
       id: "fetch-type-buttons",
       label: "Tipo de Consulta",
-      type: "buttonGroup",
+      type: "selectGroup",
       section: "consultations",
       defaultLocation: "more",
-      buttons: [
+      options: [
         { value: "all", text: "Todas" },
         { value: "basic", text: "Básicas" },
         { value: "specialized", text: "Especializadas" },
@@ -81,12 +81,13 @@ export const filterConfig = {
   ],
   exams: [
     {
+      // ALTERADO: De buttonGroup para selectGroup.
       id: "exam-fetch-type-buttons",
       label: "Status do Resultado",
-      type: "buttonGroup",
+      type: "selectGroup",
       section: "exams",
       defaultLocation: "main",
-      buttons: [
+      options: [
         { value: "all", text: "Todos" },
         { value: "withResult", text: "Com Resultado" },
         { value: "withoutResult", text: "Sem Resultado" },
@@ -119,12 +120,13 @@ export const filterConfig = {
   ],
   appointments: [
     {
+      // ALTERADO: De buttonGroup para selectGroup.
       id: "appointment-fetch-type-buttons",
       label: "Tipo de Agendamento",
-      type: "buttonGroup",
+      type: "selectGroup",
       section: "appointments",
       defaultLocation: "main",
-      buttons: [
+      options: [
         { value: "all", text: "Todos" },
         { value: "consultas", text: "Consultas" },
         { value: "exames", text: "Exames" },
@@ -164,12 +166,13 @@ export const filterConfig = {
   ],
   regulations: [
     {
+      // ALTERADO: De buttonGroup para selectGroup.
       id: "regulation-fetch-type-buttons",
       label: "Modalidade",
-      type: "buttonGroup",
+      type: "selectGroup",
       section: "regulations",
       defaultLocation: "main",
-      buttons: [
+      options: [
         { value: "all", text: "Todos" },
         { value: "ENC", text: "Consultas" },
         { value: "EXA", text: "Exames" },

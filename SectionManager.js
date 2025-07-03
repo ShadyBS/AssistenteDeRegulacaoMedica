@@ -70,6 +70,9 @@ export class SectionManager {
     if (this.currentPatient?.isenPK?.idp !== newPatient?.isenPK?.idp) {
       this.setPatient(newPatient);
     }
+
+    // NOVO: Atualiza o dropdown de filtros salvos quando eles mudam no store
+    this.populateSavedFilterDropdown();
   }
 
   cacheDomElements() {
@@ -108,7 +111,6 @@ export class SectionManager {
 
     this.elements.section?.addEventListener(
       "input",
-      // PASSO DE CORREÇÃO: Usar a função importada através do namespace Utils.
       Utils.debounce((e) => {
         if (e.target.matches("input[type='text']"))
           this.applyFiltersAndRender();
@@ -116,8 +118,14 @@ export class SectionManager {
     );
 
     this.elements.section?.addEventListener("change", (e) => {
-      if (e.target.matches("select, input[type='checkbox']"))
-        this.applyFiltersAndRender();
+      if (e.target.matches("select, input[type='checkbox']")) {
+        // ALTERADO: Se for um selectGroup, trata como mudança de tipo de busca.
+        if (e.target.closest(".filter-select-group")) {
+          this.handleFetchTypeChange(e.target);
+        } else {
+          this.applyFiltersAndRender();
+        }
+      }
       if (e.target.id === `${this.prefix}-saved-filters-select`)
         this.loadFilterSet();
     });
@@ -126,14 +134,6 @@ export class SectionManager {
       const target = e.target;
       const sortHeader = target.closest(".sort-header");
       if (sortHeader) this.handleSort(sortHeader.dataset.sortKey);
-
-      const buttonGroupBtn = target.closest("[data-fetch-type]");
-      if (
-        buttonGroupBtn &&
-        buttonGroupBtn.parentElement.id.includes("fetch-type-buttons")
-      ) {
-        this.handleFetchTypeChange(buttonGroupBtn);
-      }
 
       if (target.id === `${this.prefix}-save-filter-btn`) this.saveFilterSet();
       if (target.closest(`#${this.prefix}-delete-filter-btn`))
@@ -165,7 +165,6 @@ export class SectionManager {
   async fetchData() {
     if (!this.currentPatient) {
       if (this.elements.section.style.display !== "none")
-        // PASSO DE CORREÇÃO: Usar a função importada através do namespace Utils.
         Utils.showMessage("Nenhum paciente selecionado.");
       return;
     }
@@ -208,7 +207,6 @@ export class SectionManager {
         regulations: "regulações",
       };
       const friendlyName = sectionNameMap[this.sectionKey] || this.sectionKey;
-      // PASSO DE CORREÇÃO: Usar a função importada através do namespace Utils.
       Utils.showMessage(
         `Erro ao buscar ${friendlyName}. Verifique a conexão e a URL base.`
       );
@@ -238,7 +236,6 @@ export class SectionManager {
     return [...data].sort((a, b) => {
       let valA, valB;
       if (key === "date" || key === "sortableDate") {
-        // PASSO DE CORREÇÃO: Usar a função importada através do namespace Utils.
         valA = a.sortableDate || Utils.parseDate(a.date);
         valB = b.sortableDate || Utils.parseDate(b.date);
       } else {
@@ -286,7 +283,8 @@ export class SectionManager {
       if (el) {
         if (filter.type === "checkbox")
           el.checked = filter.defaultChecked || false;
-        else if (filter.type === "select") el.value = filter.options[0].value;
+        else if (filter.type === "select" || filter.type === "selectGroup")
+          el.value = filter.options[0].value;
         else el.value = "";
       }
     });
@@ -303,12 +301,9 @@ export class SectionManager {
     this.applyFiltersAndRender();
   }
 
-  handleFetchTypeChange(button) {
-    this.fetchType = button.dataset.fetchType;
-    button.parentElement
-      .querySelectorAll("button")
-      .forEach((btn) => btn.classList.remove("btn-active"));
-    button.classList.add("btn-active");
+  handleFetchTypeChange(element) {
+    // Funciona tanto para o <select> (lendo o value) quanto para um botão (lendo o dataset)
+    this.fetchType = element.value || element.dataset.fetchType;
     this.fetchData();
   }
 
@@ -323,10 +318,11 @@ export class SectionManager {
       this.elements.moreFilters.querySelectorAll("input, select");
     filterElements.forEach((el) => {
       if (
-        el.type === "select-one" &&
+        (el.type === "select-one" || el.type === "select") &&
         el.value !== "todos" &&
         el.value !== "todas" &&
-        el.value !== ""
+        el.value !== "" &&
+        el.value !== "all" // Adicionado para os novos selectGroups
       )
         activeCount++;
       else if (el.type === "text" && el.value.trim() !== "") activeCount++;
@@ -341,17 +337,13 @@ export class SectionManager {
   }
 
   saveFilterSet() {
-    const nameInput = document.getElementById(
-      `${this.prefix}-save-filter-name-input`
-    );
-    const name = nameInput.value.trim();
-    if (!name) {
-      // PASSO DE CORREÇÃO: Usar a função importada através do namespace Utils.
-      Utils.showMessage(
-        "Por favor, insira um nome para o conjunto de filtros."
-      );
+    // ALTERADO: Usa window.prompt em vez de um campo de input.
+    const name = window.prompt("Digite um nome para o conjunto de filtros:");
+    if (!name || name.trim() === "") {
+      Utils.showMessage("Nome inválido. O filtro não foi salvo.");
       return;
     }
+
     const savedSets = store.getSavedFilterSets();
     if (!savedSets[this.sectionKey]) {
       savedSets[this.sectionKey] = [];
@@ -367,9 +359,7 @@ export class SectionManager {
       savedSets[this.sectionKey].push(newSet);
     }
     browser.storage.local.set({ savedFilterSets: savedSets });
-    store.setSavedFilterSets(savedSets); // Atualiza o store
-    nameInput.value = "";
-    // PASSO DE CORREÇÃO: Usar a função importada através do namespace Utils.
+    store.setSavedFilterSets(savedSets);
     Utils.showMessage(`Filtro "${name}" salvo com sucesso.`, "success");
   }
 
@@ -388,6 +378,11 @@ export class SectionManager {
       if (el) {
         if (el.type === "checkbox") el.checked = value;
         else el.value = value;
+
+        // Se for um selectGroup, dispara a busca
+        if (el.classList.contains("filter-select-group")) {
+          this.handleFetchTypeChange(el);
+        }
       }
     });
     this.applyFiltersAndRender();
@@ -399,17 +394,21 @@ export class SectionManager {
     );
     const name = select.value;
     if (!name) {
-      // PASSO DE CORREÇÃO: Usar a função importada através do namespace Utils.
       Utils.showMessage("Selecione um filtro para apagar.");
       return;
     }
+
+    const confirmation = window.confirm(
+      `Tem certeza que deseja apagar o filtro "${name}"?`
+    );
+    if (!confirmation) return;
+
     const savedSets = store.getSavedFilterSets();
     savedSets[this.sectionKey] = (savedSets[this.sectionKey] || []).filter(
       (set) => set.name !== name
     );
     browser.storage.local.set({ savedFilterSets: savedSets });
     store.setSavedFilterSets(savedSets);
-    // PASSO DE CORREÇÃO: Usar a função importada através do namespace Utils.
     Utils.showMessage(`Filtro "${name}" apagado.`, "success");
   }
 
@@ -419,7 +418,7 @@ export class SectionManager {
     );
     if (!select) return;
     const currentSelection = select.value;
-    select.innerHTML = '<option value="">Carregar um filtro...</option>';
+    select.innerHTML = '<option value="">Carregar filtro...</option>';
     const sets = store.getSavedFilterSets()[this.sectionKey] || [];
     sets.forEach((set) => {
       const option = document.createElement("option");
@@ -480,6 +479,14 @@ export class SectionManager {
         });
         elementHtml += `</select>`;
         break;
+      // NOVO: Lógica para renderizar selectGroup
+      case "selectGroup":
+        elementHtml += `<select id="${filter.id}" class="filter-select-group w-full px-2 py-1 border border-slate-300 rounded-md bg-white">`;
+        filter.options.forEach((opt) => {
+          elementHtml += `<option value="${opt.value}">${opt.text}</option>`;
+        });
+        elementHtml += `</select>`;
+        break;
       case "checkbox":
         container.className = "flex items-center";
         elementHtml += `<input id="${
@@ -493,20 +500,6 @@ export class SectionManager {
           filter.label
         }</label>`;
         break;
-      case "buttonGroup":
-        elementHtml += `<div id="${filter.id}" class="grid grid-cols-${filter.buttons.length} gap-1 p-1 bg-slate-100 rounded-lg">`;
-        filter.buttons.forEach((btn, index) => {
-          const isActive = index === 0;
-          elementHtml += `<button data-fetch-type="${btn.value}" class="${
-            filter.id
-          }-btn ${
-            isActive ? "btn-active" : "text-slate-600 hover:bg-slate-200"
-          } px-2 py-1 text-sm rounded-md transition-colors">${
-            btn.text
-          }</button>`;
-        });
-        elementHtml += `</div>`;
-        break;
     }
     container.innerHTML = elementHtml;
     return container;
@@ -515,19 +508,19 @@ export class SectionManager {
   renderSavedFiltersUI() {
     const container = this.elements.savedFiltersContainer;
     if (!container) return;
+    // ALTERADO: UI de filtros salvos mais compacta.
     container.innerHTML = `
         <h3 class="text-sm font-semibold text-slate-600 mt-3 mb-2">Filtros Salvos</h3>
         <div class="flex items-center gap-2">
-            <select id="${this.prefix}-saved-filters-select" class="flex-grow w-full px-2 py-1 border border-slate-300 rounded-md bg-white text-sm">
-                <option value="">Carregar um filtro...</option>
+            <select id="${this.prefix}-saved-filters-select" class="flex-grow w-full px-2 py-1 border border-slate-300 rounded-md bg-white text-sm" title="Carregar um filtro salvo">
+                <option value="">Carregar filtro...</option>
             </select>
-            <button id="${this.prefix}-delete-filter-btn" title="Apagar selecionado" class="p-1.5 text-slate-500 hover:bg-red-100 hover:text-red-600 rounded">
+            <button id="${this.prefix}-save-filter-btn" title="Salvar filtros atuais" class="p-1.5 text-slate-500 hover:bg-blue-100 hover:text-blue-600 rounded">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M2 1a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H9.5a1 1 0 0 0-1 1v4.5h2a.5.5 0 0 1 .354.854l-2.5 2.5a.5.5 0 0 1-.708 0l-2.5-2.5A.5.5 0 0 1 5.5 6.5h2V2a2 2 0 0 1 2-2H14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2h2.5a.5.5 0 0 1 0 1H2z"/></svg>
+            </button>
+            <button id="${this.prefix}-delete-filter-btn" title="Apagar filtro selecionado" class="p-1.5 text-slate-500 hover:bg-red-100 hover:text-red-600 rounded">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/><path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/></svg>
             </button>
-        </div>
-        <div class="flex items-center gap-2 mt-2">
-            <input type="text" id="${this.prefix}-save-filter-name-input" placeholder="Nome para o novo filtro..." class="flex-grow w-full px-2 py-1 border border-slate-300 rounded-md text-sm">
-            <button id="${this.prefix}-save-filter-btn" class="px-3 py-1 bg-blue-100 text-blue-700 hover:bg-blue-200 rounded text-sm font-medium">Salvar</button>
         </div>
     `;
     this.populateSavedFilterDropdown();

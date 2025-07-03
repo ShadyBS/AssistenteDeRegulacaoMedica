@@ -279,46 +279,34 @@
         </div>
       </section>
 
-      <!-- Seção de Configuração da Ficha do Paciente -->
+      <!-- ALTERADO: Seção de Configuração de Layouts movida para abas -->
       <section
+        id="layout-config-section"
         class="bg-white p-4 rounded-lg border border-slate-200 shadow-sm"
       >
-        <h2 class="text-md font-semibold text-slate-700 mb-3">
-          Configurar Ficha do Paciente
-        </h2>
+        <div class="flex justify-between items-center mb-3">
+          <h2 class="text-md font-semibold text-slate-700">
+            Configurar Layouts
+          </h2>
+          <!-- NOVO: Botão para restaurar padrões -->
+          <button
+            id="restoreDefaultsButton"
+            class="text-sm font-medium text-red-600 hover:underline"
+          >
+            Restaurar Padrões
+          </button>
+        </div>
         <p class="text-sm text-slate-500 mb-4">
           Arraste os campos para reordenar ou mover entre as seções. Desmarque
-          para ocultar um campo.
-        </p>
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div>
-            <h3 class="font-semibold mb-2">
-              Campos Principais (Sempre Visíveis)
-            </h3>
-            <div id="main-fields-zone" class="drop-zone"></div>
-          </div>
-          <div>
-            <h3 class="font-semibold mb-2">Campos em "Mostrar Mais"</h3>
-            <div id="more-fields-zone" class="drop-zone"></div>
-          </div>
-        </div>
-      </section>
-
-      <!-- NOVA Seção de Configuração de Filtros -->
-      <section
-        id="filter-config-section"
-        class="bg-white p-4 rounded-lg border border-slate-200 shadow-sm"
-      >
-        <h2 class="text-md font-semibold text-slate-700 mb-3">
-          Configurar Filtros das Seções
-        </h2>
-        <p class="text-sm text-slate-500 mb-4">
-          Arraste os filtros para definir quais aparecerão na visão principal e
-          quais ficarão em "Mais filtros" em cada seção da barra lateral.
+          para ocultar um campo na ficha do paciente.
         </p>
         <div id="filter-tabs-container">
           <div class="tabs">
-            <button class="tab-button active" data-tab="consultations">
+            <!-- NOVO: Aba para a Ficha do Paciente -->
+            <button class="tab-button active" data-tab="patient-card">
+              Ficha do Paciente
+            </button>
+            <button class="tab-button" data-tab="consultations">
               Consultas
             </button>
             <button class="tab-button" data-tab="exams">Exames</button>
@@ -327,8 +315,25 @@
             </button>
             <button class="tab-button" data-tab="regulations">Regulação</button>
           </div>
-          <!-- Conteúdo das Abas de Filtros -->
-          <div id="consultations-tab" class="tab-content active">
+          <!-- Conteúdo das Abas -->
+
+          <!-- NOVO: Conteúdo da aba Ficha do Paciente -->
+          <div id="patient-card-tab" class="tab-content active">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-4">
+              <div>
+                <h3 class="font-semibold mb-2">
+                  Campos Principais (Sempre Visíveis)
+                </h3>
+                <div id="main-fields-zone" class="drop-zone"></div>
+              </div>
+              <div>
+                <h3 class="font-semibold mb-2">Campos em "Mostrar Mais"</h3>
+                <div id="more-fields-zone" class="drop-zone"></div>
+              </div>
+            </div>
+          </div>
+
+          <div id="consultations-tab" class="tab-content">
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-4">
               <div>
                 <h3 class="font-semibold mb-2">Filtros Principais</h3>
