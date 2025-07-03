@@ -1694,10 +1694,10 @@ function addAllEventListeners() {
   // Eventos para cada seção usando delegação
   mainContent.addEventListener("click", (e) => {
     const target = e.target;
-    const button = target.closest("button"); // Pega o botão mais próximo
-    if (!button && !target.matches("button")) return; // Sai se não for um botão ou dentro de um
+    const button = target.closest("button");
+    if (!button) return;
 
-    const id = button ? button.id : target.id;
+    const id = button.id;
 
     // Botões de busca
     if (id.startsWith("fetch-")) {
@@ -1713,7 +1713,7 @@ function addAllEventListeners() {
       const wrapper = document.getElementById(`${sectionKey}-wrapper`);
       if (wrapper) {
         wrapper.classList.toggle("show");
-        target.textContent = wrapper.classList.contains("show")
+        button.textContent = wrapper.classList.contains("show")
           ? "Recolher"
           : "Expandir";
       }
@@ -1727,12 +1727,23 @@ function addAllEventListeners() {
         (key) => idPrefixMap[key] === prefix
       );
       const moreFiltersDiv = document.getElementById(`${prefix}-more-filters`);
+      const savedFiltersDiv = document.getElementById(
+        `${prefix}-saved-filters-container`
+      );
+
       if (moreFiltersDiv && sectionKey) {
-        moreFiltersDiv.classList.toggle("show");
-        button.querySelector(".button-text").textContent =
-          moreFiltersDiv.classList.contains("show")
-            ? "Menos filtros"
-            : "Mais filtros";
+        const shouldShow = !moreFiltersDiv.classList.contains("show");
+        moreFiltersDiv.classList.toggle("show", shouldShow);
+
+        if (savedFiltersDiv) {
+          savedFiltersDiv.classList.add("collapse-section");
+          savedFiltersDiv.classList.toggle("show", shouldShow);
+        }
+
+        button.querySelector(".button-text").textContent = shouldShow
+          ? "Menos filtros"
+          : "Mais filtros";
+
         const renderFunc = applyFilterHandlers[sectionKey];
         if (renderFunc) renderFunc();
       }
@@ -1792,7 +1803,6 @@ function addAllEventListeners() {
           if (fetchHandler) {
             fetchHandler();
           } else if (renderFunc) {
-            // Se não houver fetch, apenas refiltra (ex: filtro de resultado de exames)
             renderFunc();
           }
         }
@@ -1891,7 +1901,7 @@ function addAllEventListeners() {
           await navigator.clipboard.writeText(textToCopy);
           copyBtn.textContent = "✅";
           setTimeout(() => {
-            copyBtn.textContent = "📄";
+            copyBtn.textContent = "�";
           }, 1000);
         } catch (err) {
           console.error("Falha ao copiar texto: ", err);
