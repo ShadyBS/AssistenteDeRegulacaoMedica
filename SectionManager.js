@@ -3,7 +3,6 @@
  */
 
 import { filterConfig } from "./filter-config.js";
-// PASSO DE CORREÇÃO: Alterada a forma de importação para ser mais robusta.
 import * as Utils from "./utils.js";
 import * as API from "./api.js";
 import { store } from "./store.js";
@@ -71,7 +70,6 @@ export class SectionManager {
       this.setPatient(newPatient);
     }
 
-    // NOVO: Atualiza o dropdown de filtros salvos quando eles mudam no store
     this.populateSavedFilterDropdown();
   }
 
@@ -119,7 +117,6 @@ export class SectionManager {
 
     this.elements.section?.addEventListener("change", (e) => {
       if (e.target.matches("select, input[type='checkbox']")) {
-        // ALTERADO: Se for um selectGroup, trata como mudança de tipo de busca.
         if (e.target.closest(".filter-select-group")) {
           this.handleFetchTypeChange(e.target);
         } else {
@@ -277,15 +274,43 @@ export class SectionManager {
     this.updateActiveFiltersIndicator();
   }
 
+  /**
+   * Limpa os filtros, revertendo para os valores padrão definidos pelo utilizador.
+   */
   clearFilters() {
+    const sectionLayout =
+      this.globalSettings.filterLayout[this.sectionKey] || [];
+    const layoutMap = new Map(sectionLayout.map((f) => [f.id, f]));
+
     (filterConfig[this.sectionKey] || []).forEach((filter) => {
       const el = document.getElementById(filter.id);
       if (el) {
-        if (filter.type === "checkbox")
-          el.checked = filter.defaultChecked || false;
-        else if (filter.type === "select" || filter.type === "selectGroup")
-          el.value = filter.options[0].value;
-        else el.value = "";
+        const savedFilterSettings = layoutMap.get(filter.id);
+        let defaultValue;
+
+        // Usa o valor padrão salvo se existir
+        if (
+          savedFilterSettings &&
+          savedFilterSettings.defaultValue !== undefined
+        ) {
+          defaultValue = savedFilterSettings.defaultValue;
+        } else {
+          // Fallback para o padrão do sistema se não houver configuração salva
+          defaultValue =
+            filter.defaultChecked ??
+            (filter.options ? filter.options[0].value : "");
+        }
+
+        if (el.type === "checkbox") {
+          el.checked = defaultValue;
+        } else {
+          el.value = defaultValue;
+        }
+
+        // Se for um selectGroup, a mudança de valor deve acionar a busca
+        if (el.classList.contains("filter-select-group")) {
+          this.handleFetchTypeChange(el);
+        }
       }
     });
     this.applyFiltersAndRender();
@@ -302,7 +327,6 @@ export class SectionManager {
   }
 
   handleFetchTypeChange(element) {
-    // Funciona tanto para o <select> (lendo o value) quanto para um botão (lendo o dataset)
     this.fetchType = element.value || element.dataset.fetchType;
     this.fetchData();
   }
@@ -322,7 +346,7 @@ export class SectionManager {
         el.value !== "todos" &&
         el.value !== "todas" &&
         el.value !== "" &&
-        el.value !== "all" // Adicionado para os novos selectGroups
+        el.value !== "all"
       )
         activeCount++;
       else if (el.type === "text" && el.value.trim() !== "") activeCount++;
@@ -337,7 +361,6 @@ export class SectionManager {
   }
 
   saveFilterSet() {
-    // ALTERADO: Usa window.prompt em vez de um campo de input.
     const name = window.prompt("Digite um nome para o conjunto de filtros:");
     if (!name || name.trim() === "") {
       Utils.showMessage("Nome inválido. O filtro não foi salvo.");
@@ -379,7 +402,6 @@ export class SectionManager {
         if (el.type === "checkbox") el.checked = value;
         else el.value = value;
 
-        // Se for um selectGroup, dispara a busca
         if (el.classList.contains("filter-select-group")) {
           this.handleFetchTypeChange(el);
         }
@@ -479,7 +501,6 @@ export class SectionManager {
         });
         elementHtml += `</select>`;
         break;
-      // NOVO: Lógica para renderizar selectGroup
       case "selectGroup":
         elementHtml += `<select id="${filter.id}" class="filter-select-group w-full px-2 py-1 border border-slate-300 rounded-md bg-white">`;
         filter.options.forEach((opt) => {
@@ -489,16 +510,8 @@ export class SectionManager {
         break;
       case "checkbox":
         container.className = "flex items-center";
-        elementHtml += `<input id="${
-          filter.id
-        }" type="checkbox" class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" ${
-          filter.defaultChecked ? "checked" : ""
-        }>
-                          <label for="${
-                            filter.id
-                          }" class="ml-2 block text-sm text-slate-700">${
-          filter.label
-        }</label>`;
+        elementHtml += `<input id="${filter.id}" type="checkbox" class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                          <label for="${filter.id}" class="ml-2 block text-sm text-slate-700">${filter.label}</label>`;
         break;
     }
     container.innerHTML = elementHtml;
@@ -508,7 +521,6 @@ export class SectionManager {
   renderSavedFiltersUI() {
     const container = this.elements.savedFiltersContainer;
     if (!container) return;
-    // ALTERADO: UI de filtros salvos mais compacta.
     container.innerHTML = `
         <h3 class="text-sm font-semibold text-slate-600 mt-3 mb-2">Filtros Salvos</h3>
         <div class="flex items-center gap-2">

@@ -5,7 +5,7 @@ import { filterConfig } from "./filter-config.js";
 const saveButton = document.getElementById("saveButton");
 const statusMessage = document.getElementById("statusMessage");
 const closeButton = document.getElementById("closeButton");
-const restoreDefaultsButton = document.getElementById("restoreDefaultsButton"); // NOVO
+const restoreDefaultsButton = document.getElementById("restoreDefaultsButton");
 
 // Ficha do Paciente
 const mainFieldsZone = document.getElementById("main-fields-zone");
@@ -41,7 +41,7 @@ function createDraggableField(field) {
 }
 
 /**
- * Cria um elemento de filtro arrastável para as Configurações de Filtro.
+ * Cria um elemento de filtro arrastável com controlos para valor padrão.
  * @param {object} filter - O objeto de configuração do filtro.
  * @returns {HTMLElement} O elemento <div> do filtro.
  */
@@ -51,13 +51,46 @@ function createDraggableFilter(filter) {
   div.dataset.filterId = filter.id;
   div.draggable = true;
 
-  // ALTERADO: O tipo 'selectGroup' é tratado como 'select' para fins de exibição aqui.
   const displayType = filter.type === "selectGroup" ? "select" : filter.type;
 
+  let defaultValueControl = "";
+  switch (filter.type) {
+    case "text":
+      defaultValueControl = `<input type="text" class="filter-default-value-input w-full" placeholder="Valor padrão...">`;
+      break;
+    case "select":
+    case "selectGroup":
+      const optionsHtml = filter.options
+        .map((opt) => `<option value="${opt.value}">${opt.text}</option>`)
+        .join("");
+      defaultValueControl = `<select class="filter-default-value-input w-full">${optionsHtml}</select>`;
+      break;
+    case "checkbox":
+      defaultValueControl = `<input type="checkbox" class="filter-default-value-input h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500">`;
+      break;
+  }
+
+  // Layout principal do item arrastável
   div.innerHTML = `
     <span class="drag-handle">⠿</span>
-    <span class="flex-grow font-medium text-sm">${filter.label}</span>
-    <span class="text-xs text-slate-400 p-1 bg-slate-100 rounded">${displayType}</span>
+    <div class="flex-grow flex flex-col gap-2">
+        <div class="flex justify-between items-center">
+            <span class="font-medium text-sm">${filter.label}</span>
+            <span class="text-xs text-slate-400 p-1 bg-slate-100 rounded">${displayType}</span>
+        </div>
+        ${
+          defaultValueControl
+            ? `
+        <div class="flex items-center gap-2 text-xs text-slate-500">
+            <label for="default-${filter.id}">Padrão:</label>
+            ${defaultValueControl.replace(
+              'class="',
+              `id="default-${filter.id}" class="`
+            )}
+        </div>`
+            : ""
+        }
+    </div>
   `;
 
   div.addEventListener("dragstart", handleDragStart);
@@ -87,7 +120,7 @@ function renderPatientFields(config) {
 }
 
 /**
- * Renderiza os filtros de seção nas zonas corretas.
+ * Renderiza os filtros de seção nas zonas corretas e define seus valores padrão.
  * @param {object} layout - A configuração de layout dos filtros.
  */
 function renderFilterLayout(layout) {
@@ -97,38 +130,48 @@ function renderFilterLayout(layout) {
     document.getElementById(`${section}-more-filters-zone`).innerHTML = "";
   });
 
-  // Itera sobre cada seção definida em filterConfig
   Object.entries(filterConfig).forEach(([sectionKey, filters]) => {
     const sectionLayout = layout[sectionKey] || [];
-
-    // Cria um mapa para acesso rápido ao layout de cada filtro
     const layoutMap = new Map(sectionLayout.map((f) => [f.id, f]));
 
-    // Ordena os filtros com base na ordem salva, tratando filtros novos
     const sortedFilters = [...filters].sort((a, b) => {
       const orderA = layoutMap.get(a.id)?.order ?? Infinity;
       const orderB = layoutMap.get(b.id)?.order ?? Infinity;
-      return orderA - b.order;
+      return orderA - orderB;
     });
 
-    // Renderiza cada filtro na sua zona
     sortedFilters.forEach((filter) => {
-      const filterLayout = layoutMap.get(filter.id);
-      const location = filterLayout?.location || filter.defaultLocation;
-      // ALTERADO: a aba da ficha do paciente não tem filtros
+      const filterLayoutData = layoutMap.get(filter.id);
+      const location = filterLayoutData?.location || filter.defaultLocation;
+
       if (sectionKey === "patient-card") return;
       const zoneId = `${sectionKey}-${location}-filters-zone`;
       const zone = document.getElementById(zoneId);
+
       if (zone) {
         const filterElement = createDraggableFilter(filter);
         zone.appendChild(filterElement);
+
+        // Define o valor do controlo de valor padrão
+        if (filterLayoutData && filterLayoutData.defaultValue !== undefined) {
+          const defaultValueInput = filterElement.querySelector(
+            ".filter-default-value-input"
+          );
+          if (defaultValueInput) {
+            if (defaultValueInput.type === "checkbox") {
+              defaultValueInput.checked = filterLayoutData.defaultValue;
+            } else {
+              defaultValueInput.value = filterLayoutData.defaultValue;
+            }
+          }
+        }
       }
     });
   });
 }
 
 /**
- * Carrega a configuração salva ou usa a padrão.
+ * Carrega a configuração salva, migra se necessário, e renderiza.
  */
 async function restoreOptions() {
   const items = await browser.storage.sync.get({
@@ -137,7 +180,6 @@ async function restoreOptions() {
     autoLoadConsultations: false,
     autoLoadAppointments: false,
     autoLoadRegulations: false,
-    hideNoShowDefault: false,
     monthsBack: 6,
     patientFields: defaultFieldConfig,
     filterLayout: {},
@@ -153,8 +195,6 @@ async function restoreOptions() {
     items.autoLoadAppointments;
   document.getElementById("autoLoadRegulationsCheckbox").checked =
     items.autoLoadRegulations;
-  document.getElementById("hideNoShowDefaultCheckbox").checked =
-    items.hideNoShowDefault;
   document.getElementById("monthsBackInput").value = items.monthsBack;
 
   // Restaura configuração da ficha do paciente
@@ -166,8 +206,43 @@ async function restoreOptions() {
   });
   renderPatientFields(currentPatientFieldsConfig);
 
-  // Restaura configuração de layout dos filtros
-  renderFilterLayout(items.filterLayout);
+  // LÓGICA DE MIGRAÇÃO: Garante que o filterLayout tem a estrutura nova.
+  const migratedFilterLayout = items.filterLayout || {};
+  let needsSave = false;
+  Object.entries(filterConfig).forEach(([sectionKey, filtersInSection]) => {
+    if (!migratedFilterLayout[sectionKey]) {
+      migratedFilterLayout[sectionKey] = [];
+    }
+    const savedLayout = migratedFilterLayout[sectionKey];
+    filtersInSection.forEach((filter) => {
+      let savedFilter = savedLayout.find((f) => f.id === filter.id);
+      if (savedFilter) {
+        if (savedFilter.defaultValue === undefined) {
+          needsSave = true;
+          savedFilter.defaultValue =
+            filter.defaultChecked ??
+            (filter.options ? filter.options[0].value : "");
+        }
+      } else {
+        needsSave = true;
+        savedLayout.push({
+          id: filter.id,
+          location: filter.defaultLocation,
+          order: Infinity,
+          defaultValue:
+            filter.defaultChecked ??
+            (filter.options ? filter.options[0].value : ""),
+        });
+      }
+    });
+  });
+
+  // Se a migração ocorreu, salva silenciosamente a nova estrutura
+  if (needsSave) {
+    await browser.storage.sync.set({ filterLayout: migratedFilterLayout });
+  }
+
+  renderFilterLayout(migratedFilterLayout);
 }
 
 /**
@@ -187,9 +262,6 @@ async function saveOptions() {
   ).checked;
   const autoLoadRegulations = document.getElementById(
     "autoLoadRegulationsCheckbox"
-  ).checked;
-  const hideNoShowDefault = document.getElementById(
-    "hideNoShowDefaultCheckbox"
   ).checked;
   const monthsBack =
     parseInt(document.getElementById("monthsBackInput").value, 10) || 6;
@@ -221,14 +293,12 @@ async function saveOptions() {
     });
   });
 
-  // Coleta a configuração de layout dos filtros
+  // Coleta a configuração de layout e valores padrão dos filtros
   const filterLayout = {};
   document
     .querySelectorAll("#layout-config-section .drop-zone")
     .forEach((zone) => {
-      // Ignora as zonas da ficha do paciente que não são de filtros
       if (!zone.dataset.section) return;
-
       const section = zone.dataset.section;
       if (!filterLayout[section]) {
         filterLayout[section] = [];
@@ -236,10 +306,21 @@ async function saveOptions() {
       const location = zone.id.includes("-main-") ? "main" : "more";
       zone.querySelectorAll(".draggable").forEach((div, index) => {
         const filterId = div.dataset.filterId;
+        const defaultValueInput = div.querySelector(
+          ".filter-default-value-input"
+        );
+        let defaultValue = null;
+        if (defaultValueInput) {
+          defaultValue =
+            defaultValueInput.type === "checkbox"
+              ? defaultValueInput.checked
+              : defaultValueInput.value;
+        }
         filterLayout[section].push({
           id: filterId,
           location: location,
           order: index + 1,
+          defaultValue: defaultValue,
         });
       });
     });
@@ -250,7 +331,6 @@ async function saveOptions() {
     autoLoadConsultations,
     autoLoadAppointments,
     autoLoadRegulations,
-    hideNoShowDefault,
     monthsBack,
     patientFields,
     filterLayout,
@@ -322,7 +402,6 @@ function setupTabs() {
     button.addEventListener("click", () => {
       tabButtons.forEach((btn) => btn.classList.remove("active"));
       tabContents.forEach((content) => content.classList.remove("active"));
-
       button.classList.add("active");
       document
         .getElementById(`${button.dataset.tab}-tab`)
@@ -331,22 +410,17 @@ function setupTabs() {
   });
 }
 
-// --- NOVO: Lógica para Restaurar Padrões ---
+// --- Lógica para Restaurar Padrões ---
 async function handleRestoreDefaults() {
   const confirmation = window.confirm(
-    "Tem certeza de que deseja restaurar todas as configurações de layout para o padrão? Esta ação não pode ser desfeita."
+    "Tem certeza de que deseja restaurar todas as configurações de layout e valores padrão? Esta ação não pode ser desfeita."
   );
   if (confirmation) {
-    // Limpa apenas as configurações de layout do storage.
     await browser.storage.sync.remove(["patientFields", "filterLayout"]);
-
-    // Recarrega as opções da página para refletir os padrões.
     mainFieldsZone.innerHTML = "";
     moreFieldsZone.innerHTML = "";
     restoreOptions();
-
-    statusMessage.textContent =
-      "Configurações de layout restauradas para o padrão.";
+    statusMessage.textContent = "Configurações restauradas para o padrão.";
     statusMessage.className = "mt-4 text-sm font-medium text-blue-600";
     setTimeout(() => {
       statusMessage.textContent = "";
@@ -363,7 +437,7 @@ saveButton.addEventListener("click", saveOptions);
 closeButton.addEventListener("click", () => {
   window.close();
 });
-restoreDefaultsButton.addEventListener("click", handleRestoreDefaults); // NOVO
+restoreDefaultsButton.addEventListener("click", handleRestoreDefaults);
 
 allDropZones.forEach((zone) => {
   zone.addEventListener("dragover", handleDragOver);

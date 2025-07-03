@@ -4,7 +4,6 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Assistente de Regulação</title>
-    <!-- PASSO 1.1: Adicionado polyfill para compatibilidade com Chrome -->
     <script src="browser-polyfill.js"></script>
     <link href="dist/output.css" rel="stylesheet" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -54,6 +53,19 @@
         border-radius: 0.25rem;
         padding: 0.25rem 0.5rem;
         font-size: 0.875rem;
+      }
+      /* NOVO: Estilos para os inputs de valor padrão */
+      .filter-default-value-input {
+        flex-grow: 1;
+        border: 1px solid #e5e7eb;
+        border-radius: 0.25rem;
+        padding: 0.25rem 0.5rem;
+        font-size: 0.875rem;
+        background-color: #f9fafb;
+      }
+      .filter-default-value-input:focus {
+        outline: 1px solid #3b82f6;
+        background-color: white;
       }
       /* Estilos para abas */
       .tabs {
@@ -168,14 +180,6 @@
                   />
                   Carregar automaticamente
                 </label>
-                <label class="flex items-center">
-                  <input
-                    type="checkbox"
-                    id="hideNoShowDefaultCheckbox"
-                    class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 mr-2"
-                  />
-                  Ocultar faltas
-                </label>
               </div>
               <!-- Bloco Exames -->
               <div class="space-y-4">
@@ -279,16 +283,14 @@
         </div>
       </section>
 
-      <!-- ALTERADO: Seção de Configuração de Layouts movida para abas -->
       <section
         id="layout-config-section"
         class="bg-white p-4 rounded-lg border border-slate-200 shadow-sm"
       >
         <div class="flex justify-between items-center mb-3">
           <h2 class="text-md font-semibold text-slate-700">
-            Configurar Layouts
+            Configurar Layouts e Padrões
           </h2>
-          <!-- NOVO: Botão para restaurar padrões -->
           <button
             id="restoreDefaultsButton"
             class="text-sm font-medium text-red-600 hover:underline"
@@ -297,12 +299,11 @@
           </button>
         </div>
         <p class="text-sm text-slate-500 mb-4">
-          Arraste os campos para reordenar ou mover entre as seções. Desmarque
-          para ocultar um campo na ficha do paciente.
+          Arraste para reordenar. Defina os valores padrão para os filtros da
+          barra lateral.
         </p>
         <div id="filter-tabs-container">
           <div class="tabs">
-            <!-- NOVO: Aba para a Ficha do Paciente -->
             <button class="tab-button active" data-tab="patient-card">
               Ficha do Paciente
             </button>
@@ -317,7 +318,6 @@
           </div>
           <!-- Conteúdo das Abas -->
 
-          <!-- NOVO: Conteúdo da aba Ficha do Paciente -->
           <div id="patient-card-tab" class="tab-content active">
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-4">
               <div>

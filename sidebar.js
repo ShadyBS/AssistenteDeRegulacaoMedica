@@ -1,5 +1,6 @@
 import * as API from "./api.js";
 import { defaultFieldConfig } from "./field-config.js";
+import { filterConfig } from "./filter-config.js"; // Importa para a migração
 import { SectionManager } from "./SectionManager.js";
 import * as Renderers from "./renderers.js";
 import * as Utils from "./utils.js";
@@ -13,6 +14,7 @@ const consultationFilterLogic = (data, filters) => {
   const keyword = (filters["consultation-filter-keyword"] || "")
     .toLowerCase()
     .trim();
+  // ALTERADO: O valor do checkbox agora vem do seu ID específico
   const hideNoShows = filters["hide-no-show-checkbox"];
   const cid = (filters["consultation-filter-cid"] || "").toLowerCase().trim();
   const specialty = (filters["consultation-filter-specialty"] || "")
@@ -242,7 +244,8 @@ async function init() {
     onForceRefresh: selectPatient,
   });
   initializeSections(globalSettings);
-  applyUserPreferences(globalSettings.userPreferences);
+  // ALTERADO: A função agora recebe o objeto globalSettings completo
+  applyUserPreferences(globalSettings);
   addGlobalEventListeners();
 }
 
@@ -254,7 +257,6 @@ async function loadConfigAndData() {
     autoLoadConsultations: false,
     autoLoadAppointments: false,
     autoLoadRegulations: false,
-    hideNoShowDefault: false,
     monthsBack: 6,
   });
   const localData = await browser.storage.local.get({
@@ -263,6 +265,35 @@ async function loadConfigAndData() {
   });
   store.setRecentPatients(localData.recentPatients);
   store.setSavedFilterSets(localData.savedFilterSets);
+
+  // LÓGICA DE MIGRAÇÃO (espelhada de options.js para consistência)
+  const migratedFilterLayout = syncData.filterLayout || {};
+  Object.entries(filterConfig).forEach(([sectionKey, filtersInSection]) => {
+    if (!migratedFilterLayout[sectionKey]) {
+      migratedFilterLayout[sectionKey] = [];
+    }
+    const savedLayout = migratedFilterLayout[sectionKey];
+    filtersInSection.forEach((filter) => {
+      let savedFilter = savedLayout.find((f) => f.id === filter.id);
+      if (savedFilter) {
+        if (savedFilter.defaultValue === undefined) {
+          savedFilter.defaultValue =
+            filter.defaultChecked ??
+            (filter.options ? filter.options[0].value : "");
+        }
+      } else {
+        savedLayout.push({
+          id: filter.id,
+          location: filter.defaultLocation,
+          order: Infinity,
+          defaultValue:
+            filter.defaultChecked ??
+            (filter.options ? filter.options[0].value : ""),
+        });
+      }
+    });
+  });
+
   return {
     fieldConfigLayout: defaultFieldConfig.map((defaultField) => {
       const savedField = syncData.patientFields.find(
@@ -270,13 +301,12 @@ async function loadConfigAndData() {
       );
       return savedField ? { ...defaultField, ...savedField } : defaultField;
     }),
-    filterLayout: syncData.filterLayout,
+    filterLayout: migratedFilterLayout, // Usa o layout migrado
     userPreferences: {
       autoLoadExams: syncData.autoLoadExams,
       autoLoadConsultations: syncData.autoLoadConsultations,
       autoLoadAppointments: syncData.autoLoadAppointments,
       autoLoadRegulations: syncData.autoLoadRegulations,
-      hideNoShowDefault: syncData.hideNoShowDefault,
       monthsBack: syncData.monthsBack,
     },
     savedFilterSets: localData.savedFilterSets,
@@ -294,10 +324,15 @@ function initializeSections(globalSettings) {
   });
 }
 
-function applyUserPreferences(userPreferences) {
-  const { hideNoShowDefault, monthsBack } = userPreferences;
-  const hideCheckbox = document.getElementById("hide-no-show-checkbox");
-  if (hideCheckbox) hideCheckbox.checked = hideNoShowDefault;
+/**
+ * Aplica as preferências do utilizador, incluindo os valores padrão dos filtros.
+ * @param {object} globalSettings - O objeto completo de configurações.
+ */
+function applyUserPreferences(globalSettings) {
+  const { userPreferences, filterLayout } = globalSettings;
+  const { monthsBack } = userPreferences;
+
+  // Define as datas
   const months = monthsBack || 6;
   const now = new Date();
   const initial = new Date();
@@ -309,6 +344,24 @@ function applyUserPreferences(userPreferences) {
     if (initialEl) initialEl.valueAsDate = initial;
     if (finalEl) finalEl.valueAsDate = now;
   });
+
+  // Define os valores padrão para todos os filtros
+  Object.values(filterLayout)
+    .flat()
+    .forEach((filterSetting) => {
+      const el = document.getElementById(filterSetting.id);
+      if (
+        el &&
+        filterSetting.defaultValue !== undefined &&
+        filterSetting.defaultValue !== null
+      ) {
+        if (el.type === "checkbox") {
+          el.checked = filterSetting.defaultValue;
+        } else {
+          el.value = filterSetting.defaultValue;
+        }
+      }
+    });
 }
 
 // --- MANIPULADORES DE EVENTOS GLOBAIS ---
@@ -353,9 +406,6 @@ async function handleGlobalActions(event) {
   if (appointmentInfoBtn) handleShowAppointmentInfo(appointmentInfoBtn);
 }
 
-/**
- * PASSO 3.2: Melhorar o feedback visual e prevenir múltiplos cliques.
- */
 async function copyToClipboard(button) {
   if (button.dataset.inProgress === "true") return;
   const textToCopy = button.dataset.copyText;
