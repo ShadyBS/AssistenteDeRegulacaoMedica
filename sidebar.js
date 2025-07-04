@@ -225,6 +225,7 @@ async function selectPatient(patientInfo, forceRefresh = false) {
       });
     }
     store.setPatient(ficha, cadsus);
+    await updateRecentPatients(store.getPatient());
   } catch (error) {
     Utils.showMessage("Erro ao carregar os dados do paciente.", "error");
     console.error(error);
@@ -391,10 +392,13 @@ function addGlobalEventListeners() {
     if (e.target === infoModal) infoModal.classList.add("hidden");
   });
   mainContent.addEventListener("click", handleGlobalActions);
-  store.subscribe(handlePatientChange);
 
   // NOVO: Listener para mensagens do content script
   browser.runtime.onMessage.addListener((message) => {
+    console.log(
+      "[Assistente de Regulação (Sidebar)] MENSAGEM RECEBIDA:",
+      message
+    );
     if (message.type === "CONTEXT_DETECTED") {
       handleContextDetected(message.payload);
     }
