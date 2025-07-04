@@ -32,16 +32,19 @@ export function toggleLoader(show) {
 /**
  * Exibe uma mensagem na área de mensagens.
  * @param {string} text O texto da mensagem.
- * @param {'error' | 'success'} [type='error'] O tipo de mensagem.
+ * @param {'error' | 'success' | 'info'} [type='error'] O tipo de mensagem.
  */
 export function showMessage(text, type = "error") {
   const messageArea = document.getElementById("message-area");
   if (messageArea) {
     messageArea.textContent = text;
+    const typeClasses = {
+      error: "bg-red-100 text-red-700",
+      success: "bg-green-100 text-green-700",
+      info: "bg-blue-100 text-blue-700",
+    };
     messageArea.className = `p-3 rounded-md text-sm ${
-      type === "error"
-        ? "bg-red-100 text-red-700"
-        : "bg-green-100 text-green-700"
+      typeClasses[type] || typeClasses.error
     }`;
     messageArea.style.display = "block";
   }
@@ -65,8 +68,6 @@ export function clearMessage() {
 export function parseDate(dateString) {
   if (!dateString || typeof dateString !== "string") return null;
 
-  // PASSO 3.3: Tornar a função mais robusta para aceitar múltiplos formatos.
-  // Teste para yyyy-MM-dd (padrão ISO)
   if (dateString.includes("-")) {
     const parts = dateString.split("T")[0].split("-");
     if (parts.length === 3) {
@@ -77,7 +78,6 @@ export function parseDate(dateString) {
     }
   }
 
-  // Teste para dd/MM/yyyy
   if (dateString.includes("/")) {
     const parts = dateString.split("/");
     if (parts.length === 3) {
@@ -88,7 +88,7 @@ export function parseDate(dateString) {
     }
   }
 
-  return null; // Retorna null se nenhum formato válido for encontrado
+  return null;
 }
 
 /**
@@ -101,3 +101,15 @@ export const getNestedValue = (obj, path) => {
   if (!path) return undefined;
   return path.split(".").reduce((acc, part) => acc && acc[part], obj);
 };
+
+/**
+ * NOVO: Calcula uma data relativa à data atual com base num desvio em meses.
+ * @param {number} offsetInMonths - O número de meses a adicionar ou subtrair.
+ * @returns {Date} O objeto Date resultante.
+ */
+export function calculateRelativeDate(offsetInMonths) {
+  const date = new Date();
+  // setMonth lida corretamente com transições de ano e dias do mês
+  date.setMonth(date.getMonth() + offsetInMonths);
+  return date;
+}

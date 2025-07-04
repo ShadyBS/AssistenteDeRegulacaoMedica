@@ -1,16 +1,17 @@
 import { defaultFieldConfig } from "./field-config.js";
 import { filterConfig } from "./filter-config.js";
+import * as Utils from "./utils.js"; // Importa para a mensagem
 
 // --- Constantes ---
-const CONFIG_VERSION = "1.0";
+const CONFIG_VERSION = "1.1"; // Versão da estrutura de configuração
 
 // --- Elementos do DOM ---
 const saveButton = document.getElementById("saveButton");
 const statusMessage = document.getElementById("statusMessage");
 const closeButton = document.getElementById("closeButton");
 const restoreDefaultsButton = document.getElementById("restoreDefaultsButton");
-const exportButton = document.getElementById("exportButton"); // NOVO
-const importFileInput = document.getElementById("import-file-input"); // NOVO
+const exportButton = document.getElementById("exportButton");
+const importFileInput = document.getElementById("import-file-input");
 
 // Ficha do Paciente
 const mainFieldsZone = document.getElementById("main-fields-zone");
@@ -183,7 +184,7 @@ function renderFilterLayout(layout) {
 }
 
 /**
- * Carrega a configuração salva, migra se necessário, e renderiza.
+ * Carrega a configuração salva e renderiza a página.
  */
 async function restoreOptions() {
   const items = await browser.storage.sync.get({
@@ -192,11 +193,12 @@ async function restoreOptions() {
     autoLoadConsultations: false,
     autoLoadAppointments: false,
     autoLoadRegulations: false,
-    monthsBack: 6,
     patientFields: defaultFieldConfig,
     filterLayout: {},
+    dateRangeDefaults: {}, // NOVO
   });
 
+  // Configurações Gerais
   document.getElementById("baseUrlInput").value = items.baseUrl;
   document.getElementById("autoLoadExamsCheckbox").checked =
     items.autoLoadExams;
@@ -206,8 +208,8 @@ async function restoreOptions() {
     items.autoLoadAppointments;
   document.getElementById("autoLoadRegulationsCheckbox").checked =
     items.autoLoadRegulations;
-  document.getElementById("monthsBackInput").value = items.monthsBack;
 
+  // Ficha do Paciente
   const currentPatientFieldsConfig = defaultFieldConfig.map((defaultField) => {
     const savedField = items.patientFields.find(
       (f) => f.id === defaultField.id
@@ -216,53 +218,32 @@ async function restoreOptions() {
   });
   renderPatientFields(currentPatientFieldsConfig);
 
-  const migratedFilterLayout = items.filterLayout || {};
-  let needsSave = false;
-  Object.entries(filterConfig).forEach(([sectionKey, filtersInSection]) => {
-    if (!migratedFilterLayout[sectionKey]) {
-      migratedFilterLayout[sectionKey] = [];
-    }
-    const savedLayout = migratedFilterLayout[sectionKey];
-    filtersInSection.forEach((filter) => {
-      let savedFilter = savedLayout.find((f) => f.id === filter.id);
-      if (savedFilter) {
-        if (
-          filter.type !== "component" &&
-          savedFilter.defaultValue === undefined
-        ) {
-          needsSave = true;
-          savedFilter.defaultValue =
-            filter.defaultChecked ??
-            (filter.options ? filter.options[0].value : "");
-        }
-      } else {
-        needsSave = true;
-        const newFilterData = {
-          id: filter.id,
-          location: filter.defaultLocation,
-          order: Infinity,
-        };
-        if (filter.type !== "component") {
-          newFilterData.defaultValue =
-            filter.defaultChecked ??
-            (filter.options ? filter.options[0].value : "");
-        }
-        savedLayout.push(newFilterData);
-      }
-    });
+  // Layouts de Filtro
+  renderFilterLayout(items.filterLayout);
+
+  // Períodos Padrão
+  const sections = ["consultations", "exams", "appointments", "regulations"];
+  const defaultRanges = {
+    consultations: { start: -6, end: 0 },
+    exams: { start: -6, end: 0 },
+    appointments: { start: -1, end: 3 },
+    regulations: { start: -12, end: 0 },
+  };
+
+  sections.forEach((section) => {
+    const range = items.dateRangeDefaults[section] || defaultRanges[section];
+    document.getElementById(`${section}-start-offset`).value = Math.abs(
+      range.start
+    );
+    document.getElementById(`${section}-end-offset`).value = range.end;
   });
-
-  if (needsSave) {
-    await browser.storage.sync.set({ filterLayout: migratedFilterLayout });
-  }
-
-  renderFilterLayout(migratedFilterLayout);
 }
 
 /**
  * Salva todas as configurações.
  */
 async function saveOptions() {
+  // Configurações Gerais
   const baseUrl = document.getElementById("baseUrlInput").value;
   const autoLoadExams = document.getElementById(
     "autoLoadExamsCheckbox"
@@ -276,9 +257,8 @@ async function saveOptions() {
   const autoLoadRegulations = document.getElementById(
     "autoLoadRegulationsCheckbox"
   ).checked;
-  const monthsBack =
-    parseInt(document.getElementById("monthsBackInput").value, 10) || 6;
 
+  // Ficha do Paciente
   const patientFields = [];
   mainFieldsZone.querySelectorAll(".draggable").forEach((div, index) => {
     const fieldId = div.dataset.fieldId;
@@ -305,6 +285,7 @@ async function saveOptions() {
     });
   });
 
+  // Layouts de Filtro
   const filterLayout = {};
   document
     .querySelectorAll("#layout-config-section .drop-zone")
@@ -331,18 +312,26 @@ async function saveOptions() {
           const defaultValueInput = div.querySelector(
             ".filter-default-value-input"
           );
-          let defaultValue = null;
-          if (defaultValueInput) {
-            defaultValue =
-              defaultValueInput.type === "checkbox"
-                ? defaultValueInput.checked
-                : defaultValueInput.value;
-          }
-          newFilterData.defaultValue = defaultValue;
+          newFilterData.defaultValue =
+            defaultValueInput.type === "checkbox"
+              ? defaultValueInput.checked
+              : defaultValueInput.value;
         }
         filterLayout[section].push(newFilterData);
       });
     });
+
+  // Períodos Padrão
+  const dateRangeDefaults = {};
+  const sections = ["consultations", "exams", "appointments", "regulations"];
+  sections.forEach((section) => {
+    const start =
+      -parseInt(document.getElementById(`${section}-start-offset`).value, 10) ||
+      0;
+    const end =
+      parseInt(document.getElementById(`${section}-end-offset`).value, 10) || 0;
+    dateRangeDefaults[section] = { start, end };
+  });
 
   await browser.storage.sync.set({
     baseUrl: baseUrl.endsWith("/") ? baseUrl.slice(0, -1) : baseUrl,
@@ -350,13 +339,12 @@ async function saveOptions() {
     autoLoadConsultations,
     autoLoadAppointments,
     autoLoadRegulations,
-    monthsBack,
     patientFields,
     filterLayout,
+    dateRangeDefaults,
   });
 
-  statusMessage.textContent = "Configurações salvas com sucesso!";
-  statusMessage.className = "mt-4 text-sm font-medium text-green-600";
+  Utils.showMessage("Configurações salvas com sucesso!", "success");
   setTimeout(() => {
     statusMessage.textContent = "";
   }, 2000);
@@ -435,25 +423,30 @@ async function handleRestoreDefaults() {
     "Tem certeza de que deseja restaurar todas as configurações de layout e valores padrão? Esta ação não pode ser desfeita."
   );
   if (confirmation) {
-    await browser.storage.sync.remove(["patientFields", "filterLayout"]);
+    await browser.storage.sync.remove([
+      "patientFields",
+      "filterLayout",
+      "dateRangeDefaults",
+    ]);
     mainFieldsZone.innerHTML = "";
     moreFieldsZone.innerHTML = "";
     restoreOptions();
-    statusMessage.textContent = "Configurações restauradas para o padrão.";
-    statusMessage.className = "mt-4 text-sm font-medium text-blue-600";
+    Utils.showMessage("Configurações restauradas para o padrão.", "info");
     setTimeout(() => {
       statusMessage.textContent = "";
     }, 3000);
   }
 }
 
-// --- NOVO: Lógica de Exportação e Importação ---
+// --- Lógica de Exportação e Importação ---
 async function handleExport() {
   try {
-    const settings = await browser.storage.sync.get(null);
-    settings.configVersion = CONFIG_VERSION;
+    const settingsToExport = await browser.storage.sync.get(null);
+    // Remove chaves que não devem ser exportadas se houver alguma
+    // delete settingsToExport.someKey;
+    settingsToExport.configVersion = CONFIG_VERSION;
 
-    const settingsString = JSON.stringify(settings, null, 2);
+    const settingsString = JSON.stringify(settingsToExport, null, 2);
     const blob = new Blob([settingsString], { type: "application/json" });
     const url = URL.createObjectURL(blob);
 
@@ -466,12 +459,10 @@ async function handleExport() {
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
 
-    statusMessage.textContent = "Configurações exportadas com sucesso!";
-    statusMessage.className = "mt-4 text-sm font-medium text-green-600";
+    Utils.showMessage("Configurações exportadas com sucesso!", "success");
   } catch (error) {
     console.error("Erro ao exportar configurações:", error);
-    statusMessage.textContent = "Erro ao exportar configurações.";
-    statusMessage.className = "mt-4 text-sm font-medium text-red-600";
+    Utils.showMessage("Erro ao exportar configurações.", "error");
   } finally {
     setTimeout(() => {
       statusMessage.textContent = "";
@@ -488,35 +479,32 @@ function handleImport(event) {
     try {
       const importedSettings = JSON.parse(e.target.result);
 
-      // Validação simples
-      if (
-        !importedSettings.configVersion ||
-        !importedSettings.baseUrl ||
-        !importedSettings.filterLayout
-      ) {
+      if (!importedSettings.configVersion || !importedSettings.filterLayout) {
         throw new Error("Ficheiro de configuração inválido ou corrompido.");
       }
 
-      // Validação de versão (opcional, mas bom para o futuro)
-      if (importedSettings.configVersion !== CONFIG_VERSION) {
+      if (
+        importedSettings.configVersion.split(".")[0] !==
+        CONFIG_VERSION.split(".")[0]
+      ) {
         const goOn = window.confirm(
-          "A versão do ficheiro de configuração é diferente da versão da extensão. Deseja continuar mesmo assim?"
+          "A versão do ficheiro de configuração é muito diferente da versão da extensão. A importação pode causar erros. Deseja continuar mesmo assim?"
         );
         if (!goOn) return;
       }
 
+      await browser.storage.sync.clear(); // Limpa para evitar fusão de chaves antigas
       await browser.storage.sync.set(importedSettings);
-      restoreOptions(); // Recarrega a UI com as novas configurações
+      restoreOptions();
 
-      statusMessage.textContent =
-        "Configurações importadas e aplicadas com sucesso!";
-      statusMessage.className = "mt-4 text-sm font-medium text-green-600";
+      Utils.showMessage(
+        "Configurações importadas e aplicadas com sucesso!",
+        "success"
+      );
     } catch (error) {
       console.error("Erro ao importar configurações:", error);
-      statusMessage.textContent = `Erro ao importar: ${error.message}`;
-      statusMessage.className = "mt-4 text-sm font-medium text-red-600";
+      Utils.showMessage(`Erro ao importar: ${error.message}`, "error");
     } finally {
-      // Limpa o valor do input para permitir importar o mesmo ficheiro novamente
       importFileInput.value = "";
       setTimeout(() => {
         statusMessage.textContent = "";
@@ -536,8 +524,8 @@ closeButton.addEventListener("click", () => {
   window.close();
 });
 restoreDefaultsButton.addEventListener("click", handleRestoreDefaults);
-exportButton.addEventListener("click", handleExport); // NOVO
-importFileInput.addEventListener("change", handleImport); // NOVO
+exportButton.addEventListener("click", handleExport);
+importFileInput.addEventListener("change", handleImport);
 
 allDropZones.forEach((zone) => {
   zone.addEventListener("dragover", handleDragOver);

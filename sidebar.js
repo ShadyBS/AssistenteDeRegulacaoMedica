@@ -1,6 +1,6 @@
 import * as API from "./api.js";
 import { defaultFieldConfig } from "./field-config.js";
-import { filterConfig } from "./filter-config.js"; // Importa para a migração
+import { filterConfig } from "./filter-config.js";
 import { SectionManager } from "./SectionManager.js";
 import * as Renderers from "./renderers.js";
 import * as Utils from "./utils.js";
@@ -14,7 +14,6 @@ const consultationFilterLogic = (data, filters) => {
   const keyword = (filters["consultation-filter-keyword"] || "")
     .toLowerCase()
     .trim();
-  // ALTERADO: O valor do checkbox agora vem do seu ID específico
   const hideNoShows = filters["hide-no-show-checkbox"];
   const cid = (filters["consultation-filter-cid"] || "").toLowerCase().trim();
   const specialty = (filters["consultation-filter-specialty"] || "")
@@ -227,7 +226,7 @@ async function selectPatient(patientInfo, forceRefresh = false) {
     }
     store.setPatient(ficha, cadsus);
   } catch (error) {
-    Utils.showMessage("Erro ao carregar os dados do paciente.");
+    Utils.showMessage("Erro ao carregar os dados do paciente.", "error");
     console.error(error);
     store.clearPatient();
   } finally {
@@ -244,7 +243,6 @@ async function init() {
     onForceRefresh: selectPatient,
   });
   initializeSections(globalSettings);
-  // ALTERADO: A função agora recebe o objeto globalSettings completo
   applyUserPreferences(globalSettings);
   addGlobalEventListeners();
 }
@@ -257,7 +255,7 @@ async function loadConfigAndData() {
     autoLoadConsultations: false,
     autoLoadAppointments: false,
     autoLoadRegulations: false,
-    monthsBack: 6,
+    dateRangeDefaults: {}, // NOVO
   });
   const localData = await browser.storage.local.get({
     recentPatients: [],
@@ -266,34 +264,6 @@ async function loadConfigAndData() {
   store.setRecentPatients(localData.recentPatients);
   store.setSavedFilterSets(localData.savedFilterSets);
 
-  // LÓGICA DE MIGRAÇÃO (espelhada de options.js para consistência)
-  const migratedFilterLayout = syncData.filterLayout || {};
-  Object.entries(filterConfig).forEach(([sectionKey, filtersInSection]) => {
-    if (!migratedFilterLayout[sectionKey]) {
-      migratedFilterLayout[sectionKey] = [];
-    }
-    const savedLayout = migratedFilterLayout[sectionKey];
-    filtersInSection.forEach((filter) => {
-      let savedFilter = savedLayout.find((f) => f.id === filter.id);
-      if (savedFilter) {
-        if (savedFilter.defaultValue === undefined) {
-          savedFilter.defaultValue =
-            filter.defaultChecked ??
-            (filter.options ? filter.options[0].value : "");
-        }
-      } else {
-        savedLayout.push({
-          id: filter.id,
-          location: filter.defaultLocation,
-          order: Infinity,
-          defaultValue:
-            filter.defaultChecked ??
-            (filter.options ? filter.options[0].value : ""),
-        });
-      }
-    });
-  });
-
   return {
     fieldConfigLayout: defaultFieldConfig.map((defaultField) => {
       const savedField = syncData.patientFields.find(
@@ -301,13 +271,13 @@ async function loadConfigAndData() {
       );
       return savedField ? { ...defaultField, ...savedField } : defaultField;
     }),
-    filterLayout: migratedFilterLayout, // Usa o layout migrado
+    filterLayout: syncData.filterLayout,
     userPreferences: {
       autoLoadExams: syncData.autoLoadExams,
       autoLoadConsultations: syncData.autoLoadConsultations,
       autoLoadAppointments: syncData.autoLoadAppointments,
       autoLoadRegulations: syncData.autoLoadRegulations,
-      monthsBack: syncData.monthsBack,
+      dateRangeDefaults: syncData.dateRangeDefaults, // NOVO
     },
     savedFilterSets: localData.savedFilterSets,
   };
@@ -325,24 +295,32 @@ function initializeSections(globalSettings) {
 }
 
 /**
- * Aplica as preferências do utilizador, incluindo os valores padrão dos filtros.
+ * Aplica as preferências do utilizador, incluindo os valores padrão dos filtros e períodos.
  * @param {object} globalSettings - O objeto completo de configurações.
  */
 function applyUserPreferences(globalSettings) {
   const { userPreferences, filterLayout } = globalSettings;
-  const { monthsBack } = userPreferences;
+  const { dateRangeDefaults } = userPreferences;
 
-  // Define as datas
-  const months = monthsBack || 6;
-  const now = new Date();
-  const initial = new Date();
-  initial.setMonth(now.getMonth() - months);
-  const dateFields = ["consultation", "exam", "appointment", "regulation"];
-  dateFields.forEach((prefix) => {
+  // Define as datas com base nos períodos padrão por secção
+  const sections = ["consultations", "exams", "appointments", "regulations"];
+  const defaultSystemRanges = {
+    consultations: { start: -6, end: 0 },
+    exams: { start: -6, end: 0 },
+    appointments: { start: -1, end: 3 },
+    regulations: { start: -12, end: 0 },
+  };
+
+  sections.forEach((section) => {
+    const range = dateRangeDefaults[section] || defaultSystemRanges[section];
+    const prefix = section.replace(/s$/, ""); // ex: "consultations" -> "consultation"
+
     const initialEl = document.getElementById(`${prefix}-date-initial`);
     const finalEl = document.getElementById(`${prefix}-date-final`);
-    if (initialEl) initialEl.valueAsDate = initial;
-    if (finalEl) finalEl.valueAsDate = now;
+
+    if (initialEl)
+      initialEl.valueAsDate = Utils.calculateRelativeDate(range.start);
+    if (finalEl) finalEl.valueAsDate = Utils.calculateRelativeDate(range.end);
   });
 
   // Define os valores padrão para todos os filtros
@@ -465,7 +443,7 @@ async function handleViewAppointmentDetails(button) {
       : `${baseUrl}/sigss/consultaRapida.jsp?agcoPK.idp=${idp}&agcoPK.ids=${ids}`;
     window.open(url, "_blank");
   } catch (error) {
-    Utils.showMessage("Não foi possível construir a URL.");
+    Utils.showMessage("Não foi possível construir a URL.", "error");
   }
 }
 
@@ -478,7 +456,7 @@ async function handleViewRegulationDetails(button) {
       "_blank"
     );
   } catch (error) {
-    Utils.showMessage("Não foi possível construir a URL.");
+    Utils.showMessage("Não foi possível construir a URL.", "error");
   }
 }
 
