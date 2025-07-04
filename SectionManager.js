@@ -9,7 +9,6 @@ import { store } from "./store.js";
 
 /**
  * Gera o HTML para o indicador de ordenação (seta para cima/baixo).
- * Esta função é exportada para que os módulos de renderização possam usá-la.
  * @param {string} key - A chave da coluna atual.
  * @param {object} state - O objeto de estado de ordenação da secção.
  * @returns {string} O caractere da seta ou uma string vazia.
@@ -57,7 +56,7 @@ export class SectionManager {
 
   init() {
     this.cacheDomElements();
-    this.renderFilterControls(); // ALTERADO: Renderiza antes para que os elementos dinâmicos existam
+    this.renderFilterControls();
     this.addEventListeners();
     store.subscribe(() => this.onStateChange());
   }
@@ -87,7 +86,9 @@ export class SectionManager {
       clearBtn: document.getElementById(`clear-${prefix}-filters-btn`),
       mainFilters: document.getElementById(`${prefix}-main-filters`),
       moreFilters: document.getElementById(`${prefix}-more-filters`),
-      // ALTERADO: Elementos de data e filtros salvos são removidos daqui, pois são dinâmicos
+      automationFeedback: document.getElementById(
+        `${sectionKey}-automation-feedback`
+      ),
     };
   }
 
@@ -103,7 +104,6 @@ export class SectionManager {
       this.clearFilters()
     );
 
-    // A delegação de eventos no elemento da seção principal lida com os elementos dinâmicos
     this.elements.section?.addEventListener(
       "input",
       Utils.debounce((e) => {
@@ -132,12 +132,16 @@ export class SectionManager {
       if (target.id === `${this.prefix}-save-filter-btn`) this.saveFilterSet();
       if (target.closest(`#${this.prefix}-delete-filter-btn`))
         this.deleteFilterSet();
+      if (target.closest(".clear-automation-btn")) {
+        this.clearAutomationFeedbackAndFilters(true);
+      }
     });
   }
 
   setPatient(patient) {
     this.currentPatient = patient;
     this.allData = [];
+    this.clearAutomationFeedbackAndFilters(false); // Limpa automação sem re-renderizar
     this.applyFiltersAndRender();
 
     if (this.elements.section) {
@@ -169,7 +173,17 @@ export class SectionManager {
       '<p class="text-slate-500">Carregando...</p>';
 
     try {
-      // Certifica que os elementos de data estão cacheados antes de usar
+      // --- INÍCIO DA CORREÇÃO ---
+      // Lê o valor mais atual do filtro de tipo/modalidade diretamente do elemento da UI
+      // antes de construir os parâmetros. Isso garante que as regras de automação sejam respeitadas.
+      const fetchTypeElement = this.elements.mainFilters?.querySelector(
+        `#${this.prefix}-fetch-type-buttons`
+      );
+      if (fetchTypeElement) {
+        this.fetchType = fetchTypeElement.value;
+      }
+      // --- FIM DA CORREÇÃO ---
+
       const dataInicialValue = this.elements.dateInitial
         ? this.elements.dateInitial.value
         : null;
@@ -252,7 +266,6 @@ export class SectionManager {
     const values = {};
     const filters = filterConfig[this.sectionKey] || [];
     filters.forEach((filter) => {
-      // Ignora componentes que não são filtros de valor
       if (filter.type === "component") return;
 
       const el = document.getElementById(filter.id);
@@ -314,7 +327,7 @@ export class SectionManager {
         }
       }
     });
-    this.applyFiltersAndRender();
+    this.clearAutomationFeedbackAndFilters(true);
   }
 
   handleSort(sortKey) {
@@ -436,7 +449,6 @@ export class SectionManager {
   }
 
   populateSavedFilterDropdown() {
-    // O dropdown agora é dinâmico, então precisamos encontrá-lo
     const select = document.getElementById(
       `${this.prefix}-saved-filters-select`
     );
@@ -453,7 +465,6 @@ export class SectionManager {
     select.value = currentSelection;
   }
 
-  // MÉTODO PRINCIPAL DE RENDERIZAÇÃO DINÂMICA
   renderFilterControls() {
     try {
       const sectionFilters = filterConfig[this.sectionKey] || [];
@@ -495,7 +506,6 @@ export class SectionManager {
     }
   }
 
-  // NOVO: Cria componentes de UI não-filtros
   createUiComponent(componentName) {
     switch (componentName) {
       case "date-range":
@@ -520,7 +530,6 @@ export class SectionManager {
             <input type="date" id="${this.prefix}-date-final" class="mt-1 w-full px-2 py-1 border border-slate-300 rounded-md"/>
         </div>
       `;
-    // Cacheia os elementos após a criação
     this.elements.dateInitial = container.querySelector(
       `#${this.prefix}-date-initial`
     );
@@ -533,7 +542,6 @@ export class SectionManager {
   renderSavedFiltersComponent() {
     const container = document.createElement("div");
     container.className = "mt-4 pt-4 border-t";
-    // Este ID é usado pelo toggleMoreFilters
     container.id = `${this.prefix}-saved-filters-container`;
     container.innerHTML = `
         <h3 class="text-sm font-semibold text-slate-600 mt-3 mb-2">Filtros Salvos</h3>
@@ -567,14 +575,8 @@ export class SectionManager {
         }" class="w-full px-2 py-1 border border-slate-300 rounded-md">`;
         break;
       case "select":
-        elementHtml += `<select id="${filter.id}" class="w-full px-2 py-1 border border-slate-300 rounded-md bg-white">`;
-        filter.options.forEach((opt) => {
-          elementHtml += `<option value="${opt.value}">${opt.text}</option>`;
-        });
-        elementHtml += `</select>`;
-        break;
       case "selectGroup":
-        elementHtml += `<select id="${filter.id}" class="filter-select-group w-full px-2 py-1 border border-slate-300 rounded-md bg-white">`;
+        elementHtml += `<select id="${filter.id}" class="w-full px-2 py-1 border border-slate-300 rounded-md bg-white">`;
         filter.options.forEach((opt) => {
           elementHtml += `<option value="${opt.value}">${opt.text}</option>`;
         });
@@ -588,5 +590,59 @@ export class SectionManager {
     }
     container.innerHTML = elementHtml;
     return container;
+  }
+
+  applyAutomationFilters(filterSettings, ruleName) {
+    if (!filterSettings) return;
+
+    // Obtém a configuração de todos os filtros para esta seção
+    const sectionFiltersConfig = filterConfig[this.sectionKey] || [];
+
+    Object.entries(filterSettings).forEach(([filterId, value]) => {
+      const el = document.getElementById(filterId);
+      if (el) {
+        // Define o valor do elemento de filtro na UI
+        if (el.type === "checkbox") {
+          el.checked = value;
+        } else {
+          el.value = value;
+        }
+
+        // Verifica se este filtro é um 'selectGroup' para atualizar o tipo de busca
+        const filterMeta = sectionFiltersConfig.find((f) => f.id === filterId);
+        if (filterMeta && filterMeta.type === "selectGroup") {
+          this.fetchType = value;
+        }
+      }
+    });
+
+    // Exibe o feedback visual de que a automação foi aplicada
+    if (this.elements.automationFeedback) {
+      this.elements.automationFeedback.innerHTML = `
+            <div class="flex justify-between items-center">
+                <span>Filtro automático aplicado: <strong>${ruleName}</strong></span>
+                <button class="clear-automation-btn text-blue-800 hover:text-blue-900 font-bold" title="Limpar filtro automático">&times;</button>
+            </div>
+        `;
+      this.elements.automationFeedback.classList.remove("hidden");
+    }
+
+    // Força a busca de novos dados com os filtros que acabaram de ser aplicados
+    this.fetchData();
+  }
+
+  clearAutomationFeedbackAndFilters(shouldRender = true) {
+    if (
+      this.elements.automationFeedback &&
+      !this.elements.automationFeedback.classList.contains("hidden")
+    ) {
+      this.elements.automationFeedback.classList.add("hidden");
+      this.elements.automationFeedback.innerHTML = "";
+      // Apenas limpa os filtros se uma automação estava ativa
+      this.clearFilters(false); // Passa false para evitar loop
+    }
+    if (shouldRender) {
+      this.applyFiltersAndRender();
+    }
   }
 }

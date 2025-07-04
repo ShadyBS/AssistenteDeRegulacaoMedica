@@ -16,6 +16,10 @@
       body {
         font-family: "Inter", sans-serif;
       }
+      /* Força a classe hidden a funcionar em ambientes de pré-visualização */
+      .hidden {
+        display: none !important;
+      }
       .btn-active {
         background-color: #2563eb;
         color: white;
@@ -90,7 +94,6 @@
       .tab-content.active {
         display: block;
       }
-      /* Estilos para o novo Gerenciador de Automação */
       .rule-item {
         transition: background-color 0.2s;
       }
@@ -98,19 +101,6 @@
         opacity: 0.5;
         background-color: #e0f2fe;
       }
-      .rule-item-content {
-        max-height: 0;
-        overflow: hidden;
-        transition: max-height 0.3s ease-in-out, padding 0.3s ease-in-out;
-        padding-top: 0;
-        padding-bottom: 0;
-      }
-      .rule-item-content.show {
-        max-height: 1500px; /* Altura suficiente para os filtros */
-        padding-top: 1rem;
-        padding-bottom: 1rem;
-      }
-      /* Estilos para o Modal */
       .modal-overlay {
         position: fixed;
         top: 0;
@@ -295,28 +285,6 @@
         </p>
         <div id="automation-rules-list" class="space-y-2">
           <!-- As regras de automação serão inseridas aqui pelo options.js -->
-          <!-- Exemplo de item de regra (para referência de estilo):
-          <div class="rule-item border rounded-lg bg-white p-3" draggable="true">
-            <div class="flex items-center justify-between">
-              <div class="flex items-center gap-3">
-                <span class="drag-handle cursor-grab text-slate-400">⠿</span>
-                <div>
-                  <p class="font-semibold text-slate-800">Nome da Regra</p>
-                  <p class="text-xs text-slate-500">Gatilhos: palavra1, palavra2</p>
-                </div>
-              </div>
-              <div class="flex items-center gap-4">
-                <label class="relative inline-flex items-center cursor-pointer">
-                  <input type="checkbox" class="sr-only peer" checked>
-                  <div class="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                </label>
-                <button class="text-sm font-medium text-blue-600 hover:underline">Editar</button>
-                <button class="text-sm font-medium text-slate-500 hover:underline">Duplicar</button>
-                <button class="text-sm font-medium text-red-600 hover:underline">Excluir</button>
-              </div>
-            </div>
-          </div>
-          -->
         </div>
         <button
           id="create-new-rule-btn"
@@ -628,7 +596,7 @@
       <div id="statusMessage" class="mt-4 text-sm font-medium"></div>
     </main>
 
-    <!-- NOVO: Modal para Editor de Regra -->
+    <!-- Modal para Editor de Regra -->
     <div id="rule-editor-modal" class="modal-overlay hidden">
       <div class="modal-container">
         <div class="modal-header">

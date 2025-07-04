@@ -8,10 +8,8 @@ import * as Search from "./ui/search.js";
 import * as PatientCard from "./ui/patient-card.js";
 import { store } from "./store.js";
 
-// **INÍCIO DA ALTERAÇÃO**
-// Variável para armazenar os dados da última regulação carregada
 let currentRegulationData = null;
-// **FIM DA ALTERAÇÃO**
+let sectionManagers = {}; // Objeto para armazenar instâncias de SectionManager
 
 // --- LÓGICA DE FILTRAGEM (sem alterações) ---
 const consultationFilterLogic = (data, filters) => {
@@ -226,6 +224,11 @@ async function selectPatient(patientInfo, forceRefresh = false) {
         cns: ficha.isenNumCadSus,
       });
     }
+    // Limpa a automação de todas as seções antes de definir o novo paciente
+    Object.values(sectionManagers).forEach((manager) =>
+      manager.clearAutomationFeedbackAndFilters(false)
+    );
+
     store.setPatient(ficha, cadsus);
     await updateRecentPatients(store.getPatient());
   } catch (error) {
@@ -263,9 +266,11 @@ async function loadConfigAndData() {
   const localData = await browser.storage.local.get({
     recentPatients: [],
     savedFilterSets: {},
+    automationRules: [],
   });
   store.setRecentPatients(localData.recentPatients);
   store.setSavedFilterSets(localData.savedFilterSets);
+  // Não precisa guardar as regras no store, elas são lidas quando necessário
 
   return {
     fieldConfigLayout: defaultFieldConfig.map((defaultField) => {
@@ -283,14 +288,12 @@ async function loadConfigAndData() {
       enableAutomaticDetection: syncData.enableAutomaticDetection,
       dateRangeDefaults: syncData.dateRangeDefaults,
     },
-    savedFilterSets: localData.savedFilterSets,
   };
 }
 
 function initializeSections(globalSettings) {
-  const allSectionManagers = {};
   Object.keys(sectionConfigurations).forEach((key) => {
-    allSectionManagers[key] = new SectionManager(
+    sectionManagers[key] = new SectionManager(
       key,
       sectionConfigurations[key],
       globalSettings
@@ -358,13 +361,10 @@ function setupAutoModeToggle() {
   });
 }
 
-// **INÍCIO DA ALTERAÇÃO**
 async function handleRegulationLoaded(payload) {
   Utils.toggleLoader(true);
   try {
     const regulationData = await API.fetchRegulationDetails(payload);
-
-    // Armazena a resposta JSON completa para o botão de info
     currentRegulationData = regulationData;
 
     if (
@@ -378,25 +378,69 @@ async function handleRegulationLoaded(payload) {
       };
       await selectPatient(patientInfo);
 
-      // Atualiza o botão de contexto com o nome do procedimento/especialidade
       const contextName =
         regulationData.apcnNome || regulationData.prciNome || "Contexto";
       const infoBtn = document.getElementById("context-info-btn");
       infoBtn.title = `Contexto: ${contextName.trim()}`;
       infoBtn.classList.remove("hidden");
+
+      await applyAutomationRules(regulationData);
     } else {
-      currentRegulationData = null; // Limpa se os dados não forem válidos
+      currentRegulationData = null;
       Utils.showMessage(
         "Não foi possível extrair os dados do paciente da regulação.",
         "error"
       );
     }
   } catch (error) {
-    currentRegulationData = null; // Limpa em caso de erro
-    Utils.showMessage(error.message, "error");
+    currentRegulationData = null;
+    Utils.showMessage(
+      `Erro ao processar a regulação: ${error.message}`,
+      "error"
+    );
     console.error("Erro ao processar a regulação:", error);
   } finally {
     Utils.toggleLoader(false);
+  }
+}
+
+async function applyAutomationRules(regulationData) {
+  const { automationRules } = await browser.storage.local.get({
+    automationRules: [],
+  });
+  if (!automationRules || automationRules.length === 0) return;
+
+  const contextString = [
+    regulationData.prciNome || "",
+    regulationData.prciCodigo || "",
+    regulationData.apcnNome || "",
+    regulationData.apcnCod || "",
+  ]
+    .join(" ")
+    .toLowerCase();
+
+  for (const rule of automationRules) {
+    if (rule.isActive) {
+      const hasMatch = rule.triggerKeywords.some((keyword) =>
+        contextString.includes(keyword.toLowerCase().trim())
+      );
+
+      if (hasMatch) {
+        Object.entries(rule.filterSettings).forEach(([sectionKey, filters]) => {
+          if (
+            sectionManagers[sectionKey] &&
+            typeof sectionManagers[sectionKey].applyAutomationFilters ===
+              "function"
+          ) {
+            sectionManagers[sectionKey].applyAutomationFilters(
+              filters,
+              rule.name
+            );
+          }
+        });
+        return;
+      }
+    }
   }
 }
 
@@ -412,20 +456,16 @@ function handleShowRegulationInfo() {
   modalTitle.textContent = "Dados da Regulação (JSON)";
   const formattedJson = JSON.stringify(currentRegulationData, null, 2);
 
-  // Usa <pre> para manter a formatação e adiciona estilos para quebra de linha
   modalContent.innerHTML = `<pre class="bg-slate-100 p-2 rounded-md text-xs whitespace-pre-wrap break-all">${formattedJson}</pre>`;
 
   infoModal.classList.remove("hidden");
 }
-// **FIM DA ALTERAÇÃO**
 
 function addGlobalEventListeners() {
   const mainContent = document.getElementById("main-content");
   const infoModal = document.getElementById("info-modal");
   const modalCloseBtn = document.getElementById("modal-close-btn");
-  // **INÍCIO DA ALTERAÇÃO**
   const infoBtn = document.getElementById("context-info-btn");
-  // **FIM DA ALTERAÇÃO**
 
   modalCloseBtn.addEventListener("click", () =>
     infoModal.classList.add("hidden")
@@ -434,16 +474,12 @@ function addGlobalEventListeners() {
     if (e.target === infoModal) infoModal.classList.add("hidden");
   });
   mainContent.addEventListener("click", handleGlobalActions);
-  // **INÍCIO DA ALTERAÇÃO**
   infoBtn.addEventListener("click", handleShowRegulationInfo);
-  // **FIM DA ALTERAÇÃO**
 
   browser.runtime.onMessage.addListener((message) => {
-    // **INÍCIO DA ALTERAÇÃO**
     if (message.type === "REGULATION_LOADED") {
       handleRegulationLoaded(message.payload);
     }
-    // **FIM DA ALTERAÇÃO**
   });
 }
 

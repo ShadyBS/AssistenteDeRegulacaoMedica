@@ -649,15 +649,24 @@ function openRuleEditor(ruleId = null) {
     ruleEditorTitle.textContent = "Criar Nova Regra de Automação";
     ruleNameInput.value = "";
     ruleTriggersInput.value = "";
-    // Limpa todos os campos de filtro no modal
+
+    // --- INÍCIO DA CORREÇÃO ---
+    // Define valores padrão para os campos ao criar uma nova regra
     document
-      .querySelectorAll(
-        '#rule-editor-modal input[type="text"], #rule-editor-modal select'
-      )
+      .querySelectorAll('#rule-editor-modal input[type="text"]')
       .forEach((el) => (el.value = ""));
+
     document
       .querySelectorAll('#rule-editor-modal input[type="checkbox"]')
       .forEach((el) => (el.checked = false));
+
+    document.querySelectorAll("#rule-editor-modal select").forEach((el) => {
+      if (el.options.length > 0) {
+        // Seleciona a primeira opção, que é a mais abrangente ("Todos", "Todas", etc.)
+        el.value = el.options[0].value;
+      }
+    });
+    // --- FIM DA CORREÇÃO ---
   }
 
   ruleEditorModal.classList.remove("hidden");
@@ -854,7 +863,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Listeners para a funcionalidade de automação
   createNewRuleBtn.addEventListener("click", () => openRuleEditor(null));
-  cancelRuleBtn.addEventListener("click", closeRuleEditor);
+  cancelRuleBtn.addEventListener("click", closeRuleEditor); // <-- Mantenha aqui!
   saveRuleBtn.addEventListener("click", handleSaveRule);
 
   ruleEditorModal.addEventListener("click", (e) => {
