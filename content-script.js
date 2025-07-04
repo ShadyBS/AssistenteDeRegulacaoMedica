@@ -1,86 +1,65 @@
 /**
- * @file Content Script para a extensão Assistente de Regulação (v12 - Detecção de Contexto Aprimorada para Exames).
+ * @file Content Script para a extensão Assistente de Regulação (v14 - Detecção pela Aba Manutenção).
+ * Este script observa a abertura da aba de manutenção para obter os IDs da regulação.
  */
 
 (function () {
   console.log(
-    "[Assistente de Regulação] Script de controle v12 (Contexto Aprimorado) ativo."
+    "[Assistente de Regulação] Script de controle v14 (Detecção de Aba) ativo."
   );
 
-  let lastSentPatientId = null;
+  let lastProcessedReguId = null;
 
-  const extractAndSendData = () => {
-    const maintenanceTab = document.querySelector(
-      'a[href="#tabs-manutencao"]'
-    )?.parentElement;
-    if (
-      !maintenanceTab ||
-      !maintenanceTab.classList.contains("ui-tabs-active")
-    ) {
-      if (lastSentPatientId !== null) {
-        lastSentPatientId = null;
-      }
-      return;
-    }
+  // Função para verificar se a aba de manutenção está aberta e processar os dados
+  const checkMaintenanceTab = () => {
+    // Encontra o painel da aba 'Manutenção'
+    const maintenanceTabPanel = document.getElementById("tabs-manutencao");
 
-    const patientSelectElement = document.querySelector(
-      "#regu\\.usuarioServico\\.isenPK"
-    );
+    // A aba está ativa se o atributo 'aria-expanded' for 'true'
+    const isActive =
+      maintenanceTabPanel &&
+      maintenanceTabPanel.getAttribute("aria-expanded") === "true";
 
-    if (patientSelectElement && patientSelectElement.value) {
-      const idString = patientSelectElement.value;
+    if (isActive) {
+      // Se a aba estiver ativa, procura os IDs da regulação nos campos hidden
+      const idpElement = document.querySelector("#regu\\.reguPK\\.idp");
+      const idsElement = document.querySelector("#regu\\.reguPK\\.ids");
 
-      if (idString.includes("-")) {
-        const parts = idString.split("-");
-        const idp = parts[0];
-        const ids = parts[1];
-        const patientId = `${idp}-${ids}`;
+      if (idpElement && idsElement && idpElement.value) {
+        const reguIdp = idpElement.value;
+        const reguIds = idsElement.value;
+        const currentReguId = `${reguIdp}-${reguIds}`;
 
-        if (patientId !== lastSentPatientId) {
-          lastSentPatientId = patientId;
-          sendContextData(document, idp, ids);
+        // Envia a mensagem apenas se for uma regulação diferente da última processada
+        if (currentReguId !== lastProcessedReguId) {
+          lastProcessedReguId = currentReguId;
+          const payload = { reguIdp, reguIds };
+          console.log(
+            "[Assistente] Aba Manutenção aberta. Enviando IDs da regulação:",
+            payload
+          );
+          browser.runtime.sendMessage({ type: "REGULATION_LOADED", payload });
         }
       }
+    } else {
+      // Se a aba não estiver ativa, limpa o cache para permitir uma nova detecção futura
+      lastProcessedReguId = null;
     }
   };
 
-  const sendContextData = (doc, idp, ids) => {
-    let contextName = null;
-
-    // **INÍCIO DA ALTERAÇÃO**
-    // Tenta primeiro pegar a Especialidade (CBO)
-    const specialtyElement = doc.querySelector(
-      "#regu_atividadeProfissionalCnes_apcnId_chzn span"
-    );
-    if (specialtyElement && specialtyElement.textContent.trim() !== "...") {
-      contextName = specialtyElement.textContent.trim();
-    }
-
-    // Se não encontrou uma especialidade válida, tenta pegar o Procedimento (Exame)
-    if (!contextName || contextName === "...") {
-      const procedureElement = doc.querySelector(
-        "#regu_procedimento_prciPK_chzn span"
-      );
-      if (procedureElement && procedureElement.textContent.trim() !== "...") {
-        contextName = procedureElement.textContent.trim();
-      }
-    }
-    // **FIM DA ALTERAÇÃO**
-
-    const payload = { idp, ids, context: contextName };
-    console.log(
-      "[Assistente de Regulação] ENVIANDO MENSAGEM PARA SIDEBAR:",
-      payload
-    );
-    browser.runtime.sendMessage({ type: "CONTEXT_DETECTED", payload });
-  };
-
+  // O MutationObserver observa a página por mudanças que possam indicar a abertura da aba
   const observer = new MutationObserver(() => {
+    // Usa um debounce para evitar múltiplas chamadas em sequência rápida
     clearTimeout(observer.debounceTimeout);
-    observer.debounceTimeout = setTimeout(extractAndSendData, 250);
+    observer.debounceTimeout = setTimeout(checkMaintenanceTab, 250);
   });
 
-  observer.observe(document.body, { childList: true, subtree: true });
-
-  extractAndSendData();
+  // Inicia a observação no corpo do documento
+  observer.observe(document.body, {
+    childList: true,
+    subtree: true,
+    attributes: true,
+    // Foca em atributos que mudam quando a aba é trocada
+    attributeFilter: ["style", "aria-expanded", "class"],
+  });
 })();

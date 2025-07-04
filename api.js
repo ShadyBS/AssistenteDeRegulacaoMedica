@@ -39,6 +39,56 @@ function getTextFromHTML(htmlString) {
   return doc.body.textContent || "";
 }
 
+// **INÍCIO DA ALTERAÇÃO**
+/**
+ * Busca os detalhes completos de uma regulação específica.
+ * @param {object} params
+ * @param {string} params.reguIdp - O IDP da regulação.
+ * @param {string} params.reguIds - O IDS da regulação.
+ * @returns {Promise<object>} O objeto com os dados da regulação.
+ */
+export async function fetchRegulationDetails({ reguIdp, reguIds }) {
+  if (!reguIdp || !reguIds) {
+    throw new Error("IDs da regulação são necessários.");
+  }
+  const baseUrl = await getBaseUrl();
+  // Este é o endpoint que vimos no arquivo HAR.
+  const url = new URL(
+    `${baseUrl}/sigss/regulacaoControleSolicitacao/visualiza`
+  );
+  url.search = new URLSearchParams({
+    "reguPK.idp": reguIdp,
+    "reguPK.ids": reguIds,
+  }).toString();
+
+  const response = await fetch(url, {
+    method: "GET",
+    headers: {
+      Accept: "application/json, text/javascript, */*; q=0.01",
+      "X-Requested-With": "XMLHttpRequest",
+    },
+  });
+
+  if (!response.ok) {
+    handleFetchError(response);
+    return null;
+  }
+
+  const contentType = response.headers.get("content-type");
+  if (contentType && contentType.includes("application/json")) {
+    const data = await response.json();
+    // O objeto de dados está aninhado sob a chave "regulacao"
+    return data.regulacao || null;
+  } else {
+    throw new Error(
+      "A resposta do servidor não foi JSON. A sessão pode ter expirado."
+    );
+  }
+}
+// **FIM DA ALTERAÇÃO**
+
+// --- O RESTANTE DO ARQUIVO api.js CONTINUA IGUAL ---
+
 function parseConsultasHTML(htmlString) {
   const parser = new DOMParser();
   const doc = parser.parseFromString(htmlString, "text/html");
@@ -231,8 +281,19 @@ export async function fetchVisualizaUsuario({ idp, ids }) {
     body,
   });
   if (!response.ok) handleFetchError(response);
-  const patientData = await response.json();
-  return patientData?.usuarioServico || {};
+
+  const contentType = response.headers.get("content-type");
+  if (contentType && contentType.indexOf("application/json") !== -1) {
+    const patientData = await response.json();
+    return patientData?.usuarioServico || {};
+  } else {
+    console.error(
+      "A resposta do servidor não foi JSON. Provável expiração de sessão."
+    );
+    throw new Error(
+      "A sessão pode ter expirado. Por favor, faça login no sistema novamente."
+    );
+  }
 }
 
 export async function fetchProntuarioHash({
@@ -376,7 +437,6 @@ export async function fetchExamesSolicitados({
       hasResult: (cell[6] || "") === "SIM",
       professional: cell[8] || "",
       specialty: cell[9] || "",
-      // PASSO 3.3: Tornar a conversão de ID mais segura para não falhar com o valor 0.
       resultIdp: cell[13] != null ? String(cell[13]) : "",
       resultIds: cell[14] != null ? String(cell[14]) : "",
     };
@@ -403,13 +463,6 @@ export async function fetchResultadoExame({ idp, ids }) {
   return data?.path || null;
 }
 
-/**
- * Busca dados no CADSUS. A busca prioriza o CPF se ambos forem fornecidos.
- * @param {object} options
- * @param {string} [options.cpf] - CPF do paciente.
- * @param {string} [options.cns] - CNS do paciente.
- * @returns {Promise<object|null>}
- */
 export async function fetchCadsusData({ cpf, cns }) {
   if (!cpf && !cns) {
     return null;
@@ -641,7 +694,6 @@ async function fetchRegulations({
 
   return (data?.rows || []).map((row) => {
     const cell = row.cell || [];
-    // PASSO 3.3: Tornar a extração de ID mais robusta com regex.
     let idp = null,
       ids = null;
     const idMatch = (row.id || "").match(/reguPK(\d+)-(\d+)/);

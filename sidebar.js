@@ -8,6 +8,11 @@ import * as Search from "./ui/search.js";
 import * as PatientCard from "./ui/patient-card.js";
 import { store } from "./store.js";
 
+// **INÍCIO DA ALTERAÇÃO**
+// Variável para armazenar os dados da última regulação carregada
+let currentRegulationData = null;
+// **FIM DA ALTERAÇÃO**
+
 // --- LÓGICA DE FILTRAGEM (sem alterações) ---
 const consultationFilterLogic = (data, filters) => {
   let filteredData = [...data];
@@ -173,7 +178,6 @@ const regulationFilterLogic = (data, filters) => {
   return filteredData;
 };
 
-// --- CONFIGURAÇÃO DAS SECÇÕES (sem alterações) ---
 const sectionConfigurations = {
   consultations: {
     fetchFunction: API.fetchAllConsultations,
@@ -201,8 +205,6 @@ const sectionConfigurations = {
   },
 };
 
-// --- LÓGICA DE SELEÇÃO E ATUALIZAÇÃO DE PACIENTE ---
-
 async function selectPatient(patientInfo, forceRefresh = false) {
   const currentPatient = store.getPatient();
   if (
@@ -227,15 +229,13 @@ async function selectPatient(patientInfo, forceRefresh = false) {
     store.setPatient(ficha, cadsus);
     await updateRecentPatients(store.getPatient());
   } catch (error) {
-    Utils.showMessage("Erro ao carregar os dados do paciente.", "error");
+    Utils.showMessage(error.message, "error");
     console.error(error);
     store.clearPatient();
   } finally {
     Utils.toggleLoader(false);
   }
 }
-
-// --- INICIALIZAÇÃO ---
 
 async function init() {
   const globalSettings = await loadConfigAndData();
@@ -246,7 +246,7 @@ async function init() {
   initializeSections(globalSettings);
   applyUserPreferences(globalSettings);
   addGlobalEventListeners();
-  setupAutoModeToggle(); // NOVO
+  setupAutoModeToggle();
 }
 
 async function loadConfigAndData() {
@@ -257,7 +257,7 @@ async function loadConfigAndData() {
     autoLoadConsultations: false,
     autoLoadAppointments: false,
     autoLoadRegulations: false,
-    enableAutomaticDetection: true, // NOVO
+    enableAutomaticDetection: true,
     dateRangeDefaults: {},
   });
   const localData = await browser.storage.local.get({
@@ -280,7 +280,7 @@ async function loadConfigAndData() {
       autoLoadConsultations: syncData.autoLoadConsultations,
       autoLoadAppointments: syncData.autoLoadAppointments,
       autoLoadRegulations: syncData.autoLoadRegulations,
-      enableAutomaticDetection: syncData.enableAutomaticDetection, // NOVO
+      enableAutomaticDetection: syncData.enableAutomaticDetection,
       dateRangeDefaults: syncData.dateRangeDefaults,
     },
     savedFilterSets: localData.savedFilterSets,
@@ -340,13 +340,10 @@ function applyUserPreferences(globalSettings) {
     });
 }
 
-// --- LÓGICA DE DETEÇÃO AUTOMÁTICA ---
-
 function setupAutoModeToggle() {
   const toggle = document.getElementById("auto-mode-toggle");
   const label = document.getElementById("auto-mode-label");
 
-  // Sincroniza o estado do toggle com o storage
   browser.storage.sync
     .get({ enableAutomaticDetection: true })
     .then((settings) => {
@@ -354,7 +351,6 @@ function setupAutoModeToggle() {
       label.textContent = settings.enableAutomaticDetection ? "Auto" : "Manual";
     });
 
-  // Ouve mudanças no toggle para atualizar o storage
   toggle.addEventListener("change", (event) => {
     const isEnabled = event.target.checked;
     browser.storage.sync.set({ enableAutomaticDetection: isEnabled });
@@ -362,28 +358,74 @@ function setupAutoModeToggle() {
   });
 }
 
-async function handleContextDetected(payload) {
-  const { idp, ids, context } = payload;
+// **INÍCIO DA ALTERAÇÃO**
+async function handleRegulationLoaded(payload) {
+  Utils.toggleLoader(true);
+  try {
+    const regulationData = await API.fetchRegulationDetails(payload);
 
-  // Mostra o botão de informação de contexto e define o seu tooltip
-  const infoBtn = document.getElementById("context-info-btn");
-  if (context) {
-    infoBtn.title = `Contexto detetado: ${context}`;
-    infoBtn.classList.remove("hidden");
-  } else {
-    infoBtn.classList.add("hidden");
+    // Armazena a resposta JSON completa para o botão de info
+    currentRegulationData = regulationData;
+
+    if (
+      regulationData &&
+      regulationData.isenPKIdp &&
+      regulationData.isenPKIds
+    ) {
+      const patientInfo = {
+        idp: regulationData.isenPKIdp,
+        ids: regulationData.isenPKIds,
+      };
+      await selectPatient(patientInfo);
+
+      // Atualiza o botão de contexto com o nome do procedimento/especialidade
+      const contextName =
+        regulationData.apcnNome || regulationData.prciNome || "Contexto";
+      const infoBtn = document.getElementById("context-info-btn");
+      infoBtn.title = `Contexto: ${contextName.trim()}`;
+      infoBtn.classList.remove("hidden");
+    } else {
+      currentRegulationData = null; // Limpa se os dados não forem válidos
+      Utils.showMessage(
+        "Não foi possível extrair os dados do paciente da regulação.",
+        "error"
+      );
+    }
+  } catch (error) {
+    currentRegulationData = null; // Limpa em caso de erro
+    Utils.showMessage(error.message, "error");
+    console.error("Erro ao processar a regulação:", error);
+  } finally {
+    Utils.toggleLoader(false);
   }
-
-  // Carrega o paciente automaticamente
-  await selectPatient({ idp, ids });
 }
 
-// --- MANIPULADORES DE EVENTOS GLOBAIS ---
+function handleShowRegulationInfo() {
+  if (!currentRegulationData) {
+    Utils.showMessage("Nenhuma informação de regulação carregada.", "info");
+    return;
+  }
+  const modalTitle = document.getElementById("modal-title");
+  const modalContent = document.getElementById("modal-content");
+  const infoModal = document.getElementById("info-modal");
+
+  modalTitle.textContent = "Dados da Regulação (JSON)";
+  const formattedJson = JSON.stringify(currentRegulationData, null, 2);
+
+  // Usa <pre> para manter a formatação e adiciona estilos para quebra de linha
+  modalContent.innerHTML = `<pre class="bg-slate-100 p-2 rounded-md text-xs whitespace-pre-wrap break-all">${formattedJson}</pre>`;
+
+  infoModal.classList.remove("hidden");
+}
+// **FIM DA ALTERAÇÃO**
 
 function addGlobalEventListeners() {
   const mainContent = document.getElementById("main-content");
   const infoModal = document.getElementById("info-modal");
   const modalCloseBtn = document.getElementById("modal-close-btn");
+  // **INÍCIO DA ALTERAÇÃO**
+  const infoBtn = document.getElementById("context-info-btn");
+  // **FIM DA ALTERAÇÃO**
 
   modalCloseBtn.addEventListener("click", () =>
     infoModal.classList.add("hidden")
@@ -392,27 +434,17 @@ function addGlobalEventListeners() {
     if (e.target === infoModal) infoModal.classList.add("hidden");
   });
   mainContent.addEventListener("click", handleGlobalActions);
+  // **INÍCIO DA ALTERAÇÃO**
+  infoBtn.addEventListener("click", handleShowRegulationInfo);
+  // **FIM DA ALTERAÇÃO**
 
-  // NOVO: Listener para mensagens do content script
   browser.runtime.onMessage.addListener((message) => {
-    console.log(
-      "[Assistente de Regulação (Sidebar)] MENSAGEM RECEBIDA:",
-      message
-    );
-    if (message.type === "CONTEXT_DETECTED") {
-      handleContextDetected(message.payload);
+    // **INÍCIO DA ALTERAÇÃO**
+    if (message.type === "REGULATION_LOADED") {
+      handleRegulationLoaded(message.payload);
     }
+    // **FIM DA ALTERAÇÃO**
   });
-}
-
-async function handlePatientChange() {
-  const patient = store.getPatient();
-  if (patient && patient.ficha) {
-    await updateRecentPatients(patient);
-  } else {
-    // Se o paciente for limpo, esconde o botão de contexto
-    document.getElementById("context-info-btn").classList.add("hidden");
-  }
 }
 
 async function handleGlobalActions(event) {
@@ -454,6 +486,7 @@ async function copyToClipboard(button) {
 }
 
 async function updateRecentPatients(patientData) {
+  if (!patientData || !patientData.ficha) return;
   const newRecent = { ...patientData };
   const currentRecents = store.getRecentPatients();
   const filtered = (currentRecents || []).filter(
