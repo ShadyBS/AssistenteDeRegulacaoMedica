@@ -245,6 +245,7 @@ async function init() {
   initializeSections(globalSettings);
   applyUserPreferences(globalSettings);
   addGlobalEventListeners();
+  setupAutoModeToggle(); // NOVO
 }
 
 async function loadConfigAndData() {
@@ -255,7 +256,8 @@ async function loadConfigAndData() {
     autoLoadConsultations: false,
     autoLoadAppointments: false,
     autoLoadRegulations: false,
-    dateRangeDefaults: {}, // NOVO
+    enableAutomaticDetection: true, // NOVO
+    dateRangeDefaults: {},
   });
   const localData = await browser.storage.local.get({
     recentPatients: [],
@@ -277,7 +279,8 @@ async function loadConfigAndData() {
       autoLoadConsultations: syncData.autoLoadConsultations,
       autoLoadAppointments: syncData.autoLoadAppointments,
       autoLoadRegulations: syncData.autoLoadRegulations,
-      dateRangeDefaults: syncData.dateRangeDefaults, // NOVO
+      enableAutomaticDetection: syncData.enableAutomaticDetection, // NOVO
+      dateRangeDefaults: syncData.dateRangeDefaults,
     },
     savedFilterSets: localData.savedFilterSets,
   };
@@ -294,15 +297,10 @@ function initializeSections(globalSettings) {
   });
 }
 
-/**
- * Aplica as preferências do utilizador, incluindo os valores padrão dos filtros e períodos.
- * @param {object} globalSettings - O objeto completo de configurações.
- */
 function applyUserPreferences(globalSettings) {
   const { userPreferences, filterLayout } = globalSettings;
   const { dateRangeDefaults } = userPreferences;
 
-  // Define as datas com base nos períodos padrão por secção
   const sections = ["consultations", "exams", "appointments", "regulations"];
   const defaultSystemRanges = {
     consultations: { start: -6, end: 0 },
@@ -313,7 +311,7 @@ function applyUserPreferences(globalSettings) {
 
   sections.forEach((section) => {
     const range = dateRangeDefaults[section] || defaultSystemRanges[section];
-    const prefix = section.replace(/s$/, ""); // ex: "consultations" -> "consultation"
+    const prefix = section.replace(/s$/, "");
 
     const initialEl = document.getElementById(`${prefix}-date-initial`);
     const finalEl = document.getElementById(`${prefix}-date-final`);
@@ -323,7 +321,6 @@ function applyUserPreferences(globalSettings) {
     if (finalEl) finalEl.valueAsDate = Utils.calculateRelativeDate(range.end);
   });
 
-  // Define os valores padrão para todos os filtros
   Object.values(filterLayout)
     .flat()
     .forEach((filterSetting) => {
@@ -342,12 +339,51 @@ function applyUserPreferences(globalSettings) {
     });
 }
 
+// --- LÓGICA DE DETEÇÃO AUTOMÁTICA ---
+
+function setupAutoModeToggle() {
+  const toggle = document.getElementById("auto-mode-toggle");
+  const label = document.getElementById("auto-mode-label");
+
+  // Sincroniza o estado do toggle com o storage
+  browser.storage.sync
+    .get({ enableAutomaticDetection: true })
+    .then((settings) => {
+      toggle.checked = settings.enableAutomaticDetection;
+      label.textContent = settings.enableAutomaticDetection ? "Auto" : "Manual";
+    });
+
+  // Ouve mudanças no toggle para atualizar o storage
+  toggle.addEventListener("change", (event) => {
+    const isEnabled = event.target.checked;
+    browser.storage.sync.set({ enableAutomaticDetection: isEnabled });
+    label.textContent = isEnabled ? "Auto" : "Manual";
+  });
+}
+
+async function handleContextDetected(payload) {
+  const { idp, ids, context } = payload;
+
+  // Mostra o botão de informação de contexto e define o seu tooltip
+  const infoBtn = document.getElementById("context-info-btn");
+  if (context) {
+    infoBtn.title = `Contexto detetado: ${context}`;
+    infoBtn.classList.remove("hidden");
+  } else {
+    infoBtn.classList.add("hidden");
+  }
+
+  // Carrega o paciente automaticamente
+  await selectPatient({ idp, ids });
+}
+
 // --- MANIPULADORES DE EVENTOS GLOBAIS ---
 
 function addGlobalEventListeners() {
   const mainContent = document.getElementById("main-content");
   const infoModal = document.getElementById("info-modal");
   const modalCloseBtn = document.getElementById("modal-close-btn");
+
   modalCloseBtn.addEventListener("click", () =>
     infoModal.classList.add("hidden")
   );
@@ -356,12 +392,22 @@ function addGlobalEventListeners() {
   });
   mainContent.addEventListener("click", handleGlobalActions);
   store.subscribe(handlePatientChange);
+
+  // NOVO: Listener para mensagens do content script
+  browser.runtime.onMessage.addListener((message) => {
+    if (message.type === "CONTEXT_DETECTED") {
+      handleContextDetected(message.payload);
+    }
+  });
 }
 
 async function handlePatientChange() {
   const patient = store.getPatient();
   if (patient && patient.ficha) {
     await updateRecentPatients(patient);
+  } else {
+    // Se o paciente for limpo, esconde o botão de contexto
+    document.getElementById("context-info-btn").classList.add("hidden");
   }
 }
 

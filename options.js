@@ -1,9 +1,9 @@
 import { defaultFieldConfig } from "./field-config.js";
 import { filterConfig } from "./filter-config.js";
-import * as Utils from "./utils.js"; // Importa para a mensagem
+import * as Utils from "./utils.js";
 
 // --- Constantes ---
-const CONFIG_VERSION = "1.1"; // Versão da estrutura de configuração
+const CONFIG_VERSION = "1.2"; // Versão da estrutura de configuração
 
 // --- Elementos do DOM ---
 const saveButton = document.getElementById("saveButton");
@@ -193,13 +193,16 @@ async function restoreOptions() {
     autoLoadConsultations: false,
     autoLoadAppointments: false,
     autoLoadRegulations: false,
+    enableAutomaticDetection: true, // NOVO
     patientFields: defaultFieldConfig,
     filterLayout: {},
-    dateRangeDefaults: {}, // NOVO
+    dateRangeDefaults: {},
   });
 
   // Configurações Gerais
   document.getElementById("baseUrlInput").value = items.baseUrl;
+  document.getElementById("enableAutomaticDetection").checked =
+    items.enableAutomaticDetection;
   document.getElementById("autoLoadExamsCheckbox").checked =
     items.autoLoadExams;
   document.getElementById("autoLoadConsultationsCheckbox").checked =
@@ -245,6 +248,9 @@ async function restoreOptions() {
 async function saveOptions() {
   // Configurações Gerais
   const baseUrl = document.getElementById("baseUrlInput").value;
+  const enableAutomaticDetection = document.getElementById(
+    "enableAutomaticDetection"
+  ).checked;
   const autoLoadExams = document.getElementById(
     "autoLoadExamsCheckbox"
   ).checked;
@@ -335,6 +341,7 @@ async function saveOptions() {
 
   await browser.storage.sync.set({
     baseUrl: baseUrl.endsWith("/") ? baseUrl.slice(0, -1) : baseUrl,
+    enableAutomaticDetection,
     autoLoadExams,
     autoLoadConsultations,
     autoLoadAppointments,
@@ -427,6 +434,7 @@ async function handleRestoreDefaults() {
       "patientFields",
       "filterLayout",
       "dateRangeDefaults",
+      "enableAutomaticDetection",
     ]);
     mainFieldsZone.innerHTML = "";
     moreFieldsZone.innerHTML = "";
@@ -442,8 +450,6 @@ async function handleRestoreDefaults() {
 async function handleExport() {
   try {
     const settingsToExport = await browser.storage.sync.get(null);
-    // Remove chaves que não devem ser exportadas se houver alguma
-    // delete settingsToExport.someKey;
     settingsToExport.configVersion = CONFIG_VERSION;
 
     const settingsString = JSON.stringify(settingsToExport, null, 2);
@@ -493,7 +499,7 @@ function handleImport(event) {
         if (!goOn) return;
       }
 
-      await browser.storage.sync.clear(); // Limpa para evitar fusão de chaves antigas
+      await browser.storage.sync.clear();
       await browser.storage.sync.set(importedSettings);
       restoreOptions();
 

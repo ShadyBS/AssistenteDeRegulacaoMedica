@@ -148,121 +148,56 @@
             class="bg-white p-4 rounded-lg border border-slate-200 shadow-sm mt-4"
           >
             <h2 class="text-md font-semibold text-slate-700 mb-3">
-              Preferências de Carregamento Automático
+              Preferências de Comportamento
             </h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <!-- Bloco Consultas -->
-              <div class="space-y-4">
-                <h3 class="font-semibold text-slate-600 mb-2 flex items-center">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    class="h-4 w-4 mr-1 text-blue-500"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M8 7V3m8 4V3m-9 8h10m-9 4h6m-7 4h8"
-                    />
-                  </svg>
-                  Consultas
-                </h3>
-                <label class="flex items-center">
-                  <input
-                    type="checkbox"
-                    id="autoLoadConsultationsCheckbox"
-                    class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 mr-2"
-                  />
-                  Carregar automaticamente
-                </label>
-              </div>
-              <!-- Bloco Exames -->
-              <div class="space-y-4">
-                <h3 class="font-semibold text-slate-600 mb-2 flex items-center">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    class="h-4 w-4 mr-1 text-indigo-500"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M15 12H9m12 0A9 9 0 11 3 12a9 9 0 0118 0z"
-                    />
-                  </svg>
-                  Exames
-                </h3>
-                <label class="flex items-center">
-                  <input
-                    type="checkbox"
-                    id="autoLoadExamsCheckbox"
-                    class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 mr-2"
-                  />
-                  Carregar automaticamente
-                </label>
-              </div>
-              <!-- Bloco Agendamentos -->
-              <div class="space-y-4">
-                <h3 class="font-semibold text-slate-600 mb-2 flex items-center">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="16"
-                    height="16"
-                    fill="currentColor"
-                    class="bi bi-calendar-check mr-1 text-green-500"
-                    viewBox="0 0 16 16"
-                  >
-                    <path
-                      d="M10.854 7.146a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708 0l-1.5-1.5a.5.5 0 1 1 .708-.708L7.5 9.793l2.646-2.647a.5.5 0 0 1 .708 0z"
-                    />
-                    <path
-                      d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5zM1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4H1z"
-                    />
-                  </svg>
-                  Agendamentos
-                </h3>
-                <label class="flex items-center">
-                  <input
-                    type="checkbox"
-                    id="autoLoadAppointmentsCheckbox"
-                    class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 mr-2"
-                  />
-                  Carregar automaticamente
-                </label>
-              </div>
-              <!-- Bloco Regulação -->
-              <div class="space-y-4">
-                <h3 class="font-semibold text-slate-600 mb-2 flex items-center">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="16"
-                    height="16"
-                    fill="currentColor"
-                    class="bi bi-diagram-3 mr-1 text-orange-500"
-                    viewBox="0 0 16 16"
-                  >
-                    <path
-                      fill-rule="evenodd"
-                      d="M6 3.5A1.5 1.5 0 0 1 7.5 2h1A1.5 1.5 0 0 1 10 3.5v1A1.5 1.5 0 0 1 8.5 6v1H14a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-1 0V8h-5v.5a.5.5 0 0 1-1 0V8h-5v.5a.5.5 0 0 1-1 0v-1A.5.5 0 0 1 2 7h5.5V6A1.5 1.5 0 0 1 6 4.5v-1zM8.5 5a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1zM0 11.5A1.5 1.5 0 0 1 1.5 10h1A1.5 1.5 0 0 1 4 11.5v1A1.5 1.5 0 0 1 2.5 14h-1A1.5 1.5 0 0 1 0 12.5v-1zm1.5.5a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5h-1zm4.5.5A1.5 1.5 0 0 1 7.5 10h1a1.5 1.5 0 0 1 1.5 1.5v1A1.5 1.5 0 0 1 8.5 14h-1A1.5 1.5 0 0 1 6 12.5v-1zm1.5.5a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5h-1zm4.5.5a1.5 1.5 0 0 1 1.5-1.5h1a1.5 1.5 0 0 1 1.5 1.5v1a1.5 1.5 0 0 1-1.5 1.5h-1a1.5 1.5 0 0 1-1.5-1.5v-1zm1.5.5a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5h-1z"
-                    />
-                  </svg>
-                  Regulação
-                </h3>
-                <label class="flex items-center">
-                  <input
-                    type="checkbox"
-                    id="autoLoadRegulationsCheckbox"
-                    class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 mr-2"
-                  />
-                  Carregar automaticamente
-                </label>
-              </div>
+            <div class="space-y-3">
+              <label class="flex items-center">
+                <input
+                  type="checkbox"
+                  id="enableAutomaticDetection"
+                  class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 mr-2"
+                />
+                <span>Ativar deteção automática na página de regulação</span>
+              </label>
+            </div>
+            <h3 class="text-md font-medium text-slate-600 mt-4 pt-4 border-t">
+              Carregamento Automático por Secção
+            </h3>
+            <div
+              class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-2"
+            >
+              <label class="flex items-center">
+                <input
+                  type="checkbox"
+                  id="autoLoadConsultationsCheckbox"
+                  class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 mr-2"
+                />
+                Consultas
+              </label>
+              <label class="flex items-center">
+                <input
+                  type="checkbox"
+                  id="autoLoadExamsCheckbox"
+                  class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 mr-2"
+                />
+                Exames
+              </label>
+              <label class="flex items-center">
+                <input
+                  type="checkbox"
+                  id="autoLoadAppointmentsCheckbox"
+                  class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 mr-2"
+                />
+                Agendamentos
+              </label>
+              <label class="flex items-center">
+                <input
+                  type="checkbox"
+                  id="autoLoadRegulationsCheckbox"
+                  class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 mr-2"
+                />
+                Regulação
+              </label>
             </div>
           </div>
         </div>
@@ -319,7 +254,6 @@
           </div>
 
           <div id="consultations-tab" class="tab-content">
-            <!-- NOVO: Configuração de período por secção -->
             <div class="mt-4 p-3 bg-slate-50 rounded-md border">
               <h4 class="font-medium text-sm mb-2">Período de Busca Padrão</h4>
               <div class="flex items-center gap-4 text-sm">

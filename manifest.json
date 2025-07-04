@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Assistente de Regulação Médica",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "description": "Fornece informações para auxiliar médicos reguladores a analisar solicitações e a aderência de pacientes.",
   "permissions": ["storage", "scripting", "contextMenus", "sidePanel"],
   "host_permissions": ["<all_urls>"],
@@ -35,6 +35,12 @@
     "48": "icons/icon48.png",
     "128": "icons/icon128.png"
   },
+  "content_scripts": [
+    {
+      "matches": ["*://*/sigss/regulacaoRegulador/visualiza*"],
+      "js": ["content-script.js"]
+    }
+  ],
   "browser_specific_settings": {
     "gecko": {
       "id": "assistente-regulacao@exemplo.com"

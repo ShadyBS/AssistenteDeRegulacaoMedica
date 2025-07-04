@@ -108,23 +108,57 @@
           Assistente de Regulação
         </h1>
       </div>
-      <a href="options.html" title="Configurações" class="ml-2" target="_blank">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="20"
-          height="20"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-          stroke-width="2"
-          class="text-slate-400 hover:text-blue-600 transition"
+      <!-- NOVO: Controlos do cabeçalho -->
+      <div class="flex items-center gap-2">
+        <button
+          id="context-info-btn"
+          class="hidden text-slate-400 hover:text-blue-600"
+          title="Contexto não detetado"
         >
-          <circle cx="12" cy="12" r="3" />
-          <path
-            d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 8 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 8a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 8 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09c0 .66.42 1.24 1 1.51a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 8c.66 0 1.24.42 1.51 1H21a2 2 0 1 1 0 4h-.09c-.27 0-.52.11-.71.29-.19.18-.29.43-.29.71z"
-          />
-        </svg>
-      </a>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="20"
+            height="20"
+            fill="currentColor"
+            viewBox="0 0 16 16"
+          >
+            <path
+              d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm.93-9.412-1 4.705c-.07.34.029.533.304.533.194 0 .487-.07.686-.246l-.088.416c-.287.346-.92.598-1.465.598-.703 0-1.002-.422-.808-1.319l.738-3.468c.064-.293.006-.399-.287-.47l-.451-.081.082-.381 2.29-.287zM8 5.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2z"
+            />
+          </svg>
+        </button>
+        <div class="flex items-center space-x-1 text-xs">
+          <span id="auto-mode-label" class="font-medium text-slate-500"
+            >Auto</span
+          >
+          <label
+            for="auto-mode-toggle"
+            class="relative inline-flex items-center cursor-pointer"
+          >
+            <input type="checkbox" id="auto-mode-toggle" class="sr-only peer" />
+            <div
+              class="w-9 h-5 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"
+            ></div>
+          </label>
+        </div>
+        <a href="options.html" title="Configurações" target="_blank">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="20"
+            height="20"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            stroke-width="2"
+            class="text-slate-400 hover:text-blue-600 transition"
+          >
+            <circle cx="12" cy="12" r="3" />
+            <path
+              d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 8 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 8a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 8 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09c0 .66.42 1.24 1 1.51a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 8c.66 0 1.24.42 1.51 1H21a2 2 0 1 1 0 4h-.09c-.27 0-.52.11-.71.29-.19.18-.29.43-.29.71z"
+            />
+          </svg>
+        </a>
+      </div>
     </header>
 
     <main id="main-content" class="flex-grow p-4 space-y-4 overflow-y-auto">
@@ -243,7 +277,6 @@
           </button>
         </div>
         <div id="regulations-wrapper" class="collapse-section show">
-          <!-- ALTERADO: Conteúdo dos filtros será totalmente dinâmico -->
           <div id="regulation-main-filters" class="space-y-3"></div>
           <button
             id="fetch-regulations-btn"
@@ -293,7 +326,6 @@
           </button>
         </div>
         <div id="consultations-wrapper" class="collapse-section show">
-          <!-- ALTERADO: Conteúdo dos filtros será totalmente dinâmico -->
           <div id="consultation-main-filters" class="space-y-3"></div>
           <button
             id="fetch-consultations-btn"
@@ -345,7 +377,6 @@
           </button>
         </div>
         <div id="exams-wrapper" class="collapse-section show">
-          <!-- ALTERADO: Conteúdo dos filtros será totalmente dinâmico -->
           <div id="exam-main-filters" class="space-y-3"></div>
           <button
             id="fetch-exams-btn"
@@ -399,7 +430,6 @@
           </button>
         </div>
         <div id="appointments-wrapper" class="collapse-section show">
-          <!-- ALTERADO: Conteúdo dos filtros será totalmente dinâmico -->
           <div id="appointment-main-filters" class="space-y-3"></div>
           <button
             id="fetch-appointments-btn"
