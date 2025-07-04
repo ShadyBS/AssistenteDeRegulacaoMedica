@@ -90,6 +90,68 @@
       .tab-content.active {
         display: block;
       }
+      /* Estilos para o novo Gerenciador de Automação */
+      .rule-item {
+        transition: background-color 0.2s;
+      }
+      .rule-item.dragging {
+        opacity: 0.5;
+        background-color: #e0f2fe;
+      }
+      .rule-item-content {
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.3s ease-in-out, padding 0.3s ease-in-out;
+        padding-top: 0;
+        padding-bottom: 0;
+      }
+      .rule-item-content.show {
+        max-height: 1500px; /* Altura suficiente para os filtros */
+        padding-top: 1rem;
+        padding-bottom: 1rem;
+      }
+      /* Estilos para o Modal */
+      .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+      }
+      .modal-container {
+        background-color: white;
+        border-radius: 0.5rem;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
+          0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        width: 90%;
+        max-width: 800px;
+        max-height: 90vh;
+        display: flex;
+        flex-direction: column;
+      }
+      .modal-header {
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid #e5e7eb;
+        font-size: 1.125rem;
+        font-weight: 600;
+      }
+      .modal-body {
+        padding: 1.5rem;
+        overflow-y: auto;
+        flex-grow: 1;
+      }
+      .modal-footer {
+        padding: 1rem 1.5rem;
+        border-top: 1px solid #e5e7eb;
+        display: flex;
+        justify-content: flex-end;
+        gap: 0.75rem;
+      }
     </style>
   </head>
   <body class="bg-slate-50 text-slate-800 antialiased">
@@ -125,7 +187,7 @@
     </header>
 
     <main class="p-6 space-y-6">
-      <!-- Seção de Configurações Gerais -->
+      <!-- Seção de Configurações Gerais (Existente) -->
       <section
         class="bg-white p-4 rounded-lg border border-slate-200 shadow-sm"
       >
@@ -161,7 +223,7 @@
               </label>
             </div>
             <h3 class="text-md font-medium text-slate-600 mt-4 pt-4 border-t">
-              Carregamento Automático por Secção
+              Carregamento Automático por Secção (Modo Manual)
             </h3>
             <div
               class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-2"
@@ -203,13 +265,75 @@
         </div>
       </section>
 
+      <!-- NOVA SEÇÃO: Gerenciador de Automação -->
+      <section
+        id="automation-manager-section"
+        class="bg-white p-4 rounded-lg border border-slate-200 shadow-sm"
+      >
+        <div class="flex justify-between items-center mb-1">
+          <h2 class="text-md font-semibold text-slate-700">
+            Gerenciador de Automação (Modo Automático)
+          </h2>
+          <div class="flex items-center gap-4">
+            <button
+              id="export-rules-btn"
+              class="text-sm font-medium text-slate-600 hover:underline"
+            >
+              Exportar Regras
+            </button>
+            <button
+              id="import-rules-btn"
+              class="text-sm font-medium text-slate-600 hover:underline"
+            >
+              Importar Regras
+            </button>
+          </div>
+        </div>
+        <p class="text-sm text-slate-500 mb-4">
+          Crie regras para aplicar filtros automaticamente com base no contexto
+          da solicitação. Arraste para reordenar a prioridade.
+        </p>
+        <div id="automation-rules-list" class="space-y-2">
+          <!-- As regras de automação serão inseridas aqui pelo options.js -->
+          <!-- Exemplo de item de regra (para referência de estilo):
+          <div class="rule-item border rounded-lg bg-white p-3" draggable="true">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <span class="drag-handle cursor-grab text-slate-400">⠿</span>
+                <div>
+                  <p class="font-semibold text-slate-800">Nome da Regra</p>
+                  <p class="text-xs text-slate-500">Gatilhos: palavra1, palavra2</p>
+                </div>
+              </div>
+              <div class="flex items-center gap-4">
+                <label class="relative inline-flex items-center cursor-pointer">
+                  <input type="checkbox" class="sr-only peer" checked>
+                  <div class="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                </label>
+                <button class="text-sm font-medium text-blue-600 hover:underline">Editar</button>
+                <button class="text-sm font-medium text-slate-500 hover:underline">Duplicar</button>
+                <button class="text-sm font-medium text-red-600 hover:underline">Excluir</button>
+              </div>
+            </div>
+          </div>
+          -->
+        </div>
+        <button
+          id="create-new-rule-btn"
+          class="mt-4 w-full bg-blue-100 text-blue-700 font-semibold py-2 rounded-md hover:bg-blue-200 transition text-sm"
+        >
+          + Criar Nova Regra de Automação
+        </button>
+      </section>
+
+      <!-- Seção de Configuração de Layouts (Existente) -->
       <section
         id="layout-config-section"
         class="bg-white p-4 rounded-lg border border-slate-200 shadow-sm"
       >
         <div class="flex justify-between items-center mb-3">
           <h2 class="text-md font-semibold text-slate-700">
-            Configurar Layouts e Padrões
+            Configurar Layouts e Padrões (Modo Manual)
           </h2>
           <button
             id="restoreDefaultsButton"
@@ -460,6 +584,7 @@
         </div>
       </section>
 
+      <!-- Seção de Gestão de Dados (Existente) -->
       <section
         id="data-management-section"
         class="bg-white p-4 rounded-lg border border-slate-200 shadow-sm"
@@ -477,13 +602,13 @@
             id="exportButton"
             class="px-4 py-2 bg-slate-600 text-white rounded-md hover:bg-slate-700 transition text-sm font-medium"
           >
-            Exportar Configurações
+            Exportar Configurações Gerais
           </button>
           <label
             for="import-file-input"
             class="cursor-pointer px-4 py-2 bg-slate-100 text-slate-700 rounded-md hover:bg-slate-200 transition text-sm font-medium"
           >
-            Importar Configurações
+            Importar Configurações Gerais
           </label>
           <input
             type="file"
@@ -502,6 +627,101 @@
       </button>
       <div id="statusMessage" class="mt-4 text-sm font-medium"></div>
     </main>
+
+    <!-- NOVO: Modal para Editor de Regra -->
+    <div id="rule-editor-modal" class="modal-overlay hidden">
+      <div class="modal-container">
+        <div class="modal-header">
+          <h3 id="rule-editor-title">Criar Nova Regra de Automação</h3>
+        </div>
+        <div class="modal-body space-y-4">
+          <div>
+            <label for="rule-name-input" class="block font-medium text-sm mb-1"
+              >Nome da Regra</label
+            >
+            <input
+              type="text"
+              id="rule-name-input"
+              placeholder="Ex: Protocolo de Cardiologia"
+              class="w-full px-3 py-2 border border-slate-300 rounded-md"
+            />
+          </div>
+          <div>
+            <label
+              for="rule-triggers-input"
+              class="block font-medium text-sm mb-1"
+              >Palavras-chave de Gatilho (separadas por vírgula)</label
+            >
+            <input
+              type="text"
+              id="rule-triggers-input"
+              placeholder="Ex: ecocardiograma, cardiologia, I3581"
+              class="w-full px-3 py-2 border border-slate-300 rounded-md"
+            />
+          </div>
+          <div class="pt-4 border-t">
+            <h4 class="font-semibold text-slate-700 mb-2">
+              Ações da Regra (Filtros a Aplicar)
+            </h4>
+            <p class="text-sm text-slate-500 mb-3">
+              Configure os filtros para cada seção que serão aplicados quando
+              esta regra for acionada.
+            </p>
+            <div id="rule-editor-filter-tabs">
+              <!-- Abas para cada seção de filtros -->
+              <div class="tabs">
+                <button
+                  class="tab-button active"
+                  data-tab="consultations-rule-editor"
+                >
+                  Consultas
+                </button>
+                <button class="tab-button" data-tab="exams-rule-editor">
+                  Exames
+                </button>
+                <button class="tab-button" data-tab="appointments-rule-editor">
+                  Agendamentos
+                </button>
+                <button class="tab-button" data-tab="regulations-rule-editor">
+                  Regulação
+                </button>
+              </div>
+              <!-- Conteúdo das abas com os filtros -->
+              <div
+                id="consultations-rule-editor-tab"
+                class="tab-content active space-y-4 p-1"
+              ></div>
+              <div
+                id="exams-rule-editor-tab"
+                class="tab-content space-y-4 p-1"
+              ></div>
+              <div
+                id="appointments-rule-editor-tab"
+                class="tab-content space-y-4 p-1"
+              ></div>
+              <div
+                id="regulations-rule-editor-tab"
+                class="tab-content space-y-4 p-1"
+              ></div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button
+            id="cancel-rule-btn"
+            class="px-4 py-2 bg-slate-100 text-slate-700 rounded-md hover:bg-slate-200 transition text-sm font-medium"
+          >
+            Cancelar
+          </button>
+          <button
+            id="save-rule-btn"
+            class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition text-sm font-medium"
+          >
+            Salvar Regra
+          </button>
+        </div>
+      </div>
+    </div>
 
     <script type="module" src="options.js"></script>
   </body>

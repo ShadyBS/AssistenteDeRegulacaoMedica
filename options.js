@@ -17,9 +17,16 @@ const importFileInput = document.getElementById("import-file-input");
 const mainFieldsZone = document.getElementById("main-fields-zone");
 const moreFieldsZone = document.getElementById("more-fields-zone");
 
-// Abas e Zonas de Filtros
+// Abas e Zonas de Filtros Manuais
 const filterTabsContainer = document.getElementById("filter-tabs-container");
 const allDropZones = document.querySelectorAll(".drop-zone");
+
+// --- NOVOS Elementos do DOM para o Gerenciador de Automação ---
+const createNewRuleBtn = document.getElementById("create-new-rule-btn");
+const ruleEditorModal = document.getElementById("rule-editor-modal");
+const cancelRuleBtn = document.getElementById("cancel-rule-btn");
+const saveRuleBtn = document.getElementById("save-rule-btn");
+const ruleEditorFilterTabs = document.getElementById("rule-editor-filter-tabs");
 
 /**
  * Cria um elemento de campo arrastável para a Ficha do Paciente.
@@ -193,7 +200,7 @@ async function restoreOptions() {
     autoLoadConsultations: false,
     autoLoadAppointments: false,
     autoLoadRegulations: false,
-    enableAutomaticDetection: true, // NOVO
+    enableAutomaticDetection: true,
     patientFields: defaultFieldConfig,
     filterLayout: {},
     dateRangeDefaults: {},
@@ -408,18 +415,30 @@ function getDragAfterElement(container, y) {
 }
 
 // --- Lógica das Abas (Tabs) ---
-function setupTabs() {
-  const tabButtons = filterTabsContainer.querySelectorAll(".tab-button");
-  const tabContents = filterTabsContainer.querySelectorAll(".tab-content");
+function setupTabs(container, onTabSwitch) {
+  const tabButtons = container.querySelectorAll(".tab-button");
+  const tabContents = container.querySelectorAll(".tab-content");
 
   tabButtons.forEach((button) => {
     button.addEventListener("click", () => {
+      const tabName = button.dataset.tab;
+
       tabButtons.forEach((btn) => btn.classList.remove("active"));
       tabContents.forEach((content) => content.classList.remove("active"));
+
       button.classList.add("active");
-      document
-        .getElementById(`${button.dataset.tab}-tab`)
-        .classList.add("active");
+      const activeContent = container.querySelector(`#${tabName}-tab`);
+      if (activeContent) {
+        activeContent.classList.add("active");
+      } else {
+        // Fallback for rule editor tabs
+        const editorActiveContent = container.querySelector(
+          `[data-tab-content="${tabName}"]`
+        );
+        if (editorActiveContent) editorActiveContent.classList.add("active");
+      }
+
+      if (onTabSwitch) onTabSwitch(tabName);
     });
   });
 }
@@ -520,10 +539,118 @@ function handleImport(event) {
   reader.readAsText(file);
 }
 
+// --- NOVA LÓGICA PARA O GERENCIADOR DE AUTOMAÇÃO ---
+
+/**
+ * Abre o modal do editor de regras.
+ * Se uma regra for passada, preenche o formulário para edição.
+ * @param {object|null} rule - O objeto da regra a ser editada, ou null para criar uma nova.
+ */
+function openRuleEditor(rule = null) {
+  const title = document.getElementById("rule-editor-title");
+  if (rule) {
+    title.textContent = "Editar Regra de Automação";
+    // Lógica para preencher os campos com os dados da regra (será implementada na Etapa 2)
+  } else {
+    title.textContent = "Criar Nova Regra de Automação";
+    // Lógica para limpar os campos (será implementada na Etapa 2)
+  }
+  populateRuleEditorFilters();
+  ruleEditorModal.classList.remove("hidden");
+}
+
+/**
+ * Fecha o modal do editor de regras.
+ */
+function closeRuleEditor() {
+  ruleEditorModal.classList.add("hidden");
+}
+
+/**
+ * Popula as abas do editor de regras com os controles de filtro apropriados.
+ */
+function populateRuleEditorFilters() {
+  const sections = ["consultations", "exams", "appointments", "regulations"];
+  sections.forEach((sectionKey) => {
+    const container = document.getElementById(`${sectionKey}-rule-editor-tab`);
+    container.innerHTML = ""; // Limpa antes de popular
+    const sectionFilters = filterConfig[sectionKey] || [];
+
+    sectionFilters.forEach((filter) => {
+      // Não renderiza componentes complexos como 'date-range' ou 'saved-filters'
+      if (filter.type === "component") return;
+
+      const filterElement = createFilterElementForRuleEditor(
+        filter,
+        sectionKey
+      );
+      container.appendChild(filterElement);
+    });
+  });
+  // Garante que a primeira aba esteja visível
+  document.querySelector("#rule-editor-filter-tabs .tab-button").click();
+}
+
+/**
+ * Cria um único elemento de filtro para o modal do editor de regras.
+ * @param {object} filter - O objeto de configuração do filtro de filter-config.js.
+ * @param {string} sectionKey - A chave da seção (ex: "consultations").
+ * @returns {HTMLElement} O elemento HTML do filtro.
+ */
+function createFilterElementForRuleEditor(filter, sectionKey) {
+  const container = document.createElement("div");
+  // Adiciona um ID único para o filtro dentro da regra, para evitar conflitos
+  const elementId = `rule-${sectionKey}-${filter.id}`;
+
+  let elementHtml = "";
+  if (filter.type !== "checkbox") {
+    elementHtml += `<label for="${elementId}" class="block font-medium mb-1 text-sm">${filter.label}</label>`;
+  }
+
+  switch (filter.type) {
+    case "text":
+      elementHtml += `<input type="text" id="${elementId}" placeholder="${
+        filter.placeholder || ""
+      }" class="w-full px-2 py-1 border border-slate-300 rounded-md">`;
+      break;
+    case "select":
+    case "selectGroup":
+      elementHtml += `<select id="${elementId}" class="w-full px-2 py-1 border border-slate-300 rounded-md bg-white">`;
+      filter.options.forEach((opt) => {
+        elementHtml += `<option value="${opt.value}">${opt.text}</option>`;
+      });
+      elementHtml += `</select>`;
+      break;
+    case "checkbox":
+      container.className = "flex items-center gap-2";
+      elementHtml += `<input id="${elementId}" type="checkbox" class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                          <label for="${elementId}" class="block text-sm text-slate-700">${filter.label}</label>`;
+      break;
+  }
+  container.innerHTML = elementHtml;
+  return container;
+}
+
 // --- Inicialização ---
 document.addEventListener("DOMContentLoaded", () => {
   restoreOptions();
-  setupTabs();
+  setupTabs(document.getElementById("filter-tabs-container"));
+  setupTabs(document.getElementById("rule-editor-filter-tabs")); // Configura as abas do novo modal
+
+  // Listeners para a funcionalidade de automação
+  createNewRuleBtn.addEventListener("click", () => openRuleEditor(null));
+  cancelRuleBtn.addEventListener("click", closeRuleEditor);
+  saveRuleBtn.addEventListener("click", () => {
+    // Lógica de salvar será na Etapa 2
+    console.log("Tentativa de salvar regra...");
+    closeRuleEditor();
+  });
+  ruleEditorModal.addEventListener("click", (e) => {
+    // Fecha o modal se clicar no overlay
+    if (e.target === ruleEditorModal) {
+      closeRuleEditor();
+    }
+  });
 });
 saveButton.addEventListener("click", saveOptions);
 closeButton.addEventListener("click", () => {
