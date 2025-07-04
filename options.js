@@ -5,6 +5,10 @@ import * as Utils from "./utils.js";
 // --- Constantes ---
 const CONFIG_VERSION = "1.2"; // Versão da estrutura de configuração
 
+// --- Variáveis de Estado ---
+let automationRules = [];
+let currentlyEditingRuleId = null;
+
 // --- Elementos do DOM ---
 const saveButton = document.getElementById("saveButton");
 const statusMessage = document.getElementById("statusMessage");
@@ -22,8 +26,12 @@ const filterTabsContainer = document.getElementById("filter-tabs-container");
 const allDropZones = document.querySelectorAll(".drop-zone");
 
 // --- NOVOS Elementos do DOM para o Gerenciador de Automação ---
+const automationRulesList = document.getElementById("automation-rules-list");
 const createNewRuleBtn = document.getElementById("create-new-rule-btn");
 const ruleEditorModal = document.getElementById("rule-editor-modal");
+const ruleEditorTitle = document.getElementById("rule-editor-title");
+const ruleNameInput = document.getElementById("rule-name-input");
+const ruleTriggersInput = document.getElementById("rule-triggers-input");
 const cancelRuleBtn = document.getElementById("cancel-rule-btn");
 const saveRuleBtn = document.getElementById("save-rule-btn");
 const ruleEditorFilterTabs = document.getElementById("rule-editor-filter-tabs");
@@ -143,8 +151,10 @@ function renderPatientFields(config) {
  */
 function renderFilterLayout(layout) {
   Object.keys(filterConfig).forEach((section) => {
-    document.getElementById(`${section}-main-filters-zone`).innerHTML = "";
-    document.getElementById(`${section}-more-filters-zone`).innerHTML = "";
+    const mainZone = document.getElementById(`${section}-main-filters-zone`);
+    const moreZone = document.getElementById(`${section}-more-filters-zone`);
+    if (mainZone) mainZone.innerHTML = "";
+    if (moreZone) moreZone.innerHTML = "";
   });
 
   Object.entries(filterConfig).forEach(([sectionKey, filters]) => {
@@ -194,7 +204,8 @@ function renderFilterLayout(layout) {
  * Carrega a configuração salva e renderiza a página.
  */
 async function restoreOptions() {
-  const items = await browser.storage.sync.get({
+  // Carrega configurações do storage.sync
+  const syncItems = await browser.storage.sync.get({
     baseUrl: "",
     autoLoadExams: false,
     autoLoadConsultations: false,
@@ -206,32 +217,34 @@ async function restoreOptions() {
     dateRangeDefaults: {},
   });
 
-  // Configurações Gerais
-  document.getElementById("baseUrlInput").value = items.baseUrl;
-  document.getElementById("enableAutomaticDetection").checked =
-    items.enableAutomaticDetection;
-  document.getElementById("autoLoadExamsCheckbox").checked =
-    items.autoLoadExams;
-  document.getElementById("autoLoadConsultationsCheckbox").checked =
-    items.autoLoadConsultations;
-  document.getElementById("autoLoadAppointmentsCheckbox").checked =
-    items.autoLoadAppointments;
-  document.getElementById("autoLoadRegulationsCheckbox").checked =
-    items.autoLoadRegulations;
+  // Carrega configurações do storage.local
+  const localItems = await browser.storage.local.get({
+    automationRules: [],
+  });
 
-  // Ficha do Paciente
+  // Aplica configurações gerais
+  document.getElementById("baseUrlInput").value = syncItems.baseUrl;
+  document.getElementById("enableAutomaticDetection").checked =
+    syncItems.enableAutomaticDetection;
+  document.getElementById("autoLoadExamsCheckbox").checked =
+    syncItems.autoLoadExams;
+  document.getElementById("autoLoadConsultationsCheckbox").checked =
+    syncItems.autoLoadConsultations;
+  document.getElementById("autoLoadAppointmentsCheckbox").checked =
+    syncItems.autoLoadAppointments;
+  document.getElementById("autoLoadRegulationsCheckbox").checked =
+    syncItems.autoLoadRegulations;
+
+  // Renderiza layouts e padrões manuais
   const currentPatientFieldsConfig = defaultFieldConfig.map((defaultField) => {
-    const savedField = items.patientFields.find(
+    const savedField = syncItems.patientFields.find(
       (f) => f.id === defaultField.id
     );
     return savedField ? { ...defaultField, ...savedField } : defaultField;
   });
   renderPatientFields(currentPatientFieldsConfig);
+  renderFilterLayout(syncItems.filterLayout);
 
-  // Layouts de Filtro
-  renderFilterLayout(items.filterLayout);
-
-  // Períodos Padrão
   const sections = ["consultations", "exams", "appointments", "regulations"];
   const defaultRanges = {
     consultations: { start: -6, end: 0 },
@@ -239,21 +252,24 @@ async function restoreOptions() {
     appointments: { start: -1, end: 3 },
     regulations: { start: -12, end: 0 },
   };
-
   sections.forEach((section) => {
-    const range = items.dateRangeDefaults[section] || defaultRanges[section];
+    const range =
+      syncItems.dateRangeDefaults[section] || defaultRanges[section];
     document.getElementById(`${section}-start-offset`).value = Math.abs(
       range.start
     );
     document.getElementById(`${section}-end-offset`).value = range.end;
   });
+
+  // Renderiza regras de automação
+  automationRules = localItems.automationRules;
+  renderAutomationRules();
 }
 
 /**
- * Salva todas as configurações.
+ * Salva as configurações GERAIS (não as regras de automação).
  */
 async function saveOptions() {
-  // Configurações Gerais
   const baseUrl = document.getElementById("baseUrlInput").value;
   const enableAutomaticDetection = document.getElementById(
     "enableAutomaticDetection"
@@ -271,7 +287,6 @@ async function saveOptions() {
     "autoLoadRegulationsCheckbox"
   ).checked;
 
-  // Ficha do Paciente
   const patientFields = [];
   mainFieldsZone.querySelectorAll(".draggable").forEach((div, index) => {
     const fieldId = div.dataset.fieldId;
@@ -298,29 +313,24 @@ async function saveOptions() {
     });
   });
 
-  // Layouts de Filtro
   const filterLayout = {};
   document
     .querySelectorAll("#layout-config-section .drop-zone")
     .forEach((zone) => {
       if (!zone.dataset.section) return;
       const section = zone.dataset.section;
-      if (!filterLayout[section]) {
-        filterLayout[section] = [];
-      }
+      if (!filterLayout[section]) filterLayout[section] = [];
       const location = zone.id.includes("-main-") ? "main" : "more";
       zone.querySelectorAll(".draggable").forEach((div, index) => {
         const filterId = div.dataset.filterId;
         const originalFilter = filterConfig[section].find(
           (f) => f.id === filterId
         );
-
         const newFilterData = {
           id: filterId,
           location: location,
           order: index + 1,
         };
-
         if (originalFilter.type !== "component") {
           const defaultValueInput = div.querySelector(
             ".filter-default-value-input"
@@ -334,7 +344,6 @@ async function saveOptions() {
       });
     });
 
-  // Períodos Padrão
   const dateRangeDefaults = {};
   const sections = ["consultations", "exams", "appointments", "regulations"];
   sections.forEach((section) => {
@@ -358,7 +367,7 @@ async function saveOptions() {
     dateRangeDefaults,
   });
 
-  Utils.showMessage("Configurações salvas com sucesso!", "success");
+  Utils.showMessage("Configurações gerais salvas com sucesso!", "success");
   setTimeout(() => {
     statusMessage.textContent = "";
   }, 2000);
@@ -368,13 +377,15 @@ async function saveOptions() {
 let draggedElement = null;
 
 function handleDragStart(e) {
-  draggedElement = e.target;
+  draggedElement = e.target.closest(".draggable, .rule-item");
+  if (!draggedElement) return;
   e.dataTransfer.effectAllowed = "move";
-  setTimeout(() => e.target.classList.add("dragging"), 0);
+  setTimeout(() => draggedElement.classList.add("dragging"), 0);
 }
 
 function handleDragEnd(e) {
-  e.target.classList.remove("dragging");
+  if (!draggedElement) return;
+  draggedElement.classList.remove("dragging");
   draggedElement = null;
 }
 
@@ -385,20 +396,29 @@ function handleDragOver(e) {
 
 function handleDrop(e) {
   e.preventDefault();
-  const dropZone = e.target.closest(".drop-zone");
-  if (dropZone && draggedElement) {
+  if (!draggedElement) return;
+
+  const dropZone = e.target.closest(".drop-zone, #automation-rules-list");
+  if (dropZone) {
     const afterElement = getDragAfterElement(dropZone, e.clientY);
     if (afterElement == null) {
       dropZone.appendChild(draggedElement);
     } else {
       dropZone.insertBefore(draggedElement, afterElement);
     }
+
+    // Se a zona de drop for a lista de regras, reordena e salva
+    if (dropZone.id === "automation-rules-list") {
+      reorderAutomationRules();
+    }
   }
 }
 
 function getDragAfterElement(container, y) {
   const draggableElements = [
-    ...container.querySelectorAll(".draggable:not(.dragging)"),
+    ...container.querySelectorAll(
+      ".draggable:not(.dragging), .rule-item:not(.dragging)"
+    ),
   ];
   return draggableElements.reduce(
     (closest, child) => {
@@ -415,30 +435,20 @@ function getDragAfterElement(container, y) {
 }
 
 // --- Lógica das Abas (Tabs) ---
-function setupTabs(container, onTabSwitch) {
+function setupTabs(container) {
   const tabButtons = container.querySelectorAll(".tab-button");
   const tabContents = container.querySelectorAll(".tab-content");
 
   tabButtons.forEach((button) => {
     button.addEventListener("click", () => {
       const tabName = button.dataset.tab;
-
       tabButtons.forEach((btn) => btn.classList.remove("active"));
       tabContents.forEach((content) => content.classList.remove("active"));
-
       button.classList.add("active");
       const activeContent = container.querySelector(`#${tabName}-tab`);
       if (activeContent) {
         activeContent.classList.add("active");
-      } else {
-        // Fallback for rule editor tabs
-        const editorActiveContent = container.querySelector(
-          `[data-tab-content="${tabName}"]`
-        );
-        if (editorActiveContent) editorActiveContent.classList.add("active");
       }
-
-      if (onTabSwitch) onTabSwitch(tabName);
     });
   });
 }
@@ -470,11 +480,9 @@ async function handleExport() {
   try {
     const settingsToExport = await browser.storage.sync.get(null);
     settingsToExport.configVersion = CONFIG_VERSION;
-
     const settingsString = JSON.stringify(settingsToExport, null, 2);
     const blob = new Blob([settingsString], { type: "application/json" });
     const url = URL.createObjectURL(blob);
-
     const a = document.createElement("a");
     a.href = url;
     const date = new Date().toISOString().slice(0, 10);
@@ -483,7 +491,6 @@ async function handleExport() {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-
     Utils.showMessage("Configurações exportadas com sucesso!", "success");
   } catch (error) {
     console.error("Erro ao exportar configurações:", error);
@@ -498,16 +505,13 @@ async function handleExport() {
 function handleImport(event) {
   const file = event.target.files[0];
   if (!file) return;
-
   const reader = new FileReader();
   reader.onload = async (e) => {
     try {
       const importedSettings = JSON.parse(e.target.result);
-
       if (!importedSettings.configVersion || !importedSettings.filterLayout) {
         throw new Error("Ficheiro de configuração inválido ou corrompido.");
       }
-
       if (
         importedSettings.configVersion.split(".")[0] !==
         CONFIG_VERSION.split(".")[0]
@@ -517,11 +521,9 @@ function handleImport(event) {
         );
         if (!goOn) return;
       }
-
       await browser.storage.sync.clear();
       await browser.storage.sync.set(importedSettings);
       restoreOptions();
-
       Utils.showMessage(
         "Configurações importadas e aplicadas com sucesso!",
         "success"
@@ -539,23 +541,125 @@ function handleImport(event) {
   reader.readAsText(file);
 }
 
-// --- NOVA LÓGICA PARA O GERENCIADOR DE AUTOMAÇÃO ---
+// --- LÓGICA PARA O GERENCIADOR DE AUTOMAÇÃO ---
 
 /**
- * Abre o modal do editor de regras.
- * Se uma regra for passada, preenche o formulário para edição.
- * @param {object|null} rule - O objeto da regra a ser editada, ou null para criar uma nova.
+ * Renderiza a lista de regras de automação na UI.
  */
-function openRuleEditor(rule = null) {
-  const title = document.getElementById("rule-editor-title");
-  if (rule) {
-    title.textContent = "Editar Regra de Automação";
-    // Lógica para preencher os campos com os dados da regra (será implementada na Etapa 2)
+function renderAutomationRules() {
+  automationRulesList.innerHTML = "";
+  automationRules.forEach((rule) => {
+    const ruleElement = document.createElement("div");
+    ruleElement.className = "rule-item border rounded-lg bg-white p-3";
+    ruleElement.dataset.ruleId = rule.id;
+    ruleElement.draggable = true;
+
+    const keywords = rule.triggerKeywords.join(", ");
+    const checked = rule.isActive ? "checked" : "";
+
+    ruleElement.innerHTML = `
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <span class="drag-handle cursor-grab text-slate-400">⠿</span>
+                <div>
+                  <p class="font-semibold text-slate-800">${rule.name}</p>
+                  <p class="text-xs text-slate-500" title="${keywords}">Gatilhos: ${
+      keywords.length > 50 ? keywords.substring(0, 50) + "..." : keywords
+    }</p>
+                </div>
+              </div>
+              <div class="flex items-center gap-4">
+                <label class="relative inline-flex items-center cursor-pointer" title="${
+                  rule.isActive ? "Regra Ativa" : "Regra Inativa"
+                }">
+                  <input type="checkbox" class="sr-only peer rule-toggle-active" ${checked}>
+                  <div class="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                </label>
+                <button class="text-sm font-medium text-blue-600 hover:underline rule-edit-btn">Editar</button>
+                <button class="text-sm font-medium text-slate-500 hover:underline rule-duplicate-btn">Duplicar</button>
+                <button class="text-sm font-medium text-red-600 hover:underline rule-delete-btn">Excluir</button>
+              </div>
+            </div>
+        `;
+    automationRulesList.appendChild(ruleElement);
+  });
+
+  // Adiciona event listeners para os botões de cada regra
+  document.querySelectorAll(".rule-item").forEach((item) => {
+    const ruleId = item.dataset.ruleId;
+    item
+      .querySelector(".rule-edit-btn")
+      .addEventListener("click", () => handleEditRule(ruleId));
+    item
+      .querySelector(".rule-delete-btn")
+      .addEventListener("click", () => handleDeleteRule(ruleId));
+    item
+      .querySelector(".rule-duplicate-btn")
+      .addEventListener("click", () => handleDuplicateRule(ruleId));
+    item
+      .querySelector(".rule-toggle-active")
+      .addEventListener("change", (e) =>
+        handleToggleRuleActive(ruleId, e.target.checked)
+      );
+  });
+}
+
+/**
+ * Salva o array de regras de automação no storage local.
+ */
+async function saveAutomationRules() {
+  await browser.storage.local.set({ automationRules });
+  Utils.showMessage("Regras de automação salvas.", "success");
+  setTimeout(() => {
+    statusMessage.textContent = "";
+  }, 2000);
+}
+
+/**
+ * Abre o modal do editor de regras, preenchendo-o se uma regra for fornecida.
+ * @param {string|null} ruleId - O ID da regra a ser editada, ou null para criar uma nova.
+ */
+function openRuleEditor(ruleId = null) {
+  currentlyEditingRuleId = ruleId;
+  populateRuleEditorFilters(); // Popula com a estrutura de filtros
+
+  if (ruleId) {
+    const rule = automationRules.find((r) => r.id === ruleId);
+    if (!rule) return;
+    ruleEditorTitle.textContent = "Editar Regra de Automação";
+    ruleNameInput.value = rule.name;
+    ruleTriggersInput.value = rule.triggerKeywords.join(", ");
+
+    // Preenche os filtros no modal com os valores da regra
+    Object.entries(rule.filterSettings).forEach(([sectionKey, filters]) => {
+      Object.entries(filters).forEach(([filterId, value]) => {
+        const element = document.getElementById(
+          `rule-${sectionKey}-${filterId}`
+        );
+        if (element) {
+          if (element.type === "checkbox") {
+            element.checked = value;
+          } else {
+            element.value = value;
+          }
+        }
+      });
+    });
   } else {
-    title.textContent = "Criar Nova Regra de Automação";
-    // Lógica para limpar os campos (será implementada na Etapa 2)
+    ruleEditorTitle.textContent = "Criar Nova Regra de Automação";
+    ruleNameInput.value = "";
+    ruleTriggersInput.value = "";
+    // Limpa todos os campos de filtro no modal
+    document
+      .querySelectorAll(
+        '#rule-editor-modal input[type="text"], #rule-editor-modal select'
+      )
+      .forEach((el) => (el.value = ""));
+    document
+      .querySelectorAll('#rule-editor-modal input[type="checkbox"]')
+      .forEach((el) => (el.checked = false));
   }
-  populateRuleEditorFilters();
+
   ruleEditorModal.classList.remove("hidden");
 }
 
@@ -564,6 +668,113 @@ function openRuleEditor(rule = null) {
  */
 function closeRuleEditor() {
   ruleEditorModal.classList.add("hidden");
+  currentlyEditingRuleId = null;
+}
+
+/**
+ * Salva a regra (nova ou editada) do modal.
+ */
+function handleSaveRule() {
+  const name = ruleNameInput.value.trim();
+  if (!name) {
+    alert("O nome da regra é obrigatório.");
+    return;
+  }
+
+  const triggerKeywords = ruleTriggersInput.value
+    .split(",")
+    .map((k) => k.trim())
+    .filter(Boolean);
+  const filterSettings = {};
+  const sections = ["consultations", "exams", "appointments", "regulations"];
+
+  sections.forEach((sectionKey) => {
+    filterSettings[sectionKey] = {};
+    const sectionFilters = filterConfig[sectionKey] || [];
+    sectionFilters.forEach((filter) => {
+      if (filter.type === "component") return;
+      const element = document.getElementById(
+        `rule-${sectionKey}-${filter.id}`
+      );
+      if (element) {
+        const value =
+          element.type === "checkbox" ? element.checked : element.value;
+        filterSettings[sectionKey][filter.id] = value;
+      }
+    });
+  });
+
+  if (currentlyEditingRuleId) {
+    // Editando regra existente
+    const ruleIndex = automationRules.findIndex(
+      (r) => r.id === currentlyEditingRuleId
+    );
+    if (ruleIndex > -1) {
+      automationRules[ruleIndex].name = name;
+      automationRules[ruleIndex].triggerKeywords = triggerKeywords;
+      automationRules[ruleIndex].filterSettings = filterSettings;
+    }
+  } else {
+    // Criando nova regra
+    const newRule = {
+      id: Date.now().toString(),
+      name,
+      triggerKeywords,
+      isActive: true,
+      filterSettings,
+    };
+    automationRules.push(newRule);
+  }
+
+  saveAutomationRules();
+  renderAutomationRules();
+  closeRuleEditor();
+}
+
+function handleEditRule(ruleId) {
+  openRuleEditor(ruleId);
+}
+
+function handleDeleteRule(ruleId) {
+  if (confirm("Tem certeza que deseja excluir esta regra?")) {
+    automationRules = automationRules.filter((r) => r.id !== ruleId);
+    saveAutomationRules();
+    renderAutomationRules();
+  }
+}
+
+function handleDuplicateRule(ruleId) {
+  const originalRule = automationRules.find((r) => r.id === ruleId);
+  if (!originalRule) return;
+
+  const newRule = JSON.parse(JSON.stringify(originalRule)); // Deep copy
+  newRule.id = Date.now().toString();
+  newRule.name = `${originalRule.name} (Cópia)`;
+  newRule.isActive = false;
+
+  const originalIndex = automationRules.findIndex((r) => r.id === ruleId);
+  automationRules.splice(originalIndex + 1, 0, newRule); // Insere a cópia logo após o original
+
+  saveAutomationRules();
+  renderAutomationRules();
+}
+
+function handleToggleRuleActive(ruleId, isActive) {
+  const ruleIndex = automationRules.findIndex((r) => r.id === ruleId);
+  if (ruleIndex > -1) {
+    automationRules[ruleIndex].isActive = isActive;
+    saveAutomationRules();
+  }
+}
+
+function reorderAutomationRules() {
+  const newOrderedIds = [
+    ...automationRulesList.querySelectorAll(".rule-item"),
+  ].map((item) => item.dataset.ruleId);
+  automationRules.sort(
+    (a, b) => newOrderedIds.indexOf(a.id) - newOrderedIds.indexOf(b.id)
+  );
+  saveAutomationRules();
 }
 
 /**
@@ -573,13 +784,12 @@ function populateRuleEditorFilters() {
   const sections = ["consultations", "exams", "appointments", "regulations"];
   sections.forEach((sectionKey) => {
     const container = document.getElementById(`${sectionKey}-rule-editor-tab`);
+    if (!container) return;
     container.innerHTML = ""; // Limpa antes de popular
     const sectionFilters = filterConfig[sectionKey] || [];
 
     sectionFilters.forEach((filter) => {
-      // Não renderiza componentes complexos como 'date-range' ou 'saved-filters'
       if (filter.type === "component") return;
-
       const filterElement = createFilterElementForRuleEditor(
         filter,
         sectionKey
@@ -588,7 +798,12 @@ function populateRuleEditorFilters() {
     });
   });
   // Garante que a primeira aba esteja visível
-  document.querySelector("#rule-editor-filter-tabs .tab-button").click();
+  const firstTabButton = document.querySelector(
+    "#rule-editor-filter-tabs .tab-button"
+  );
+  if (firstTabButton) {
+    firstTabButton.click();
+  }
 }
 
 /**
@@ -599,11 +814,11 @@ function populateRuleEditorFilters() {
  */
 function createFilterElementForRuleEditor(filter, sectionKey) {
   const container = document.createElement("div");
-  // Adiciona um ID único para o filtro dentro da regra, para evitar conflitos
   const elementId = `rule-${sectionKey}-${filter.id}`;
-
   let elementHtml = "";
+
   if (filter.type !== "checkbox") {
+    container.className = "mb-3";
     elementHtml += `<label for="${elementId}" class="block font-medium mb-1 text-sm">${filter.label}</label>`;
   }
 
@@ -635,23 +850,26 @@ function createFilterElementForRuleEditor(filter, sectionKey) {
 document.addEventListener("DOMContentLoaded", () => {
   restoreOptions();
   setupTabs(document.getElementById("filter-tabs-container"));
-  setupTabs(document.getElementById("rule-editor-filter-tabs")); // Configura as abas do novo modal
+  setupTabs(document.getElementById("rule-editor-filter-tabs"));
 
   // Listeners para a funcionalidade de automação
   createNewRuleBtn.addEventListener("click", () => openRuleEditor(null));
   cancelRuleBtn.addEventListener("click", closeRuleEditor);
-  saveRuleBtn.addEventListener("click", () => {
-    // Lógica de salvar será na Etapa 2
-    console.log("Tentativa de salvar regra...");
-    closeRuleEditor();
-  });
+  saveRuleBtn.addEventListener("click", handleSaveRule);
+
   ruleEditorModal.addEventListener("click", (e) => {
-    // Fecha o modal se clicar no overlay
     if (e.target === ruleEditorModal) {
       closeRuleEditor();
     }
   });
+
+  // Listeners para drag and drop das regras
+  automationRulesList.addEventListener("dragstart", handleDragStart);
+  automationRulesList.addEventListener("dragend", handleDragEnd);
+  automationRulesList.addEventListener("dragover", handleDragOver);
+  automationRulesList.addEventListener("drop", handleDrop);
 });
+
 saveButton.addEventListener("click", saveOptions);
 closeButton.addEventListener("click", () => {
   window.close();
