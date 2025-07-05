@@ -107,7 +107,7 @@ export class SectionManager {
     this.elements.section?.addEventListener(
       "input",
       Utils.debounce((e) => {
-        if (e.target.matches("input[type='text']"))
+        if (e.target.matches("input[type='text'], input[type='date']"))
           this.applyFiltersAndRender();
       }, 300)
     );
@@ -173,16 +173,12 @@ export class SectionManager {
       '<p class="text-slate-500">Carregando...</p>';
 
     try {
-      // --- INÍCIO DA CORREÇÃO ---
-      // Lê o valor mais atual do filtro de tipo/modalidade diretamente do elemento da UI
-      // antes de construir os parâmetros. Isso garante que as regras de automação sejam respeitadas.
       const fetchTypeElement = this.elements.mainFilters?.querySelector(
         `#${this.prefix}-fetch-type-buttons`
       );
       if (fetchTypeElement) {
         this.fetchType = fetchTypeElement.value;
       }
-      // --- FIM DA CORREÇÃO ---
 
       const dataInicialValue = this.elements.dateInitial
         ? this.elements.dateInitial.value
@@ -595,28 +591,31 @@ export class SectionManager {
   applyAutomationFilters(filterSettings, ruleName) {
     if (!filterSettings) return;
 
-    // Obtém a configuração de todos os filtros para esta seção
-    const sectionFiltersConfig = filterConfig[this.sectionKey] || [];
+    // Aplica o filtro de data, se existir na regra
+    if (filterSettings.dateRange) {
+      const { start, end } = filterSettings.dateRange;
+      if (this.elements.dateInitial) {
+        this.elements.dateInitial.valueAsDate =
+          Utils.calculateRelativeDate(start);
+      }
+      if (this.elements.dateFinal) {
+        this.elements.dateFinal.valueAsDate = Utils.calculateRelativeDate(end);
+      }
+    }
 
+    // Aplica os outros filtros
     Object.entries(filterSettings).forEach(([filterId, value]) => {
+      if (filterId === "dateRange") return; // Pula o filtro de data que já foi tratado
       const el = document.getElementById(filterId);
       if (el) {
-        // Define o valor do elemento de filtro na UI
         if (el.type === "checkbox") {
           el.checked = value;
         } else {
           el.value = value;
         }
-
-        // Verifica se este filtro é um 'selectGroup' para atualizar o tipo de busca
-        const filterMeta = sectionFiltersConfig.find((f) => f.id === filterId);
-        if (filterMeta && filterMeta.type === "selectGroup") {
-          this.fetchType = value;
-        }
       }
     });
 
-    // Exibe o feedback visual de que a automação foi aplicada
     if (this.elements.automationFeedback) {
       this.elements.automationFeedback.innerHTML = `
             <div class="flex justify-between items-center">
@@ -627,7 +626,6 @@ export class SectionManager {
       this.elements.automationFeedback.classList.remove("hidden");
     }
 
-    // Força a busca de novos dados com os filtros que acabaram de ser aplicados
     this.fetchData();
   }
 

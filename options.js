@@ -632,7 +632,18 @@ function openRuleEditor(ruleId = null) {
 
     // Preenche os filtros no modal com os valores da regra
     Object.entries(rule.filterSettings).forEach(([sectionKey, filters]) => {
+      // Popula os filtros de data
+      const dateRange = filters.dateRange || {};
+      const startEl = document.getElementById(
+        `rule-${sectionKey}-start-offset`
+      );
+      const endEl = document.getElementById(`rule-${sectionKey}-end-offset`);
+      if (startEl) startEl.value = Math.abs(dateRange.start || 0);
+      if (endEl) endEl.value = dateRange.end || 0;
+
+      // Popula os outros filtros
       Object.entries(filters).forEach(([filterId, value]) => {
+        if (filterId === "dateRange") return;
         const element = document.getElementById(
           `rule-${sectionKey}-${filterId}`
         );
@@ -650,23 +661,21 @@ function openRuleEditor(ruleId = null) {
     ruleNameInput.value = "";
     ruleTriggersInput.value = "";
 
-    // --- INÍCIO DA CORREÇÃO ---
-    // Define valores padrão para os campos ao criar uma nova regra
+    // Limpa e define padrões para todos os campos
     document
       .querySelectorAll('#rule-editor-modal input[type="text"]')
       .forEach((el) => (el.value = ""));
-
+    document
+      .querySelectorAll('#rule-editor-modal input[type="number"]')
+      .forEach((el) => (el.value = "0")); // Padrão para datas
     document
       .querySelectorAll('#rule-editor-modal input[type="checkbox"]')
       .forEach((el) => (el.checked = false));
-
     document.querySelectorAll("#rule-editor-modal select").forEach((el) => {
       if (el.options.length > 0) {
-        // Seleciona a primeira opção, que é a mais abrangente ("Todos", "Todas", etc.)
         el.value = el.options[0].value;
       }
     });
-    // --- FIM DA CORREÇÃO ---
   }
 
   ruleEditorModal.classList.remove("hidden");
@@ -699,6 +708,21 @@ function handleSaveRule() {
 
   sections.forEach((sectionKey) => {
     filterSettings[sectionKey] = {};
+
+    // Salva o range de datas
+    const start =
+      -parseInt(
+        document.getElementById(`rule-${sectionKey}-start-offset`).value,
+        10
+      ) || 0;
+    const end =
+      parseInt(
+        document.getElementById(`rule-${sectionKey}-end-offset`).value,
+        10
+      ) || 0;
+    filterSettings[sectionKey].dateRange = { start, end };
+
+    // Salva os outros filtros
     const sectionFilters = filterConfig[sectionKey] || [];
     sectionFilters.forEach((filter) => {
       if (filter.type === "component") return;
@@ -794,9 +818,20 @@ function populateRuleEditorFilters() {
   sections.forEach((sectionKey) => {
     const container = document.getElementById(`${sectionKey}-rule-editor-tab`);
     if (!container) return;
-    container.innerHTML = ""; // Limpa antes de popular
-    const sectionFilters = filterConfig[sectionKey] || [];
 
+    const dateContainer = container.querySelector(
+      ".rule-editor-date-range-container"
+    );
+    dateContainer.innerHTML = ""; // Limpa antes de popular
+    dateContainer.appendChild(createDateRangeElementForRuleEditor(sectionKey));
+
+    // Limpa filtros antigos (exceto o container de data)
+    const filterElements = container.querySelectorAll(
+      ":scope > div:not(.rule-editor-date-range-container)"
+    );
+    filterElements.forEach((el) => el.remove());
+
+    const sectionFilters = filterConfig[sectionKey] || [];
     sectionFilters.forEach((filter) => {
       if (filter.type === "component") return;
       const filterElement = createFilterElementForRuleEditor(
@@ -813,6 +848,27 @@ function populateRuleEditorFilters() {
   if (firstTabButton) {
     firstTabButton.click();
   }
+}
+
+/**
+ * Cria o componente de range de data para o editor de regras.
+ * @param {string} sectionKey - A chave da seção (ex: "consultations").
+ * @returns {HTMLElement} O elemento HTML do componente.
+ */
+function createDateRangeElementForRuleEditor(sectionKey) {
+  const container = document.createElement("div");
+  container.className = "grid grid-cols-2 gap-4 text-sm";
+  container.innerHTML = `
+        <div>
+            <label for="rule-${sectionKey}-start-offset" class="block font-medium">Início (meses antes)</label>
+            <input type="number" id="rule-${sectionKey}-start-offset" class="mt-1 w-full px-2 py-1 border border-slate-300 rounded-md" value="0" min="0"/>
+        </div>
+        <div>
+            <label for="rule-${sectionKey}-end-offset" class="block font-medium">Fim (meses depois)</label>
+            <input type="number" id="rule-${sectionKey}-end-offset" class="mt-1 w-full px-2 py-1 border border-slate-300 rounded-md" value="0" min="0"/>
+        </div>
+    `;
+  return container;
 }
 
 /**
