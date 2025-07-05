@@ -119,7 +119,7 @@ export const defaultFieldConfig = [
   {
     id: "rg",
     key: "entidadeFisica.entfRG",
-    cadsusKey: null,
+    cadsusKey: 51, // CORRIGIDO
     label: "RG",
     enabled: true,
     section: "more",
@@ -134,7 +134,6 @@ export const defaultFieldConfig = [
       } ${String(data.entidadeFisica?.entidade?.logradouro?.logrNome || "")
         .split("/")[0]
         .trim()}`.trim(),
-    // CORRIGIDO: Mapeamento e normalização do endereço do CADSUS
     cadsusKey: (cell) =>
       `${String(cell[35] || "")} ${String(cell[34] || "")
         .split("/")[0]
@@ -147,7 +146,6 @@ export const defaultFieldConfig = [
   {
     id: "bairro",
     key: "entidadeFisica.entidade.localidade.locaNome",
-    // CORRIGIDO: Mapeamento do bairro
     cadsusKey: 30,
     label: "Bairro",
     enabled: true,
@@ -157,7 +155,6 @@ export const defaultFieldConfig = [
   {
     id: "cidade",
     key: "entidadeFisica.entidade.localidade.cidade.cidaNome",
-    // CORRIGIDO: Mapeamento da cidade
     cadsusKey: 29,
     label: "Cidade",
     enabled: true,
@@ -167,7 +164,6 @@ export const defaultFieldConfig = [
   {
     id: "cep",
     key: "entidadeFisica.entidade.entiEndeCEP",
-    // CORRIGIDO: Mapeamento do CEP
     cadsusKey: 41,
     label: "CEP",
     enabled: true,
@@ -262,7 +258,7 @@ export const defaultFieldConfig = [
   {
     id: "nomePai",
     key: "entidadeFisica.entfNomePai",
-    cadsusKey: null,
+    cadsusKey: 8, // CORRIGIDO
     label: "Nome do Pai",
     enabled: false,
     section: "more",
@@ -271,7 +267,7 @@ export const defaultFieldConfig = [
   {
     id: "racaCor",
     key: "entidadeFisica.racaCor.racoNome",
-    cadsusKey: null,
+    cadsusKey: 11, // CORRIGIDO
     label: "Raça/Cor",
     enabled: false,
     section: "more",
@@ -289,7 +285,7 @@ export const defaultFieldConfig = [
   {
     id: "cidadeNascimento",
     key: "entidadeFisica.cidadeNasc.cidaNome",
-    cadsusKey: null,
+    cadsusKey: 45, // CORRIGIDO
     label: "Cidade de Nascimento",
     enabled: false,
     section: "more",
@@ -298,7 +294,7 @@ export const defaultFieldConfig = [
   {
     id: "nacionalidade",
     key: "entidadeFisica.nacionalidade.naciDescricao",
-    cadsusKey: null,
+    cadsusKey: 23, // CORRIGIDO
     label: "Nacionalidade",
     enabled: false,
     section: "more",
@@ -325,7 +321,7 @@ export const defaultFieldConfig = [
   {
     id: "pis",
     key: "entidadeFisica.entfPis",
-    cadsusKey: null,
+    cadsusKey: 55, // CORRIGIDO
     label: "PIS",
     enabled: false,
     section: "more",

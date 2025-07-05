@@ -55,7 +55,10 @@ function render(patientData) {
     const v2 = String(cadsusValue || "").trim();
     let icon = "";
 
-    if (cadsus) {
+    // --- INÍCIO DA CORREÇÃO ---
+    // A comparação só é feita se o CADSUS foi carregado E se o campo atual
+    // tem uma chave de mapeamento para o CADSUS (cadsusKey não é nula).
+    if (cadsus && field.cadsusKey !== null) {
       let compareV1 = v1,
         compareV2 = v2;
       if (field.id === "telefone") {
@@ -69,6 +72,7 @@ function render(patientData) {
         icon = `<span class="comparison-icon" data-tooltip="${tooltipText}">⚠️</span>`;
       }
     }
+    // --- FIM DA CORREÇÃO ---
 
     const valueClass =
       field.id.toLowerCase().includes("alerg") && v1 && v1 !== "-"
@@ -139,7 +143,6 @@ function handleForceRefresh() {
 function onStateChange() {
   const patient = store.getPatient();
   if (patient) {
-    // PASSO 2.1: A função render não é mais async, eliminando a race condition.
     render(patient);
   } else {
     hide();
@@ -157,7 +160,6 @@ export function init(config, callbacks) {
   patientMainInfoDiv = document.getElementById("patient-main-info");
   patientAdditionalInfoDiv = document.getElementById("patient-additional-info");
   toggleDetailsBtn = document.getElementById("toggle-details-btn");
-  // PASSO 2.1: Elementos do rodapé
   patientCardFooter = document.getElementById("patient-card-footer");
   cadsusTimestamp = document.getElementById("cadsus-timestamp");
   refreshCadsusBtn = document.getElementById("refresh-cadsus-btn");
