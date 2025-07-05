@@ -203,8 +203,11 @@ const sectionConfigurations = {
   },
 };
 
+// --- INÍCIO DA CORREÇÃO ---
 async function selectPatient(patientInfo, forceRefresh = false) {
   const currentPatient = store.getPatient();
+
+  // Se for o mesmo paciente e não estivermos forçando uma atualização, não faz nada.
   if (
     currentPatient &&
     currentPatient.ficha.isenPK.idp === patientInfo.idp &&
@@ -212,24 +215,30 @@ async function selectPatient(patientInfo, forceRefresh = false) {
   ) {
     return;
   }
+
   Utils.toggleLoader(true);
   Utils.clearMessage();
-  store.setPatientUpdating();
+  store.setPatientUpdating(); // Define o estado de atualização para a UI
+
   try {
+    // Sempre busca o registro do novo paciente (Ficha)
     const ficha = await API.fetchVisualizaUsuario(patientInfo);
-    let cadsus = currentPatient?.cadsus;
-    if (forceRefresh || !cadsus) {
-      cadsus = await API.fetchCadsusData({
-        cpf: Utils.getNestedValue(ficha, "entidadeFisica.entfCPF"),
-        cns: ficha.isenNumCadSus,
-      });
-    }
+
+    // Sempre busca os dados do CADSUS para o novo paciente para evitar contaminação de estado.
+    const cadsus = await API.fetchCadsusData({
+      cpf: Utils.getNestedValue(ficha, "entidadeFisica.entfCPF"),
+      cns: ficha.isenNumCadSus,
+    });
+
     // Limpa a automação de todas as seções antes de definir o novo paciente
     Object.values(sectionManagers).forEach((manager) =>
       manager.clearAutomationFeedbackAndFilters(false)
     );
 
+    // Define atomicamente o novo estado do paciente com os dados da Ficha e do CADSUS correspondentes
     store.setPatient(ficha, cadsus);
+
+    // Atualiza a lista de pacientes recentes
     await updateRecentPatients(store.getPatient());
   } catch (error) {
     Utils.showMessage(error.message, "error");
@@ -239,6 +248,7 @@ async function selectPatient(patientInfo, forceRefresh = false) {
     Utils.toggleLoader(false);
   }
 }
+// --- FIM DA CORREÇÃO ---
 
 async function init() {
   const globalSettings = await loadConfigAndData();
