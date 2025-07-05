@@ -1,32 +1,44 @@
-// Função para alternar a barra lateral (sidebar/sidePanel)
-async function toggleSidebar() {
-  // Para Chrome e navegadores baseados em Chromium
-  if (browser.sidePanel) {
-    await browser.sidePanel.toggle();
+// Detecta qual API de extensão está disponível (browser para Firefox, chrome para Chrome)
+// e a atribui a uma constante 'api' para uso consistente em todo o script.
+const api = typeof browser !== "undefined" ? browser : chrome;
+
+/**
+ * Alterna a visibilidade da barra lateral (side panel no Chrome, sidebar no Firefox).
+ * @param {object} tab - O objeto da aba ativa, fornecido pelo listener do evento.
+ */
+async function toggleSidebar(tab) {
+  // Verifica a API sidePanel do Chrome.
+  if (api.sidePanel) {
+    // A API sidePanel requer um contexto (ID da janela) para funcionar corretamente.
+    await api.sidePanel.toggle({ windowId: tab.windowId });
   }
-  // Para Firefox
-  else if (browser.sidebarAction) {
-    await browser.sidebarAction.toggle();
+  // Verifica a API sidebarAction do Firefox.
+  else if (api.sidebarAction) {
+    await api.sidebarAction.toggle();
   }
 }
 
-// Listener para o clique no ícone da extensão
-browser.action.onClicked.addListener(toggleSidebar);
+// Adiciona um listener para o clique no ícone da extensão na barra de ferramentas.
+// O objeto 'tab' é passado automaticamente para o listener no Manifest V3.
+api.action.onClicked.addListener(toggleSidebar);
 
-// ----- Código do Menu de Contexto (clique com o botão direito) -----
+// --- Lógica do Menu de Contexto (clique com o botão direito) ---
 
-// Cria o item no menu de contexto quando a extensão é instalada.
-browser.runtime.onInstalled.addListener(() => {
-  browser.contextMenus.create({
+// É executado quando a extensão é instalada ou atualizada.
+api.runtime.onInstalled.addListener(() => {
+  // Cria um item no menu de contexto do navegador.
+  api.contextMenus.create({
     id: "openSidePanel",
     title: "Alternar Assistente de Regulação",
-    contexts: ["all"],
+    contexts: ["all"], // O item aparecerá em qualquer contexto de clique.
   });
 });
 
-// Listener para o clique na opção do menu de contexto.
-browser.contextMenus.onClicked.addListener((info) => {
+// Adiciona um listener para cliques nos itens do menu de contexto criados pela extensão.
+// O objeto 'tab' também é passado aqui.
+api.contextMenus.onClicked.addListener((info, tab) => {
+  // Verifica se o item de menu clicado é o que criamos.
   if (info.menuItemId === "openSidePanel") {
-    toggleSidebar();
+    toggleSidebar(tab);
   }
 });
