@@ -551,6 +551,16 @@ function addGlobalEventListeners() {
     if (message.type === "REGULATION_LOADED") {
       handleRegulationLoaded(message.payload);
     }
+    if (message.type === "CONFIG_UPDATED") {
+      // Exibe aviso antes de recarregar
+      Utils.showMessage(
+        "Configuração alterada. A barra lateral será recarregada para aplicar as novas configurações.",
+        "info"
+      );
+      setTimeout(() => {
+        window.location.reload();
+      }, 2200); // Dá tempo para o usuário ler o aviso
+    }
   });
 }
 

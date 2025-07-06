@@ -76,7 +76,7 @@ const getVersionFromManifest = async (manifestPath) => {
       manifestSource: "manifest.json",
     });
     await zipExtension({
-      zipName: `AssistenteDeRegulacao-v${chromiumVersion}.zip`,
+      zipName: `AssistenteDeRegulacao-chromium-v${chromiumVersion}.zip`,
       manifestSource: "manifest-edge.json",
     });
     console.log("ZIPs gerados em dist-zips/");

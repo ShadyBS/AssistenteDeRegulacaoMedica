@@ -38,7 +38,9 @@
             "[Assistente] Aba Manutenção aberta. Enviando IDs da regulação:",
             payload
           );
-          browser.runtime.sendMessage({ type: "REGULATION_LOADED", payload });
+          // Compatibilidade Chrome/Firefox
+          const api = typeof browser !== "undefined" ? browser : chrome;
+          api.runtime.sendMessage({ type: "REGULATION_LOADED", payload });
         }
       }
     } else {
