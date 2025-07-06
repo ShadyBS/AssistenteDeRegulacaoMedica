@@ -9,6 +9,7 @@ const CONFIG_VERSION = "1.2"; // Versão da estrutura de configuração
 // --- Variáveis de Estado ---
 let automationRules = [];
 let currentlyEditingRuleId = null;
+let draggedTab = null; // Variável para a aba arrastada
 
 // --- Elementos do DOM ---
 const saveButton = document.getElementById("saveButton");
@@ -217,6 +218,26 @@ async function renderFilterLayout(layout) {
 }
 
 /**
+ * Reordena os botões das abas na página de opções com base na ordem salva.
+ * @param {string[]} order - Array de IDs de abas na ordem correta.
+ */
+function applyTabOrder(order) {
+  const tabsContainer = document.querySelector("#filter-tabs-container .tabs");
+  const tabMap = new Map();
+  tabsContainer.querySelectorAll(".tab-button").forEach((tab) => {
+    tabMap.set(tab.dataset.tab, tab);
+  });
+
+  // Anexa as abas na ordem salva. As não encontradas na ordem (novas) permanecem.
+  order.forEach((tabId) => {
+    const tabElement = tabMap.get(tabId);
+    if (tabElement) {
+      tabsContainer.appendChild(tabElement);
+    }
+  });
+}
+
+/**
  * Carrega a configuração salva e renderiza a página.
  */
 async function restoreOptions() {
@@ -230,6 +251,7 @@ async function restoreOptions() {
     patientFields: defaultFieldConfig,
     filterLayout: {},
     dateRangeDefaults: {},
+    sidebarSectionOrder: null, // Carrega a nova configuração de ordem
   });
 
   const localItems = await browser.storage.local.get({
@@ -247,6 +269,11 @@ async function restoreOptions() {
     syncItems.autoLoadAppointments;
   document.getElementById("autoLoadRegulationsCheckbox").checked =
     syncItems.autoLoadRegulations;
+
+  // Aplica a ordem das abas antes de renderizar o resto
+  if (syncItems.sidebarSectionOrder) {
+    applyTabOrder(syncItems.sidebarSectionOrder);
+  }
 
   const currentPatientFieldsConfig = defaultFieldConfig.map((defaultField) => {
     const savedField = syncItems.patientFields.find(
@@ -368,6 +395,11 @@ async function saveOptions() {
     dateRangeDefaults[section] = { start, end };
   });
 
+  // Salva a ordem das abas/seções
+  const sidebarSectionOrder = [
+    ...document.querySelectorAll(".tabs .tab-button"),
+  ].map((btn) => btn.dataset.tab);
+
   await browser.storage.sync.set({
     baseUrl: baseUrl.endsWith("/") ? baseUrl.slice(0, -1) : baseUrl,
     enableAutomaticDetection,
@@ -378,6 +410,7 @@ async function saveOptions() {
     patientFields,
     filterLayout,
     dateRangeDefaults,
+    sidebarSectionOrder, // Salva a nova ordem
   });
 
   Utils.showMessage("Configurações gerais salvas com sucesso!", "success");
@@ -465,10 +498,66 @@ function setupTabs(container) {
   });
 }
 
+// --- Lógica de Arrastar e Soltar para Abas ---
+function getDragAfterTab(container, x) {
+  const draggableElements = [
+    ...container.querySelectorAll(".tab-button:not(.dragging)"),
+  ];
+  return draggableElements.reduce(
+    (closest, child) => {
+      const box = child.getBoundingClientRect();
+      const offset = x - box.left - box.width / 2;
+      if (offset < 0 && offset > closest.offset && child.draggable) {
+        return { offset: offset, element: child };
+      } else {
+        return closest;
+      }
+    },
+    { offset: Number.NEGATIVE_INFINITY }
+  ).element;
+}
+
+function setupTabDnD(container) {
+  const tabs = container.querySelectorAll(".tab-button");
+  tabs.forEach((tab) => {
+    // A aba "Ficha do Paciente" não é arrastável
+    if (tab.dataset.tab !== "patient-card") {
+      tab.draggable = true;
+    }
+  });
+
+  container.addEventListener("dragstart", (e) => {
+    if (e.target.classList.contains("tab-button") && e.target.draggable) {
+      draggedTab = e.target;
+      setTimeout(() => e.target.classList.add("dragging"), 0);
+    }
+  });
+
+  container.addEventListener("dragend", () => {
+    if (draggedTab) {
+      draggedTab.classList.remove("dragging");
+      draggedTab = null;
+    }
+  });
+
+  container.addEventListener("dragover", (e) => {
+    e.preventDefault();
+    if (!draggedTab) return;
+
+    const afterElement = getDragAfterTab(container, e.clientX);
+    if (afterElement) {
+      container.insertBefore(draggedTab, afterElement);
+    } else {
+      // Se não houver um elemento "depois", anexa ao final (respeitando as não arrastáveis)
+      container.appendChild(draggedTab);
+    }
+  });
+}
+
 // --- Lógica para Restaurar Padrões ---
 async function handleRestoreDefaults() {
   const confirmation = window.confirm(
-    "Tem certeza de que deseja restaurar todas as configurações de layout e valores padrão? Esta ação não pode ser desfeita."
+    "Tem certeza de que deseja restaurar todas as configurações de layout e valores padrão? Isto também restaurará a ordem das seções. Esta ação não pode ser desfeita."
   );
   if (confirmation) {
     await browser.storage.sync.remove([
@@ -476,14 +565,12 @@ async function handleRestoreDefaults() {
       "filterLayout",
       "dateRangeDefaults",
       "enableAutomaticDetection",
+      "sidebarSectionOrder", // Remove a ordem personalizada
     ]);
     mainFieldsZone.innerHTML = "";
     moreFieldsZone.innerHTML = "";
-    restoreOptions();
-    Utils.showMessage("Configurações restauradas para o padrão.", "info");
-    setTimeout(() => {
-      statusMessage.textContent = "";
-    }, 3000);
+    // Recarrega a página para garantir que a ordem padrão das abas seja aplicada
+    window.location.reload();
   }
 }
 
@@ -871,7 +958,12 @@ function createFilterElementForRuleEditor(filter, sectionKey, priorities) {
 // --- Inicialização ---
 document.addEventListener("DOMContentLoaded", async () => {
   await restoreOptions();
+
+  const mainTabsContainer = document.querySelector(
+    "#filter-tabs-container .tabs"
+  );
   setupTabs(document.getElementById("filter-tabs-container"));
+  setupTabDnD(mainTabsContainer); // Ativa o Drag and Drop para as abas principais
   setupTabs(document.getElementById("rule-editor-filter-tabs"));
 
   createNewRuleBtn.addEventListener("click", () => openRuleEditor(null));

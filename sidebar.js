@@ -243,6 +243,9 @@ async function init() {
 
   globalSettings.regulationPriorities = regulationPriorities;
 
+  // Aplica a ordem das seções antes de inicializar os componentes
+  applySectionOrder(globalSettings.sidebarSectionOrder);
+
   Search.init({ onSelectPatient: selectPatient });
   PatientCard.init(globalSettings.fieldConfigLayout, {
     onForceRefresh: selectPatient,
@@ -263,6 +266,7 @@ async function loadConfigAndData() {
     autoLoadRegulations: false,
     enableAutomaticDetection: true,
     dateRangeDefaults: {},
+    sidebarSectionOrder: [], // Carrega a ordem das seções
   });
   const localData = await browser.storage.local.get({
     recentPatients: [],
@@ -288,7 +292,74 @@ async function loadConfigAndData() {
       enableAutomaticDetection: syncData.enableAutomaticDetection,
       dateRangeDefaults: syncData.dateRangeDefaults,
     },
+    sidebarSectionOrder: syncData.sidebarSectionOrder,
   };
+}
+
+/**
+ * Reordena as seções na barra lateral com base na preferência do usuário.
+ * @param {string[]} order - Um array de IDs de abas (ex: ['regulations', 'consultations']).
+ */
+function applySectionOrder(order) {
+  const mainContent = document.getElementById("main-content");
+  if (!mainContent) return;
+
+  // Mapeia os data-tab das abas para os IDs das seções correspondentes
+  const sectionMap = {
+    "patient-card": "patient-details-section",
+    regulations: "regulations-section",
+    consultations: "consultations-section",
+    exams: "exams-section",
+    appointments: "appointments-section",
+  };
+
+  const allKnownOrderableIds = Object.keys(sectionMap);
+
+  // Pega todas as seções do DOM que são reordenáveis
+  const allOrderableSectionsInDOM = Array.from(
+    mainContent.querySelectorAll("section")
+  ).filter((s) => Object.values(sectionMap).includes(s.id));
+
+  // Mapeia de volta para os IDs das abas para saber a ordem padrão do DOM
+  const domTabOrder = allOrderableSectionsInDOM
+    .map((section) => {
+      return Object.keys(sectionMap).find(
+        (key) => sectionMap[key] === section.id
+      );
+    })
+    .filter(Boolean);
+
+  let finalOrder = [];
+  // Usa a ordem salva se for um array válido
+  if (order && Array.isArray(order) && order.length > 0) {
+    // Filtra a ordem salva para remover seções que não existem mais
+    const validSavedOrder = order.filter((id) =>
+      allKnownOrderableIds.includes(id)
+    );
+    finalOrder = [...validSavedOrder];
+  } else {
+    // Se não houver ordem salva, usa a ordem do DOM como padrão
+    finalOrder = [...domTabOrder];
+  }
+
+  // Identifica seções novas (presentes no DOM/código mas não na ordem final)
+  const currentSectionsInOrder = new Set(finalOrder);
+  const newSections = domTabOrder.filter(
+    (id) => !currentSectionsInOrder.has(id)
+  );
+
+  // Anexa as novas seções ao final para garantir que sempre apareçam
+  finalOrder.push(...newSections);
+
+  // Re-anexa os elementos ao DOM na ordem correta
+  // As seções não-mapeadas (como a de busca) não são afetadas e permanecem no topo.
+  finalOrder.forEach((tabId) => {
+    const sectionId = sectionMap[tabId];
+    const sectionElement = document.getElementById(sectionId);
+    if (sectionElement) {
+      mainContent.appendChild(sectionElement);
+    }
+  });
 }
 
 function initializeSections(globalSettings) {

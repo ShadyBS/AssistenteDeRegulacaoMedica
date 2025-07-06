@@ -88,6 +88,14 @@
         color: #2563eb;
         border-bottom-color: #2563eb;
       }
+      /* Estilos para arrastar e soltar abas */
+      .tab-button[draggable="true"] {
+        cursor: grab;
+      }
+      .tab-button.dragging {
+        opacity: 0.4;
+        background: #e0f2fe;
+      }
       .tab-content {
         display: none;
       }
@@ -301,7 +309,7 @@
       >
         <div class="flex justify-between items-center mb-3">
           <h2 class="text-md font-semibold text-slate-700">
-            Configurar Layouts e Padrões (Modo Manual)
+            Configurar Layouts e Padrões
           </h2>
           <button
             id="restoreDefaultsButton"
@@ -311,8 +319,8 @@
           </button>
         </div>
         <p class="text-sm text-slate-500 mb-4">
-          Arraste para reordenar. Defina os valores padrão para os filtros e
-          períodos de busca.
+          Arraste as abas abaixo para reordenar as seções na barra lateral.
+          Arraste os campos e filtros para reordená-los dentro de cada seção.
         </p>
         <div id="filter-tabs-container">
           <div class="tabs">
