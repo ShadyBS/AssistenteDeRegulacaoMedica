@@ -60,6 +60,15 @@ const getVersionFromManifest = async (manifestPath) => {
 
 (async () => {
   try {
+    // Limpa os arquivos ZIP antigos da pasta de saída
+    await fs.ensureDir(OUT_DIR);
+    const oldZips = (await fs.readdir(OUT_DIR)).filter((f) =>
+      f.endsWith(".zip")
+    );
+    for (const zip of oldZips) {
+      await fs.remove(path.join(OUT_DIR, zip));
+    }
+
     const firefoxVersion = await getVersionFromManifest("manifest.json");
     const chromiumVersion = await getVersionFromManifest("manifest-edge.json");
     await zipExtension({
