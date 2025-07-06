@@ -12,6 +12,8 @@ const FILES_TO_IGNORE = [
   "dist-zips",
   "node_modules",
   "build-zips.js",
+  "build-zips.bat",
+  "build-release.bat",
   ".git",
   ".vscode",
   "package-lock.json",
