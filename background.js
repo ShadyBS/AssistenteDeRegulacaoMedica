@@ -25,13 +25,18 @@ api.action.onClicked.addListener(toggleSidebar);
 // --- Lógica do Menu de Contexto (clique com o botão direito) ---
 
 // É executado quando a extensão é instalada ou atualizada.
-api.runtime.onInstalled.addListener(() => {
+api.runtime.onInstalled.addListener((details) => {
   // Cria um item no menu de contexto do navegador.
   api.contextMenus.create({
     id: "openSidePanel",
     title: "Alternar Assistente de Regulação",
     contexts: ["all"], // O item aparecerá em qualquer contexto de clique.
   });
+
+  // Abre a página de ajuda automaticamente na primeira instalação
+  if (details.reason === "install") {
+    api.tabs.create({ url: api.runtime.getURL("help.html") });
+  }
 });
 
 // Adiciona um listener para cliques nos itens do menu de contexto criados pela extensão.
