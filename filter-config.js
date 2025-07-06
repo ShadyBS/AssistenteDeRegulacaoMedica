@@ -18,7 +18,6 @@
 
 export const filterConfig = {
   consultations: [
-    // NOVO: Filtro de data como um componente configurável
     {
       id: "consultation-date-range",
       label: "Filtro de Datas",
@@ -87,7 +86,6 @@ export const filterConfig = {
       defaultLocation: "more",
       placeholder: "Digite unidades, separe por vírgula...",
     },
-    // NOVO: Filtros salvos como um componente configurável
     {
       id: "consultation-saved-filters",
       label: "Filtros Salvos",
@@ -256,12 +254,7 @@ export const filterConfig = {
       section: "regulations",
       defaultLocation: "more",
       options: [
-        { value: "todas", text: "Todas" },
-        { value: "EMERGENCIA", text: "Emergência" },
-        { value: "MUITO ALTA", text: "Muito Alta" },
-        { value: "ALTA", text: "Alta" },
-        { value: "NORMAL", text: "Normal" },
-        { value: "BAIXA", text: "Baixa" },
+        { value: "todas", text: "Todas" }, // Opções serão populadas dinamicamente
       ],
     },
     {

@@ -141,7 +141,7 @@ export class SectionManager {
   setPatient(patient) {
     this.currentPatient = patient;
     this.allData = [];
-    this.clearAutomationFeedbackAndFilters(false); // Limpa automação sem re-renderizar
+    this.clearAutomationFeedbackAndFilters(false);
     this.applyFiltersAndRender();
 
     if (this.elements.section) {
@@ -237,7 +237,7 @@ export class SectionManager {
       );
     }
     const sortedData = this.sortData(filteredData);
-    this.config.renderFunction(sortedData, this.sortState);
+    this.config.renderFunction(sortedData, this.sortState, this.globalSettings);
     this.updateActiveFiltersIndicator();
   }
 
@@ -573,9 +573,20 @@ export class SectionManager {
       case "select":
       case "selectGroup":
         elementHtml += `<select id="${filter.id}" class="w-full px-2 py-1 border border-slate-300 rounded-md bg-white">`;
-        filter.options.forEach((opt) => {
-          elementHtml += `<option value="${opt.value}">${opt.text}</option>`;
-        });
+
+        if (
+          filter.id === "regulation-filter-priority" &&
+          this.globalSettings.regulationPriorities
+        ) {
+          elementHtml += `<option value="todas">Todas</option>`;
+          this.globalSettings.regulationPriorities.forEach((prio) => {
+            elementHtml += `<option value="${prio.coreDescricao}">${prio.coreDescricao}</option>`;
+          });
+        } else {
+          (filter.options || []).forEach((opt) => {
+            elementHtml += `<option value="${opt.value}">${opt.text}</option>`;
+          });
+        }
         elementHtml += `</select>`;
         break;
       case "checkbox":
@@ -591,21 +602,7 @@ export class SectionManager {
   applyAutomationFilters(filterSettings, ruleName) {
     if (!filterSettings) return;
 
-    // Aplica o filtro de data, se existir na regra
-    if (filterSettings.dateRange) {
-      const { start, end } = filterSettings.dateRange;
-      if (this.elements.dateInitial) {
-        this.elements.dateInitial.valueAsDate =
-          Utils.calculateRelativeDate(start);
-      }
-      if (this.elements.dateFinal) {
-        this.elements.dateFinal.valueAsDate = Utils.calculateRelativeDate(end);
-      }
-    }
-
-    // Aplica os outros filtros
     Object.entries(filterSettings).forEach(([filterId, value]) => {
-      if (filterId === "dateRange") return; // Pula o filtro de data que já foi tratado
       const el = document.getElementById(filterId);
       if (el) {
         if (el.type === "checkbox") {
@@ -616,6 +613,8 @@ export class SectionManager {
       }
     });
 
+    this.fetchData();
+
     if (this.elements.automationFeedback) {
       this.elements.automationFeedback.innerHTML = `
             <div class="flex justify-between items-center">
@@ -625,8 +624,6 @@ export class SectionManager {
         `;
       this.elements.automationFeedback.classList.remove("hidden");
     }
-
-    this.fetchData();
   }
 
   clearAutomationFeedbackAndFilters(shouldRender = true) {
@@ -636,8 +633,7 @@ export class SectionManager {
     ) {
       this.elements.automationFeedback.classList.add("hidden");
       this.elements.automationFeedback.innerHTML = "";
-      // Apenas limpa os filtros se uma automação estava ativa
-      this.clearFilters(false); // Passa false para evitar loop
+      this.clearFilters(false);
     }
     if (shouldRender) {
       this.applyFiltersAndRender();

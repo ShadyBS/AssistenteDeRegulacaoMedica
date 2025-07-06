@@ -103,7 +103,7 @@ export const getNestedValue = (obj, path) => {
 };
 
 /**
- * NOVO: Calcula uma data relativa à data atual com base num desvio em meses.
+ * Calcula uma data relativa à data atual com base num desvio em meses.
  * @param {number} offsetInMonths - O número de meses a adicionar ou subtrair.
  * @returns {Date} O objeto Date resultante.
  */
@@ -112,4 +112,18 @@ export function calculateRelativeDate(offsetInMonths) {
   // setMonth lida corretamente com transições de ano e dias do mês
   date.setMonth(date.getMonth() + offsetInMonths);
   return date;
+}
+
+/**
+ * Retorna 'black' ou 'white' para o texto dependendo do contraste com a cor de fundo.
+ * @param {string} hexcolor - A cor de fundo em formato hexadecimal (com ou sem #).
+ * @returns {'black' | 'white'}
+ */
+export function getContrastYIQ(hexcolor) {
+  hexcolor = hexcolor.replace("#", "");
+  var r = parseInt(hexcolor.substr(0, 2), 16);
+  var g = parseInt(hexcolor.substr(2, 2), 16);
+  var b = parseInt(hexcolor.substr(4, 2), 16);
+  var yiq = (r * 299 + g * 587 + b * 114) / 1000;
+  return yiq >= 128 ? "black" : "white";
 }

@@ -2,7 +2,8 @@
  * @file Contém todas as funções responsáveis por gerar o HTML dos resultados.
  */
 
-import { getSortIndicator } from "./SectionManager.js"; // Importa a função de lá
+import { getSortIndicator } from "./SectionManager.js";
+import * as Utils from "./utils.js";
 
 export function renderConsultations(consultations, sortState) {
   const contentDiv = document.getElementById("consultations-content");
@@ -235,17 +236,18 @@ export function renderAppointments(appointments, sortState) {
       .join("");
 }
 
-export function renderRegulations(regulations, sortState) {
+export function renderRegulations(regulations, sortState, globalSettings) {
   const contentDiv = document.getElementById("regulations-content");
   if (!contentDiv) return;
 
-  const priorityStyles = {
-    EMERGENCIA: "bg-red-500 text-white",
-    "MUITO ALTA": "bg-orange-500 text-white",
-    ALTA: "bg-yellow-500 text-black",
-    NORMAL: "bg-blue-500 text-white",
-    BAIXA: "bg-green-500 text-white",
-  };
+  const priorityNameMap = new Map();
+  const priorityColorMap = new Map();
+  if (globalSettings && globalSettings.regulationPriorities) {
+    globalSettings.regulationPriorities.forEach((prio) => {
+      priorityNameMap.set(prio.coreDescricao, prio.coreDescricao);
+      priorityColorMap.set(prio.coreDescricao, prio.coreCor);
+    });
+  }
 
   const statusStyles = {
     AUTORIZADO: "bg-green-100 text-green-800",
@@ -285,8 +287,10 @@ export function renderRegulations(regulations, sortState) {
         const style = statusStyles[statusKey] || "bg-gray-100 text-gray-800";
 
         const priorityKey = (item.priority || "").toUpperCase();
-        const priorityStyle =
-          priorityStyles[priorityKey] || "bg-gray-400 text-white";
+        const priorityColor = priorityColorMap.get(priorityKey) || "CCCCCC";
+        const textColor = Utils.getContrastYIQ(priorityColor);
+        const priorityStyle = `background-color: #${priorityColor}; color: ${textColor};`;
+        const priorityText = priorityNameMap.get(priorityKey) || item.priority;
 
         const typeText = (item.type || "").startsWith("CON")
           ? "CONSULTA"
@@ -300,9 +304,7 @@ export function renderRegulations(regulations, sortState) {
                     <div>
                         <div class="flex items-center gap-2 mb-1">
                            <p class="font-bold ${typeColor}">${typeText}</p>
-                           <span class="text-xs font-bold px-2 py-0.5 rounded-full ${priorityStyle}">${
-          item.priority
-        }</span>
+                           <span class="text-xs font-bold px-2 py-0.5 rounded-full" style="${priorityStyle}">${priorityText}</span>
                         </div>
                         <p class="text-sm text-slate-800 font-medium">${
                           item.procedure

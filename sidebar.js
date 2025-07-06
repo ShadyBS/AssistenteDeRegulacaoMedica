@@ -11,7 +11,7 @@ import { store } from "./store.js";
 let currentRegulationData = null;
 let sectionManagers = {}; // Objeto para armazenar instâncias de SectionManager
 
-// --- LÓGICA DE FILTRAGEM (sem alterações) ---
+// --- LÓGICA DE FILTRAGEM ---
 const consultationFilterLogic = (data, filters) => {
   let filteredData = [...data];
   const keyword = (filters["consultation-filter-keyword"] || "")
@@ -149,10 +149,10 @@ const regulationFilterLogic = (data, filters) => {
     );
   }
   if (priority !== "todas") {
+    // A 'priority' aqui é o 'coreNome' (ex: "URGENCIA").
+    // O 'item.priority' é o texto que vem na lista de regulações (que também é o coreNome).
     filteredData = filteredData.filter(
-      (item) =>
-        (item.priority || "").toUpperCase().replace(" ", "") ===
-        priority.toUpperCase()
+      (item) => (item.priority || "").toUpperCase() === priority.toUpperCase()
     );
   }
   if (procedureTerms) {
@@ -203,11 +203,8 @@ const sectionConfigurations = {
   },
 };
 
-// --- INÍCIO DA CORREÇÃO ---
 async function selectPatient(patientInfo, forceRefresh = false) {
   const currentPatient = store.getPatient();
-
-  // Se for o mesmo paciente e não estivermos forçando uma atualização, não faz nada.
   if (
     currentPatient &&
     currentPatient.ficha.isenPK.idp === patientInfo.idp &&
@@ -215,30 +212,19 @@ async function selectPatient(patientInfo, forceRefresh = false) {
   ) {
     return;
   }
-
   Utils.toggleLoader(true);
   Utils.clearMessage();
-  store.setPatientUpdating(); // Define o estado de atualização para a UI
-
+  store.setPatientUpdating();
   try {
-    // Sempre busca o registro do novo paciente (Ficha)
     const ficha = await API.fetchVisualizaUsuario(patientInfo);
-
-    // Sempre busca os dados do CADSUS para o novo paciente para evitar contaminação de estado.
     const cadsus = await API.fetchCadsusData({
       cpf: Utils.getNestedValue(ficha, "entidadeFisica.entfCPF"),
       cns: ficha.isenNumCadSus,
     });
-
-    // Limpa a automação de todas as seções antes de definir o novo paciente
     Object.values(sectionManagers).forEach((manager) =>
       manager.clearAutomationFeedbackAndFilters(false)
     );
-
-    // Define atomicamente o novo estado do paciente com os dados da Ficha e do CADSUS correspondentes
     store.setPatient(ficha, cadsus);
-
-    // Atualiza a lista de pacientes recentes
     await updateRecentPatients(store.getPatient());
   } catch (error) {
     Utils.showMessage(error.message, "error");
@@ -248,10 +234,15 @@ async function selectPatient(patientInfo, forceRefresh = false) {
     Utils.toggleLoader(false);
   }
 }
-// --- FIM DA CORREÇÃO ---
 
 async function init() {
-  const globalSettings = await loadConfigAndData();
+  const [globalSettings, regulationPriorities] = await Promise.all([
+    loadConfigAndData(),
+    API.fetchRegulationPriorities(),
+  ]);
+
+  globalSettings.regulationPriorities = regulationPriorities;
+
   Search.init({ onSelectPatient: selectPatient });
   PatientCard.init(globalSettings.fieldConfigLayout, {
     onForceRefresh: selectPatient,
@@ -280,7 +271,6 @@ async function loadConfigAndData() {
   });
   store.setRecentPatients(localData.recentPatients);
   store.setSavedFilterSets(localData.savedFilterSets);
-  // Não precisa guardar as regras no store, elas são lidas quando necessário
 
   return {
     fieldConfigLayout: defaultFieldConfig.map((defaultField) => {

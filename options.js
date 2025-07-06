@@ -1,6 +1,7 @@
 import { defaultFieldConfig } from "./field-config.js";
 import { filterConfig } from "./filter-config.js";
 import * as Utils from "./utils.js";
+import * as API from "./api.js"; // Importa a API para buscar prioridades
 
 // --- Constantes ---
 const CONFIG_VERSION = "1.2"; // Versão da estrutura de configuração
@@ -25,7 +26,7 @@ const moreFieldsZone = document.getElementById("more-fields-zone");
 const filterTabsContainer = document.getElementById("filter-tabs-container");
 const allDropZones = document.querySelectorAll(".drop-zone");
 
-// --- NOVOS Elementos do DOM para o Gerenciador de Automação ---
+// --- Elementos do DOM para o Gerenciador de Automação ---
 const automationRulesList = document.getElementById("automation-rules-list");
 const createNewRuleBtn = document.getElementById("create-new-rule-btn");
 const ruleEditorModal = document.getElementById("rule-editor-modal");
@@ -64,9 +65,10 @@ function createDraggableField(field) {
 /**
  * Cria um elemento de filtro arrastável com controlos para valor padrão.
  * @param {object} filter - O objeto de configuração do filtro.
+ * @param {Array<object>} priorities - A lista de prioridades dinâmicas para a regulação.
  * @returns {HTMLElement} O elemento <div> do filtro.
  */
-function createDraggableFilter(filter) {
+function createDraggableFilter(filter, priorities = []) {
   const div = document.createElement("div");
   div.className = "draggable";
   div.dataset.filterId = filter.id;
@@ -82,9 +84,21 @@ function createDraggableFilter(filter) {
         break;
       case "select":
       case "selectGroup":
-        const optionsHtml = filter.options
-          .map((opt) => `<option value="${opt.value}">${opt.text}</option>`)
-          .join("");
+        let optionsHtml = "";
+        if (filter.id === "regulation-filter-priority") {
+          // Constrói o dropdown de prioridades dinamicamente
+          optionsHtml = filter.options
+            .map((opt) => `<option value="${opt.value}">${opt.text}</option>`)
+            .join(""); // Adiciona "Todas"
+          priorities.forEach((prio) => {
+            optionsHtml += `<option value="${prio.coreDescricao}">${prio.coreDescricao}</option>`;
+          });
+        } else {
+          // Lógica original para outros selects
+          optionsHtml = (filter.options || [])
+            .map((opt) => `<option value="${opt.value}">${opt.text}</option>`)
+            .join("");
+        }
         defaultValueControl = `<select class="filter-default-value-input w-full">${optionsHtml}</select>`;
         break;
       case "checkbox":
@@ -149,7 +163,9 @@ function renderPatientFields(config) {
  * Renderiza os filtros de seção nas zonas corretas e define seus valores padrão.
  * @param {object} layout - A configuração de layout dos filtros.
  */
-function renderFilterLayout(layout) {
+async function renderFilterLayout(layout) {
+  const priorities = await API.fetchRegulationPriorities();
+
   Object.keys(filterConfig).forEach((section) => {
     const mainZone = document.getElementById(`${section}-main-filters-zone`);
     const moreZone = document.getElementById(`${section}-more-filters-zone`);
@@ -176,7 +192,7 @@ function renderFilterLayout(layout) {
       const zone = document.getElementById(zoneId);
 
       if (zone) {
-        const filterElement = createDraggableFilter(filter);
+        const filterElement = createDraggableFilter(filter, priorities);
         zone.appendChild(filterElement);
 
         if (
@@ -204,7 +220,6 @@ function renderFilterLayout(layout) {
  * Carrega a configuração salva e renderiza a página.
  */
 async function restoreOptions() {
-  // Carrega configurações do storage.sync
   const syncItems = await browser.storage.sync.get({
     baseUrl: "",
     autoLoadExams: false,
@@ -217,12 +232,10 @@ async function restoreOptions() {
     dateRangeDefaults: {},
   });
 
-  // Carrega configurações do storage.local
   const localItems = await browser.storage.local.get({
     automationRules: [],
   });
 
-  // Aplica configurações gerais
   document.getElementById("baseUrlInput").value = syncItems.baseUrl;
   document.getElementById("enableAutomaticDetection").checked =
     syncItems.enableAutomaticDetection;
@@ -235,7 +248,6 @@ async function restoreOptions() {
   document.getElementById("autoLoadRegulationsCheckbox").checked =
     syncItems.autoLoadRegulations;
 
-  // Renderiza layouts e padrões manuais
   const currentPatientFieldsConfig = defaultFieldConfig.map((defaultField) => {
     const savedField = syncItems.patientFields.find(
       (f) => f.id === defaultField.id
@@ -243,7 +255,7 @@ async function restoreOptions() {
     return savedField ? { ...defaultField, ...savedField } : defaultField;
   });
   renderPatientFields(currentPatientFieldsConfig);
-  renderFilterLayout(syncItems.filterLayout);
+  await renderFilterLayout(syncItems.filterLayout);
 
   const sections = ["consultations", "exams", "appointments", "regulations"];
   const defaultRanges = {
@@ -261,7 +273,6 @@ async function restoreOptions() {
     document.getElementById(`${section}-end-offset`).value = range.end;
   });
 
-  // Renderiza regras de automação
   automationRules = localItems.automationRules;
   renderAutomationRules();
 }
@@ -335,10 +346,12 @@ async function saveOptions() {
           const defaultValueInput = div.querySelector(
             ".filter-default-value-input"
           );
-          newFilterData.defaultValue =
-            defaultValueInput.type === "checkbox"
-              ? defaultValueInput.checked
-              : defaultValueInput.value;
+          if (defaultValueInput) {
+            newFilterData.defaultValue =
+              defaultValueInput.type === "checkbox"
+                ? defaultValueInput.checked
+                : defaultValueInput.value;
+          }
         }
         filterLayout[section].push(newFilterData);
       });
@@ -407,7 +420,6 @@ function handleDrop(e) {
       dropZone.insertBefore(draggedElement, afterElement);
     }
 
-    // Se a zona de drop for a lista de regras, reordena e salva
     if (dropZone.id === "automation-rules-list") {
       reorderAutomationRules();
     }
@@ -584,7 +596,6 @@ function renderAutomationRules() {
     automationRulesList.appendChild(ruleElement);
   });
 
-  // Adiciona event listeners para os botões de cada regra
   document.querySelectorAll(".rule-item").forEach((item) => {
     const ruleId = item.dataset.ruleId;
     item
@@ -619,9 +630,9 @@ async function saveAutomationRules() {
  * Abre o modal do editor de regras, preenchendo-o se uma regra for fornecida.
  * @param {string|null} ruleId - O ID da regra a ser editada, ou null para criar uma nova.
  */
-function openRuleEditor(ruleId = null) {
+async function openRuleEditor(ruleId = null) {
   currentlyEditingRuleId = ruleId;
-  populateRuleEditorFilters(); // Popula com a estrutura de filtros
+  await populateRuleEditorFilters();
 
   if (ruleId) {
     const rule = automationRules.find((r) => r.id === ruleId);
@@ -630,20 +641,8 @@ function openRuleEditor(ruleId = null) {
     ruleNameInput.value = rule.name;
     ruleTriggersInput.value = rule.triggerKeywords.join(", ");
 
-    // Preenche os filtros no modal com os valores da regra
     Object.entries(rule.filterSettings).forEach(([sectionKey, filters]) => {
-      // Popula os filtros de data
-      const dateRange = filters.dateRange || {};
-      const startEl = document.getElementById(
-        `rule-${sectionKey}-start-offset`
-      );
-      const endEl = document.getElementById(`rule-${sectionKey}-end-offset`);
-      if (startEl) startEl.value = Math.abs(dateRange.start || 0);
-      if (endEl) endEl.value = dateRange.end || 0;
-
-      // Popula os outros filtros
       Object.entries(filters).forEach(([filterId, value]) => {
-        if (filterId === "dateRange") return;
         const element = document.getElementById(
           `rule-${sectionKey}-${filterId}`
         );
@@ -661,13 +660,9 @@ function openRuleEditor(ruleId = null) {
     ruleNameInput.value = "";
     ruleTriggersInput.value = "";
 
-    // Limpa e define padrões para todos os campos
     document
       .querySelectorAll('#rule-editor-modal input[type="text"]')
       .forEach((el) => (el.value = ""));
-    document
-      .querySelectorAll('#rule-editor-modal input[type="number"]')
-      .forEach((el) => (el.value = "0")); // Padrão para datas
     document
       .querySelectorAll('#rule-editor-modal input[type="checkbox"]')
       .forEach((el) => (el.checked = false));
@@ -708,21 +703,6 @@ function handleSaveRule() {
 
   sections.forEach((sectionKey) => {
     filterSettings[sectionKey] = {};
-
-    // Salva o range de datas
-    const start =
-      -parseInt(
-        document.getElementById(`rule-${sectionKey}-start-offset`).value,
-        10
-      ) || 0;
-    const end =
-      parseInt(
-        document.getElementById(`rule-${sectionKey}-end-offset`).value,
-        10
-      ) || 0;
-    filterSettings[sectionKey].dateRange = { start, end };
-
-    // Salva os outros filtros
     const sectionFilters = filterConfig[sectionKey] || [];
     sectionFilters.forEach((filter) => {
       if (filter.type === "component") return;
@@ -738,7 +718,6 @@ function handleSaveRule() {
   });
 
   if (currentlyEditingRuleId) {
-    // Editando regra existente
     const ruleIndex = automationRules.findIndex(
       (r) => r.id === currentlyEditingRuleId
     );
@@ -748,7 +727,6 @@ function handleSaveRule() {
       automationRules[ruleIndex].filterSettings = filterSettings;
     }
   } else {
-    // Criando nova regra
     const newRule = {
       id: Date.now().toString(),
       name,
@@ -786,7 +764,7 @@ function handleDuplicateRule(ruleId) {
   newRule.isActive = false;
 
   const originalIndex = automationRules.findIndex((r) => r.id === ruleId);
-  automationRules.splice(originalIndex + 1, 0, newRule); // Insere a cópia logo após o original
+  automationRules.splice(originalIndex + 1, 0, newRule);
 
   saveAutomationRules();
   renderAutomationRules();
@@ -813,35 +791,27 @@ function reorderAutomationRules() {
 /**
  * Popula as abas do editor de regras com os controles de filtro apropriados.
  */
-function populateRuleEditorFilters() {
+async function populateRuleEditorFilters() {
+  const priorities = await API.fetchRegulationPriorities();
   const sections = ["consultations", "exams", "appointments", "regulations"];
+
   sections.forEach((sectionKey) => {
     const container = document.getElementById(`${sectionKey}-rule-editor-tab`);
     if (!container) return;
-
-    const dateContainer = container.querySelector(
-      ".rule-editor-date-range-container"
-    );
-    dateContainer.innerHTML = ""; // Limpa antes de popular
-    dateContainer.appendChild(createDateRangeElementForRuleEditor(sectionKey));
-
-    // Limpa filtros antigos (exceto o container de data)
-    const filterElements = container.querySelectorAll(
-      ":scope > div:not(.rule-editor-date-range-container)"
-    );
-    filterElements.forEach((el) => el.remove());
-
+    container.innerHTML = "";
     const sectionFilters = filterConfig[sectionKey] || [];
+
     sectionFilters.forEach((filter) => {
       if (filter.type === "component") return;
       const filterElement = createFilterElementForRuleEditor(
         filter,
-        sectionKey
+        sectionKey,
+        priorities
       );
       container.appendChild(filterElement);
     });
   });
-  // Garante que a primeira aba esteja visível
+
   const firstTabButton = document.querySelector(
     "#rule-editor-filter-tabs .tab-button"
   );
@@ -851,33 +821,13 @@ function populateRuleEditorFilters() {
 }
 
 /**
- * Cria o componente de range de data para o editor de regras.
- * @param {string} sectionKey - A chave da seção (ex: "consultations").
- * @returns {HTMLElement} O elemento HTML do componente.
- */
-function createDateRangeElementForRuleEditor(sectionKey) {
-  const container = document.createElement("div");
-  container.className = "grid grid-cols-2 gap-4 text-sm";
-  container.innerHTML = `
-        <div>
-            <label for="rule-${sectionKey}-start-offset" class="block font-medium">Início (meses antes)</label>
-            <input type="number" id="rule-${sectionKey}-start-offset" class="mt-1 w-full px-2 py-1 border border-slate-300 rounded-md" value="0" min="0"/>
-        </div>
-        <div>
-            <label for="rule-${sectionKey}-end-offset" class="block font-medium">Fim (meses depois)</label>
-            <input type="number" id="rule-${sectionKey}-end-offset" class="mt-1 w-full px-2 py-1 border border-slate-300 rounded-md" value="0" min="0"/>
-        </div>
-    `;
-  return container;
-}
-
-/**
  * Cria um único elemento de filtro para o modal do editor de regras.
- * @param {object} filter - O objeto de configuração do filtro de filter-config.js.
- * @param {string} sectionKey - A chave da seção (ex: "consultations").
+ * @param {object} filter - O objeto de configuração do filtro.
+ * @param {string} sectionKey - A chave da seção.
+ * @param {Array<object>} priorities - A lista de prioridades dinâmicas.
  * @returns {HTMLElement} O elemento HTML do filtro.
  */
-function createFilterElementForRuleEditor(filter, sectionKey) {
+function createFilterElementForRuleEditor(filter, sectionKey, priorities) {
   const container = document.createElement("div");
   const elementId = `rule-${sectionKey}-${filter.id}`;
   let elementHtml = "";
@@ -896,9 +846,16 @@ function createFilterElementForRuleEditor(filter, sectionKey) {
     case "select":
     case "selectGroup":
       elementHtml += `<select id="${elementId}" class="w-full px-2 py-1 border border-slate-300 rounded-md bg-white">`;
-      filter.options.forEach((opt) => {
-        elementHtml += `<option value="${opt.value}">${opt.text}</option>`;
-      });
+      if (filter.id === "regulation-filter-priority") {
+        elementHtml += `<option value="todas">Todas</option>`;
+        priorities.forEach((prio) => {
+          elementHtml += `<option value="${prio.coreDescricao}">${prio.coreDescricao}</option>`;
+        });
+      } else {
+        (filter.options || []).forEach((opt) => {
+          elementHtml += `<option value="${opt.value}">${opt.text}</option>`;
+        });
+      }
       elementHtml += `</select>`;
       break;
     case "checkbox":
@@ -912,14 +869,13 @@ function createFilterElementForRuleEditor(filter, sectionKey) {
 }
 
 // --- Inicialização ---
-document.addEventListener("DOMContentLoaded", () => {
-  restoreOptions();
+document.addEventListener("DOMContentLoaded", async () => {
+  await restoreOptions();
   setupTabs(document.getElementById("filter-tabs-container"));
   setupTabs(document.getElementById("rule-editor-filter-tabs"));
 
-  // Listeners para a funcionalidade de automação
   createNewRuleBtn.addEventListener("click", () => openRuleEditor(null));
-  cancelRuleBtn.addEventListener("click", closeRuleEditor); // <-- Mantenha aqui!
+  cancelRuleBtn.addEventListener("click", closeRuleEditor);
   saveRuleBtn.addEventListener("click", handleSaveRule);
 
   ruleEditorModal.addEventListener("click", (e) => {
@@ -928,7 +884,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // Listeners para drag and drop das regras
   automationRulesList.addEventListener("dragstart", handleDragStart);
   automationRulesList.addEventListener("dragend", handleDragEnd);
   automationRulesList.addEventListener("dragover", handleDragOver);

@@ -39,7 +39,33 @@ function getTextFromHTML(htmlString) {
   return doc.body.textContent || "";
 }
 
-// **INÍCIO DA ALTERAÇÃO**
+/**
+ * Busca as configurações de prioridade de regulação do sistema.
+ * @returns {Promise<Array<object>>} Uma lista de objetos de prioridade.
+ */
+export async function fetchRegulationPriorities() {
+  const baseUrl = await getBaseUrl();
+  const url = new URL(
+    `${baseUrl}/sigss/configuracaoGravidade/loadConfiguracaoRegra`
+  );
+
+  try {
+    const response = await fetch(url);
+    if (!response.ok) {
+      console.error("Não foi possível buscar as prioridades de regulação.");
+      return [];
+    }
+    const data = await response.json();
+    // Filtra apenas as ativas e ordena pela ordem de exibição definida no sistema
+    return data
+      .filter((p) => p.coreIsAtivo === "t")
+      .sort((a, b) => a.coreOrdemExibicao - b.coreOrdemExibicao);
+  } catch (error) {
+    console.error("Erro de rede ao buscar prioridades:", error);
+    return []; // Retorna lista vazia em caso de falha de rede
+  }
+}
+
 /**
  * Busca os detalhes completos de uma regulação específica.
  * @param {object} params
@@ -85,9 +111,6 @@ export async function fetchRegulationDetails({ reguIdp, reguIds }) {
     );
   }
 }
-// **FIM DA ALTERAÇÃO**
-
-// --- O RESTANTE DO ARQUIVO api.js CONTINUA IGUAL ---
 
 function parseConsultasHTML(htmlString) {
   const parser = new DOMParser();
