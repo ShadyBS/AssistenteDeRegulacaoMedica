@@ -212,7 +212,7 @@
       </div>
     </header>
 
-    <main class="p-6 space-y-6">
+    <main class="p-6 space-y-6 pb-24">
       <!-- Seção de Configurações Gerais (Existente) -->
       <section
         class="bg-white p-4 rounded-lg border border-slate-200 shadow-sm"
@@ -622,14 +622,6 @@
           />
         </div>
       </section>
-
-      <button
-        id="saveButton"
-        class="mt-4 w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 transition text-sm"
-      >
-        Salvar Todas as Configurações
-      </button>
-      <div id="statusMessage" class="mt-4 text-sm font-medium"></div>
     </main>
 
     <!-- Modal para Editor de Regra -->
@@ -747,6 +739,22 @@
         </div>
       </div>
     </div>
+
+    <!-- NOVO: Rodapé Flutuante para o Botão Salvar -->
+    <footer
+      id="save-footer"
+      class="sticky bottom-0 bg-white/80 backdrop-blur-sm border-t border-slate-200 p-4 z-10"
+    >
+      <div class="max-w-5xl mx-auto flex justify-end items-center gap-4">
+        <div id="statusMessage" class="text-sm font-medium"></div>
+        <button
+          id="saveButton"
+          class="bg-blue-600 text-white py-2 px-6 rounded-md hover:bg-blue-700 transition text-sm font-semibold shadow-md"
+        >
+          Salvar Todas as Configurações
+        </button>
+      </div>
+    </footer>
 
     <script type="module" src="options.js"></script>
   </body>

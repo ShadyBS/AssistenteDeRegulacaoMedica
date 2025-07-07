@@ -236,6 +236,48 @@ async function selectPatient(patientInfo, forceRefresh = false) {
 }
 
 async function init() {
+  try {
+    // Verifica se a URL base está configurada. Lança um erro se não estiver.
+    await API.getBaseUrl();
+  } catch (error) {
+    // Se a URL não estiver configurada, mostra o aviso e para a inicialização.
+    if (error.message.includes("URL base não está configurada")) {
+      const mainContent = document.getElementById("main-content");
+      const urlWarning = document.getElementById("url-config-warning");
+
+      if (mainContent) mainContent.classList.add("hidden");
+      if (urlWarning) urlWarning.classList.remove("hidden");
+
+      const openOptionsBtn = document.getElementById(
+        "open-options-from-warning"
+      );
+      const reloadSidebarBtn = document.getElementById(
+        "reload-sidebar-from-warning"
+      );
+
+      if (openOptionsBtn) {
+        openOptionsBtn.addEventListener("click", () => {
+          browser.runtime.openOptionsPage();
+        });
+      }
+
+      if (reloadSidebarBtn) {
+        reloadSidebarBtn.addEventListener("click", () => {
+          window.location.reload();
+        });
+      }
+      return; // Para a execução aqui.
+    } else {
+      // Lida com outros erros inesperados durante a inicialização.
+      console.error("Initialization failed:", error);
+      Utils.showMessage(
+        "Ocorreu um erro inesperado ao iniciar a extensão.",
+        "error"
+      );
+    }
+  }
+
+  // Se a verificação da URL passar, continua com a inicialização normal.
   const [globalSettings, regulationPriorities] = await Promise.all([
     loadConfigAndData(),
     API.fetchRegulationPriorities(),
