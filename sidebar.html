@@ -111,7 +111,6 @@
           Assistente de Regulação
         </h1>
       </div>
-      <!-- Controlos do cabeçalho -->
       <div class="flex items-center gap-2">
         <button
           id="context-info-btn"
@@ -144,6 +143,27 @@
             ></div>
           </label>
         </div>
+        <button
+          id="reload-sidebar-btn"
+          title="Recarregar Assistente"
+          class="text-slate-400 hover:text-blue-600 transition"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="20"
+            height="20"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke-width="2"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0011.664 0l3.181-3.183m-3.181-4.991v4.99"
+            />
+          </svg>
+        </button>
         <a href="options.html" title="Configurações" target="_blank">
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -185,7 +205,6 @@
       </div>
     </header>
 
-    <!-- NOVO: Aviso de Configuração de URL -->
     <div
       id="url-config-warning"
       class="hidden p-6 text-center flex-grow flex flex-col justify-center"
@@ -327,8 +346,6 @@
           </button>
         </div>
       </section>
-
-      <!-- As seções abaixo serão populadas dinamicamente -->
 
       <section
         id="regulations-section"

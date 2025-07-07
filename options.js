@@ -413,10 +413,19 @@ async function saveOptions() {
     sidebarSectionOrder, // Salva a nova ordem
   });
 
-  Utils.showMessage("Configurações gerais salvas com sucesso!", "success");
+  // Exibe a nova mensagem de confirmação, sem recarregar automaticamente
+  Utils.showMessage(
+    "Configurações salvas! Lembre-se de recarregar o assistente para aplicar as alterações.",
+    "success"
+  );
+
   setTimeout(() => {
-    statusMessage.textContent = "";
-  }, 2000);
+    const statusMsg = document.getElementById("statusMessage");
+    if (statusMsg) {
+      statusMsg.textContent = "";
+      statusMsg.className = "text-sm font-medium"; // Limpa classes de cor
+    }
+  }, 4000);
 }
 
 // --- Lógica de Arrastar e Soltar (Drag and Drop) ---

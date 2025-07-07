@@ -579,6 +579,23 @@ function addGlobalEventListeners() {
   const infoModal = document.getElementById("info-modal");
   const modalCloseBtn = document.getElementById("modal-close-btn");
   const infoBtn = document.getElementById("context-info-btn");
+  const reloadBtn = document.getElementById("reload-sidebar-btn");
+
+  if (reloadBtn) {
+    reloadBtn.addEventListener("click", () => {
+      const patient = store.getPatient();
+      if (patient && patient.ficha) {
+        const confirmation = window.confirm(
+          "Um paciente está selecionado e o estado atual será perdido. Deseja realmente recarregar o assistente?"
+        );
+        if (confirmation) {
+          window.location.reload();
+        }
+      } else {
+        window.location.reload();
+      }
+    });
+  }
 
   modalCloseBtn.addEventListener("click", () =>
     infoModal.classList.add("hidden")
@@ -589,21 +606,12 @@ function addGlobalEventListeners() {
   mainContent.addEventListener("click", handleGlobalActions);
   infoBtn.addEventListener("click", handleShowRegulationInfo);
 
-  browser.runtime.onMessage.addListener((message) => {
-    if (message.type === "REGULATION_LOADED") {
-      handleRegulationLoaded(message.payload);
-    }
-    if (message.type === "CONFIG_UPDATED") {
-      // Exibe aviso antes de recarregar
-      Utils.showMessage(
-        "Configuração alterada. A barra lateral será recarregada para aplicar as novas configurações.",
-        "info"
-      );
-      setTimeout(() => {
-        window.location.reload();
-      }, 2200); // Dá tempo para o usuário ler o aviso
-    }
-  });
+  // Listener removido, pois a recarga agora é manual.
+  // browser.runtime.onMessage.addListener((message) => {
+  //   if (message.type === "REGULATION_LOADED") {
+  //     handleRegulationLoaded(message.payload);
+  //   }
+  // });
 }
 
 async function handleGlobalActions(event) {
