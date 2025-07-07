@@ -127,3 +127,17 @@ export function getContrastYIQ(hexcolor) {
   var yiq = (r * 299 + g * 587 + b * 114) / 1000;
   return yiq >= 128 ? "black" : "white";
 }
+
+/**
+ * Normaliza uma string removendo acentos, cedilha e convertendo para minúsculas.
+ * @param {string} str - A string a ser normalizada.
+ * @returns {string} A string normalizada.
+ */
+export function normalizeString(str) {
+  if (!str) return "";
+  return str
+    .toString()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+}

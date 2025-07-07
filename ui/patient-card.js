@@ -1,7 +1,7 @@
 /**
  * @file Módulo para gerir o card de "Dados do Paciente".
  */
-import { getNestedValue } from "../utils.js";
+import * as Utils from "../utils.js";
 import { store } from "../store.js";
 
 let patientDetailsSection,
@@ -31,7 +31,7 @@ function render(patientData) {
 
   const getLocalValue = (field, data) => {
     if (typeof field.key === "function") return field.key(data);
-    return getNestedValue(data, field.key);
+    return Utils.getNestedValue(data, field.key);
   };
 
   const getCadsusValue = (field, data) => {
@@ -55,24 +55,25 @@ function render(patientData) {
     const v2 = String(cadsusValue || "").trim();
     let icon = "";
 
-    // --- INÍCIO DA CORREÇÃO ---
-    // A comparação só é feita se o CADSUS foi carregado E se o campo atual
-    // tem uma chave de mapeamento para o CADSUS (cadsusKey não é nula).
     if (cadsus && field.cadsusKey !== null) {
-      let compareV1 = v1,
-        compareV2 = v2;
+      let compareV1 = v1;
+      let compareV2 = v2;
+
       if (field.id === "telefone") {
         compareV1 = v1.replace(/\D/g, "").replace(/^55/, "");
         compareV2 = v2.replace(/\D/g, "").replace(/^55/, "");
+      } else {
+        compareV1 = Utils.normalizeString(v1);
+        compareV2 = Utils.normalizeString(v2);
       }
-      if (compareV1 && compareV1.toUpperCase() === compareV2.toUpperCase()) {
+
+      if (compareV1 && compareV1 === compareV2) {
         icon = `<span class="comparison-icon" title="Dado confere com o CADSUS">✅</span>`;
       } else {
         const tooltipText = `Ficha: ${v1 || "Vazio"}\nCADSUS: ${v2 || "Vazio"}`;
         icon = `<span class="comparison-icon" data-tooltip="${tooltipText}">⚠️</span>`;
       }
     }
-    // --- FIM DA CORREÇÃO ---
 
     const valueClass =
       field.id.toLowerCase().includes("alerg") && v1 && v1 !== "-"
@@ -94,7 +95,6 @@ function render(patientData) {
     }
   });
 
-  // Atualiza o rodapé do card
   if (lastCadsusCheck) {
     cadsusTimestamp.textContent = `CADSUS verificado em: ${lastCadsusCheck.toLocaleString()}`;
     patientCardFooter.style.display = "flex";
@@ -103,7 +103,6 @@ function render(patientData) {
     patientCardFooter.style.display = "flex";
   }
 
-  // Controla o estado do botão de refresh
   refreshCadsusBtn
     .querySelector(".refresh-icon")
     .classList.toggle("spinning", isUpdating);
