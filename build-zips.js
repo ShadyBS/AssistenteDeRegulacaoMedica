@@ -10,10 +10,12 @@ const SRC_DIR = __dirname;
 const OUT_DIR = path.join(__dirname, "dist-zips");
 const FILES_TO_IGNORE = [
   "dist-zips",
+  "src",
   "node_modules",
   "build-zips.js",
   "build-zips.bat",
   "build-release.bat",
+  ".gitignore",
   ".git",
   ".vscode",
   "package-lock.json",
