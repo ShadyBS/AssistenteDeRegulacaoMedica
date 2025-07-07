@@ -149,8 +149,6 @@ const regulationFilterLogic = (data, filters) => {
     );
   }
   if (priority !== "todas") {
-    // A 'priority' aqui é o 'coreNome' (ex: "URGENCIA").
-    // O 'item.priority' é o texto que vem na lista de regulações (que também é o coreNome).
     filteredData = filteredData.filter(
       (item) => (item.priority || "").toUpperCase() === priority.toUpperCase()
     );
@@ -237,10 +235,8 @@ async function selectPatient(patientInfo, forceRefresh = false) {
 
 async function init() {
   try {
-    // Verifica se a URL base está configurada. Lança um erro se não estiver.
     await API.getBaseUrl();
   } catch (error) {
-    // Se a URL não estiver configurada, mostra o aviso e para a inicialização.
     if (error.message.includes("URL base não está configurada")) {
       const mainContent = document.getElementById("main-content");
       const urlWarning = document.getElementById("url-config-warning");
@@ -266,9 +262,8 @@ async function init() {
           window.location.reload();
         });
       }
-      return; // Para a execução aqui.
+      return;
     } else {
-      // Lida com outros erros inesperados durante a inicialização.
       console.error("Initialization failed:", error);
       Utils.showMessage(
         "Ocorreu um erro inesperado ao iniciar a extensão.",
@@ -277,7 +272,6 @@ async function init() {
     }
   }
 
-  // Se a verificação da URL passar, continua com a inicialização normal.
   const [globalSettings, regulationPriorities] = await Promise.all([
     loadConfigAndData(),
     API.fetchRegulationPriorities(),
@@ -285,7 +279,6 @@ async function init() {
 
   globalSettings.regulationPriorities = regulationPriorities;
 
-  // Aplica a ordem das seções antes de inicializar os componentes
   applySectionOrder(globalSettings.sidebarSectionOrder);
 
   Search.init({ onSelectPatient: selectPatient });
@@ -296,6 +289,8 @@ async function init() {
   applyUserPreferences(globalSettings);
   addGlobalEventListeners();
   setupAutoModeToggle();
+
+  await checkForPendingRegulation();
 }
 
 async function loadConfigAndData() {
@@ -308,7 +303,7 @@ async function loadConfigAndData() {
     autoLoadRegulations: false,
     enableAutomaticDetection: true,
     dateRangeDefaults: {},
-    sidebarSectionOrder: [], // Carrega a ordem das seções
+    sidebarSectionOrder: [],
   });
   const localData = await browser.storage.local.get({
     recentPatients: [],
@@ -338,15 +333,10 @@ async function loadConfigAndData() {
   };
 }
 
-/**
- * Reordena as seções na barra lateral com base na preferência do usuário.
- * @param {string[]} order - Um array de IDs de abas (ex: ['regulations', 'consultations']).
- */
 function applySectionOrder(order) {
   const mainContent = document.getElementById("main-content");
   if (!mainContent) return;
 
-  // Mapeia os data-tab das abas para os IDs das seções correspondentes
   const sectionMap = {
     "patient-card": "patient-details-section",
     regulations: "regulations-section",
@@ -357,12 +347,10 @@ function applySectionOrder(order) {
 
   const allKnownOrderableIds = Object.keys(sectionMap);
 
-  // Pega todas as seções do DOM que são reordenáveis
   const allOrderableSectionsInDOM = Array.from(
     mainContent.querySelectorAll("section")
   ).filter((s) => Object.values(sectionMap).includes(s.id));
 
-  // Mapeia de volta para os IDs das abas para saber a ordem padrão do DOM
   const domTabOrder = allOrderableSectionsInDOM
     .map((section) => {
       return Object.keys(sectionMap).find(
@@ -372,29 +360,22 @@ function applySectionOrder(order) {
     .filter(Boolean);
 
   let finalOrder = [];
-  // Usa a ordem salva se for um array válido
   if (order && Array.isArray(order) && order.length > 0) {
-    // Filtra a ordem salva para remover seções que não existem mais
     const validSavedOrder = order.filter((id) =>
       allKnownOrderableIds.includes(id)
     );
     finalOrder = [...validSavedOrder];
   } else {
-    // Se não houver ordem salva, usa a ordem do DOM como padrão
     finalOrder = [...domTabOrder];
   }
 
-  // Identifica seções novas (presentes no DOM/código mas não na ordem final)
   const currentSectionsInOrder = new Set(finalOrder);
   const newSections = domTabOrder.filter(
     (id) => !currentSectionsInOrder.has(id)
   );
 
-  // Anexa as novas seções ao final para garantir que sempre apareçam
   finalOrder.push(...newSections);
 
-  // Re-anexa os elementos ao DOM na ordem correta
-  // As seções não-mapeadas (como a de busca) não são afetadas e permanecem no topo.
   finalOrder.forEach((tabId) => {
     const sectionId = sectionMap[tabId];
     const sectionElement = document.getElementById(sectionId);
@@ -474,10 +455,9 @@ function setupAutoModeToggle() {
   });
 }
 
-async function handleRegulationLoaded(payload) {
+async function handleRegulationLoaded(regulationData) {
   Utils.toggleLoader(true);
   try {
-    const regulationData = await API.fetchRegulationDetails(payload);
     currentRegulationData = regulationData;
 
     if (
@@ -606,12 +586,23 @@ function addGlobalEventListeners() {
   mainContent.addEventListener("click", handleGlobalActions);
   infoBtn.addEventListener("click", handleShowRegulationInfo);
 
-  // Listener removido, pois a recarga agora é manual.
-  // browser.runtime.onMessage.addListener((message) => {
-  //   if (message.type === "REGULATION_LOADED") {
-  //     handleRegulationLoaded(message.payload);
-  //   }
-  // });
+  // NOVO: Listener para reagir a mudanças de regulação em tempo real.
+  browser.storage.onChanged.addListener((changes, areaName) => {
+    // Reage apenas a mudanças na chave 'pendingRegulation' no storage 'local'.
+    if (areaName === "local" && changes.pendingRegulation) {
+      const { newValue } = changes.pendingRegulation;
+      // Se houver um novo valor, processa-o.
+      if (newValue && newValue.isenPKIdp) {
+        console.log(
+          "[Assistente Sidebar] Nova regulação detectada via storage.onChanged:",
+          newValue
+        );
+        handleRegulationLoaded(newValue);
+        // Limpa o storage para não reprocessar na próxima vez que a sidebar for aberta.
+        browser.storage.local.remove("pendingRegulation");
+      }
+    }
+  });
 }
 
 async function handleGlobalActions(event) {
@@ -733,6 +724,20 @@ function handleShowAppointmentInfo(button) {
         <p><strong>Procedimento:</strong> ${data.description}</p>
     `;
   infoModal.classList.remove("hidden");
+}
+
+async function checkForPendingRegulation() {
+  try {
+    const { pendingRegulation } = await browser.storage.local.get(
+      "pendingRegulation"
+    );
+    if (pendingRegulation && pendingRegulation.isenPKIdp) {
+      await handleRegulationLoaded(pendingRegulation);
+      await browser.storage.local.remove("pendingRegulation");
+    }
+  } catch (e) {
+    console.error("Erro ao verificar regulação pendente:", e);
+  }
 }
 
 document.addEventListener("DOMContentLoaded", init);
