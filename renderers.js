@@ -185,18 +185,7 @@ export function renderAppointments(appointments, sortState) {
           typeText = "EXAME";
         }
 
-        let idp, ids;
-        const idParts = item.id.split("-");
-
-        if (idParts[0].toLowerCase() === "exam") {
-          idp = idParts[1];
-          ids = idParts[2];
-        } else {
-          idp = idParts[0];
-          ids = idParts[1];
-        }
-
-        const appointmentDataString = JSON.stringify(item);
+        const [idp, ids] = item.id.split("-");
 
         return `
         <div class="p-3 mb-3 border rounded-lg bg-white">
@@ -220,14 +209,7 @@ export function renderAppointments(appointments, sortState) {
                  <button class="view-appointment-details-btn text-sm bg-gray-100 text-gray-800 py-1 px-3 rounded hover:bg-gray-200" data-idp="${
                    idp || ""
                  }" data-ids="${ids || ""}" data-type="${item.type}">
-                    Abrir
-                </button>
-                <button class="appointment-info-btn text-blue-600 hover:text-blue-800 p-1 rounded-full hover:bg-blue-100" data-appointment='${appointmentDataString}'>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="12" cy="12" r="10"></circle>
-                        <line x1="12" y1="16" x2="12" y2="12"></line>
-                        <line x1="12" y1="8" x2="12.01" y2="8"></line>
-                    </svg>
+                    Ver Detalhes
                 </button>
             </div>
         </div>

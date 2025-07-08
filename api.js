@@ -567,6 +567,37 @@ export async function fetchAppointmentDetails({ idp, ids }) {
   return data?.agendamentoConsulta || null;
 }
 
+/**
+ * NEW: Busca os detalhes de um agendamento de exame.
+ * @param {object} params
+ * @param {string} params.idp - O IDP do agendamento de exame.
+ * @param {string} params.ids - O IDS do agendamento de exame.
+ * @returns {Promise<object>} O objeto com os dados do agendamento de exame.
+ */
+export async function fetchExamAppointmentDetails({ idp, ids }) {
+  if (!idp || !ids) throw new Error("ID do agendamento de exame é necessário.");
+  const baseUrl = await getBaseUrl();
+  const url = new URL(`${baseUrl}/sigss/agendamentoExame/visualizar`);
+  url.search = new URLSearchParams({
+    "examPK.idp": idp,
+    "examPK.ids": ids,
+  }).toString();
+
+  const response = await fetch(url, {
+    headers: {
+      Accept: "application/json, text/javascript, */*; q=0.01",
+      "X-Requested-With": "XMLHttpRequest",
+    },
+  });
+
+  if (!response.ok) {
+    handleFetchError(response);
+    return null;
+  }
+  const data = await response.json();
+  return data?.agendamentoExame || null;
+}
+
 export async function fetchAppointments({ isenPK, dataInicial, dataFinal }) {
   if (!isenPK) throw new Error("ID (isenPK) do paciente é necessário.");
   const baseUrl = await getBaseUrl();

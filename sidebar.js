@@ -237,7 +237,7 @@ async function init() {
   try {
     await API.getBaseUrl();
   } catch (error) {
-    if (error.message.includes("URL base não está configurada")) {
+    if (error.message.includes("URL base não configurada")) {
       const mainContent = document.getElementById("main-content");
       const urlWarning = document.getElementById("url-config-warning");
 
@@ -586,19 +586,15 @@ function addGlobalEventListeners() {
   mainContent.addEventListener("click", handleGlobalActions);
   infoBtn.addEventListener("click", handleShowRegulationInfo);
 
-  // NOVO: Listener para reagir a mudanças de regulação em tempo real.
   browser.storage.onChanged.addListener((changes, areaName) => {
-    // Reage apenas a mudanças na chave 'pendingRegulation' no storage 'local'.
     if (areaName === "local" && changes.pendingRegulation) {
       const { newValue } = changes.pendingRegulation;
-      // Se houver um novo valor, processa-o.
       if (newValue && newValue.isenPKIdp) {
         console.log(
           "[Assistente Sidebar] Nova regulação detectada via storage.onChanged:",
           newValue
         );
         handleRegulationLoaded(newValue);
-        // Limpa o storage para não reprocessar na próxima vez que a sidebar for aberta.
         browser.storage.local.remove("pendingRegulation");
       }
     }
@@ -613,15 +609,27 @@ async function handleGlobalActions(event) {
     return;
   }
   const examResultBtn = target.closest(".view-exam-result-btn");
-  if (examResultBtn) await handleViewExamResult(examResultBtn);
+  if (examResultBtn) {
+    await handleViewExamResult(examResultBtn);
+    return;
+  }
+
   const appointmentDetailsBtn = target.closest(".view-appointment-details-btn");
-  if (appointmentDetailsBtn)
-    await handleViewAppointmentDetails(appointmentDetailsBtn);
+  if (appointmentDetailsBtn) {
+    await handleShowAppointmentDetailsModal(appointmentDetailsBtn);
+    return;
+  }
   const regulationDetailsBtn = target.closest(".view-regulation-details-btn");
-  if (regulationDetailsBtn)
-    await handleViewRegulationDetails(regulationDetailsBtn);
+  if (regulationDetailsBtn) {
+    await handleShowRegulationDetailsModal(regulationDetailsBtn);
+    return;
+  }
+
   const appointmentInfoBtn = target.closest(".appointment-info-btn");
-  if (appointmentInfoBtn) handleShowAppointmentInfo(appointmentInfoBtn);
+  if (appointmentInfoBtn) {
+    handleShowAppointmentInfo(appointmentInfoBtn);
+    return;
+  }
 }
 
 async function copyToClipboard(button) {
@@ -675,29 +683,154 @@ async function handleViewExamResult(button) {
   }
 }
 
-async function handleViewAppointmentDetails(button) {
-  const { idp, ids, type } = button.dataset;
+function showModal(title, content) {
+  const modal = document.getElementById("info-modal");
+  const modalTitle = document.getElementById("modal-title");
+  const modalContent = document.getElementById("modal-content");
+
+  modalTitle.textContent = title;
+  modalContent.innerHTML = content;
+  modal.classList.remove("hidden");
+}
+
+function createDetailRow(label, value) {
+  if (!value || String(value).trim() === "") return "";
+  return `<div class="py-2 border-b border-slate-100 flex justify-between items-start gap-4">
+            <span class="font-semibold text-slate-600 flex-shrink-0">${label}:</span>
+            <span class="text-slate-800 text-right break-words">${value}</span>
+          </div>`;
+}
+
+function formatRegulationDetailsForModal(data) {
+  if (!data) return "<p>Dados da regulação não encontrados.</p>";
+  let content = "";
+  content += createDetailRow("Status", data.reguStatus);
+  content += createDetailRow(
+    "Tipo",
+    data.reguTipo === "ENC" ? "Consulta" : "Exame"
+  );
+  content += createDetailRow("Data Solicitação", data.reguDataStr);
+  content += createDetailRow("Procedimento", data.prciNome);
+  content += createDetailRow("CID", `${data.tcidCod} - ${data.tcidDescricao}`);
+  content += createDetailRow("Profissional Sol.", data.prsaEntiNome);
+  content += createDetailRow("Unidade Sol.", data.limoSolicitanteNome);
+  content += createDetailRow("Unidade Desejada", data.limoDesejadaNome);
+  content += createDetailRow("Gravidade", data.reguGravidade);
+  if (data.reguJustificativa && data.reguJustificativa !== "null") {
+    content += `<div class="py-2">
+                      <span class="font-semibold text-slate-600">Justificativa:</span>
+                      <p class="text-slate-800 whitespace-pre-wrap mt-1 p-2 bg-slate-50 rounded">${data.reguJustificativa.replace(
+                        /\\n/g,
+                        "\n"
+                      )}</p>
+                  </div>`;
+  }
+  return content;
+}
+
+function formatAppointmentDetailsForModal(data) {
+  if (!data) return "<p>Dados do agendamento não encontrados.</p>";
+
+  let status = "Agendado";
+  if (data.agcoIsCancelado === "t") status = "Cancelado";
+  else if (data.agcoIsFaltante === "t") status = "Faltou";
+  else if (data.agcoIsAtendido === "t") status = "Atendido";
+
+  let content = "";
+  content += createDetailRow("Status", status);
+  content += createDetailRow(
+    "Data",
+    `${data.agcoData} às ${data.agcoHoraPrevista}`
+  );
+  content += createDetailRow(
+    "Local",
+    data.unidadeSaudeDestino?.entidade?.entiNome
+  );
+  content += createDetailRow(
+    "Profissional",
+    data.profissionalDestino?.entidadeFisica?.entidade?.entiNome
+  );
+  content += createDetailRow(
+    "Especialidade",
+    data.atividadeProfissionalCnes?.apcnNome
+  );
+  content += createDetailRow("Procedimento", data.procedimento?.prciNome);
+  content += createDetailRow("Convênio", data.convenio?.entidade?.entiNome);
+  if (data.agcoObs) {
+    content += `<div class="py-2">
+                        <span class="font-semibold text-slate-600">Observação:</span>
+                        <p class="text-slate-800 whitespace-pre-wrap mt-1 p-2 bg-slate-50 rounded">${data.agcoObs}</p>
+                    </div>`;
+  }
+  return content;
+}
+
+function formatExamAppointmentDetailsForModal(data) {
+  if (!data) return "<p>Dados do agendamento de exame não encontrados.</p>";
+
+  let content = "";
+  content += createDetailRow("Data Agendamento", data.examDataCad);
+  content += createDetailRow(
+    "Unidade Origem",
+    data.ligacaoModularOrigem?.limoNome
+  );
+  content += createDetailRow(
+    "Unidade Destino",
+    data.ligacaoModularDestino?.limoNome
+  );
+  content += createDetailRow(
+    "Profissional Sol.",
+    data.profissional?.entidadeFisica?.entidade?.entiNome
+  );
+  content += createDetailRow("Caráter", data.CaraterAtendimento?.caraDescri);
+  content += createDetailRow("Critério", data.criterioExame?.critNome);
+
+  return content;
+}
+
+async function handleShowRegulationDetailsModal(button) {
+  const { idp, ids } = button.dataset;
+  showModal("Detalhes da Regulação", "<p>Carregando...</p>");
   try {
-    const baseUrl = await API.getBaseUrl();
-    const url = type.toUpperCase().includes("EXAME")
-      ? `${baseUrl}/sigss/agendamentoExame.jsp?id=${idp}`
-      : `${baseUrl}/sigss/consultaRapida.jsp?agcoPK.idp=${idp}&agcoPK.ids=${ids}`;
-    window.open(url, "_blank");
+    const data = await API.fetchRegulationDetails({
+      reguIdp: idp,
+      reguIds: ids,
+    });
+    const content = formatRegulationDetailsForModal(data);
+    showModal("Detalhes da Regulação", content);
   } catch (error) {
-    Utils.showMessage("Não foi possível construir a URL.", "error");
+    showModal(
+      "Erro",
+      `<p>Não foi possível carregar os detalhes: ${error.message}</p>`
+    );
   }
 }
 
-async function handleViewRegulationDetails(button) {
-  const { idp, ids } = button.dataset;
+async function handleShowAppointmentDetailsModal(button) {
+  const { idp, ids, type } = button.dataset;
+  const isExam = type.toUpperCase().includes("EXAME");
+  const title = isExam
+    ? "Detalhes do Agendamento de Exame"
+    : "Detalhes da Consulta Agendada";
+
+  showModal(title, "<p>Carregando...</p>");
+
   try {
-    const baseUrl = await API.getBaseUrl();
-    window.open(
-      `${baseUrl}/sigss/regulacaoRegulador/visualiza?reguPK.idp=${idp}&reguPK.ids=${ids}`,
-      "_blank"
-    );
+    let data;
+    let content;
+    if (isExam) {
+      data = await API.fetchExamAppointmentDetails({ idp, ids });
+      content = formatExamAppointmentDetailsForModal(data);
+    } else {
+      data = await API.fetchAppointmentDetails({ idp, ids });
+      content = formatAppointmentDetailsForModal(data);
+    }
+    showModal(title, content);
   } catch (error) {
-    Utils.showMessage("Não foi possível construir a URL.", "error");
+    showModal(
+      "Erro",
+      `<p>Não foi possível carregar os detalhes: ${error.message}</p>`
+    );
   }
 }
 
