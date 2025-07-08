@@ -237,7 +237,7 @@ async function init() {
   try {
     await API.getBaseUrl();
   } catch (error) {
-    if (error.message.includes("URL base não configurada")) {
+    if (error && error.message === "URL_BASE_NOT_CONFIGURED") {
       const mainContent = document.getElementById("main-content");
       const urlWarning = document.getElementById("url-config-warning");
 

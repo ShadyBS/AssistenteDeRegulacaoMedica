@@ -3,17 +3,20 @@
  * @returns {Promise<string>} A URL base salva.
  */
 export async function getBaseUrl() {
+  let data;
   try {
-    const data = await browser.storage.sync.get("baseUrl");
-    if (data.baseUrl) return data.baseUrl;
-    console.error(
-      "URL base não configurada. Vá em 'Opções' para configurá-la."
-    );
-    throw new Error("URL base não está configurada.");
+    data = await browser.storage.sync.get("baseUrl");
   } catch (e) {
-    console.error("Erro ao obter a URL base:", e);
+    console.error("Erro ao obter a URL base do storage:", e);
     throw e;
   }
+
+  if (data && data.baseUrl) {
+    return data.baseUrl;
+  }
+
+  console.error("URL base não configurada. Vá em 'Opções' para configurá-la.");
+  throw new Error("URL_BASE_NOT_CONFIGURED");
 }
 
 /**
