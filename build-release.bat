@@ -41,12 +41,10 @@ if not "%NOVA_VERSAO%"=="" (
     powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "$path = 'manifest-edge.json'; $manifest = Get-Content $path -Raw | ConvertFrom-Json; $manifest.version = '%NOVA_VERSAO%'; $manifest | ConvertTo-Json -Depth 5 | Set-Content -Encoding UTF8 -Path $path"
 
     @echo Versao atualizada nos dois manifests.
-    
-    REM Re-lê as versões para garantir que foram atualizadas corretamente
-    for /f "tokens=2 delims=:," %%v in ('findstr /r /c:"\"version\":" manifest.json') do set VERSION=%%~v
-    set VERSION=%VERSION:"= %
-    set VERSION=%VERSION: =%
-    set EDGE_VERSION=%VERSION%
+
+    REM Define a nova versão para as variáveis do script
+    set "VERSION=%NOVA_VERSAO%"
+    set "EDGE_VERSION=%NOVA_VERSAO%"
 )
 
 set TAG=v%VERSION%

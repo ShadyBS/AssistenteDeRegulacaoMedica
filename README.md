@@ -47,17 +47,22 @@ Extensão para navegadores (Firefox, Chrome, Edge) que auxilia médicos regulado
 
 ## Publicando um Release no GitHub
 
-1. Gere os ZIPs conforme acima.
-2. Faça commit e tag da nova versão:
-   ```sh
-   git add .
-   git commit -m "Release vX.Y.Z"
-   git tag vX.Y.Z
-   git push && git push --tags
-   ```
-3. No GitHub, vá em "Releases" > "Draft a new release".
-4. Selecione a tag, preencha o título/descrição e anexe os arquivos ZIP de `dist-zips/`.
-5. Clique em "Publish release".
+O projeto inclui um script para automatizar todo o processo de build e release.
+
+1.  Certifique-se de que o GitHub CLI está instalado e você está autenticado (`gh auth login`).
+2.  Execute o script de release:
+
+```sh
+build-release.bat
+```
+
+3.  O script irá:
+    - Mostrar a versão atual.
+    - Pedir para você digitar a nova versão (ex: `3.2.7`).
+    - Atualizar os arquivos `manifest.json` e `manifest-edge.json`.
+    - Gerar os arquivos `.zip` na pasta `dist-zips/`.
+    - Fazer o commit, criar a tag da nova versão e fazer o push para o GitHub.
+    - Criar um novo Release no GitHub com os arquivos `.zip` anexados.
 
 ## Guia do Usuário
 
