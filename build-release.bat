@@ -35,10 +35,10 @@ if not "%NOVA_VERSAO%"=="" (
     @echo Atualizando a versao para %NOVA_VERSAO%...
 
     REM Atualiza manifest.json
-    powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "(Get-Content 'manifest.json' -Raw) -replace '(\"version\": *)\"[^\"]+\"', '$1\"%NOVA_VERSAO%\"' | Set-Content 'manifest.json'"
+    powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "$path = 'manifest.json'; $manifest = Get-Content $path -Raw | ConvertFrom-Json; $manifest.version = '%NOVA_VERSAO%'; $manifest | ConvertTo-Json -Depth 5 | Set-Content -Encoding UTF8 -Path $path"
 
     REM Atualiza manifest-edge.json
-    powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "(Get-Content 'manifest-edge.json' -Raw) -replace '(\"version\": *)\"[^\"]+\"', '$1\"%NOVA_VERSAO%\"' | Set-Content 'manifest-edge.json'"
+    powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "$path = 'manifest-edge.json'; $manifest = Get-Content $path -Raw | ConvertFrom-Json; $manifest.version = '%NOVA_VERSAO%'; $manifest | ConvertTo-Json -Depth 5 | Set-Content -Encoding UTF8 -Path $path"
 
     @echo Versao atualizada nos dois manifests.
     
