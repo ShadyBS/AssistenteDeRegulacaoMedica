@@ -1,8 +1,8 @@
 ﻿{
     "manifest_version":  3,
-    "name":  "Assistente de RegulaÃ§Ã£o MÃ©dica",
-    "version":  "3.2.7",
-    "description":  "Fornece informaÃ§Ãµes para auxiliar mÃ©dicos reguladores a analisar solicitaÃ§Ãµes e a aderÃªncia de pacientes.",
+    "name":  "Assistente de Regulação Médica",
+    "version":  "3.2.8",
+    "description":  "Fornece informações para auxiliar médicos reguladores a analisar solicitações e a aderência de pacientes.",
     "permissions":  [
                         "storage",
                         "scripting",
@@ -25,7 +25,7 @@
                        "type":  "module"
                    },
     "action":  {
-                   "default_title":  "Abrir Assistente de RegulaÃ§Ã£o",
+                   "default_title":  "Abrir Assistente de Regulação",
                    "default_icon":  {
                                         "16":  "icons/icon16.png",
                                         "48":  "icons/icon48.png",
