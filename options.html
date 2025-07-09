@@ -213,6 +213,7 @@
     </header>
 
     <main class="p-6 space-y-6 pb-24">
+      <!-- Seção de Configurações Gerais (Existente) -->
       <section
         class="bg-white p-4 rounded-lg border border-slate-200 shadow-sm"
       >
@@ -298,6 +299,7 @@
         </div>
       </section>
 
+      <!-- NOVA SEÇÃO: Gerenciador de Automação -->
       <section
         id="automation-manager-section"
         class="bg-white p-4 rounded-lg border border-slate-200 shadow-sm"
@@ -326,7 +328,8 @@
           da solicitação. Arraste para reordenar a prioridade.
         </p>
         <div id="automation-rules-list" class="space-y-2">
-          </div>
+          <!-- As regras de automação serão inseridas aqui pelo options.js -->
+        </div>
         <button
           id="create-new-rule-btn"
           class="mt-4 w-full bg-blue-100 text-blue-700 font-semibold py-2 rounded-md hover:bg-blue-200 transition text-sm"
@@ -335,6 +338,7 @@
         </button>
       </section>
 
+      <!-- Seção de Configuração de Layouts (Existente) -->
       <section
         id="layout-config-section"
         class="bg-white p-4 rounded-lg border border-slate-200 shadow-sm"
@@ -369,6 +373,8 @@
             <button class="tab-button" data-tab="regulations">Regulação</button>
             <button class="tab-button" data-tab="documents">Documentos</button>
           </div>
+          <!-- Conteúdo das Abas -->
+
           <div id="patient-card-tab" class="tab-content active">
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-4">
               <div>
@@ -589,11 +595,37 @@
             </div>
           </div>
           <div id="documents-tab" class="tab-content">
-            <p class="text-sm text-slate-500 mt-4">
-              A seção de Documentos atualmente não possui filtros
-              configuráveis.
-            </p>
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-4 hidden">
+            <div class="mt-4 p-3 bg-slate-50 rounded-md border">
+              <h4 class="font-medium text-sm mb-2">Período de Busca Padrão</h4>
+              <div class="flex items-center gap-4 text-sm">
+                <div>
+                  <label for="documents-start-offset"
+                    >Início (meses antes):</label
+                  >
+                  <input
+                    type="number"
+                    id="documents-start-offset"
+                    class="w-20 p-1 border rounded-md"
+                    value="24"
+                    min="0"
+                  />
+                </div>
+                <div>
+                  <label for="documents-end-offset">Fim (meses depois):</label>
+                  <input
+                    type="number"
+                    id="documents-end-offset"
+                    class="w-20 p-1 border rounded-md"
+                    value="0"
+                    min="0"
+                  />
+                </div>
+              </div>
+              <p class="text-xs text-slate-400 mt-2">
+                Use '0' para o mês atual. Os valores são relativos a hoje.
+              </p>
+            </div>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-4">
               <div>
                 <h3 class="font-semibold mb-2">Filtros Principais</h3>
                 <div
@@ -615,6 +647,7 @@
         </div>
       </section>
 
+      <!-- Seção de Gestão de Dados (Existente) -->
       <section
         id="data-management-section"
         class="bg-white p-4 rounded-lg border border-slate-200 shadow-sm"
@@ -650,6 +683,7 @@
       </section>
     </main>
 
+    <!-- Modal para Editor de Regra -->
     <div id="rule-editor-modal" class="modal-overlay hidden">
       <div class="modal-container">
         <div class="modal-header">
@@ -689,6 +723,7 @@
               esta regra for acionada.
             </p>
             <div id="rule-editor-filter-tabs">
+              <!-- Abas para cada seção de filtros -->
               <div class="tabs">
                 <button
                   class="tab-button active"
@@ -705,40 +740,31 @@
                 <button class="tab-button" data-tab="regulations-rule-editor">
                   Regulação
                 </button>
+                <button class="tab-button" data-tab="documents-rule-editor">
+                  Documentos
+                </button>
               </div>
+              <!-- Conteúdo das abas com os filtros -->
               <div
                 id="consultations-rule-editor-tab"
                 class="tab-content active space-y-4 p-1"
-              >
-                <div
-                  class="rule-editor-date-range-container border-b pb-4 mb-4"
-                >
-                  </div>
-              </div>
-              <div id="exams-rule-editor-tab" class="tab-content space-y-4 p-1">
-                <div
-                  class="rule-editor-date-range-container border-b pb-4 mb-4"
-                >
-                  </div>
-              </div>
+              ></div>
+              <div
+                id="exams-rule-editor-tab"
+                class="tab-content space-y-4 p-1"
+              ></div>
               <div
                 id="appointments-rule-editor-tab"
                 class="tab-content space-y-4 p-1"
-              >
-                <div
-                  class="rule-editor-date-range-container border-b pb-4 mb-4"
-                >
-                  </div>
-              </div>
+              ></div>
               <div
                 id="regulations-rule-editor-tab"
                 class="tab-content space-y-4 p-1"
-              >
-                <div
-                  class="rule-editor-date-range-container border-b pb-4 mb-4"
-                >
-                  </div>
-              </div>
+              ></div>
+              <div
+                id="documents-rule-editor-tab"
+                class="tab-content space-y-4 p-1"
+              ></div>
             </div>
           </div>
         </div>
@@ -759,6 +785,7 @@
       </div>
     </div>
 
+    <!-- NOVO: Rodapé Flutuante para o Botão Salvar -->
     <footer
       id="save-footer"
       class="sticky bottom-0 bg-white/80 backdrop-blur-sm border-t border-slate-200 p-4 z-10"

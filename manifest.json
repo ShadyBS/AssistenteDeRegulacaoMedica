@@ -17,7 +17,7 @@
     "type": "module"
   },
   "action": {
-    "default_title": "Abrir Assistente de RegulaÃ§Ã£o",
+    "default_title": "Abrir Assistente de Regulação",
     "default_icon": {
       "16": "icons/icon16.png",
       "48": "icons/icon48.png",
@@ -26,7 +26,7 @@
   },
   "sidebar_action": {
     "default_panel": "sidebar.html",
-    "default_title": "Assistente de RegulaÃ§Ã£o",
+    "default_title": "Assistente de Regulação",
     "default_icon": {
       "16": "icons/icon16.png",
       "48": "icons/icon48.png",

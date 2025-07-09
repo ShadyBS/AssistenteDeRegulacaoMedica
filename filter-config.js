@@ -282,4 +282,22 @@ export const filterConfig = {
       defaultLocation: "more",
     },
   ],
+  documents: [
+    {
+      id: "document-date-range",
+      label: "Filtro de Datas",
+      type: "component",
+      componentName: "date-range",
+      section: "documents",
+      defaultLocation: "main",
+    },
+    {
+      id: "document-filter-keyword",
+      label: "Busca por Palavra-chave",
+      type: "text",
+      section: "documents",
+      defaultLocation: "main",
+      placeholder: "Busque na descrição do documento...",
+    },
+  ],
 };

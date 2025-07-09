@@ -50,6 +50,7 @@ export class SectionManager {
       exams: "exam",
       appointments: "appointment",
       regulations: "regulation",
+      documents: "document",
     };
     return map[sectionKey] || sectionKey;
   }
@@ -215,6 +216,7 @@ export class SectionManager {
         exams: "exames",
         appointments: "agendamentos",
         regulations: "regulações",
+        documents: "documentos",
       };
       const friendlyName = sectionNameMap[this.sectionKey] || this.sectionKey;
       Utils.showMessage(

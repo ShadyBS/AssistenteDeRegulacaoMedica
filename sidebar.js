@@ -64,6 +64,7 @@ const consultationFilterLogic = (data, filters) => {
   filteredData = applyTextFilter(filteredData, unit, (c) => c.unit || "");
   return filteredData;
 };
+
 const examFilterLogic = (data, filters) => {
   let filteredData = [...data];
   const name = (filters["exam-filter-name"] || "").toLowerCase().trim();
@@ -89,6 +90,7 @@ const examFilterLogic = (data, filters) => {
   filteredData = applyTextFilter(filteredData, specialty, "specialty");
   return filteredData;
 };
+
 const appointmentFilterLogic = (data, filters, fetchType) => {
   let filteredData = [...data];
   const status = filters["appointment-filter-status"] || "todos";
@@ -133,6 +135,7 @@ const appointmentFilterLogic = (data, filters, fetchType) => {
   }
   return filteredData;
 };
+
 const regulationFilterLogic = (data, filters) => {
   let filteredData = [...data];
   const status = filters["regulation-filter-status"] || "todos";
@@ -174,6 +177,48 @@ const regulationFilterLogic = (data, filters) => {
   return filteredData;
 };
 
+const documentFilterLogic = (data, filters) => {
+  let filteredData = [...data];
+  const keyword = (filters["document-filter-keyword"] || "")
+    .toLowerCase()
+    .trim();
+
+  // Filtro por data (client-side)
+  const startDateValue = document.getElementById(
+    "document-date-initial"
+  )?.value;
+  const endDateValue = document.getElementById("document-date-final")?.value;
+
+  if (startDateValue) {
+    const start = Utils.parseDate(startDateValue);
+    if (start) {
+      filteredData = filteredData.filter((doc) => {
+        const docDate = Utils.parseDate(doc.date.split(" ")[0]);
+        return docDate && docDate >= start;
+      });
+    }
+  }
+
+  if (endDateValue) {
+    const end = Utils.parseDate(endDateValue);
+    if (end) {
+      filteredData = filteredData.filter((doc) => {
+        const docDate = Utils.parseDate(doc.date.split(" ")[0]);
+        return docDate && docDate <= end;
+      });
+    }
+  }
+
+  // Filtro por palavra-chave
+  if (keyword) {
+    filteredData = filteredData.filter((doc) =>
+      (doc.description || "").toLowerCase().includes(keyword)
+    );
+  }
+
+  return filteredData;
+};
+
 const sectionConfigurations = {
   consultations: {
     fetchFunction: API.fetchAllConsultations,
@@ -203,7 +248,7 @@ const sectionConfigurations = {
     fetchFunction: API.fetchDocuments,
     renderFunction: Renderers.renderDocuments,
     initialSortState: { key: "date", order: "desc" },
-    filterLogic: (data, filters) => data, // Sem filtros por enquanto
+    filterLogic: documentFilterLogic,
   },
 };
 
@@ -307,6 +352,7 @@ async function loadConfigAndData() {
     autoLoadConsultations: false,
     autoLoadAppointments: false,
     autoLoadRegulations: false,
+    autoLoadDocuments: false,
     enableAutomaticDetection: true,
     dateRangeDefaults: {},
     sidebarSectionOrder: [],
@@ -332,6 +378,7 @@ async function loadConfigAndData() {
       autoLoadConsultations: syncData.autoLoadConsultations,
       autoLoadAppointments: syncData.autoLoadAppointments,
       autoLoadRegulations: syncData.autoLoadRegulations,
+      autoLoadDocuments: syncData.autoLoadDocuments,
       enableAutomaticDetection: syncData.enableAutomaticDetection,
       dateRangeDefaults: syncData.dateRangeDefaults,
     },
@@ -406,12 +453,19 @@ function applyUserPreferences(globalSettings) {
   const { userPreferences, filterLayout } = globalSettings;
   const { dateRangeDefaults } = userPreferences;
 
-  const sections = ["consultations", "exams", "appointments", "regulations"];
+  const sections = [
+    "consultations",
+    "exams",
+    "appointments",
+    "regulations",
+    "documents",
+  ];
   const defaultSystemRanges = {
     consultations: { start: -6, end: 0 },
     exams: { start: -6, end: 0 },
     appointments: { start: -1, end: 3 },
     regulations: { start: -12, end: 0 },
+    documents: { start: -24, end: 0 },
   };
 
   sections.forEach((section) => {
@@ -706,7 +760,8 @@ async function handleViewDocument(button) {
     if (docUrl) {
       newTab.location.href = docUrl;
     } else {
-      newTab.document.body.innerHTML = "<p>URL do documento não encontrada.</p>";
+      newTab.document.body.innerHTML =
+        "<p>URL do documento não encontrada.</p>";
     }
   } catch (error) {
     newTab.document.body.innerHTML = `<p>Erro ao carregar documento: ${error.message}</p>`;

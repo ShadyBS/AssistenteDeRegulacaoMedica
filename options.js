@@ -287,20 +287,27 @@ async function restoreOptions() {
   renderPatientFields(currentPatientFieldsConfig);
   await renderFilterLayout(syncItems.filterLayout);
 
-  const sections = ["consultations", "exams", "appointments", "regulations"];
+  const sections = [
+    "consultations",
+    "exams",
+    "appointments",
+    "regulations",
+    "documents",
+  ];
   const defaultRanges = {
     consultations: { start: -6, end: 0 },
     exams: { start: -6, end: 0 },
     appointments: { start: -1, end: 3 },
     regulations: { start: -12, end: 0 },
+    documents: { start: -24, end: 0 },
   };
   sections.forEach((section) => {
     const range =
       syncItems.dateRangeDefaults[section] || defaultRanges[section];
-    document.getElementById(`${section}-start-offset`).value = Math.abs(
-      range.start
-    );
-    document.getElementById(`${section}-end-offset`).value = range.end;
+    const startOffsetEl = document.getElementById(`${section}-start-offset`);
+    const endOffsetEl = document.getElementById(`${section}-end-offset`);
+    if (startOffsetEl) startOffsetEl.value = Math.abs(range.start);
+    if (endOffsetEl) endOffsetEl.value = range.end;
   });
 
   automationRules = localItems.automationRules;
@@ -391,14 +398,21 @@ async function saveOptions() {
     });
 
   const dateRangeDefaults = {};
-  const sections = ["consultations", "exams", "appointments", "regulations"];
+  const sections = [
+    "consultations",
+    "exams",
+    "appointments",
+    "regulations",
+    "documents",
+  ];
   sections.forEach((section) => {
-    const start =
-      -parseInt(document.getElementById(`${section}-start-offset`).value, 10) ||
-      0;
-    const end =
-      parseInt(document.getElementById(`${section}-end-offset`).value, 10) || 0;
-    dateRangeDefaults[section] = { start, end };
+    const startEl = document.getElementById(`${section}-start-offset`);
+    const endEl = document.getElementById(`${section}-end-offset`);
+    if (startEl && endEl) {
+      const start = -parseInt(startEl.value, 10) || 0;
+      const end = parseInt(endEl.value, 10) || 0;
+      dateRangeDefaults[section] = { start, end };
+    }
   });
 
   // Salva a ordem das abas/seções
@@ -802,7 +816,13 @@ function handleSaveRule() {
     .map((k) => k.trim())
     .filter(Boolean);
   const filterSettings = {};
-  const sections = ["consultations", "exams", "appointments", "regulations"];
+  const sections = [
+    "consultations",
+    "exams",
+    "appointments",
+    "regulations",
+    "documents",
+  ];
 
   sections.forEach((sectionKey) => {
     filterSettings[sectionKey] = {};
@@ -896,7 +916,13 @@ function reorderAutomationRules() {
  */
 async function populateRuleEditorFilters() {
   const priorities = await API.fetchRegulationPriorities();
-  const sections = ["consultations", "exams", "appointments", "regulations"];
+  const sections = [
+    "consultations",
+    "exams",
+    "appointments",
+    "regulations",
+    "documents",
+  ];
 
   sections.forEach((sectionKey) => {
     const container = document.getElementById(`${sectionKey}-rule-editor-tab`);
