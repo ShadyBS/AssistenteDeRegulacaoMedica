@@ -199,6 +199,12 @@ const sectionConfigurations = {
     initialSortState: { key: "date", order: "desc" },
     filterLogic: regulationFilterLogic,
   },
+  documents: {
+    fetchFunction: API.fetchDocuments,
+    renderFunction: Renderers.renderDocuments,
+    initialSortState: { key: "date", order: "desc" },
+    filterLogic: (data, filters) => data, // Sem filtros por enquanto
+  },
 };
 
 async function selectPatient(patientInfo, forceRefresh = false) {
@@ -343,6 +349,7 @@ function applySectionOrder(order) {
     consultations: "consultations-section",
     exams: "exams-section",
     appointments: "appointments-section",
+    documents: "documents-section",
   };
 
   const allKnownOrderableIds = Object.keys(sectionMap);
@@ -630,6 +637,12 @@ async function handleGlobalActions(event) {
     handleShowAppointmentInfo(appointmentInfoBtn);
     return;
   }
+
+  const documentBtn = target.closest(".view-document-btn");
+  if (documentBtn) {
+    await handleViewDocument(documentBtn);
+    return;
+  }
 }
 
 async function copyToClipboard(button) {
@@ -680,6 +693,24 @@ async function handleViewExamResult(button) {
     }
   } catch (error) {
     newTab.document.body.innerHTML = `<p>Erro: ${error.message}</p>`;
+  }
+}
+
+async function handleViewDocument(button) {
+  const { idp, ids } = button.dataset;
+  const newTab = window.open("", "_blank");
+  newTab.document.write("Carregando documento...");
+
+  try {
+    const docUrl = await API.fetchDocumentUrl({ idp, ids });
+    if (docUrl) {
+      newTab.location.href = docUrl;
+    } else {
+      newTab.document.body.innerHTML = "<p>URL do documento não encontrada.</p>";
+    }
+  } catch (error) {
+    newTab.document.body.innerHTML = `<p>Erro ao carregar documento: ${error.message}</p>`;
+    console.error("Falha ao visualizar documento:", error);
   }
 }
 

@@ -247,6 +247,7 @@ async function restoreOptions() {
     autoLoadConsultations: false,
     autoLoadAppointments: false,
     autoLoadRegulations: false,
+    autoLoadDocuments: false,
     enableAutomaticDetection: true,
     patientFields: defaultFieldConfig,
     filterLayout: {},
@@ -269,6 +270,8 @@ async function restoreOptions() {
     syncItems.autoLoadAppointments;
   document.getElementById("autoLoadRegulationsCheckbox").checked =
     syncItems.autoLoadRegulations;
+  document.getElementById("autoLoadDocumentsCheckbox").checked =
+    syncItems.autoLoadDocuments;
 
   // Aplica a ordem das abas antes de renderizar o resto
   if (syncItems.sidebarSectionOrder) {
@@ -323,6 +326,9 @@ async function saveOptions() {
   ).checked;
   const autoLoadRegulations = document.getElementById(
     "autoLoadRegulationsCheckbox"
+  ).checked;
+  const autoLoadDocuments = document.getElementById(
+    "autoLoadDocumentsCheckbox"
   ).checked;
 
   const patientFields = [];
@@ -407,6 +413,7 @@ async function saveOptions() {
     autoLoadConsultations,
     autoLoadAppointments,
     autoLoadRegulations,
+    autoLoadDocuments,
     patientFields,
     filterLayout,
     dateRangeDefaults,

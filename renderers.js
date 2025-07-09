@@ -322,3 +322,48 @@ export function renderRegulations(regulations, sortState, globalSettings) {
       })
       .join("");
 }
+
+export function renderDocuments(documents, sortState) {
+  const contentDiv = document.getElementById("documents-content");
+  if (!contentDiv) return;
+
+  if (!documents || documents.length === 0) {
+    contentDiv.innerHTML =
+      '<p class="text-slate-500">Nenhum documento encontrado.</p>';
+    return;
+  }
+
+  const headers = `
+    <div class="flex justify-between text-xs font-bold text-slate-500 mb-2 px-3">
+        <span class="sort-header w-2/3" data-sort-key="description">Descrição <span class="sort-indicator">${getSortIndicator(
+          "description",
+          sortState
+        )}</span></span>
+        <span class="sort-header w-1/3 text-right" data-sort-key="date">Data <span class="sort-indicator">${getSortIndicator(
+          "date",
+          sortState
+        )}</span></span>
+    </div>
+  `;
+
+  contentDiv.innerHTML =
+    headers +
+    documents
+      .map(
+        (doc) => `
+        <div class="p-3 mb-2 border rounded-lg bg-white">
+            <p class="font-semibold text-gray-800">${doc.description}</p>
+            <div class="text-sm text-slate-500 mt-1">
+                <span>Data: ${doc.date}</span> |
+                <span class="font-medium">Tipo: ${doc.fileType.toUpperCase()}</span>
+            </div>
+            <button class="view-document-btn mt-2 w-full text-sm bg-gray-100 text-gray-800 py-1 rounded hover:bg-gray-200" data-idp="${
+              doc.idp
+            }" data-ids="${doc.ids}">
+                Visualizar Documento
+            </button>
+        </div>
+      `
+      )
+      .join("");
+}

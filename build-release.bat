@@ -1,9 +1,10 @@
 @echo off
+chcp 65001 > nul
 REM build-release.bat
 REM Gera os ZIPs, cria a tag e publica o release no GitHub com os arquivos ZIP
 
-REM 0. Atualiza o CSS com Tailwind
-call npx tailwindcss -i ./src/input.css -o ./dist/output.css --minify || echo Ignorando erro do Tailwind (Browserslist)
+REM 0. Atualiza o CSS com Tailwind usando o script do npm
+call npm run build:css || echo Ignorando erro do Tailwind (Browserslist)
 
 :VERSAO_LOOP
 REM 1. Lê a versão do manifest.json
@@ -35,10 +36,10 @@ if not "%NOVA_VERSAO%"=="" (
     @echo Atualizando a versao para %NOVA_VERSAO%...
 
     REM Atualiza manifest.json
-    powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "$path = 'manifest.json'; $manifest = Get-Content $path -Raw | ConvertFrom-Json; $manifest.version = '%NOVA_VERSAO%'; $manifest | ConvertTo-Json -Depth 5 | Set-Content -Encoding UTF8 -Path $path"
+    powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "$path = 'manifest.json'; $manifest = Get-Content $path -Raw -Encoding UTF8 | ConvertFrom-Json; $manifest.version = '%NOVA_VERSAO%'; $manifest | ConvertTo-Json -Depth 5 | Set-Content -Encoding UTF8 -Path $path"
 
     REM Atualiza manifest-edge.json
-    powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "$path = 'manifest-edge.json'; $manifest = Get-Content $path -Raw | ConvertFrom-Json; $manifest.version = '%NOVA_VERSAO%'; $manifest | ConvertTo-Json -Depth 5 | Set-Content -Encoding UTF8 -Path $path"
+    powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "$path = 'manifest-edge.json'; $manifest = Get-Content $path -Raw -Encoding UTF8 | ConvertFrom-Json; $manifest.version = '%NOVA_VERSAO%'; $manifest | ConvertTo-Json -Depth 5 | Set-Content -Encoding UTF8 -Path $path"
 
     @echo Versao atualizada nos dois manifests.
 
@@ -52,7 +53,7 @@ set TAG=v%VERSION%
 REM 2. Gera os ZIPs com a versão correta
 @echo.
 @echo Gerando arquivos ZIP para a versao %VERSION%...
-call build-zips.bat
+call npm run build:zips
 @echo.
 
 REM 3. Cria a tag git e faz o push

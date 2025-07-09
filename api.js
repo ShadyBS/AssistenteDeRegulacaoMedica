@@ -822,3 +822,85 @@ export async function fetchAllRegulations({
 
   return allRegulations;
 }
+
+/**
+ * Busca a lista de documentos anexados ao cadastro de um paciente.
+ * @param {object} params
+ * @param {string} params.isenPK - O PK do paciente no formato "idp-ids".
+ * @returns {Promise<Array<object>>} Uma lista de objetos de documento.
+ */
+export async function fetchDocuments({ isenPK }) {
+  if (!isenPK) throw new Error("ID (isenPK) do paciente é necessário.");
+  const [idp, ids] = isenPK.split("-");
+  if (!idp || !ids) throw new Error("ID (isenPK) do paciente em formato inválido.");
+
+  const baseUrl = await getBaseUrl();
+  const url = new URL(`${baseUrl}/sigss/isar/buscaGrid`);
+  const params = {
+    "isenPK.idp": idp,
+    "isenPK.ids": ids,
+    _search: "false",
+    nd: Date.now(),
+    rows: "999",
+    page: "1",
+    sidx: "isar.isarData desc, isar.isarPK.idp",
+    sord: "desc",
+  };
+  url.search = new URLSearchParams(params).toString();
+
+  const response = await fetch(url, {
+    headers: {
+      Accept: "application/json, text/javascript, */*; q=0.01",
+      "X-Requested-With": "XMLHttpRequest",
+    },
+  });
+
+  if (!response.ok) handleFetchError(response);
+  const data = await response.json();
+
+  return (data?.rows || []).map((row) => {
+    const cell = row.cell || [];
+    return {
+      idp: cell[0],
+      ids: cell[1],
+      date: cell[2] || "",
+      description: (cell[3] || "").trim(),
+      fileType: (cell[4] || "").toLowerCase(),
+    };
+  });
+}
+
+/**
+ * Obtém a URL de visualização para um documento específico.
+ * @param {object} params
+ * @param {string} params.idp - O IDP do documento.
+ * @param {string} params.ids - O IDS do documento.
+ * @returns {Promise<string|null>} A URL completa para visualização do arquivo.
+ */
+export async function fetchDocumentUrl({ idp, ids }) {
+  if (!idp || !ids) throw new Error("IDs do documento são necessários.");
+
+  const baseUrl = await getBaseUrl();
+  const url = new URL(`${baseUrl}/sigss/isar/getHashArquivo`);
+  url.search = new URLSearchParams({
+    "isarPK.idp": idp,
+    "isarPK.ids": ids,
+  }).toString();
+
+  const response = await fetch(url, {
+    headers: {
+      Accept: "application/json, text/javascript, */*; q=0.01",
+      "X-Requested-With": "XMLHttpRequest",
+    },
+  });
+
+  if (!response.ok) handleFetchError(response);
+  const data = await response.json();
+
+  if (data?.isenArquivo?.img) {
+    const filePath = data.isenArquivo.img;
+    return filePath.startsWith("http") ? filePath : `${baseUrl}${filePath}`;
+  }
+
+  return null;
+}
