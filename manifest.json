@@ -2,7 +2,7 @@
     "manifest_version":  3,
     "name":  "Assistente de Regulação Médica",
     "version":  "3.2.9",
-    "description":  "Fornece informaÃ§Ãµes para auxiliar mÃ©dicos reguladores a analisar solicitaÃ§Ãµes e a aderÃªncia de pacientes.",
+    "description":  "Fornece informaçõeses para auxiliar mÃ©dicos reguladores a analisar solicitaçõeses e a aderÃªncia de pacientes.",
     "permissions":  [
                         "storage",
                         "scripting",

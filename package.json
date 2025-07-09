@@ -1,0 +1,16 @@
+{
+  "name": "assistente-de-regulacao-medica",
+  "version": "1.0.0",
+  "description": "Extensão para auxiliar na regulação médica.",
+  "main": "sidebar.js",
+  "scripts": {
+    "build:css": "tailwindcss -i ./src/input.css -o ./dist/output.css --minify",
+    "build:zips": "node build-zips.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "archiver": "^7.0.1",
+    "tailwindcss": "^3.4.1"
+  }
+}
