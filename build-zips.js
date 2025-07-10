@@ -38,11 +38,17 @@ async function zipExtension({ zipName, manifestSource }) {
     archive.on("error", reject);
     archive.pipe(output);
 
-    // Adiciona todos os arquivos exceto os ignorados e o manifest.json
+    // Adiciona todos os arquivos exceto os ignorados e os manifests específicos
     const files = await fs.readdir(SRC_DIR);
     for (const file of files) {
       if (FILES_TO_IGNORE.includes(file)) continue;
-      if (file === "manifest.json" || file === "manifest-edge.json") continue;
+      // Ignora os arquivos de manifesto para serem adicionados especificamente depois, de forma case-insensitive
+      const lowerCaseFile = file.toLowerCase();
+      if (
+        lowerCaseFile === "manifest.json" ||
+        lowerCaseFile === "manifest-edge.json"
+      )
+        continue;
       const filePath = path.join(SRC_DIR, file);
       const stats = await fs.stat(filePath);
       if (stats.isDirectory()) {
