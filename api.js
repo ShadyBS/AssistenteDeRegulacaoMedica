@@ -1,3 +1,7 @@
+import "./browser-polyfill.js";
+
+const api = typeof browser !== "undefined" ? browser : chrome;
+
 /**
  * Obtém a URL base do sistema a partir das configurações salvas pelo usuário.
  * @returns {Promise<string>} A URL base salva.
@@ -5,7 +9,7 @@
 export async function getBaseUrl() {
   let data;
   try {
-    data = await browser.storage.sync.get("baseUrl");
+    data = await api.storage.sync.get("baseUrl");
   } catch (e) {
     console.error("Erro ao obter a URL base do storage:", e);
     throw e;

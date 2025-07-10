@@ -9,7 +9,7 @@
     "[Assistente de Regulação] Script de controle v16 (Detecção com Broker) ativo."
   );
 
-  const api = typeof browser !== "undefined" ? browser : chrome;
+  const api = browser;
   let lastProcessedReguId = null;
 
   const checkMaintenanceTab = () => {

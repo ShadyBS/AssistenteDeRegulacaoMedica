@@ -1,3 +1,4 @@
+import "./browser-polyfill.js";
 import { fetchRegulationDetails } from "./api.js";
 
 const api = typeof browser !== "undefined" ? browser : chrome;

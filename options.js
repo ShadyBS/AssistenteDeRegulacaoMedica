@@ -1,3 +1,4 @@
+import "./browser-polyfill.js";
 import { defaultFieldConfig } from "./field-config.js";
 import { filterConfig } from "./filter-config.js";
 import * as Utils from "./utils.js";
