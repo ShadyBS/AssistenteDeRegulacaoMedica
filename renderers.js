@@ -280,6 +280,37 @@ export function renderRegulations(regulations, sortState, globalSettings) {
         const typeColor =
           typeText === "CONSULTA" ? "text-cyan-700" : "text-fuchsia-700";
 
+        const attachmentsHtml =
+          item.attachments && item.attachments.length > 0
+            ? `
+            <div class="mt-2 pt-2 border-t border-slate-100">
+                <p class="text-xs font-semibold text-slate-500 mb-1">ANEXOS:</p>
+                <div class="space-y-1">
+                    ${item.attachments
+                      .map(
+                        (att) => `
+                        <button class="view-regulation-attachment-btn w-full text-left text-sm bg-gray-50 text-gray-700 py-1 px-2 rounded hover:bg-gray-100 flex justify-between items-center" data-idp="${
+                          att.idp
+                        }" data-ids="${att.ids}">
+                            <div class="flex items-center gap-2 overflow-hidden">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="flex-shrink-0" viewBox="0 0 16 16"><path d="M4 0h8a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2zM2 2a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H2z"/><path d="M4.5 12.5a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7a.5.5 0 0 1-.5-.5zm0-2a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7a.5.5 0 0 1-.5-.5zm0-2a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7a.5.5 0 0 1-.5-.5z"/></svg>
+                                <span class="truncate" title="${
+                                  att.description
+                                } (${att.fileType.toUpperCase()})">${
+                          att.description
+                        } (${att.fileType.toUpperCase()})</span>
+                            </div>
+                            <span class="text-xs text-slate-400 flex-shrink-0 ml-2">${
+                              att.date
+                            }</span>
+                        </button>`
+                      )
+                      .join("")}
+                </div>
+            </div>
+            `
+            : "";
+
         return `
             <div class="p-3 mb-3 border rounded-lg bg-white">
                 <div class="flex justify-between items-start">
@@ -317,6 +348,7 @@ export function renderRegulations(regulations, sortState, globalSettings) {
                         Visualizar Detalhes
                     </button>
                 </div>
+                ${attachmentsHtml}
             </div>
       `;
       })

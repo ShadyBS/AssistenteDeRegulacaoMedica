@@ -697,6 +697,14 @@ async function handleGlobalActions(event) {
     await handleViewDocument(documentBtn);
     return;
   }
+
+  const regulationAttachmentBtn = target.closest(
+    ".view-regulation-attachment-btn"
+  );
+  if (regulationAttachmentBtn) {
+    await handleViewRegulationAttachment(regulationAttachmentBtn);
+    return;
+  }
 }
 
 async function copyToClipboard(button) {
@@ -766,6 +774,24 @@ async function handleViewDocument(button) {
   } catch (error) {
     newTab.document.body.innerHTML = `<p>Erro ao carregar documento: ${error.message}</p>`;
     console.error("Falha ao visualizar documento:", error);
+  }
+}
+
+async function handleViewRegulationAttachment(button) {
+  const { idp, ids } = button.dataset;
+  const newTab = window.open("", "_blank");
+  newTab.document.write("Carregando anexo da regulação...");
+
+  try {
+    const fileUrl = await API.fetchRegulationAttachmentUrl({ idp, ids });
+    if (fileUrl) {
+      newTab.location.href = fileUrl;
+    } else {
+      newTab.document.body.innerHTML = "<p>URL do anexo não encontrada.</p>";
+    }
+  } catch (error) {
+    newTab.document.body.innerHTML = `<p>Erro ao carregar anexo: ${error.message}</p>`;
+    console.error("Falha ao visualizar anexo da regulação:", error);
   }
 }
 

@@ -814,13 +814,37 @@ export async function fetchAllRegulations({
 
   const allRegulations = regulationsToFetch.flat();
 
-  allRegulations.sort((a, b) => {
+  const regulationsWithAttachments = await Promise.all(
+    allRegulations.map(async (regulation) => {
+      if (regulation.idp && regulation.ids) {
+        try {
+          // CORREÇÃO: Usa o ID da própria regulação como o isenPK para esta chamada específica.
+          const attachmentIsenPk = `${regulation.idp}-${regulation.ids}`;
+          const attachments = await fetchRegulationAttachments({
+            reguIdp: regulation.idp,
+            reguIds: regulation.ids,
+            isenPK: attachmentIsenPk,
+          });
+          return { ...regulation, attachments };
+        } catch (error) {
+          console.warn(
+            `Falha ao buscar anexos para regulação ${regulation.id}:`,
+            error
+          );
+          return { ...regulation, attachments: [] };
+        }
+      }
+      return { ...regulation, attachments: [] };
+    })
+  );
+
+  regulationsWithAttachments.sort((a, b) => {
     const dateA = a.date.split("/").reverse().join("-");
     const dateB = b.date.split("/").reverse().join("-");
     return new Date(dateB) - new Date(dateA);
   });
 
-  return allRegulations;
+  return regulationsWithAttachments;
 }
 
 /**
@@ -832,7 +856,8 @@ export async function fetchAllRegulations({
 export async function fetchDocuments({ isenPK }) {
   if (!isenPK) throw new Error("ID (isenPK) do paciente é necessário.");
   const [idp, ids] = isenPK.split("-");
-  if (!idp || !ids) throw new Error("ID (isenPK) do paciente em formato inválido.");
+  if (!idp || !ids)
+    throw new Error("ID (isenPK) do paciente em formato inválido.");
 
   const baseUrl = await getBaseUrl();
   const url = new URL(`${baseUrl}/sigss/isar/buscaGrid`);
@@ -899,6 +924,95 @@ export async function fetchDocumentUrl({ idp, ids }) {
 
   if (data?.isenArquivo?.img) {
     const filePath = data.isenArquivo.img;
+    return filePath.startsWith("http") ? filePath : `${baseUrl}${filePath}`;
+  }
+
+  return null;
+}
+
+/**
+ * Busca a lista de arquivos anexados a uma solicitação de regulação específica.
+ * @param {object} params
+ * @param {string} params.reguIdp - O IDP da regulação.
+ * @param {string} params.reguIds - O IDS da regulação.
+ * @param {string} params.isenPK - O PK do paciente no formato "idp-ids".
+ * @returns {Promise<Array<object>>} Uma lista de objetos de anexo.
+ */
+export async function fetchRegulationAttachments({ reguIdp, reguIds, isenPK }) {
+  if (!reguIdp || !reguIds) throw new Error("ID da regulação é necessário.");
+  if (!isenPK) throw new Error("ID do paciente (isenPK) é necessário.");
+
+  const [isenIdp, isenIds] = isenPK.split("-");
+  if (!isenIdp || !isenIds)
+    throw new Error("ID do paciente (isenPK) em formato inválido.");
+
+  const baseUrl = await getBaseUrl();
+  const url = new URL(`${baseUrl}/sigss/rear/buscaGrid`);
+  const params = {
+    "isenPK.idp": isenIdp,
+    "isenPK.ids": isenIds,
+    "reguPK.idp": reguIdp,
+    "reguPK.ids": reguIds,
+    _search: "false",
+    nd: Date.now(),
+    rows: "999",
+    page: "1",
+    sidx: "", // Corrigido para corresponder à requisição da aplicação
+    sord: "asc", // Corrigido para corresponder à requisição da aplicação
+  };
+  url.search = new URLSearchParams(params).toString();
+
+  const response = await fetch(url, {
+    headers: {
+      Accept: "application/json, text/javascript, */*; q=0.01",
+      "X-Requested-With": "XMLHttpRequest",
+    },
+  });
+
+  if (!response.ok) handleFetchError(response);
+  const data = await response.json();
+
+  return (data?.rows || []).map((row) => {
+    const cell = row.cell || [];
+    return {
+      idp: cell[0],
+      ids: cell[1],
+      date: cell[2] || "",
+      description: (cell[3] || "").trim(),
+      fileType: (cell[4] || "").toLowerCase(),
+    };
+  });
+}
+
+/**
+ * Obtém a URL de visualização para um anexo de regulação específico.
+ * @param {object} params
+ * @param {string} params.idp - O IDP do anexo (rearPK.idp).
+ * @param {string} params.ids - O IDS do anexo (rearPK.ids).
+ * @returns {Promise<string|null>} A URL completa para visualização do arquivo.
+ */
+export async function fetchRegulationAttachmentUrl({ idp, ids }) {
+  if (!idp || !ids) throw new Error("IDs do anexo são necessários.");
+
+  const baseUrl = await getBaseUrl();
+  const url = new URL(`${baseUrl}/sigss/rear/getHashArquivo`);
+  url.search = new URLSearchParams({
+    "rearPK.idp": idp,
+    "rearPK.ids": ids,
+  }).toString();
+
+  const response = await fetch(url, {
+    headers: {
+      Accept: "application/json, text/javascript, */*; q=0.01",
+      "X-Requested-With": "XMLHttpRequest",
+    },
+  });
+
+  if (!response.ok) handleFetchError(response);
+  const data = await response.json();
+
+  if (data?.regulacaoArquivo?.img) {
+    const filePath = data.regulacaoArquivo.img;
     return filePath.startsWith("http") ? filePath : `${baseUrl}${filePath}`;
   }
 
