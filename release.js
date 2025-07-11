@@ -80,11 +80,11 @@ async function createGitTag(newVersion) {
   await git.push("origin", "main");
 }
 
-// Passo 7: Criar release no GitHub
+// Passo 7: Criar release no GitHub e fazer upload dos ZIPs
 async function createRelease(newVersion, changelog) {
   console.log("🚀 Criando release no GitHub...");
   try {
-    await octokit.repos.createRelease({
+    const releaseResponse = await octokit.repos.createRelease({
       owner,
       repo,
       tag_name: `v${newVersion}`,
@@ -94,10 +94,40 @@ async function createRelease(newVersion, changelog) {
       prerelease: false,
     });
     console.log(`✅ Release v${newVersion} criado com sucesso!`);
+
+    // Upload dos assets
+    const release_id = releaseResponse.data.id;
+    const DIST_ZIPS_DIR = path.join(__dirname, "dist-zips");
+    const zipFiles = fs
+      .readdirSync(DIST_ZIPS_DIR)
+      .filter((f) => f.endsWith(".zip"));
+
+    if (zipFiles.length === 0) {
+      console.warn(
+        "⚠️ Nenhum arquivo .zip encontrado em dist-zips para fazer upload."
+      );
+      return;
+    }
+
+    console.log("⬆️  Fazendo upload dos ZIPs para a release...");
+    for (const file of zipFiles) {
+      const filePath = path.join(DIST_ZIPS_DIR, file);
+      console.log(`  -> Uploading ${file}...`);
+      await octokit.repos.uploadReleaseAsset({
+        owner,
+        repo,
+        release_id,
+        name: file,
+        data: fs.readFileSync(filePath),
+      });
+    }
+    console.log("✅ Todos os ZIPs foram enviados com sucesso.");
   } catch (err) {
-    console.error(`❌ Falha ao criar release no GitHub: ${err.message}`);
     console.error(
-      `→ Verifique se o GITHUB_TOKEN possui permissão \"repo\" e \"release\" e se está configurado corretamente.`
+      `❌ Falha ao criar release ou fazer upload de assets no GitHub: ${err.message}`
+    );
+    console.error(
+      `→ Verifique se o GITHUB_TOKEN possui permissões de "contents: write" e se está configurado corretamente.`
     );
     process.exit(1);
   }
