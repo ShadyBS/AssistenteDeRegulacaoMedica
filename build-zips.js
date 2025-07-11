@@ -17,6 +17,7 @@ const FILES_TO_IGNORE = [
   "release.js",
   ".env",
   "build-release.bat",
+  "rollback-release.bat",
   ".gitignore",
   ".git",
   ".vscode",

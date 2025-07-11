@@ -284,63 +284,50 @@ function applySectionIcons() {
 }
 
 /**
- * Lê os estilos customizados do storage e os aplica aos cabeçalhos.
+ * Lê os estilos customizados do storage e os aplica aos cabeçalhos
+ * usando Variáveis CSS (CSS Custom Properties) para melhor performance e manutenibilidade.
  * @param {object} styles - O objeto de estilos vindo do storage.
  */
 function applyCustomHeaderStyles(styles) {
-  const styleSheet = document.createElement("style");
-  let cssRules = "";
+  // O CSS base com as variáveis e fallbacks já está definido em sidebar.html.
+  // Esta função apenas define os valores das variáveis para cada seção.
 
-  // Adiciona estilos padrão explícitos para todos os cabeçalhos
-  cssRules += `
-    .section-header {
-      background-color: #ffffff !important;
-      color: #1e293b !important;
-      padding: 0.5rem;
-      border-radius: 0.375rem;
-      margin-bottom: 0.75rem;
-    }
-    .section-header h2, .section-header button {
-      color: #1e293b !important;
-    }
-    .section-icon svg {
-      stroke: #1e293b !important;
-      fill: none !important;
-    }
-  `;
+  const defaultStyles = {
+    backgroundColor: "#ffffff",
+    color: "#1e293b",
+    iconColor: "#1e293b",
+    fontSize: "16px",
+  };
 
-  // Aplica estilos customizados se existirem
   for (const sectionKey in sectionIcons) {
     const sectionId =
       sectionKey === "patient-details"
         ? "patient-details-section"
         : `${sectionKey}-section`;
 
-    const style = styles[sectionKey] || {};
+    const sectionElement = document.getElementById(sectionId);
+    if (!sectionElement) continue;
 
-    if (Object.keys(style).length > 0) {
-      cssRules += `
-        #${sectionId} .section-header {
-          ${
-            style.backgroundColor
-              ? `background-color: ${style.backgroundColor} !important;`
-              : ""
-          }
-          ${style.fontSize ? `font-size: ${style.fontSize} !important;` : ""}
-        }
-        #${sectionId} .section-header h2,
-        #${sectionId} .section-header button {
-          ${style.color ? `color: ${style.color} !important;` : ""}
-        }
-        #${sectionId} .section-icon svg {
-          ${style.iconColor ? `stroke: ${style.iconColor} !important;` : ""}
-        }
-      `;
-    }
+    // Pega o estilo salvo para a seção ou usa um objeto vazio.
+    const savedStyle = styles[sectionKey] || {};
+    // Combina com os padrões para garantir que todas as propriedades existam.
+    const finalStyle = { ...defaultStyles, ...savedStyle };
+
+    // Define as variáveis CSS no elemento da seção.
+    sectionElement.style.setProperty(
+      "--section-bg-color",
+      finalStyle.backgroundColor
+    );
+    sectionElement.style.setProperty("--section-font-color", finalStyle.color);
+    sectionElement.style.setProperty(
+      "--section-icon-color",
+      finalStyle.iconColor
+    );
+    sectionElement.style.setProperty(
+      "--section-font-size",
+      finalStyle.fontSize
+    );
   }
-
-  styleSheet.textContent = cssRules;
-  document.head.appendChild(styleSheet);
 }
 
 async function selectPatient(patientInfo, forceRefresh = false) {
