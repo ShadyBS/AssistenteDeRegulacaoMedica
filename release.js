@@ -32,15 +32,11 @@ function updateManifestVersion(newVersion) {
       console.warn(`⚠️ Arquivo não encontrado: ${file}`);
       return;
     }
-
     try {
       let content = fs.readFileSync(manifestPath, "utf8");
-      // Remove BOM se presente
       content = content.replace(/^\uFEFF/, "");
-
       const manifest = JSON.parse(content);
       manifest.version = newVersion;
-
       fs.writeFileSync(
         manifestPath,
         JSON.stringify(manifest, null, 2) + "\n",
@@ -69,13 +65,10 @@ function buildZips() {
 
 // Passo 6: Commit, tag e push no Git
 async function createGitTag(newVersion) {
-  // Commit changes (se houver)
   await git.add(".");
   await git
     .commit(`release: v${newVersion}`)
     .catch(() => console.log("⚠️ Nenhum arquivo modificado para commit."));
-
-  // Verificar existência da tag
   const tags = await git.tags();
   if (tags.all.includes(`v${newVersion}`)) {
     console.log(`⚠️ Tag v${newVersion} já existe, pulando criação de tag.`);
@@ -84,23 +77,30 @@ async function createGitTag(newVersion) {
     await git.pushTags();
     console.log(`✅ Tag v${newVersion} criada e enviada.`);
   }
-
-  // Push branch principal
   await git.push("origin", "main");
 }
 
 // Passo 7: Criar release no GitHub
 async function createRelease(newVersion, changelog) {
   console.log("🚀 Criando release no GitHub...");
-  await octokit.repos.createRelease({
-    owner,
-    repo,
-    tag_name: `v${newVersion}`,
-    name: `v${newVersion}`,
-    body: changelog,
-    draft: false,
-    prerelease: false,
-  });
+  try {
+    await octokit.repos.createRelease({
+      owner,
+      repo,
+      tag_name: `v${newVersion}`,
+      name: `v${newVersion}`,
+      body: changelog,
+      draft: false,
+      prerelease: false,
+    });
+    console.log(`✅ Release v${newVersion} criado com sucesso!`);
+  } catch (err) {
+    console.error(`❌ Falha ao criar release no GitHub: ${err.message}`);
+    console.error(
+      `→ Verifique se o GITHUB_TOKEN possui permissão \"repo\" e \"release\" e se está configurado corretamente.`
+    );
+    process.exit(1);
+  }
 }
 
 // Fluxo principal
@@ -112,17 +112,13 @@ async function run() {
     );
     process.exit(1);
   }
-
   const lastTag = await getLastTag();
   const changelog = await getChangelog(lastTag);
-
   updateManifestVersion(newVersion);
   buildTailwind();
   buildZips();
   await createGitTag(newVersion);
   await createRelease(newVersion, changelog);
-
-  console.log(`✅ Release v${newVersion} criado com sucesso!`);
 }
 
 run();
