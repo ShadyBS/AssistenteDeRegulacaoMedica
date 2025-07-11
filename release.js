@@ -8,8 +8,8 @@ const { Octokit } = require("@octokit/rest");
 const git = simpleGit();
 const octokit = new Octokit({ auth: process.env.GITHUB_TOKEN });
 
-const owner = "SEU_USUARIO";
-const repo = "SEU_REPOSITORIO";
+const owner = "ShadyBS";
+const repo = "AssistenteDeRegulacaoMedica";
 
 // Passo 1: Obter a última tag
 async function getLastTag() {
