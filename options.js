@@ -306,6 +306,7 @@ async function restoreOptions() {
 
   const sections = [
     "patient-details",
+    "timeline",
     "consultations",
     "exams",
     "appointments",
@@ -342,13 +343,15 @@ async function restoreOptions() {
     const savedStyle = syncItems.sectionHeaderStyles[section] || {};
     const style = { ...defaultStyles, ...savedStyle };
 
-    document.getElementById(`style-${section}-bg-color`).value =
-      style.backgroundColor;
-    document.getElementById(`style-${section}-font-color`).value = style.color;
-    document.getElementById(`style-${section}-icon-color`).value =
-      style.iconColor;
-    document.getElementById(`style-${section}-font-size`).value =
-      style.fontSize;
+    const bgColorEl = document.getElementById(`style-${section}-bg-color`);
+    const fontColorEl = document.getElementById(`style-${section}-font-color`);
+    const iconColorEl = document.getElementById(`style-${section}-icon-color`);
+    const fontSizeEl = document.getElementById(`style-${section}-font-size`);
+
+    if (bgColorEl) bgColorEl.value = style.backgroundColor;
+    if (fontColorEl) fontColorEl.value = style.color;
+    if (iconColorEl) iconColorEl.value = style.iconColor;
+    if (fontSizeEl) fontSizeEl.value = style.fontSize;
   });
 
   automationRules = localItems.automationRules || [];
@@ -459,6 +462,7 @@ async function saveOptions() {
   const sectionHeaderStyles = {};
   const sectionsForStyle = [
     "patient-details",
+    "timeline",
     "consultations",
     "exams",
     "appointments",
@@ -466,13 +470,16 @@ async function saveOptions() {
     "documents",
   ];
   sectionsForStyle.forEach((section) => {
-    sectionHeaderStyles[section] = {
-      backgroundColor: document.getElementById(`style-${section}-bg-color`)
-        .value,
-      color: document.getElementById(`style-${section}-font-color`).value,
-      iconColor: document.getElementById(`style-${section}-icon-color`).value,
-      fontSize: document.getElementById(`style-${section}-font-size`).value,
-    };
+    const bgColorEl = document.getElementById(`style-${section}-bg-color`);
+    if (bgColorEl) {
+      // Check if the element exists before accessing properties
+      sectionHeaderStyles[section] = {
+        backgroundColor: bgColorEl.value,
+        color: document.getElementById(`style-${section}-font-color`).value,
+        iconColor: document.getElementById(`style-${section}-icon-color`).value,
+        fontSize: document.getElementById(`style-${section}-font-size`).value,
+      };
+    }
   });
 
   const sidebarSectionOrder = [

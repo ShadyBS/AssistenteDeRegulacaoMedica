@@ -375,6 +375,44 @@
         </div>
       </section>
 
+      <!-- Seção da Linha do Tempo -->
+      <section
+        id="timeline-section"
+        class="bg-white p-4 rounded-lg border border-slate-200 shadow-sm"
+        style="display: none"
+      >
+        <div class="section-header flex justify-between items-center">
+          <h2 class="flex items-center gap-2 font-semibold">
+            <span id="timeline-section-icon" class="section-icon"></span>
+            <span>Linha do Tempo</span>
+          </h2>
+          <button
+            id="toggle-timeline-list-btn"
+            class="text-xs text-slate-500 hover:text-blue-600"
+          >
+            Recolher
+          </button>
+        </div>
+        <div id="timeline-wrapper" class="collapse-section show">
+          <div
+            id="timeline-automation-feedback"
+            class="hidden mb-3 p-2 bg-blue-50 border border-blue-200 rounded-md text-sm text-blue-700"
+          ></div>
+          <button
+            id="fetch-timeline-btn"
+            class="mt-4 w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 transition text-sm"
+          >
+            Carregar Linha do Tempo
+          </button>
+          <div
+            id="timeline-content"
+            class="pt-4 mt-4 border-t border-slate-200"
+          >
+            <!-- O conteúdo da linha do tempo, incluindo estados de carregamento/vazio/erro, será renderizado aqui -->
+          </div>
+        </div>
+      </section>
+
       <section
         id="regulations-section"
         class="bg-white p-4 rounded-lg border border-slate-200 shadow-sm"
