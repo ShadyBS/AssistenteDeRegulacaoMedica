@@ -1022,3 +1022,48 @@ export async function fetchRegulationAttachmentUrl({ idp, ids }) {
 
   return null;
 }
+
+/**
+ * Fetches all data sources for the patient timeline concurrently.
+ * @param {object} params - The parameters for the API calls.
+ * @returns {Promise<object>} An object containing the data from all sources.
+ */
+export async function fetchAllTimelineData({
+  isenPK,
+  isenFullPKCrypto,
+  dataInicial,
+  dataFinal,
+}) {
+  // Using Promise.allSettled to ensure that if one API call fails, the others can still succeed.
+  const results = await Promise.allSettled([
+    fetchAllConsultations({ isenFullPKCrypto, dataInicial, dataFinal }),
+    fetchExamesSolicitados({
+      isenPK,
+      dataInicial,
+      dataFinal,
+      comResultado: true,
+      semResultado: true,
+    }),
+    fetchAppointments({ isenPK, dataInicial, dataFinal }),
+    fetchAllRegulations({ isenPK, dataInicial, dataFinal, type: "all" }),
+  ]);
+
+  const getValueOrDefault = (result, defaultValue = []) => {
+    if (result.status === "fulfilled") {
+      // Handle the different data structures returned by the API functions.
+      if (result.value && typeof result.value.jsonData !== "undefined") {
+        return result.value.jsonData; // For consultations
+      }
+      return result.value; // For others
+    }
+    console.warn("API call failed for timeline:", result.reason);
+    return defaultValue;
+  };
+
+  return {
+    consultations: getValueOrDefault(results[0]),
+    exams: getValueOrDefault(results[1]),
+    appointments: getValueOrDefault(results[2]),
+    regulations: getValueOrDefault(results[3]),
+  };
+}

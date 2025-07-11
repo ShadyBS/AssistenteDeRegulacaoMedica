@@ -165,3 +165,103 @@ export function setupTabs(container) {
     });
   });
 }
+
+/**
+ * Normalizes data from various sources into a single, sorted timeline event list.
+ * @param {object} apiData - An object containing arrays of consultations, exams, etc.
+ * @returns {Array<object>} A sorted array of timeline event objects.
+ */
+export function normalizeTimelineData(apiData) {
+  const events = [];
+
+  // Normalize Consultations
+  try {
+    (apiData.consultations || []).forEach((c) => {
+      if (!c || !c.date) return;
+      events.push({
+        type: "consultation",
+        date: parseDate(c.date.split("\n")[0]),
+        sortableDate: c.sortableDate || parseDate(c.date),
+        title: `Consulta: ${c.specialty || "Especialidade não informada"}`,
+        summary: `com ${c.professional || "Profissional não informado"}`,
+        details: c,
+        subDetails: c.details || [],
+      });
+    });
+  } catch (e) {
+    console.error("Failed to normalize consultation data for timeline:", e);
+  }
+
+  // Normalize Exams
+  try {
+    (apiData.exams || []).forEach((e) => {
+      if (!e || !e.date) return;
+      events.push({
+        type: "exam",
+        date: parseDate(e.date),
+        sortableDate: parseDate(e.date),
+        title: `Exame Solicitado: ${e.examName || "Nome não informado"}`,
+        summary: `Solicitado por ${e.professional || "Não informado"}`,
+        details: e,
+        subDetails: [
+          {
+            label: "Resultado",
+            value: e.hasResult ? "Disponível" : "Pendente",
+          },
+        ],
+      });
+    });
+  } catch (e) {
+    console.error("Failed to normalize exam data for timeline:", e);
+  }
+
+  // Normalize Appointments
+  try {
+    (apiData.appointments || []).forEach((a) => {
+      if (!a || !a.date) return;
+      events.push({
+        type: "appointment",
+        date: parseDate(a.date),
+        sortableDate: parseDate(a.date),
+        title: `Agendamento: ${a.specialty || a.description || "Não descrito"}`,
+        summary: a.location || "Local não informado",
+        details: a,
+        subDetails: [
+          { label: "Status", value: a.status || "N/A" },
+          { label: "Hora", value: a.time || "N/A" },
+        ],
+      });
+    });
+  } catch (e) {
+    console.error("Failed to normalize appointment data for timeline:", e);
+  }
+
+  // Normalize Regulations
+  try {
+    (apiData.regulations || []).forEach((r) => {
+      if (!r || !r.date) return;
+      events.push({
+        type: "regulation",
+        date: parseDate(r.date),
+        sortableDate: parseDate(r.date),
+        title: `Regulação: ${r.procedure || "Procedimento não informado"}`,
+        summary: `Solicitante: ${r.requester || "Não informado"}`,
+        details: r,
+        subDetails: [
+          { label: "Status", value: r.status || "N/A" },
+          { label: "Prioridade", value: r.priority || "N/A" },
+        ],
+      });
+    });
+  } catch (e) {
+    console.error("Failed to normalize regulation data for timeline:", e);
+  }
+
+  // Filter out events with invalid dates and sort all events by date, newest first.
+  return events
+    .filter(
+      (event) =>
+        event.sortableDate instanceof Date && !isNaN(event.sortableDate)
+    )
+    .sort((a, b) => b.sortableDate - a.sortableDate);
+}
