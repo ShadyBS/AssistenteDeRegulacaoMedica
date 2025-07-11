@@ -111,6 +111,15 @@
         stroke: var(--section-icon-color, #1e293b);
         fill: none !important; /* Garante que o ícone não seja preenchido */
       }
+      /* Estilos para a nova Linha do Tempo */
+      .timeline-details-body {
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.3s ease-out;
+      }
+      .timeline-details-body.show {
+        max-height: 500px; /* Altura suficiente para os detalhes */
+      }
     </style>
   </head>
   <body class="bg-slate-50 text-slate-800 antialiased flex flex-col h-screen">

@@ -399,3 +399,121 @@ export function renderDocuments(documents, sortState) {
       )
       .join("");
 }
+
+/**
+ * Renders the timeline based on the provided events and status.
+ * @param {Array<object>} events - The array of timeline event objects.
+ * @param {'loading'|'empty'|'error'|'success'} status - The current status of the timeline.
+ */
+export function renderTimeline(events, status) {
+  const contentDiv = document.getElementById("timeline-content");
+  if (!contentDiv) return;
+
+  const eventTypeStyles = {
+    consultation: {
+      label: "Consulta",
+      color: "blue",
+      icon: "M11 2v2M5 2v2M5 3H4a2 2 0 0 0-2 2v4a6 6 0 0 0 12 0V5a2 2 0 0 0-2-2h-1M8 15a6 6 0 0 0 12 0v-3m-6-5a2 2 0 1 0 0 4 2 2 0 0 0 0-4Z",
+    },
+    exam: {
+      label: "Exame",
+      color: "green",
+      icon: "M6 18h8M3 22h18M14 22a7 7 0 1 0 0-14h-1M9 14h2M9 12a2 2 0 0 1-2-2V6h6v4a2 2 0 0 1-2 2ZM12 6V3a1 1 0 0 0-1-1H9a1 1 0 0 0-1 1v3",
+    },
+    appointment: {
+      label: "Agendamento",
+      color: "purple",
+      icon: "M8 2v4M16 2v4M3 10h18M3 4h18v16H3zM9 16l2 2 4-4",
+    },
+    regulation: {
+      label: "Regulação",
+      color: "red",
+      icon: "M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1zM9 12l2 2 4-4",
+    },
+  };
+
+  let contentHtml = "";
+
+  switch (status) {
+    case "loading":
+      contentHtml =
+        '<p class="text-slate-500 text-center">A carregar linha do tempo...</p>';
+      break;
+    case "empty":
+      contentHtml =
+        '<p class="text-slate-500 text-center">Nenhum evento encontrado para este paciente.</p>';
+      break;
+    case "error":
+      contentHtml =
+        '<p class="text-red-500 text-center">Ocorreu um erro ao carregar os dados. Tente novamente.</p>';
+      break;
+    case "success":
+      if (events.length === 0) {
+        contentHtml =
+          '<p class="text-slate-500 text-center">Nenhum evento encontrado para este paciente.</p>';
+        break;
+      }
+      contentHtml = '<div class="relative space-y-4">';
+      // Vertical line
+      contentHtml +=
+        '<div class="absolute left-4 top-2 bottom-2 w-0.5 bg-slate-200"></div>';
+
+      contentHtml += events
+        .map((event) => {
+          const style = eventTypeStyles[event.type] || {
+            label: "Evento",
+            color: "gray",
+            icon: "",
+          };
+          const detailsHtml = (event.subDetails || [])
+            .map(
+              (detail) =>
+                `<div class="flex justify-between text-xs mt-1">
+                        <span class="font-semibold text-slate-500">${detail.label}:</span>
+                        <span class="text-slate-700">${detail.value}</span>
+                    </div>`
+            )
+            .join("");
+
+          return `
+                    <div class="relative pl-10 timeline-item" data-event-type="${
+                      event.type
+                    }">
+                        <div class="absolute left-4 top-2 -ml-[9px] h-5 w-5 rounded-full bg-${
+                          style.color
+                        }-500 border-2 border-white flex items-center justify-center text-white" title="${
+            style.label
+          }">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="${style.icon}" />
+                            </svg>
+                        </div>
+                        <div class="bg-slate-50 p-3 rounded-lg border border-slate-200">
+                            <div class="timeline-header cursor-pointer">
+                                <div class="flex justify-between items-start">
+                                    <div>
+                                        <p class="text-sm font-semibold text-${
+                                          style.color
+                                        }-700">${event.title}</p>
+                                        <p class="text-xs text-slate-600">${
+                                          event.summary
+                                        }</p>
+                                    </div>
+                                    <p class="text-xs font-medium text-slate-500 flex-shrink-0 ml-2">${event.date.toLocaleDateString(
+                                      "pt-BR"
+                                    )}</p>
+                                </div>
+                            </div>
+                            <div class="timeline-details-body collapse-section mt-2 pt-2 border-t border-slate-200">
+                                ${detailsHtml}
+                            </div>
+                        </div>
+                    </div>
+                `;
+        })
+        .join("");
+      contentHtml += "</div>";
+      break;
+  }
+  contentDiv.innerHTML = contentHtml;
+}
