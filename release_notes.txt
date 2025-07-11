@@ -1,4 +1,0 @@
-Release v3.2.11
-
-### Mudanças
-- s

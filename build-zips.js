@@ -14,6 +14,8 @@ const FILES_TO_IGNORE = [
   "node_modules",
   "build-zips.js",
   "build-zips.bat",
+  "release.js",
+  ".env",
   "build-release.bat",
   ".gitignore",
   ".git",

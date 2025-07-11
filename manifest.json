@@ -1,69 +1,69 @@
-﻿{
-    "manifest_version":  3,
-    "name":  "Assistente de Regulação Médica",
-    "version":  "3.2.11",
-    "description":  "Fornece informaçõeses para auxiliar mÃ©dicos reguladores a analisar solicitaçõeses e a aderÃªncia de pacientes.",
-    "permissions":  [
-                        "storage",
-                        "scripting",
-                        "contextMenus",
-                        "clipboardWrite"
-                    ],
-    "host_permissions":  [
-                             "\u003call_urls\u003e"
-                         ],
-    "content_security_policy":  {
-                                    "extension_pages":  "script-src \u0027self\u0027; object-src \u0027self\u0027; connect-src http://* https://*;"
-                                },
-    "options_ui":  {
-                       "page":  "options.html",
-                       "open_in_tab":  true
-                   },
-    "background":  {
-                       "scripts":  [
-                                       "background.js"
-                                   ],
-                       "type":  "module"
-                   },
-    "action":  {
-                   "default_title":  "Abrir Assistente de Regulação",
-                   "default_icon":  {
-                                        "16":  "icons/icon16.png",
-                                        "48":  "icons/icon48.png",
-                                        "128":  "icons/icon128.png"
-                                    }
-               },
-    "sidebar_action":  {
-                           "default_panel":  "sidebar.html",
-                           "default_title":  "Assistente de Regulação",
-                           "default_icon":  {
-                                                "16":  "icons/icon16.png",
-                                                "48":  "icons/icon48.png",
-                                                "128":  "icons/icon128.png"
-                                            }
-                       },
-    "icons":  {
-                  "16":  "icons/icon16.png",
-                  "48":  "icons/icon48.png",
-                  "128":  "icons/icon128.png"
-              },
-    "content_scripts":  [
-                            {
-                                "matches":  [
-                                                "*://*/sigss/regulacaoRegulador*",
-                                                "*://*/sigss/regulacaoRegulador/*",
-                                                "*://*/sigss/regulacaoControleSolicitacao/*"
-                                            ],
-                                "js":  [
-                                           "browser-polyfill.js",
-                                           "content-script.js"
-                                       ],
-                                "all_frames":  true
-                            }
-                        ],
-    "browser_specific_settings":  {
-                                      "gecko":  {
-                                                    "id":  "assistente-regulacao@exemplo.com"
-                                                }
-                                  }
+{
+  "manifest_version": 3,
+  "name": "Assistente de Regulação Médica",
+  "version": "3.2.11",
+  "description": "Fornece informações para auxiliar médicos reguladores a analisar solicitações e a aderência de pacientes.",
+  "permissions": [
+    "storage",
+    "scripting",
+    "contextMenus",
+    "clipboardWrite"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'; connect-src http://* https://*;"
+  },
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": true
+  },
+  "background": {
+    "scripts": [
+      "background.js"
+    ],
+    "type": "module"
+  },
+  "action": {
+    "default_title": "Abrir Assistente de Regulação",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "sidebar_action": {
+    "default_panel": "sidebar.html",
+    "default_title": "Assistente de Regulação",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "*://*/sigss/regulacaoRegulador*",
+        "*://*/sigss/regulacaoRegulador/*",
+        "*://*/sigss/regulacaoControleSolicitacao/*"
+      ],
+      "js": [
+        "browser-polyfill.js",
+        "content-script.js"
+      ],
+      "all_frames": true
+    }
+  ],
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "assistente-regulacao@exemplo.com"
+    }
+  }
 }
