@@ -69,11 +69,24 @@ function buildZips() {
 
 // Passo 6: Commit, tag e push no Git
 async function createGitTag(newVersion) {
+  // Commit changes (se houver)
   await git.add(".");
-  await git.commit(`release: v${newVersion}`);
-  await git.addTag(`v${newVersion}`);
+  await git
+    .commit(`release: v${newVersion}`)
+    .catch(() => console.log("⚠️ Nenhum arquivo modificado para commit."));
+
+  // Verificar existência da tag
+  const tags = await git.tags();
+  if (tags.all.includes(`v${newVersion}`)) {
+    console.log(`⚠️ Tag v${newVersion} já existe, pulando criação de tag.`);
+  } else {
+    await git.addTag(`v${newVersion}`);
+    await git.pushTags();
+    console.log(`✅ Tag v${newVersion} criada e enviada.`);
+  }
+
+  // Push branch principal
   await git.push("origin", "main");
-  await git.pushTags();
 }
 
 // Passo 7: Criar release no GitHub
