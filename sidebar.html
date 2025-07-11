@@ -86,6 +86,11 @@
           transform: rotate(360deg);
         }
       }
+      .section-icon svg {
+        width: 1.125rem; /* 18px */
+        height: 1.125rem; /* 18px */
+        fill: currentColor;
+      }
     </style>
   </head>
   <body class="bg-slate-50 text-slate-800 antialiased flex flex-col h-screen">
@@ -305,9 +310,14 @@
         class="bg-white p-4 rounded-lg border border-slate-200 shadow-sm"
         style="display: none"
       >
-        <h2 class="text-md font-semibold text-slate-700 mb-3">
-          Dados do Paciente
-        </h2>
+        <div class="flex justify-between items-center mb-3">
+          <h2
+            class="flex items-center gap-2 text-md font-semibold text-slate-700"
+          >
+            <span id="patient-details-section-icon" class="section-icon"></span>
+            <span>Dados do Paciente</span>
+          </h2>
+        </div>
         <div id="patient-main-info" class="space-y-2 text-sm"></div>
         <button
           id="toggle-details-btn"
@@ -353,7 +363,12 @@
         style="display: none"
       >
         <div class="flex justify-between items-center mb-3">
-          <h2 class="text-md font-semibold text-slate-700">Regulação</h2>
+          <h2
+            class="flex items-center gap-2 text-md font-semibold text-slate-700"
+          >
+            <span id="regulations-section-icon" class="section-icon"></span>
+            <span>Regulação</span>
+          </h2>
           <button
             id="toggle-regulations-list-btn"
             class="text-xs text-slate-500 hover:text-blue-600"
@@ -406,7 +421,12 @@
         style="display: none"
       >
         <div class="flex justify-between items-center mb-3">
-          <h2 class="text-md font-semibold text-slate-700">Consultas</h2>
+          <h2
+            class="flex items-center gap-2 text-md font-semibold text-slate-700"
+          >
+            <span id="consultations-section-icon" class="section-icon"></span>
+            <span>Consultas</span>
+          </h2>
           <button
             id="toggle-consultations-list-btn"
             class="text-xs text-slate-500 hover:text-blue-600"
@@ -459,8 +479,11 @@
         style="display: none"
       >
         <div class="flex justify-between items-center mb-3">
-          <h2 class="text-md font-semibold text-slate-700">
-            Exames Solicitados
+          <h2
+            class="flex items-center gap-2 text-md font-semibold text-slate-700"
+          >
+            <span id="exams-section-icon" class="section-icon"></span>
+            <span>Exames Solicitados</span>
           </h2>
           <button
             id="toggle-exams-list-btn"
@@ -518,7 +541,12 @@
         style="display: none"
       >
         <div class="flex justify-between items-center mb-3">
-          <h2 class="text-md font-semibold text-slate-700">Agendamentos</h2>
+          <h2
+            class="flex items-center gap-2 text-md font-semibold text-slate-700"
+          >
+            <span id="appointments-section-icon" class="section-icon"></span>
+            <span>Agendamentos</span>
+          </h2>
           <button
             id="toggle-appointments-list-btn"
             class="text-xs text-slate-500 hover:text-blue-600"
@@ -571,7 +599,12 @@
         style="display: none"
       >
         <div class="flex justify-between items-center mb-3">
-          <h2 class="text-md font-semibold text-slate-700">Documentos</h2>
+          <h2
+            class="flex items-center gap-2 text-md font-semibold text-slate-700"
+          >
+            <span id="documents-section-icon" class="section-icon"></span>
+            <span>Documentos</span>
+          </h2>
           <button
             id="toggle-documents-list-btn"
             class="text-xs text-slate-500 hover:text-blue-600"

@@ -9,6 +9,21 @@ import * as Search from "./ui/search.js";
 import * as PatientCard from "./ui/patient-card.js";
 import { store } from "./store.js";
 
+// --- ÍCONES ---
+const sectionIcons = {
+  "patient-details": `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-user-round-check-icon lucide-user-round-check"><path d="M2 21a8 8 0 0 1 13.292-6"/><circle cx="10" cy="8" r="5"/><path d="m16 19 2 2 4-4"/></svg>`,
+
+  regulations: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-shield-check-icon lucide-shield-check"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg>`,
+
+  consultations: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-stethoscope-icon lucide-stethoscope"><path d="M11 2v2"/><path d="M5 2v2"/><path d="M5 3H4a2 2 0 0 0-2 2v4a6 6 0 0 0 12 0V5a2 2 0 0 0-2-2h-1"/><path d="M8 15a6 6 0 0 0 12 0v-3"/><circle cx="20" cy="10" r="2"/></svg>`,
+
+  exams: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-microscope-icon lucide-microscope"><path d="M6 18h8"/><path d="M3 22h18"/><path d="M14 22a7 7 0 1 0 0-14h-1"/><path d="M9 14h2"/><path d="M9 12a2 2 0 0 1-2-2V6h6v4a2 2 0 0 1-2 2Z"/><path d="M12 6V3a1 1 0 0 0-1-1H9a1 1 0 0 0-1 1v3"/></svg>`,
+
+  appointments: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-calendar-check-icon lucide-calendar-check"><path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/><path d="m9 16 2 2 4-4"/></svg>`,
+
+  documents: `<svg xmlns="http://www.w3.org/2000/svg" class="lucide lucide-file-text" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>`,
+};
+
 let currentRegulationData = null;
 let sectionManagers = {}; // Objeto para armazenar instâncias de SectionManager
 
@@ -221,6 +236,7 @@ const documentFilterLogic = (data, filters) => {
 };
 
 const sectionConfigurations = {
+  "patient-details": {}, // Seção especial sem fetch
   consultations: {
     fetchFunction: API.fetchAllConsultations,
     renderFunction: Renderers.renderConsultations,
@@ -252,6 +268,80 @@ const sectionConfigurations = {
     filterLogic: documentFilterLogic,
   },
 };
+
+// --- FUNÇÕES DE ESTILO E ÍCONES ---
+
+/**
+ * Injeta os ícones SVG nos cabeçalhos das seções.
+ */
+function applySectionIcons() {
+  for (const sectionKey in sectionIcons) {
+    const iconContainer = document.getElementById(`${sectionKey}-section-icon`);
+    if (iconContainer) {
+      iconContainer.innerHTML = sectionIcons[sectionKey];
+    }
+  }
+}
+
+/**
+ * Lê os estilos customizados do storage e os aplica aos cabeçalhos.
+ * @param {object} styles - O objeto de estilos vindo do storage.
+ */
+function applyCustomHeaderStyles(styles) {
+  const styleSheet = document.createElement("style");
+  let cssRules = "";
+
+  // Adiciona estilos padrão explícitos para todos os cabeçalhos
+  cssRules += `
+    .section-header {
+      background-color: #ffffff !important;
+      color: #1e293b !important;
+      padding: 0.5rem;
+      border-radius: 0.375rem;
+      margin-bottom: 0.75rem;
+    }
+    .section-header h2, .section-header button {
+      color: #1e293b !important;
+    }
+    .section-icon svg {
+      stroke: #1e293b !important;
+      fill: none !important;
+    }
+  `;
+
+  // Aplica estilos customizados se existirem
+  for (const sectionKey in sectionIcons) {
+    const sectionId =
+      sectionKey === "patient-details"
+        ? "patient-details-section"
+        : `${sectionKey}-section`;
+
+    const style = styles[sectionKey] || {};
+
+    if (Object.keys(style).length > 0) {
+      cssRules += `
+        #${sectionId} .section-header {
+          ${
+            style.backgroundColor
+              ? `background-color: ${style.backgroundColor} !important;`
+              : ""
+          }
+          ${style.fontSize ? `font-size: ${style.fontSize} !important;` : ""}
+        }
+        #${sectionId} .section-header h2,
+        #${sectionId} .section-header button {
+          ${style.color ? `color: ${style.color} !important;` : ""}
+        }
+        #${sectionId} .section-icon svg {
+          ${style.iconColor ? `stroke: ${style.iconColor} !important;` : ""}
+        }
+      `;
+    }
+  }
+
+  styleSheet.textContent = cssRules;
+  document.head.appendChild(styleSheet);
+}
 
 async function selectPatient(patientInfo, forceRefresh = false) {
   const currentPatient = store.getPatient();
@@ -286,44 +376,57 @@ async function selectPatient(patientInfo, forceRefresh = false) {
 }
 
 async function init() {
+  let baseUrlConfigured = true;
+
   try {
     await API.getBaseUrl();
   } catch (error) {
-    if (error && error.message === "URL_BASE_NOT_CONFIGURED") {
+    if (error?.message === "URL_BASE_NOT_CONFIGURED") {
+      baseUrlConfigured = false;
+
       const mainContent = document.getElementById("main-content");
       const urlWarning = document.getElementById("url-config-warning");
+      const openOptions = document.getElementById("open-options-from-warning");
+      const reloadSidebar = document.getElementById(
+        "reload-sidebar-from-warning"
+      );
 
       if (mainContent) mainContent.classList.add("hidden");
       if (urlWarning) urlWarning.classList.remove("hidden");
 
-      const openOptionsBtn = document.getElementById(
-        "open-options-from-warning"
-      );
-      const reloadSidebarBtn = document.getElementById(
-        "reload-sidebar-from-warning"
-      );
-
-      if (openOptionsBtn) {
-        openOptionsBtn.addEventListener("click", () => {
-          browser.runtime.openOptionsPage();
-        });
+      if (openOptions) {
+        openOptions.addEventListener("click", () =>
+          browser.runtime.openOptionsPage()
+        );
+      }
+      if (reloadSidebar) {
+        reloadSidebar.addEventListener("click", () => window.location.reload());
       }
 
-      if (reloadSidebarBtn) {
-        reloadSidebarBtn.addEventListener("click", () => {
-          window.location.reload();
-        });
-      }
-      return;
+      // **não retornamos mais aqui**, apenas marcamos que deu “fallback”
     } else {
       console.error("Initialization failed:", error);
       Utils.showMessage(
         "Ocorreu um erro inesperado ao iniciar a extensão.",
         "error"
       );
+      // nesse caso você pode querer return ou throw de verdade
+      return;
     }
   }
 
+  // === setup das abas: sempre rodar, mesmo sem baseURL ===
+  Utils.setupTabs(document.getElementById("layout-tabs-container"));
+  Utils.setupTabs(document.getElementById("patterns-tabs-container"));
+  // (adicione aqui quaisquer outros containers de aba que tenha)
+
+  // === só o resto do fluxo principal depende de baseUrlConfigured ===
+  if (!baseUrlConfigured) {
+    // já mostramos o formulário de URL, não temos mais nada a fazer
+    return;
+  }
+
+  // agora vem tudo o que precisa de baseURL
   const [globalSettings, regulationPriorities] = await Promise.all([
     loadConfigAndData(),
     API.fetchRegulationPriorities(),
@@ -331,6 +434,8 @@ async function init() {
 
   globalSettings.regulationPriorities = regulationPriorities;
 
+  applySectionIcons();
+  applyCustomHeaderStyles(globalSettings.sectionHeaderStyles);
   applySectionOrder(globalSettings.sidebarSectionOrder);
 
   Search.init({ onSelectPatient: selectPatient });
@@ -357,6 +462,7 @@ async function loadConfigAndData() {
     enableAutomaticDetection: true,
     dateRangeDefaults: {},
     sidebarSectionOrder: [],
+    sectionHeaderStyles: {}, // Carrega a nova configuração de estilos
   });
   const localData = await browser.storage.local.get({
     recentPatients: [],
@@ -384,6 +490,7 @@ async function loadConfigAndData() {
       dateRangeDefaults: syncData.dateRangeDefaults,
     },
     sidebarSectionOrder: syncData.sidebarSectionOrder,
+    sectionHeaderStyles: syncData.sectionHeaderStyles, // Passa os estilos para frente
   };
 }
 
@@ -392,7 +499,7 @@ function applySectionOrder(order) {
   if (!mainContent) return;
 
   const sectionMap = {
-    "patient-card": "patient-details-section",
+    "patient-details": "patient-details-section",
     regulations: "regulations-section",
     consultations: "consultations-section",
     exams: "exams-section",
@@ -400,37 +507,27 @@ function applySectionOrder(order) {
     documents: "documents-section",
   };
 
-  const allKnownOrderableIds = Object.keys(sectionMap);
+  const patientCardId = "patient-details";
 
-  const allOrderableSectionsInDOM = Array.from(
-    mainContent.querySelectorAll("section")
-  ).filter((s) => Object.values(sectionMap).includes(s.id));
+  // Pega a ordem salva ou a ordem padrão do DOM
+  const savedOrder =
+    order && order.length > 0 ? order : Object.keys(sectionMap);
 
-  const domTabOrder = allOrderableSectionsInDOM
-    .map((section) => {
-      return Object.keys(sectionMap).find(
-        (key) => sectionMap[key] === section.id
-      );
-    })
-    .filter(Boolean);
+  // Garante que a ficha do paciente esteja sempre no topo
+  // 1. Remove a ficha da ordem atual, não importa onde esteja.
+  let finalOrder = savedOrder.filter((id) => id !== patientCardId);
+  // 2. Adiciona a ficha no início da lista.
+  finalOrder.unshift(patientCardId);
 
-  let finalOrder = [];
-  if (order && Array.isArray(order) && order.length > 0) {
-    const validSavedOrder = order.filter((id) =>
-      allKnownOrderableIds.includes(id)
-    );
-    finalOrder = [...validSavedOrder];
-  } else {
-    finalOrder = [...domTabOrder];
-  }
+  // Adiciona quaisquer novas seções (não presentes na ordem salva) ao final
+  const knownIds = new Set(finalOrder);
+  Object.keys(sectionMap).forEach((id) => {
+    if (!knownIds.has(id)) {
+      finalOrder.push(id);
+    }
+  });
 
-  const currentSectionsInOrder = new Set(finalOrder);
-  const newSections = domTabOrder.filter(
-    (id) => !currentSectionsInOrder.has(id)
-  );
-
-  finalOrder.push(...newSections);
-
+  // Reordena os elementos no DOM
   finalOrder.forEach((tabId) => {
     const sectionId = sectionMap[tabId];
     const sectionElement = document.getElementById(sectionId);
@@ -442,6 +539,7 @@ function applySectionOrder(order) {
 
 function initializeSections(globalSettings) {
   Object.keys(sectionConfigurations).forEach((key) => {
+    if (key === "patient-details") return; // Não cria SectionManager para a ficha
     sectionManagers[key] = new SectionManager(
       key,
       sectionConfigurations[key],
@@ -650,15 +748,31 @@ function addGlobalEventListeners() {
 
   browser.storage.onChanged.addListener((changes, areaName) => {
     if (areaName === "local" && changes.pendingRegulation) {
-      const { newValue } = changes.pendingRegulation;
-      if (newValue && newValue.isenPKIdp) {
-        console.log(
-          "[Assistente Sidebar] Nova regulação detectada via storage.onChanged:",
-          newValue
-        );
-        handleRegulationLoaded(newValue);
-        browser.storage.local.remove("pendingRegulation");
-      }
+      // Apenas processa se a detecção automática estiver LIGADA
+      browser.storage.sync
+        .get({ enableAutomaticDetection: true })
+        .then((settings) => {
+          if (settings.enableAutomaticDetection) {
+            const { newValue } = changes.pendingRegulation;
+            if (newValue && newValue.isenPKIdp) {
+              console.log(
+                "[Assistente Sidebar] Nova regulação detectada via storage.onChanged:",
+                newValue
+              );
+              handleRegulationLoaded(newValue);
+              browser.storage.local.remove("pendingRegulation");
+            }
+          }
+        });
+    }
+
+    if (areaName === "sync" && changes.sectionHeaderStyles) {
+      window.location.reload();
+    }
+
+    if (areaName === "sync" && changes.enableAutomaticDetection) {
+      // Mantém o botão da sidebar sincronizado com a configuração
+      setupAutoModeToggle();
     }
   });
 }

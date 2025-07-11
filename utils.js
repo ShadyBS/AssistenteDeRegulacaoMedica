@@ -141,3 +141,27 @@ export function normalizeString(str) {
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "");
 }
+
+/**
+ * Configura um sistema de abas (tabs) dentro de um container.
+ * @param {HTMLElement} container - O elemento que contém os botões e os painéis das abas.
+ */
+export function setupTabs(container) {
+  if (!container) return;
+
+  const tabButtons = container.querySelectorAll(".tab-button");
+  const tabContents = container.querySelectorAll(".tab-content");
+
+  tabButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+      const tabName = button.dataset.tab;
+      tabButtons.forEach((btn) => btn.classList.remove("active"));
+      tabContents.forEach((content) => content.classList.remove("active"));
+      button.classList.add("active");
+      const activeContent = container.querySelector(`#${tabName}-tab`);
+      if (activeContent) {
+        activeContent.classList.add("active");
+      }
+    });
+  });
+}

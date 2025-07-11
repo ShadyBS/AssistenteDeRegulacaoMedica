@@ -160,6 +160,32 @@
                 Tudo o que você precisa saber para dominar o Assistente de
                 Regulação Médica.
               </p>
+              <a
+                href="options.html"
+                target="_blank"
+                class="mt-6 inline-flex items-center gap-2 bg-white text-blue-600 font-semibold py-2 px-5 rounded-lg shadow-sm hover:bg-blue-50 transition"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="h-5 w-5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
+                  ></path>
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                  ></path>
+                </svg>
+                <span>Abrir Página de Configurações</span>
+              </a>
             </header>
 
             <main class="p-8 sm:p-12">
@@ -320,38 +346,45 @@
                   (um escudo azul) na barra de ferramentas do seu navegador.
                 </p>
 
-                <h4 class="text-xl font-semibold">
+                <h3 class="text-2xl font-semibold">
                   Modo Automático vs. Modo Manual
-                </h4>
+                </h3>
                 <p class="text-slate-600 leading-relaxed mt-4">
                   A extensão opera em dois modos, que podem ser alternados no
-                  topo da barra lateral:
+                  topo da barra lateral através de um interruptor
+                  <kbd>Auto</kbd>:
                 </p>
                 <ul class="list-disc list-inside space-y-2 mt-4 text-slate-600">
                   <li>
                     <strong>Modo Automático (Padrão):</strong> Quando você
                     acessa uma página de regulação no sistema (especificamente a
                     aba "Manutenção"), a extensão detecta automaticamente os
-                    dados do paciente e carrega suas informações na barra
-                    lateral. Um ícone de informação (ⓘ) aparecerá, mostrando o
-                    contexto detectado (ex: procedimento, especialidade). Clicar
-                    neste ícone exibe todos os dados brutos recebidos da
-                    regulação.
+                    dados do paciente e carrega suas informações. Um ícone de
+                    informação (ⓘ) aparecerá, mostrando o contexto detectado
+                    (ex: procedimento, especialidade). Clicar neste ícone exibe
+                    todos os dados brutos recebidos da regulação. Este modo
+                    também ativa as
+                    <a
+                      href="#opcoes-avancadas"
+                      class="text-blue-600 font-medium hover:underline"
+                      >Regras de Automação</a
+                    >.
                   </li>
                   <li>
                     <strong>Modo Manual:</strong> Se a detecção automática
-                    estiver desativada (nas Opções) ou falhar, você pode usar a
-                    caixa de busca <kbd>Buscar Paciente</kbd> para encontrar
-                    qualquer paciente pelo nome ou CPF. Ao focar na busca, uma
-                    lista de pacientes recentes será exibida para acesso rápido.
+                    estiver desativada (no interruptor <kbd>Auto</kbd>) ou
+                    falhar, você pode usar a caixa de busca
+                    <kbd>Buscar Paciente</kbd> para encontrar qualquer paciente
+                    pelo nome ou CPF. Ao focar na busca, uma lista de pacientes
+                    recentes será exibida para acesso rápido.
                   </li>
                 </ul>
 
                 <h3 class="text-2xl font-semibold">
-                  3.2. Entendendo a Interface
+                  3.3. Entendendo as Seções
                 </h3>
 
-                <h4 class="text-xl font-semibold">Ficha do Paciente</h4>
+                <h4 class="text-xl font-semibold">Dados do Paciente</h4>
                 <p class="text-slate-600 leading-relaxed mt-4">
                   Após selecionar um paciente, sua ficha é exibida. A extensão
                   realiza uma comparação em tempo real dos dados do seu sistema
@@ -375,7 +408,7 @@
                 </ul>
 
                 <h4 class="text-xl font-semibold">
-                  Seções de Dados (Consultas, Exames, etc.)
+                  Seções de Histórico (Consultas, Exames, etc.)
                 </h4>
                 <p class="text-slate-600 leading-relaxed mt-4">
                   Todas as seções de dados (Consultas, Exames, Agendamentos e
@@ -383,6 +416,12 @@
                   para ser intuitivo:
                 </p>
                 <ul class="list-disc list-inside space-y-2 mt-4 text-slate-600">
+                  <li>
+                    <strong>Automação:</strong> No Modo Automático, se uma regra
+                    for acionada, uma mensagem aparecerá no topo da seção
+                    indicando qual regra foi aplicada e os filtros foram
+                    pré-preenchidos.
+                  </li>
                   <li>
                     <strong>Filtros Principais:</strong> Os filtros mais comuns
                     ficam sempre visíveis para acesso rápido.
@@ -476,7 +515,7 @@
                 </ul>
 
                 <h3 class="text-2xl font-semibold">
-                  4.2. Configurar Layouts e Padrões
+                  4.2. Configurar Layouts, Padrões e Estilos
                 </h3>
                 <p class="text-slate-600 leading-relaxed mt-4">
                   Personalize a aparência e o comportamento padrão da extensão.
@@ -499,6 +538,11 @@
                     para definir valores pré-selecionados para os filtros (ex:
                     sempre ocultar consultas com falta) ou para os períodos de
                     busca, economizando cliques.
+                  </li>
+                  <li>
+                    <strong>Estilos de Cabeçalho:</strong> Dentro de cada aba,
+                    você pode personalizar as cores de fundo, da fonte e do
+                    ícone, além do tamanho da fonte do cabeçalho de cada seção.
                   </li>
                 </ul>
 
@@ -599,6 +643,20 @@
                       desnecessárias. Após ajustar os filtros desejados, você
                       precisa clicar no botão <kbd>Buscar [Seção]</kbd> para
                       aplicar as novas condições.
+                    </p>
+                  </div>
+                  <div>
+                    <h4 class="text-xl font-semibold">
+                      P: Criei uma regra de automação, mas ela não foi aplicada.
+                    </h4>
+                    <p class="text-slate-600 mt-2">
+                      <strong>R:</strong> Verifique alguns pontos: 1) O
+                      interruptor <kbd>Auto</kbd> está ativado na barra lateral?
+                      2) As <kbd>Palavras-chave de Gatilho</kbd> da sua regra
+                      correspondem exatamente (sem acentos, etc.) ao texto do
+                      procedimento ou CID na página de regulação? 3) Verifique a
+                      prioridade das regras; uma outra regra com gatilhos mais
+                      genéricos pode estar sendo acionada antes da sua.
                     </p>
                   </div>
                 </div>

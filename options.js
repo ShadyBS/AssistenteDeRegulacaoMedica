@@ -166,7 +166,16 @@ function renderPatientFields(config) {
  * @param {object} layout - A configuração de layout dos filtros.
  */
 async function renderFilterLayout(layout) {
-  const priorities = await API.fetchRegulationPriorities();
+  let priorities = [];
+
+  try {
+    const baseUrl = await API.getBaseUrl();
+    if (baseUrl) {
+      priorities = await API.fetchRegulationPriorities();
+    }
+  } catch (error) {
+    console.error("Não foi possível carregar prioridades:", error);
+  }
 
   Object.keys(filterConfig).forEach((section) => {
     const mainZone = document.getElementById(`${section}-main-filters-zone`);
@@ -224,6 +233,8 @@ async function renderFilterLayout(layout) {
  */
 function applyTabOrder(order) {
   const tabsContainer = document.querySelector("#filter-tabs-container .tabs");
+  if (!tabsContainer) return;
+
   const tabMap = new Map();
   tabsContainer.querySelectorAll(".tab-button").forEach((tab) => {
     tabMap.set(tab.dataset.tab, tab);
@@ -253,14 +264,15 @@ async function restoreOptions() {
     patientFields: defaultFieldConfig,
     filterLayout: {},
     dateRangeDefaults: {},
-    sidebarSectionOrder: null, // Carrega a nova configuração de ordem
+    sidebarSectionOrder: null,
+    sectionHeaderStyles: {},
   });
 
   const localItems = await browser.storage.local.get({
     automationRules: [],
   });
 
-  document.getElementById("baseUrlInput").value = syncItems.baseUrl;
+  document.getElementById("baseUrlInput").value = syncItems.baseUrl || "";
   document.getElementById("enableAutomaticDetection").checked =
     syncItems.enableAutomaticDetection;
   document.getElementById("autoLoadExamsCheckbox").checked =
@@ -274,7 +286,6 @@ async function restoreOptions() {
   document.getElementById("autoLoadDocumentsCheckbox").checked =
     syncItems.autoLoadDocuments;
 
-  // Aplica a ordem das abas antes de renderizar o resto
   if (syncItems.sidebarSectionOrder) {
     applyTabOrder(syncItems.sidebarSectionOrder);
   }
@@ -286,9 +297,15 @@ async function restoreOptions() {
     return savedField ? { ...defaultField, ...savedField } : defaultField;
   });
   renderPatientFields(currentPatientFieldsConfig);
-  await renderFilterLayout(syncItems.filterLayout);
+
+  try {
+    await renderFilterLayout(syncItems.filterLayout);
+  } catch (error) {
+    console.error("Erro ao renderizar filtros:", error);
+  }
 
   const sections = [
+    "patient-details",
     "consultations",
     "exams",
     "appointments",
@@ -302,16 +319,39 @@ async function restoreOptions() {
     regulations: { start: -12, end: 0 },
     documents: { start: -24, end: 0 },
   };
+
+  // CORREÇÃO 2: Define os estilos padrão aqui.
+  const defaultStyles = {
+    backgroundColor: "#ffffff",
+    color: "#1e293b",
+    iconColor: "#1e293b",
+    fontSize: "16px",
+  };
+
   sections.forEach((section) => {
-    const range =
-      syncItems.dateRangeDefaults[section] || defaultRanges[section];
-    const startOffsetEl = document.getElementById(`${section}-start-offset`);
-    const endOffsetEl = document.getElementById(`${section}-end-offset`);
-    if (startOffsetEl) startOffsetEl.value = Math.abs(range.start);
-    if (endOffsetEl) endOffsetEl.value = range.end;
+    if (defaultRanges[section]) {
+      const range =
+        syncItems.dateRangeDefaults[section] || defaultRanges[section];
+      const startOffsetEl = document.getElementById(`${section}-start-offset`);
+      const endOffsetEl = document.getElementById(`${section}-end-offset`);
+      if (startOffsetEl) startOffsetEl.value = Math.abs(range.start);
+      if (endOffsetEl) endOffsetEl.value = range.end;
+    }
+
+    // Restaura estilos, usando os padrões como base.
+    const savedStyle = syncItems.sectionHeaderStyles[section] || {};
+    const style = { ...defaultStyles, ...savedStyle };
+
+    document.getElementById(`style-${section}-bg-color`).value =
+      style.backgroundColor;
+    document.getElementById(`style-${section}-font-color`).value = style.color;
+    document.getElementById(`style-${section}-icon-color`).value =
+      style.iconColor;
+    document.getElementById(`style-${section}-font-size`).value =
+      style.fontSize;
   });
 
-  automationRules = localItems.automationRules;
+  automationRules = localItems.automationRules || [];
   renderAutomationRules();
 }
 
@@ -399,14 +439,14 @@ async function saveOptions() {
     });
 
   const dateRangeDefaults = {};
-  const sections = [
+  const sectionsForDate = [
     "consultations",
     "exams",
     "appointments",
     "regulations",
     "documents",
   ];
-  sections.forEach((section) => {
+  sectionsForDate.forEach((section) => {
     const startEl = document.getElementById(`${section}-start-offset`);
     const endEl = document.getElementById(`${section}-end-offset`);
     if (startEl && endEl) {
@@ -416,7 +456,25 @@ async function saveOptions() {
     }
   });
 
-  // Salva a ordem das abas/seções
+  const sectionHeaderStyles = {};
+  const sectionsForStyle = [
+    "patient-details",
+    "consultations",
+    "exams",
+    "appointments",
+    "regulations",
+    "documents",
+  ];
+  sectionsForStyle.forEach((section) => {
+    sectionHeaderStyles[section] = {
+      backgroundColor: document.getElementById(`style-${section}-bg-color`)
+        .value,
+      color: document.getElementById(`style-${section}-font-color`).value,
+      iconColor: document.getElementById(`style-${section}-icon-color`).value,
+      fontSize: document.getElementById(`style-${section}-font-size`).value,
+    };
+  });
+
   const sidebarSectionOrder = [
     ...document.querySelectorAll(".tabs .tab-button"),
   ].map((btn) => btn.dataset.tab);
@@ -432,12 +490,12 @@ async function saveOptions() {
     patientFields,
     filterLayout,
     dateRangeDefaults,
-    sidebarSectionOrder, // Salva a nova ordem
+    sidebarSectionOrder,
+    sectionHeaderStyles,
   });
 
-  // Exibe a nova mensagem de confirmação, sem recarregar automaticamente
   Utils.showMessage(
-    "Configurações salvas! Lembre-se de recarregar o assistente para aplicar as alterações.",
+    "Configurações salvas! As alterações serão aplicadas ao recarregar o assistente.",
     "success"
   );
 
@@ -445,7 +503,7 @@ async function saveOptions() {
     const statusMsg = document.getElementById("statusMessage");
     if (statusMsg) {
       statusMsg.textContent = "";
-      statusMsg.className = "text-sm font-medium"; // Limpa classes de cor
+      statusMsg.className = "text-sm font-medium";
     }
   }, 4000);
 }
@@ -510,25 +568,6 @@ function getDragAfterElement(container, y) {
   ).element;
 }
 
-// --- Lógica das Abas (Tabs) ---
-function setupTabs(container) {
-  const tabButtons = container.querySelectorAll(".tab-button");
-  const tabContents = container.querySelectorAll(".tab-content");
-
-  tabButtons.forEach((button) => {
-    button.addEventListener("click", () => {
-      const tabName = button.dataset.tab;
-      tabButtons.forEach((btn) => btn.classList.remove("active"));
-      tabContents.forEach((content) => content.classList.remove("active"));
-      button.classList.add("active");
-      const activeContent = container.querySelector(`#${tabName}-tab`);
-      if (activeContent) {
-        activeContent.classList.add("active");
-      }
-    });
-  });
-}
-
 // --- Lógica de Arrastar e Soltar para Abas ---
 function getDragAfterTab(container, x) {
   const draggableElements = [
@@ -549,9 +588,10 @@ function getDragAfterTab(container, x) {
 }
 
 function setupTabDnD(container) {
+  if (!container) return;
+
   const tabs = container.querySelectorAll(".tab-button");
   tabs.forEach((tab) => {
-    // A aba "Ficha do Paciente" não é arrastável
     if (tab.dataset.tab !== "patient-card") {
       tab.draggable = true;
     }
@@ -579,7 +619,6 @@ function setupTabDnD(container) {
     if (afterElement) {
       container.insertBefore(draggedTab, afterElement);
     } else {
-      // Se não houver um elemento "depois", anexa ao final (respeitando as não arrastáveis)
       container.appendChild(draggedTab);
     }
   });
@@ -588,7 +627,7 @@ function setupTabDnD(container) {
 // --- Lógica para Restaurar Padrões ---
 async function handleRestoreDefaults() {
   const confirmation = window.confirm(
-    "Tem certeza de que deseja restaurar todas as configurações de layout e valores padrão? Isto também restaurará a ordem das seções. Esta ação não pode ser desfeita."
+    "Tem certeza de que deseja restaurar todas as configurações de layout e valores padrão? Isto também restaurará a ordem das seções e os estilos dos cabeçalhos. Esta ação não pode ser desfeita."
   );
   if (confirmation) {
     await browser.storage.sync.remove([
@@ -596,11 +635,11 @@ async function handleRestoreDefaults() {
       "filterLayout",
       "dateRangeDefaults",
       "enableAutomaticDetection",
-      "sidebarSectionOrder", // Remove a ordem personalizada
+      "sidebarSectionOrder",
+      "sectionHeaderStyles",
     ]);
     mainFieldsZone.innerHTML = "";
     moreFieldsZone.innerHTML = "";
-    // Recarrega a página para garantir que a ordem padrão das abas seja aplicada
     window.location.reload();
   }
 }
@@ -882,7 +921,7 @@ function handleDuplicateRule(ruleId) {
   const originalRule = automationRules.find((r) => r.id === ruleId);
   if (!originalRule) return;
 
-  const newRule = JSON.parse(JSON.stringify(originalRule)); // Deep copy
+  const newRule = JSON.parse(JSON.stringify(originalRule));
   newRule.id = Date.now().toString();
   newRule.name = `${originalRule.name} (Cópia)`;
   newRule.isActive = false;
@@ -916,7 +955,17 @@ function reorderAutomationRules() {
  * Popula as abas do editor de regras com os controles de filtro apropriados.
  */
 async function populateRuleEditorFilters() {
-  const priorities = await API.fetchRegulationPriorities();
+  let priorities = [];
+
+  try {
+    const baseUrl = await API.getBaseUrl();
+    if (baseUrl) {
+      priorities = await API.fetchRegulationPriorities();
+    }
+  } catch (error) {
+    console.error("Não foi possível carregar prioridades:", error);
+  }
+
   const sections = [
     "consultations",
     "exams",
@@ -1005,9 +1054,11 @@ document.addEventListener("DOMContentLoaded", async () => {
   const mainTabsContainer = document.querySelector(
     "#filter-tabs-container .tabs"
   );
-  setupTabs(document.getElementById("filter-tabs-container"));
-  setupTabDnD(mainTabsContainer); // Ativa o Drag and Drop para as abas principais
-  setupTabs(document.getElementById("rule-editor-filter-tabs"));
+  Utils.setupTabs(document.getElementById("filter-tabs-container"));
+  if (mainTabsContainer) {
+    setupTabDnD(mainTabsContainer);
+  }
+  Utils.setupTabs(document.getElementById("rule-editor-filter-tabs"));
 
   createNewRuleBtn.addEventListener("click", () => openRuleEditor(null));
   cancelRuleBtn.addEventListener("click", closeRuleEditor);
@@ -1023,6 +1074,15 @@ document.addEventListener("DOMContentLoaded", async () => {
   automationRulesList.addEventListener("dragend", handleDragEnd);
   automationRulesList.addEventListener("dragover", handleDragOver);
   automationRulesList.addEventListener("drop", handleDrop);
+
+  browser.storage.onChanged.addListener((changes, areaName) => {
+    if (areaName === "sync" && changes.enableAutomaticDetection) {
+      const toggle = document.getElementById("enableAutomaticDetection");
+      if (toggle) {
+        toggle.checked = changes.enableAutomaticDetection.newValue;
+      }
+    }
+  });
 });
 
 saveButton.addEventListener("click", saveOptions);
