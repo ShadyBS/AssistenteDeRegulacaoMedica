@@ -56,27 +56,46 @@ REM 2. Gera os ZIPs com a versão correta
 call npm run build:zips
 @echo.
 
-REM 3. Cria a tag git e faz o push
+REM 3. Coleta as notas de release dos commits
+@echo.
+@echo Coletando notas de release desde a tag %GIT_TAG%...
+set NOTES_FILE=release_notes.txt
+(
+    echo Release %TAG%
+    echo.
+    echo ### Mudanças
+    git log %GIT_TAG%..HEAD --pretty=format:"- %s"
+) > %NOTES_FILE%
+
+@echo Notas de release geradas:
+type %NOTES_FILE%
+@echo.
+
+
+REM 4. Cria a tag git e faz o push
 @echo Adicionando arquivos, criando commit e tag %TAG%...
 git add .
-git commit -m "Release %TAG%"
+git commit -F %NOTES_FILE%
 git tag %TAG%
 git push
 git push --tags
 
-REM Aguarda alguns segundos para garantir que a tag foi processada no GitHub
 @echo Aguardando o processamento da tag no GitHub...
 timeout /t 5
 
-REM 4. Publica o release no GitHub (requer GitHub CLI)
+REM 5. Publica o release no GitHub (requer GitHub CLI)
 @echo Publicando release %TAG% no GitHub...
-gh release create %TAG% "dist-zips\AssistenteDeRegulacao-firefox-v%VERSION%.zip" "dist-zips\AssistenteDeRegulacao-chromium-v%EDGE_VERSION%.zip" --title "Release %TAG%" --notes "Release automatico gerado pelo script."
+gh release create %TAG% "dist-zips\AssistenteDeRegulacao-firefox-v%VERSION%.zip" "dist-zips\AssistenteDeRegulacao-chromium-v%EDGE_VERSION%.zip" --title "Release %TAG%" -F %NOTES_FILE%
 
 if %errorlevel% neq 0 (
     echo.
     echo ERRO: Falha ao criar o release no GitHub. Verifique se o GitHub CLI esta instalado e autenticado.
+    del %NOTES_FILE%
     exit /b 1
 )
+
+REM 6. Limpa o arquivo temporário
+del %NOTES_FILE%
 
 echo.
 echo Release %TAG% publicado com sucesso com os arquivos ZIP!
