@@ -475,15 +475,15 @@ export function renderTimeline(events, status) {
             )
             .join("");
 
+          // CORREÇÃO: Verifica se a data é válida antes de a formatar.
+          const dateString =
+            event.date instanceof Date && !isNaN(event.date)
+              ? event.date.toLocaleDateString("pt-BR")
+              : "Data Inválida";
+
           return `
-                    <div class="relative pl-10 timeline-item" data-event-type="${
-                      event.type
-                    }">
-                        <div class="absolute left-4 top-2 -ml-[9px] h-5 w-5 rounded-full bg-${
-                          style.color
-                        }-500 border-2 border-white flex items-center justify-center text-white" title="${
-            style.label
-          }">
+                    <div class="relative pl-10 timeline-item" data-event-type="${event.type}">
+                        <div class="absolute left-4 top-2 -ml-[9px] h-5 w-5 rounded-full bg-${style.color}-500 border-2 border-white flex items-center justify-center text-white" title="${style.label}">
                             <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                                 <path d="${style.icon}" />
                             </svg>
@@ -492,16 +492,10 @@ export function renderTimeline(events, status) {
                             <div class="timeline-header cursor-pointer">
                                 <div class="flex justify-between items-start">
                                     <div>
-                                        <p class="text-sm font-semibold text-${
-                                          style.color
-                                        }-700">${event.title}</p>
-                                        <p class="text-xs text-slate-600">${
-                                          event.summary
-                                        }</p>
+                                        <p class="text-sm font-semibold text-${style.color}-700">${event.title}</p>
+                                        <p class="text-xs text-slate-600">${event.summary}</p>
                                     </div>
-                                    <p class="text-xs font-medium text-slate-500 flex-shrink-0 ml-2">${event.date.toLocaleDateString(
-                                      "pt-BR"
-                                    )}</p>
+                                    <p class="text-xs font-medium text-slate-500 flex-shrink-0 ml-2">${dateString}</p>
                                 </div>
                             </div>
                             <div class="timeline-details-body collapse-section mt-2 pt-2 border-t border-slate-200">
