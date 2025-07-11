@@ -3,6 +3,7 @@ import * as API from "./api.js";
 import { defaultFieldConfig } from "./field-config.js";
 import { filterConfig } from "./filter-config.js";
 import { SectionManager } from "./SectionManager.js";
+import { TimelineManager } from "./TimelineManager.js"; // Importa o novo gestor
 import * as Renderers from "./renderers.js";
 import * as Utils from "./utils.js";
 import * as Search from "./ui/search.js";
@@ -233,6 +234,7 @@ const documentFilterLogic = (data, filters) => {
 
 const sectionConfigurations = {
   "patient-details": {}, // Seção especial sem fetch
+  timeline: {}, // Configuração da Timeline será tratada pelo seu próprio gestor
   consultations: {
     fetchFunction: API.fetchAllConsultations,
     renderFunction: Renderers.renderConsultations,
@@ -344,9 +346,13 @@ async function selectPatient(patientInfo, forceRefresh = false) {
       cpf: Utils.getNestedValue(ficha, "entidadeFisica.entfCPF"),
       cns: ficha.isenNumCadSus,
     });
-    Object.values(sectionManagers).forEach((manager) =>
-      manager.clearAutomationFeedbackAndFilters(false)
-    );
+    Object.values(sectionManagers).forEach((manager) => {
+      if (typeof manager.clearAutomationFeedbackAndFilters === "function") {
+        manager.clearAutomationFeedbackAndFilters(false);
+      } else if (typeof manager.clearAutomation === "function") {
+        manager.clearAutomation();
+      }
+    });
     store.setPatient(ficha, cadsus);
     await updateRecentPatients(store.getPatient());
   } catch (error) {
@@ -523,7 +529,15 @@ function applySectionOrder(order) {
 
 function initializeSections(globalSettings) {
   Object.keys(sectionConfigurations).forEach((key) => {
-    if (key === "patient-details") return; // Não cria SectionManager para a ficha
+    if (key === "patient-details") return;
+    if (key === "timeline") {
+      sectionManagers[key] = new TimelineManager(
+        key,
+        sectionConfigurations[key],
+        globalSettings
+      );
+      return;
+    }
     sectionManagers[key] = new SectionManager(
       key,
       sectionConfigurations[key],
@@ -663,19 +677,16 @@ async function applyAutomationRules(regulationData) {
       );
 
       if (hasMatch) {
-        Object.entries(rule.filterSettings).forEach(([sectionKey, filters]) => {
+        // Aplicar filtros nas seções existentes E na nova timeline
+        Object.entries(sectionManagers).forEach(([key, manager]) => {
           if (
-            sectionManagers[sectionKey] &&
-            typeof sectionManagers[sectionKey].applyAutomationFilters ===
-              "function"
+            rule.filterSettings[key] &&
+            typeof manager.applyAutomationFilters === "function"
           ) {
-            sectionManagers[sectionKey].applyAutomationFilters(
-              filters,
-              rule.name
-            );
+            manager.applyAutomationFilters(rule.filterSettings[key], rule.name);
           }
         });
-        return;
+        return; // Aplica apenas a primeira regra correspondente
       }
     }
   }

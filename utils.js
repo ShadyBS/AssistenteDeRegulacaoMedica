@@ -265,3 +265,104 @@ export function normalizeTimelineData(apiData) {
     )
     .sort((a, b) => b.sortableDate - a.sortableDate);
 }
+
+/**
+ * Filters timeline events based on automation rule filters.
+ * @param {Array<object>} events - The full array of timeline events.
+ * @param {object} automationFilters - The filter settings from an automation rule.
+ * @returns {Array<object>} A new array with the filtered events.
+ */
+export function filterTimelineEvents(events, automationFilters) {
+  if (!automationFilters) return events;
+
+  const checkText = (text, filterValue) => {
+    if (!filterValue) return true; // If filter is empty, it passes
+    const terms = filterValue
+      .toLowerCase()
+      .split(",")
+      .map((t) => t.trim())
+      .filter(Boolean);
+    if (terms.length === 0) return true;
+    const normalizedText = normalizeString(text || "");
+    return terms.some((term) => normalizedText.includes(term));
+  };
+
+  return events.filter((event) => {
+    try {
+      switch (event.type) {
+        case "consultation":
+          const consultFilters = automationFilters.consultations || {};
+          const consultDetailsText = event.details.details
+            .map((d) => d.value)
+            .join(" ");
+          return (
+            checkText(
+              event.details.specialty,
+              consultFilters["consultation-filter-specialty"]
+            ) &&
+            checkText(
+              event.details.professional,
+              consultFilters["consultation-filter-professional"]
+            ) &&
+            checkText(
+              consultDetailsText,
+              consultFilters["consultation-filter-cid"]
+            )
+          );
+
+        case "exam":
+          const examFilters = automationFilters.exams || {};
+          return (
+            checkText(
+              event.details.examName,
+              examFilters["exam-filter-name"]
+            ) &&
+            checkText(
+              event.details.professional,
+              examFilters["exam-filter-professional"]
+            ) &&
+            checkText(
+              event.details.specialty,
+              examFilters["exam-filter-specialty"]
+            )
+          );
+
+        case "appointment":
+          const apptFilters = automationFilters.appointments || {};
+          const apptText = `${event.details.specialty} ${event.details.professional} ${event.details.location}`;
+          return checkText(apptText, apptFilters["appointment-filter-term"]);
+
+        case "regulation":
+          const regFilters = automationFilters.regulations || {};
+          return (
+            checkText(
+              event.details.procedure,
+              regFilters["regulation-filter-procedure"]
+            ) &&
+            checkText(
+              event.details.requester,
+              regFilters["regulation-filter-requester"]
+            ) &&
+            (regFilters["regulation-filter-status"] === "todos" ||
+              !regFilters["regulation-filter-status"] ||
+              event.details.status.toUpperCase() ===
+                regFilters["regulation-filter-status"].toUpperCase()) &&
+            (regFilters["regulation-filter-priority"] === "todas" ||
+              !regFilters["regulation-filter-priority"] ||
+              event.details.priority.toUpperCase() ===
+                regFilters["regulation-filter-priority"].toUpperCase())
+          );
+
+        default:
+          return true;
+      }
+    } catch (e) {
+      console.warn(
+        "Error filtering timeline event, it will be included by default:",
+        event,
+        e
+      );
+      return true;
+    }
+  });
+}
