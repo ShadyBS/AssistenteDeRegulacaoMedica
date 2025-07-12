@@ -473,7 +473,9 @@ export function renderTimeline(events, status) {
               ? event.date.toLocaleDateString("pt-BR")
               : "Data Inválida";
 
+          let topRightDetailsHtml = "";
           let extraInfoHtml = "";
+
           if (event.type === "appointment") {
             const statusStyles = {
               AGENDADO: "text-blue-600",
@@ -484,7 +486,9 @@ export function renderTimeline(events, status) {
             };
             const statusClass =
               statusStyles[event.details.status] || "text-slate-600";
-            extraInfoHtml = `<div class="mt-1 text-xs text-slate-500"><span class="font-semibold ${statusClass}">${event.details.status}</span> às ${event.details.time}</div>`;
+            const timeHtml = `<div class="text-xs text-slate-500">às ${event.details.time}</div>`;
+            const statusHtml = `<div class="mt-1 text-xs font-semibold ${statusClass}">${event.details.status}</div>`;
+            topRightDetailsHtml = timeHtml + statusHtml;
           } else if (event.type === "exam") {
             const statusText = event.details.hasResult
               ? "Com Resultado"
@@ -492,15 +496,86 @@ export function renderTimeline(events, status) {
             const statusClass = event.details.hasResult
               ? "text-green-600"
               : "text-yellow-600";
-            extraInfoHtml = `<div class="mt-1 text-xs text-slate-500">Status: <span class="font-semibold ${statusClass}">${statusText}</span></div>`;
+            topRightDetailsHtml = `<div class="mt-1 text-xs font-semibold ${statusClass}">${statusText}</div>`;
             if (
               event.details.hasResult &&
               event.details.resultIdp &&
               event.details.resultIds
             ) {
-              extraInfoHtml += `<button class="view-exam-result-btn mt-2 w-full text-xs bg-green-100 text-green-800 py-1 rounded hover:bg-green-200" data-idp="${event.details.resultIdp}" data-ids="${event.details.resultIds}">Visualizar Resultado</button>`;
+              topRightDetailsHtml += `<button class="view-exam-result-btn mt-2 text-xs bg-green-100 text-green-800 py-1 px-3 rounded hover:bg-green-200" data-idp="${event.details.resultIdp}" data-ids="${event.details.resultIds}">Visualizar Resultado</button>`;
             }
           }
+
+          // --- INÍCIO DA MODIFICAÇÃO ---
+          if (event.type === "consultation") {
+            const c = event.details;
+            extraInfoHtml = `
+                <div class="timeline-details-body mt-2 pt-2 border-t border-slate-200 space-y-2">
+                    <p class="text-sm text-slate-500">${c.unit}</p>
+                    ${c.details
+                      .map(
+                        (d) => `
+                        <p class="text-xs font-semibold text-slate-500 uppercase">${
+                          d.label
+                        }</p>
+                        <p class="text-sm text-slate-700 whitespace-pre-wrap">${d.value.replace(
+                          /\n/g,
+                          "<br>"
+                        )} <span class="copy-icon" title="Copiar" data-copy-text="${
+                          d.value
+                        }">📄</span></p>
+                    `
+                      )
+                      .join("")}
+                </div>
+            `;
+          } else if (event.type === "regulation") {
+            const r = event.details;
+            const attachmentsHtml =
+              r.attachments && r.attachments.length > 0
+                ? `
+                <div class="mt-2 pt-2 border-t border-slate-100">
+                    <p class="text-xs font-semibold text-slate-500 mb-1">ANEXOS:</p>
+                    <div class="space-y-1">
+                        ${r.attachments
+                          .map(
+                            (att) => `
+                            <button class="view-regulation-attachment-btn w-full text-left text-sm bg-gray-50 text-gray-700 py-1 px-2 rounded hover:bg-gray-100 flex justify-between items-center" data-idp="${
+                              att.idp
+                            }" data-ids="${att.ids}">
+                                <div class="flex items-center gap-2 overflow-hidden">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="flex-shrink-0" viewBox="0 0 16 16"><path d="M4 0h8a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2zM2 2a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H2z"/><path d="M4.5 12.5a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7a.5.5 0 0 1-.5-.5zm0-2a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7a.5.5 0 0 1-.5-.5zm0-2a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7a.5.5 0 0 1-.5-.5z"/></svg>
+                                    <span class="truncate" title="${
+                                      att.description
+                                    } (${att.fileType.toUpperCase()})">${
+                              att.description
+                            } (${att.fileType.toUpperCase()})</span>
+                                </div>
+                                <span class="text-xs text-slate-400 flex-shrink-0 ml-2">${
+                                  att.date
+                                }</span>
+                            </button>
+                        `
+                          )
+                          .join("")}
+                    </div>
+                </div>
+                `
+                : "";
+
+            extraInfoHtml = `
+                <div class="timeline-details-body mt-2 pt-2 border-t border-slate-200 space-y-1 text-sm">
+                    <p><strong>Status:</strong> ${r.status}</p>
+                    <p><strong>Prioridade:</strong> ${r.priority}</p>
+                    <p><strong>CID:</strong> ${r.cid}</p>
+                    <p><strong>Executante:</strong> ${
+                      r.provider || "Não definido"
+                    }</p>
+                    ${attachmentsHtml}
+                </div>
+            `;
+          }
+          // --- FIM DA MODIFICAÇÃO ---
 
           return `
                     <div class="relative pl-10 timeline-item" data-event-type="${event.type}">
@@ -516,7 +591,10 @@ export function renderTimeline(events, status) {
                                         <p class="text-sm font-semibold text-${style.color}-700">${event.title}</p>
                                         <p class="text-xs text-slate-600">${event.summary}</p>
                                     </div>
-                                    <p class="text-xs font-medium text-slate-500 flex-shrink-0 ml-2">${dateString}</p>
+                                    <div class="text-right flex-shrink-0 ml-2">
+                                        <p class="text-xs font-medium text-slate-500">${dateString}</p>
+                                        ${topRightDetailsHtml}
+                                    </div>
                                 </div>
                             </div>
                             ${extraInfoHtml}
