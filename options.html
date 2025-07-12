@@ -103,7 +103,7 @@
         display: block;
       }
       .rule-item {
-        transition: background-color 0.2s;
+        transition: background-color: 0.2s;
       }
       .rule-item.dragging {
         opacity: 0.5;
@@ -529,10 +529,36 @@
                 </div>
               </div>
             </div>
-            <p class="text-slate-600">
-              A Linha do Tempo é configurada para exibir todos os eventos por
-              padrão. Opções futuras de customização aparecerão aqui.
-            </p>
+            <div class="mt-4 p-3 bg-slate-50 rounded-md border">
+              <h4 class="font-medium text-sm mb-2">Período de Busca Padrão</h4>
+              <div class="flex items-center gap-4 text-sm">
+                <div>
+                  <label for="timeline-start-offset"
+                    >Início (meses antes):</label
+                  >
+                  <input
+                    type="number"
+                    id="timeline-start-offset"
+                    class="w-20 p-1 border rounded-md"
+                    value="12"
+                    min="0"
+                  />
+                </div>
+                <div>
+                  <label for="timeline-end-offset">Fim (meses depois):</label>
+                  <input
+                    type="number"
+                    id="timeline-end-offset"
+                    class="w-20 p-1 border rounded-md"
+                    value="0"
+                    min="0"
+                  />
+                </div>
+              </div>
+              <p class="text-xs text-slate-400 mt-2">
+                Use '0' para o mês atual. Os valores são relativos a hoje.
+              </p>
+            </div>
           </div>
 
           <div id="consultations-tab" class="tab-content">

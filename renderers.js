@@ -450,7 +450,7 @@ export function renderTimeline(events, status) {
     case "success":
       if (events.length === 0) {
         contentHtml =
-          '<p class="text-slate-500 text-center">Nenhum evento encontrado para este paciente.</p>';
+          '<p class="text-slate-500 text-center">Nenhum evento encontrado para os filtros aplicados.</p>';
         break;
       }
       contentHtml = '<div class="relative space-y-4">';
@@ -475,7 +475,6 @@ export function renderTimeline(events, status) {
             )
             .join("");
 
-          // CORREÇÃO: Verifica se a data é válida antes de a formatar.
           const dateString =
             event.date instanceof Date && !isNaN(event.date)
               ? event.date.toLocaleDateString("pt-BR")

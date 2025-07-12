@@ -62,14 +62,17 @@ export function clearMessage() {
 
 /**
  * Converte uma string de data em vários formatos para um objeto Date.
- * @param {string} dateString A data no formato "dd/MM/yyyy" ou "yyyy-MM-dd".
+ * @param {string} dateString A data no formato "dd/MM/yyyy" ou "yyyy-MM-dd", podendo conter prefixos.
  * @returns {Date|null} O objeto Date ou null se a string for inválida.
  */
 export function parseDate(dateString) {
   if (!dateString || typeof dateString !== "string") return null;
 
-  if (dateString.includes("-")) {
-    const parts = dateString.split("T")[0].split("-");
+  // CORREÇÃO: Remove qualquer prefixo de texto (ex: "Ag ", "At ") antes de processar a data.
+  const cleanedDateString = dateString.replace(/^[a-zA-Z\s]+/, "").trim();
+
+  if (cleanedDateString.includes("-")) {
+    const parts = cleanedDateString.split("T")[0].split("-");
     if (parts.length === 3) {
       const [year, month, day] = parts.map(Number);
       if (!isNaN(year) && !isNaN(month) && !isNaN(day)) {
@@ -78,8 +81,10 @@ export function parseDate(dateString) {
     }
   }
 
-  if (dateString.includes("/")) {
-    const parts = dateString.split("/");
+  if (cleanedDateString.includes("/")) {
+    // Pega apenas a parte da data, ignorando a hora se houver.
+    const datePart = cleanedDateString.split(" ")[0];
+    const parts = datePart.split("/");
     if (parts.length === 3) {
       const [day, month, year] = parts.map(Number);
       if (!isNaN(day) && !isNaN(month) && !isNaN(year)) {
@@ -178,6 +183,14 @@ export function normalizeTimelineData(apiData) {
   try {
     (apiData.consultations || []).forEach((c) => {
       if (!c || !c.date) return;
+      const searchText = normalizeString(
+        [
+          c.specialty,
+          c.professional,
+          c.unit,
+          ...c.details.map((d) => d.value),
+        ].join(" ")
+      );
       events.push({
         type: "consultation",
         date: parseDate(c.date.split("\n")[0]),
@@ -186,6 +199,7 @@ export function normalizeTimelineData(apiData) {
         summary: `com ${c.professional || "Profissional não informado"}`,
         details: c,
         subDetails: c.details || [],
+        searchText,
       });
     });
   } catch (e) {
@@ -196,6 +210,9 @@ export function normalizeTimelineData(apiData) {
   try {
     (apiData.exams || []).forEach((e) => {
       if (!e || !e.date) return;
+      const searchText = normalizeString(
+        [e.examName, e.professional, e.specialty].join(" ")
+      );
       events.push({
         type: "exam",
         date: parseDate(e.date),
@@ -209,6 +226,7 @@ export function normalizeTimelineData(apiData) {
             value: e.hasResult ? "Disponível" : "Pendente",
           },
         ],
+        searchText,
       });
     });
   } catch (e) {
@@ -219,6 +237,9 @@ export function normalizeTimelineData(apiData) {
   try {
     (apiData.appointments || []).forEach((a) => {
       if (!a || !a.date) return;
+      const searchText = normalizeString(
+        [a.specialty, a.description, a.location, a.professional].join(" ")
+      );
       events.push({
         type: "appointment",
         date: parseDate(a.date),
@@ -230,6 +251,7 @@ export function normalizeTimelineData(apiData) {
           { label: "Status", value: a.status || "N/A" },
           { label: "Hora", value: a.time || "N/A" },
         ],
+        searchText,
       });
     });
   } catch (e) {
@@ -240,6 +262,9 @@ export function normalizeTimelineData(apiData) {
   try {
     (apiData.regulations || []).forEach((r) => {
       if (!r || !r.date) return;
+      const searchText = normalizeString(
+        [r.procedure, r.requester, r.provider, r.cid].join(" ")
+      );
       events.push({
         type: "regulation",
         date: parseDate(r.date),
@@ -251,6 +276,7 @@ export function normalizeTimelineData(apiData) {
           { label: "Status", value: r.status || "N/A" },
           { label: "Prioridade", value: r.priority || "N/A" },
         ],
+        searchText,
       });
     });
   } catch (e) {

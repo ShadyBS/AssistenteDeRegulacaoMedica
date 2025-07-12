@@ -41,6 +41,9 @@ export class TimelineManager {
       automationFeedback: document.getElementById(
         "timeline-automation-feedback"
       ),
+      dateInitial: document.getElementById("timeline-date-initial"),
+      dateFinal: document.getElementById("timeline-date-final"),
+      searchKeyword: document.getElementById("timeline-search-keyword"),
     };
   }
 
@@ -50,8 +53,14 @@ export class TimelineManager {
       this.toggleSection()
     );
 
+    this.elements.searchKeyword?.addEventListener(
+      "input",
+      Utils.debounce(() => this.render(), 300)
+    );
+    this.elements.dateInitial?.addEventListener("change", () => this.render());
+    this.elements.dateFinal?.addEventListener("change", () => this.render());
+
     this.elements.section?.addEventListener("click", (event) => {
-      // For expanding/collapsing timeline item details
       const header = event.target.closest(".timeline-header");
       if (header) {
         const details = header.nextElementSibling;
@@ -61,7 +70,6 @@ export class TimelineManager {
         return;
       }
 
-      // For toggling the focused timeline view
       const toggleFilterBtn = event.target.closest(
         "#timeline-toggle-filter-btn"
       );
@@ -83,12 +91,28 @@ export class TimelineManager {
   setPatient(patient) {
     this.currentPatient = patient;
     this.allData = [];
-    this.clearAutomation(); // Reset automation on patient change
+    this.clearAutomation();
     this.elements.content.innerHTML = "";
+    this.applyDefaultDateRange();
 
     if (this.elements.section) {
       this.elements.section.style.display = patient ? "block" : "none";
     }
+  }
+
+  applyDefaultDateRange() {
+    const dateRangeDefaults =
+      this.globalSettings.userPreferences.dateRangeDefaults;
+    const range = dateRangeDefaults.timeline || { start: -12, end: 0 };
+
+    if (this.elements.dateInitial)
+      this.elements.dateInitial.valueAsDate = Utils.calculateRelativeDate(
+        range.start
+      );
+    if (this.elements.dateFinal)
+      this.elements.dateFinal.valueAsDate = Utils.calculateRelativeDate(
+        range.end
+      );
   }
 
   async fetchData() {
@@ -103,7 +127,7 @@ export class TimelineManager {
       const params = {
         isenPK: `${this.currentPatient.isenPK.idp}-${this.currentPatient.isenPK.ids}`,
         isenFullPKCrypto: this.currentPatient.isenFullPKCrypto,
-        dataInicial: "01/01/1900",
+        dataInicial: "01/01/1900", // Busca sempre o histórico completo
         dataFinal: new Date().toLocaleDateString("pt-BR"),
       };
 
@@ -120,16 +144,47 @@ export class TimelineManager {
     }
   }
 
+  getFilterValues() {
+    return {
+      startDate: this.elements.dateInitial?.value,
+      endDate: this.elements.dateFinal?.value,
+      keyword: Utils.normalizeString(this.elements.searchKeyword?.value || ""),
+    };
+  }
+
   render() {
-    if (this.allData.length === 0) {
+    if (this.allData.length === 0 && !this.isLoading) {
       Renderers.renderTimeline([], "empty");
       return;
     }
 
     let dataToRender = this.allData;
+    const filters = this.getFilterValues();
+
+    // Client-side filtering
+    if (filters.startDate) {
+      const startDate = new Date(filters.startDate);
+      dataToRender = dataToRender.filter(
+        (event) => event.sortableDate >= startDate
+      );
+    }
+    if (filters.endDate) {
+      const endDate = new Date(filters.endDate);
+      endDate.setHours(23, 59, 59, 999); // Garante que o dia final seja incluído
+      dataToRender = dataToRender.filter(
+        (event) => event.sortableDate <= endDate
+      );
+    }
+    if (filters.keyword) {
+      dataToRender = dataToRender.filter((event) =>
+        event.searchText.includes(filters.keyword)
+      );
+    }
+
+    // Automation rule filtering
     if (this.isFilteredView && this.activeRuleFilters) {
       dataToRender = Utils.filterTimelineEvents(
-        this.allData,
+        dataToRender,
         this.activeRuleFilters
       );
     }
@@ -148,7 +203,7 @@ export class TimelineManager {
   applyAutomationFilters(filters, ruleName) {
     this.activeRuleFilters = filters;
     this.activeRuleName = ruleName;
-    this.isFilteredView = false; // Start with the complete view
+    this.isFilteredView = false;
 
     if (this.elements.automationFeedback) {
       this.elements.automationFeedback.innerHTML = `
@@ -162,7 +217,6 @@ export class TimelineManager {
       this.elements.automationFeedback.classList.remove("hidden");
     }
 
-    // If data is already loaded, re-render to show the option
     if (this.allData.length > 0) {
       this.render();
     }
