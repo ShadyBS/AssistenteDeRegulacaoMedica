@@ -130,7 +130,8 @@ export class SectionManager {
       const sortHeader = target.closest(".sort-header");
       if (sortHeader) this.handleSort(sortHeader.dataset.sortKey);
 
-      if (target.id === `${this.prefix}-save-filter-btn`) this.saveFilterSet();
+      if (target.closest(`#${this.prefix}-save-filter-btn`))
+        this.saveFilterSet();
       if (target.closest(`#${this.prefix}-delete-filter-btn`))
         this.deleteFilterSet();
       if (target.closest(".clear-automation-btn")) {
