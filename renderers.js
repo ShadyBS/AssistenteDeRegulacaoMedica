@@ -412,22 +412,26 @@ export function renderTimeline(events, status) {
   const eventTypeStyles = {
     consultation: {
       label: "Consulta",
-      color: "blue",
+      bgColorClass: "bg-blue-100",
+      iconColorClass: "text-blue-600",
       icon: "M11 2v2M5 2v2M5 3H4a2 2 0 0 0-2 2v4a6 6 0 0 0 12 0V5a2 2 0 0 0-2-2h-1M8 15a6 6 0 0 0 12 0v-3m-6-5a2 2 0 1 0 0 4 2 2 0 0 0 0-4Z",
     },
     exam: {
       label: "Exame",
-      color: "green",
+      bgColorClass: "bg-green-100",
+      iconColorClass: "text-green-600",
       icon: "M6 18h8M3 22h18M14 22a7 7 0 1 0 0-14h-1M9 14h2M9 12a2 2 0 0 1-2-2V6h6v4a2 2 0 0 1-2 2ZM12 6V3a1 1 0 0 0-1-1H9a1 1 0 0 0-1 1v3",
     },
     appointment: {
       label: "Agendamento",
-      color: "purple",
+      bgColorClass: "bg-purple-100",
+      iconColorClass: "text-purple-600",
       icon: "M8 2v4M16 2v4M3 10h18M3 4h18v16H3zM9 16l2 2 4-4",
     },
     regulation: {
       label: "Regulação",
-      color: "red",
+      bgColorClass: "bg-red-100",
+      iconColorClass: "text-red-600",
       icon: "M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1zM9 12l2 2 4-4",
     },
   };
@@ -500,8 +504,8 @@ export function renderTimeline(events, status) {
 
           return `
                     <div class="relative pl-10 timeline-item" data-event-type="${event.type}">
-                        <div class="absolute left-4 top-2 -ml-[9px] h-5 w-5 rounded-full bg-${style.color}-500 border-2 border-white flex items-center justify-center" title="${style.label}">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <div class="absolute left-4 top-2 -ml-[15px] h-[30px] w-[30px] rounded-full ${style.bgColorClass} border-2 border-white flex items-center justify-center ${style.iconColorClass}" title="${style.label}">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                                 <path d="${style.icon}" />
                             </svg>
                         </div>
