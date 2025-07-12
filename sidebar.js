@@ -24,98 +24,102 @@ const sectionIcons = {
 let currentRegulationData = null;
 let sectionManagers = {}; // Objeto para armazenar instâncias de SectionManager
 
+// --- FUNÇÃO AUXILIAR DE FILTRAGEM ---
+/**
+ * Aplica um filtro de texto normalizado a um array de dados.
+ * @param {Array} items - O array de itens a ser filtrado.
+ * @param {string} text - O texto de busca (pode conter múltiplos termos separados por vírgula).
+ * @param {Function} getFieldContent - Uma função que recebe um item e retorna a string a ser pesquisada.
+ * @returns {Array} O array de itens filtrado.
+ */
+const applyNormalizedTextFilter = (items, text, getFieldContent) => {
+  const searchTerms = Utils.normalizeString(text)
+    .split(",")
+    .map((t) => t.trim())
+    .filter(Boolean);
+  if (searchTerms.length === 0) return items;
+  return items.filter((item) => {
+    const content = Utils.normalizeString(getFieldContent(item));
+    return searchTerms.some((term) => content.includes(term));
+  });
+};
+
 // --- LÓGICA DE FILTRAGEM ---
 const consultationFilterLogic = (data, filters) => {
   let filteredData = [...data];
-  const keyword = (filters["consultation-filter-keyword"] || "")
-    .toLowerCase()
-    .trim();
-  const hideNoShows = filters["hide-no-show-checkbox"];
-  const cid = (filters["consultation-filter-cid"] || "").toLowerCase().trim();
-  const specialty = (filters["consultation-filter-specialty"] || "")
-    .toLowerCase()
-    .trim();
-  const professional = (filters["consultation-filter-professional"] || "")
-    .toLowerCase()
-    .trim();
-  const unit = (filters["consultation-filter-unit"] || "").toLowerCase().trim();
-  if (hideNoShows) {
+  if (filters["hide-no-show-checkbox"]) {
     filteredData = filteredData.filter((c) => !c.isNoShow);
   }
-  const applyTextFilter = (items, text, getFieldContent) => {
-    const searchTerms = text
-      .split(",")
-      .map((t) => t.trim())
-      .filter(Boolean);
-    if (searchTerms.length === 0) return items;
-    return items.filter((item) => {
-      const content = getFieldContent(item).toLowerCase();
-      return searchTerms.some((term) => content.includes(term));
-    });
-  };
-  filteredData = applyTextFilter(filteredData, keyword, (c) =>
-    [
-      c.specialty,
-      c.professional,
-      c.unit,
-      ...c.details.map((d) => `${d.label} ${d.value}`),
-    ].join(" ")
-  );
-  filteredData = applyTextFilter(filteredData, cid, (c) =>
-    c.details.map((d) => d.value).join(" ")
-  );
-  filteredData = applyTextFilter(
+
+  filteredData = applyNormalizedTextFilter(
     filteredData,
-    specialty,
+    filters["consultation-filter-keyword"],
+    (c) =>
+      [
+        c.specialty,
+        c.professional,
+        c.unit,
+        ...c.details.map((d) => `${d.label} ${d.value}`),
+      ].join(" ")
+  );
+
+  filteredData = applyNormalizedTextFilter(
+    filteredData,
+    filters["consultation-filter-cid"],
+    (c) => c.details.map((d) => d.value).join(" ")
+  );
+
+  filteredData = applyNormalizedTextFilter(
+    filteredData,
+    filters["consultation-filter-specialty"],
     (c) => c.specialty || ""
   );
-  filteredData = applyTextFilter(
+  filteredData = applyNormalizedTextFilter(
     filteredData,
-    professional,
+    filters["consultation-filter-professional"],
     (c) => c.professional || ""
   );
-  filteredData = applyTextFilter(filteredData, unit, (c) => c.unit || "");
+  filteredData = applyNormalizedTextFilter(
+    filteredData,
+    filters["consultation-filter-unit"],
+    (c) => c.unit || ""
+  );
+
   return filteredData;
 };
 
 const examFilterLogic = (data, filters) => {
   let filteredData = [...data];
-  const name = (filters["exam-filter-name"] || "").toLowerCase().trim();
-  const professional = (filters["exam-filter-professional"] || "")
-    .toLowerCase()
-    .trim();
-  const specialty = (filters["exam-filter-specialty"] || "")
-    .toLowerCase()
-    .trim();
-  const applyTextFilter = (items, text, field) => {
-    const searchTerms = text
-      .split(",")
-      .map((t) => t.trim())
-      .filter(Boolean);
-    if (searchTerms.length === 0) return items;
-    return items.filter((item) => {
-      const content = (item[field] || "").toLowerCase();
-      return searchTerms.some((term) => content.includes(term));
-    });
-  };
-  filteredData = applyTextFilter(filteredData, name, "examName");
-  filteredData = applyTextFilter(filteredData, professional, "professional");
-  filteredData = applyTextFilter(filteredData, specialty, "specialty");
+
+  filteredData = applyNormalizedTextFilter(
+    filteredData,
+    filters["exam-filter-name"],
+    (item) => item.examName
+  );
+  filteredData = applyNormalizedTextFilter(
+    filteredData,
+    filters["exam-filter-professional"],
+    (item) => item.professional
+  );
+  filteredData = applyNormalizedTextFilter(
+    filteredData,
+    filters["exam-filter-specialty"],
+    (item) => item.specialty
+  );
+
   return filteredData;
 };
 
 const appointmentFilterLogic = (data, filters, fetchType) => {
   let filteredData = [...data];
   const status = filters["appointment-filter-status"] || "todos";
-  const term = (filters["appointment-filter-term"] || "").toLowerCase().trim();
-  const location = (filters["appointment-filter-location"] || "")
-    .toLowerCase()
-    .trim();
+
   if (status !== "todos") {
     filteredData = filteredData.filter(
       (a) => (a.status || "").toUpperCase() === status.toUpperCase()
     );
   }
+
   if (fetchType === "consultas") {
     filteredData = filteredData.filter(
       (a) => !a.type.toUpperCase().includes("EXAME")
@@ -125,27 +129,18 @@ const appointmentFilterLogic = (data, filters, fetchType) => {
       a.type.toUpperCase().includes("EXAME")
     );
   }
-  if (term) {
-    const searchTerms = term
-      .split(",")
-      .map((t) => t.trim())
-      .filter(Boolean);
-    filteredData = filteredData.filter((a) => {
-      const fullText = [a.professional, a.specialty, a.description]
-        .join(" ")
-        .toLowerCase();
-      return searchTerms.some((t) => fullText.includes(t));
-    });
-  }
-  if (location) {
-    const searchTerms = location
-      .split(",")
-      .map((t) => t.trim())
-      .filter(Boolean);
-    filteredData = filteredData.filter((a) =>
-      searchTerms.some((t) => (a.location || "").toLowerCase().includes(t))
-    );
-  }
+
+  filteredData = applyNormalizedTextFilter(
+    filteredData,
+    filters["appointment-filter-term"],
+    (a) => [a.professional, a.specialty, a.description].join(" ")
+  );
+  filteredData = applyNormalizedTextFilter(
+    filteredData,
+    filters["appointment-filter-location"],
+    (a) => a.location || ""
+  );
+
   return filteredData;
 };
 
@@ -153,48 +148,35 @@ const regulationFilterLogic = (data, filters) => {
   let filteredData = [...data];
   const status = filters["regulation-filter-status"] || "todos";
   const priority = filters["regulation-filter-priority"] || "todas";
-  const procedureTerms = (filters["regulation-filter-procedure"] || "")
-    .toLowerCase()
-    .trim();
-  const requesterTerms = (filters["regulation-filter-requester"] || "")
-    .toLowerCase()
-    .trim();
+
   if (status !== "todos") {
     filteredData = filteredData.filter(
       (item) => (item.status || "").toUpperCase() === status.toUpperCase()
     );
   }
+
   if (priority !== "todas") {
     filteredData = filteredData.filter(
       (item) => (item.priority || "").toUpperCase() === priority.toUpperCase()
     );
   }
-  if (procedureTerms) {
-    const searchTerms = procedureTerms
-      .split(",")
-      .map((t) => t.trim())
-      .filter(Boolean);
-    filteredData = filteredData.filter((item) =>
-      searchTerms.some((t) => (item.procedure || "").toLowerCase().includes(t))
-    );
-  }
-  if (requesterTerms) {
-    const searchTerms = requesterTerms
-      .split(",")
-      .map((t) => t.trim())
-      .filter(Boolean);
-    filteredData = filteredData.filter((item) =>
-      searchTerms.some((t) => (item.requester || "").toLowerCase().includes(t))
-    );
-  }
+
+  filteredData = applyNormalizedTextFilter(
+    filteredData,
+    filters["regulation-filter-procedure"],
+    (item) => item.procedure || ""
+  );
+  filteredData = applyNormalizedTextFilter(
+    filteredData,
+    filters["regulation-filter-requester"],
+    (item) => item.requester || ""
+  );
+
   return filteredData;
 };
 
 const documentFilterLogic = (data, filters) => {
   let filteredData = [...data];
-  const keyword = (filters["document-filter-keyword"] || "")
-    .toLowerCase()
-    .trim();
 
   // Filtro por data (client-side)
   const startDateValue = document.getElementById(
@@ -222,12 +204,12 @@ const documentFilterLogic = (data, filters) => {
     }
   }
 
-  // Filtro por palavra-chave
-  if (keyword) {
-    filteredData = filteredData.filter((doc) =>
-      (doc.description || "").toLowerCase().includes(keyword)
-    );
-  }
+  // Filtro por palavra-chave normalizada
+  filteredData = applyNormalizedTextFilter(
+    filteredData,
+    filters["document-filter-keyword"],
+    (doc) => doc.description || ""
+  );
 
   return filteredData;
 };
