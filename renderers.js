@@ -412,24 +412,28 @@ export function renderTimeline(events, status) {
   const eventTypeStyles = {
     consultation: {
       label: "Consulta",
+      color: "blue",
       bgColorClass: "bg-blue-100",
       iconColorClass: "text-blue-600",
       icon: "M11 2v2M5 2v2M5 3H4a2 2 0 0 0-2 2v4a6 6 0 0 0 12 0V5a2 2 0 0 0-2-2h-1M8 15a6 6 0 0 0 12 0v-3m-6-5a2 2 0 1 0 0 4 2 2 0 0 0 0-4Z",
     },
     exam: {
       label: "Exame",
+      color: "green",
       bgColorClass: "bg-green-100",
       iconColorClass: "text-green-600",
       icon: "M6 18h8M3 22h18M14 22a7 7 0 1 0 0-14h-1M9 14h2M9 12a2 2 0 0 1-2-2V6h6v4a2 2 0 0 1-2 2ZM12 6V3a1 1 0 0 0-1-1H9a1 1 0 0 0-1 1v3",
     },
     appointment: {
       label: "Agendamento",
+      color: "purple",
       bgColorClass: "bg-purple-100",
       iconColorClass: "text-purple-600",
       icon: "M8 2v4M16 2v4M3 10h18M3 4h18v16H3zM9 16l2 2 4-4",
     },
     regulation: {
       label: "Regulação",
+      color: "red",
       bgColorClass: "bg-red-100",
       iconColorClass: "text-red-600",
       icon: "M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1zM9 12l2 2 4-4",
@@ -437,6 +441,7 @@ export function renderTimeline(events, status) {
     // --- INÍCIO DA MODIFICAÇÃO ---
     document: {
       label: "Documento",
+      color: "gray",
       bgColorClass: "bg-gray-100",
       iconColorClass: "text-gray-600",
       icon: "M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z M14 2v6h6",
@@ -511,6 +516,12 @@ export function renderTimeline(events, status) {
               event.details.resultIds
             ) {
               topRightDetailsHtml += `<button class="view-exam-result-btn mt-2 text-xs bg-green-100 text-green-800 py-1 px-3 rounded hover:bg-green-200" data-idp="${event.details.resultIdp}" data-ids="${event.details.resultIds}">Visualizar Resultado</button>`;
+            }
+          } else if (event.type === "regulation") {
+            const r = event.details;
+            if (r.idp && r.ids) {
+              const icon = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-search-2"><path d="M14 2v6h6"/><path d="M4 22h14a2 2 0 0 0 2-2V7.5L14.5 2H6a2 2 0 0 0-2 2v4"/><path d="M5 17a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/><path d="m9 21-1.5-1.5"/></svg>`;
+              topRightDetailsHtml = `<button class="view-regulation-details-btn mt-2 text-xs bg-gray-100 text-gray-800 py-1 px-3 rounded hover:bg-gray-200 flex items-center gap-1" data-idp="${r.idp}" data-ids="${r.ids}">${icon}<span>Detalhes</span></button>`;
             }
           }
 
