@@ -454,7 +454,6 @@ export function renderTimeline(events, status) {
         break;
       }
       contentHtml = '<div class="relative space-y-4">';
-      // Vertical line
       contentHtml +=
         '<div class="absolute left-4 top-2 bottom-2 w-0.5 bg-slate-200"></div>';
 
@@ -465,25 +464,44 @@ export function renderTimeline(events, status) {
             color: "gray",
             icon: "",
           };
-          const detailsHtml = (event.subDetails || [])
-            .map(
-              (detail) =>
-                `<div class="flex justify-between text-xs mt-1">
-                        <span class="font-semibold text-slate-500">${detail.label}:</span>
-                        <span class="text-slate-700">${detail.value}</span>
-                    </div>`
-            )
-            .join("");
-
           const dateString =
             event.date instanceof Date && !isNaN(event.date)
               ? event.date.toLocaleDateString("pt-BR")
               : "Data Inválida";
 
+          let extraInfoHtml = "";
+          if (event.type === "appointment") {
+            const statusStyles = {
+              AGENDADO: "text-blue-600",
+              PRESENTE: "text-green-600",
+              FALTOU: "text-red-600",
+              CANCELADO: "text-yellow-600",
+              ATENDIDO: "text-purple-600",
+            };
+            const statusClass =
+              statusStyles[event.details.status] || "text-slate-600";
+            extraInfoHtml = `<div class="mt-1 text-xs text-slate-500"><span class="font-semibold ${statusClass}">${event.details.status}</span> às ${event.details.time}</div>`;
+          } else if (event.type === "exam") {
+            const statusText = event.details.hasResult
+              ? "Com Resultado"
+              : "Sem Resultado";
+            const statusClass = event.details.hasResult
+              ? "text-green-600"
+              : "text-yellow-600";
+            extraInfoHtml = `<div class="mt-1 text-xs text-slate-500">Status: <span class="font-semibold ${statusClass}">${statusText}</span></div>`;
+            if (
+              event.details.hasResult &&
+              event.details.resultIdp &&
+              event.details.resultIds
+            ) {
+              extraInfoHtml += `<button class="view-exam-result-btn mt-2 w-full text-xs bg-green-100 text-green-800 py-1 rounded hover:bg-green-200" data-idp="${event.details.resultIdp}" data-ids="${event.details.resultIds}">Visualizar Resultado</button>`;
+            }
+          }
+
           return `
                     <div class="relative pl-10 timeline-item" data-event-type="${event.type}">
-                        <div class="absolute left-4 top-2 -ml-[9px] h-5 w-5 rounded-full bg-${style.color}-500 border-2 border-white flex items-center justify-center text-white" title="${style.label}">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <div class="absolute left-4 top-2 -ml-[9px] h-5 w-5 rounded-full bg-${style.color}-500 border-2 border-white flex items-center justify-center" title="${style.label}">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                                 <path d="${style.icon}" />
                             </svg>
                         </div>
@@ -497,9 +515,7 @@ export function renderTimeline(events, status) {
                                     <p class="text-xs font-medium text-slate-500 flex-shrink-0 ml-2">${dateString}</p>
                                 </div>
                             </div>
-                            <div class="timeline-details-body collapse-section mt-2 pt-2 border-t border-slate-200">
-                                ${detailsHtml}
-                            </div>
+                            ${extraInfoHtml}
                         </div>
                     </div>
                 `;
