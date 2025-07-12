@@ -604,7 +604,22 @@ export class SectionManager {
   applyAutomationFilters(filterSettings, ruleName) {
     if (!filterSettings) return;
 
+    // Aplica o período de busca da regra, se definido
+    if (filterSettings.dateRange) {
+      const { start, end } = filterSettings.dateRange;
+      if (this.elements.dateInitial && start !== null) {
+        this.elements.dateInitial.valueAsDate =
+          Utils.calculateRelativeDate(start);
+      }
+      if (this.elements.dateFinal && end !== null) {
+        this.elements.dateFinal.valueAsDate = Utils.calculateRelativeDate(end);
+      }
+    }
+
     Object.entries(filterSettings).forEach(([filterId, value]) => {
+      // Pula a propriedade dateRange que já foi tratada
+      if (filterId === "dateRange") return;
+
       const el = document.getElementById(filterId);
       if (el) {
         if (el.type === "checkbox") {

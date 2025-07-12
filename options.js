@@ -5,7 +5,7 @@ import * as Utils from "./utils.js";
 import * as API from "./api.js"; // Importa a API para buscar prioridades
 
 // --- Constantes ---
-const CONFIG_VERSION = "1.2"; // Versão da estrutura de configuração
+const CONFIG_VERSION = "1.3"; // Versão da estrutura de configuração
 
 // --- Variáveis de Estado ---
 let automationRules = [];
@@ -806,7 +806,25 @@ async function openRuleEditor(ruleId = null) {
     ruleTriggersInput.value = rule.triggerKeywords.join(", ");
 
     Object.entries(rule.filterSettings).forEach(([sectionKey, filters]) => {
+      // Preenche os filtros de data
+      if (filters.dateRange) {
+        const startOffsetEl = document.getElementById(
+          `rule-${sectionKey}-start-offset`
+        );
+        const endOffsetEl = document.getElementById(
+          `rule-${sectionKey}-end-offset`
+        );
+        if (startOffsetEl && filters.dateRange.start !== null) {
+          startOffsetEl.value = Math.abs(filters.dateRange.start);
+        }
+        if (endOffsetEl && filters.dateRange.end !== null) {
+          endOffsetEl.value = filters.dateRange.end;
+        }
+      }
+
+      // Preenche outros filtros
       Object.entries(filters).forEach(([filterId, value]) => {
+        if (filterId === "dateRange") return;
         const element = document.getElementById(
           `rule-${sectionKey}-${filterId}`
         );
@@ -824,8 +842,23 @@ async function openRuleEditor(ruleId = null) {
     ruleNameInput.value = "";
     ruleTriggersInput.value = "";
 
+    // Limpa todos os campos, incluindo os de data
+    const sections = [
+      "consultations",
+      "exams",
+      "appointments",
+      "regulations",
+      "documents",
+    ];
+    sections.forEach((sectionKey) => {
+      document.getElementById(`rule-${sectionKey}-start-offset`).value = "";
+      document.getElementById(`rule-${sectionKey}-end-offset`).value = "";
+    });
+
     document
-      .querySelectorAll('#rule-editor-modal input[type="text"]')
+      .querySelectorAll(
+        '#rule-editor-modal input[type="text"]:not(.rule-date-range-input), #rule-editor-modal input[type="search"]:not(.rule-date-range-input)'
+      )
       .forEach((el) => (el.value = ""));
     document
       .querySelectorAll('#rule-editor-modal input[type="checkbox"]')
@@ -873,6 +906,25 @@ function handleSaveRule() {
 
   sections.forEach((sectionKey) => {
     filterSettings[sectionKey] = {};
+
+    // Salva as configurações de data
+    const startOffsetEl = document.getElementById(
+      `rule-${sectionKey}-start-offset`
+    );
+    const endOffsetEl = document.getElementById(
+      `rule-${sectionKey}-end-offset`
+    );
+    const startVal = startOffsetEl.value;
+    const endVal = endOffsetEl.value;
+
+    if (startVal !== "" || endVal !== "") {
+      filterSettings[sectionKey].dateRange = {
+        start: startVal !== "" ? -parseInt(startVal, 10) : null,
+        end: endVal !== "" ? parseInt(endVal, 10) : null,
+      };
+    }
+
+    // Salva as configurações dos outros filtros
     const sectionFilters = filterConfig[sectionKey] || [];
     sectionFilters.forEach((filter) => {
       if (filter.type === "component") return;
@@ -984,7 +1036,12 @@ async function populateRuleEditorFilters() {
   sections.forEach((sectionKey) => {
     const container = document.getElementById(`${sectionKey}-rule-editor-tab`);
     if (!container) return;
-    container.innerHTML = "";
+    container.innerHTML = ""; // Limpa o conteúdo anterior
+
+    // Adiciona o componente de data
+    const dateRangeElement = createDateRangeElementForRuleEditor(sectionKey);
+    container.appendChild(dateRangeElement);
+
     const sectionFilters = filterConfig[sectionKey] || [];
 
     sectionFilters.forEach((filter) => {
@@ -1051,6 +1108,31 @@ function createFilterElementForRuleEditor(filter, sectionKey, priorities) {
       break;
   }
   container.innerHTML = elementHtml;
+  return container;
+}
+
+/**
+ * Cria o componente de intervalo de datas para o editor de regras.
+ * @param {string} sectionKey - A chave da seção.
+ * @returns {HTMLElement} O elemento HTML do componente.
+ */
+function createDateRangeElementForRuleEditor(sectionKey) {
+  const container = document.createElement("div");
+  container.className = "p-2 bg-slate-50 rounded-md border mb-4";
+  container.innerHTML = `
+    <h5 class="font-medium text-xs text-slate-500 mb-2">Período de Busca Automático</h5>
+    <div class="flex items-center gap-4 text-sm">
+        <div>
+            <label for="rule-${sectionKey}-start-offset" class="text-xs">Início (meses antes):</label>
+            <input type="number" id="rule-${sectionKey}-start-offset" class="w-20 p-1 border rounded-md rule-date-range-input" placeholder="Padrão" min="0">
+        </div>
+        <div>
+            <label for="rule-${sectionKey}-end-offset" class="text-xs">Fim (meses depois):</label>
+            <input type="number" id="rule-${sectionKey}-end-offset" class="w-20 p-1 border rounded-md rule-date-range-input" placeholder="Padrão" min="0">
+        </div>
+    </div>
+    <p class="text-xs text-slate-400 mt-2">Deixe em branco para usar o padrão global da seção.</p>
+  `;
   return container;
 }
 
