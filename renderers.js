@@ -434,6 +434,14 @@ export function renderTimeline(events, status) {
       iconColorClass: "text-red-600",
       icon: "M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1zM9 12l2 2 4-4",
     },
+    // --- INÍCIO DA MODIFICAÇÃO ---
+    document: {
+      label: "Documento",
+      bgColorClass: "bg-gray-100",
+      iconColorClass: "text-gray-600",
+      icon: "M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z M14 2v6h6",
+    },
+    // --- FIM DA MODIFICAÇÃO ---
   };
 
   let contentHtml = "";
@@ -506,7 +514,6 @@ export function renderTimeline(events, status) {
             }
           }
 
-          // --- INÍCIO DA MODIFICAÇÃO ---
           if (event.type === "consultation") {
             const c = event.details;
             extraInfoHtml = `
@@ -572,6 +579,16 @@ export function renderTimeline(events, status) {
                       r.provider || "Não definido"
                     }</p>
                     ${attachmentsHtml}
+                </div>
+            `;
+            // --- INÍCIO DA MODIFICAÇÃO ---
+          } else if (event.type === "document") {
+            const doc = event.details;
+            extraInfoHtml = `
+                <div class="timeline-details-body mt-2 pt-2 border-t border-slate-200">
+                    <button class="view-document-btn w-full text-sm bg-gray-100 text-gray-800 py-1 rounded hover:bg-gray-200" data-idp="${doc.idp}" data-ids="${doc.ids}">
+                        Visualizar Documento
+                    </button>
                 </div>
             `;
           }

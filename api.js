@@ -1046,6 +1046,9 @@ export async function fetchAllTimelineData({
     }),
     fetchAppointments({ isenPK, dataInicial, dataFinal }),
     fetchAllRegulations({ isenPK, dataInicial, dataFinal, type: "all" }),
+    // --- INÍCIO DA MODIFICAÇÃO ---
+    fetchDocuments({ isenPK }),
+    // --- FIM DA MODIFICAÇÃO ---
   ]);
 
   const getValueOrDefault = (result, defaultValue = []) => {
@@ -1065,5 +1068,8 @@ export async function fetchAllTimelineData({
     exams: getValueOrDefault(results[1]),
     appointments: getValueOrDefault(results[2]),
     regulations: getValueOrDefault(results[3]),
+    // --- INÍCIO DA MODIFICAÇÃO ---
+    documents: getValueOrDefault(results[4]),
+    // --- FIM DA MODIFICAÇÃO ---
   };
 }

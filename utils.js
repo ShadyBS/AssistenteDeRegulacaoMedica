@@ -283,6 +283,28 @@ export function normalizeTimelineData(apiData) {
     console.error("Failed to normalize regulation data for timeline:", e);
   }
 
+  // --- INÍCIO DA MODIFICAÇÃO ---
+  // Normalize Documents
+  try {
+    (apiData.documents || []).forEach((doc) => {
+      if (!doc || !doc.date) return;
+      const searchText = normalizeString(doc.description || "");
+      events.push({
+        type: "document",
+        date: parseDate(doc.date),
+        sortableDate: parseDate(doc.date),
+        title: `Documento: ${doc.description || "Sem descrição"}`,
+        summary: `Tipo: ${doc.fileType.toUpperCase()}`,
+        details: doc,
+        subDetails: [],
+        searchText,
+      });
+    });
+  } catch (e) {
+    console.error("Failed to normalize document data for timeline:", e);
+  }
+  // --- FIM DA MODIFICAÇÃO ---
+
   // Filter out events with invalid dates and sort all events by date, newest first.
   return events
     .filter(
