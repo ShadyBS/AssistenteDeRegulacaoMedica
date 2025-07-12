@@ -93,6 +93,9 @@ export class TimelineManager {
     this.allData = [];
     this.clearAutomation();
     this.elements.content.innerHTML = "";
+    if (this.elements.searchKeyword) {
+      this.elements.searchKeyword.value = "";
+    }
     this.applyDefaultDateRange();
 
     if (this.elements.section) {

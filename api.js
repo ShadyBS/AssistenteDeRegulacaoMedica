@@ -1034,42 +1034,48 @@ export async function fetchAllTimelineData({
   dataInicial,
   dataFinal,
 }) {
-  // Using Promise.allSettled to ensure that if one API call fails, the others can still succeed.
-  const results = await Promise.allSettled([
-    fetchAllConsultations({ isenFullPKCrypto, dataInicial, dataFinal }),
-    fetchExamesSolicitados({
+  // Usando um objeto de promessas para tornar a extração de resultados mais robusta.
+  const dataPromises = {
+    consultations: fetchAllConsultations({
+      isenFullPKCrypto,
+      dataInicial,
+      dataFinal,
+    }),
+    exams: fetchExamesSolicitados({
       isenPK,
       dataInicial,
       dataFinal,
       comResultado: true,
       semResultado: true,
     }),
-    fetchAppointments({ isenPK, dataInicial, dataFinal }),
-    fetchAllRegulations({ isenPK, dataInicial, dataFinal, type: "all" }),
-    // --- INÍCIO DA MODIFICAÇÃO ---
-    fetchDocuments({ isenPK }),
-    // --- FIM DA MODIFICAÇÃO ---
-  ]);
+    appointments: fetchAppointments({ isenPK, dataInicial, dataFinal }),
+    regulations: fetchAllRegulations({
+      isenPK,
+      dataInicial,
+      dataFinal,
+      type: "all",
+    }),
+    documents: fetchDocuments({ isenPK }),
+  };
+
+  const results = await Promise.allSettled(Object.values(dataPromises));
+  const dataKeys = Object.keys(dataPromises);
 
   const getValueOrDefault = (result, defaultValue = []) => {
     if (result.status === "fulfilled") {
-      // Handle the different data structures returned by the API functions.
       if (result.value && typeof result.value.jsonData !== "undefined") {
         return result.value.jsonData; // For consultations
       }
       return result.value; // For others
     }
-    console.warn("API call failed for timeline:", result.reason);
+    console.warn("Falha em chamada de API para a timeline:", result.reason);
     return defaultValue;
   };
 
-  return {
-    consultations: getValueOrDefault(results[0]),
-    exams: getValueOrDefault(results[1]),
-    appointments: getValueOrDefault(results[2]),
-    regulations: getValueOrDefault(results[3]),
-    // --- INÍCIO DA MODIFICAÇÃO ---
-    documents: getValueOrDefault(results[4]),
-    // --- FIM DA MODIFICAÇÃO ---
-  };
+  const timelineData = {};
+  dataKeys.forEach((key, index) => {
+    timelineData[key] = getValueOrDefault(results[index]);
+  });
+
+  return timelineData;
 }

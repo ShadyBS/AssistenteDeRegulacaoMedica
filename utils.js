@@ -68,32 +68,43 @@ export function clearMessage() {
 export function parseDate(dateString) {
   if (!dateString || typeof dateString !== "string") return null;
 
-  // CORREÇÃO: Remove qualquer prefixo de texto (ex: "Ag ", "At ") antes de processar a data.
-  const cleanedDateString = dateString.replace(/^[a-zA-Z\s]+/, "").trim();
+  // Tenta extrair o primeiro padrão de data válido da string.
+  const dateMatch = dateString.match(
+    /(\d{4}-\d{2}-\d{2})|(\d{2}\/\d{2}\/\d{2,4})/
+  );
+  if (!dateMatch) return null;
 
-  if (cleanedDateString.includes("-")) {
-    const parts = cleanedDateString.split("T")[0].split("-");
-    if (parts.length === 3) {
-      const [year, month, day] = parts.map(Number);
-      if (!isNaN(year) && !isNaN(month) && !isNaN(day)) {
-        return new Date(Date.UTC(year, month - 1, day));
-      }
-    }
+  const matchedDate = dateMatch[0];
+  let year, month, day;
+
+  // Tenta o formato YYYY-MM-DD
+  if (matchedDate.includes("-")) {
+    [year, month, day] = matchedDate.split("-").map(Number);
+  } else if (matchedDate.includes("/")) {
+    // Tenta o formato DD/MM/YYYY
+    [day, month, year] = matchedDate.split("/").map(Number);
   }
 
-  if (cleanedDateString.includes("/")) {
-    // Pega apenas a parte da data, ignorando a hora se houver.
-    const datePart = cleanedDateString.split(" ")[0];
-    const parts = datePart.split("/");
-    if (parts.length === 3) {
-      const [day, month, year] = parts.map(Number);
-      if (!isNaN(day) && !isNaN(month) && !isNaN(year)) {
-        return new Date(Date.UTC(year, month - 1, day));
-      }
-    }
+  // Valida se os números são válidos e se a data é real
+  if (isNaN(year) || isNaN(month) || isNaN(day)) return null;
+
+  // Lida com anos de 2 dígitos (ex: '24' -> 2024)
+  if (year >= 0 && year < 100) {
+    year += 2000;
   }
 
-  return null;
+  const date = new Date(Date.UTC(year, month - 1, day));
+
+  // Confirma que a data não "rolou" para o mês seguinte (ex: 31 de Abril -> 1 de Maio)
+  if (
+    date.getUTCFullYear() === year &&
+    date.getUTCMonth() === month - 1 &&
+    date.getUTCDate() === day
+  ) {
+    return date;
+  }
+
+  return null; // Retorna nulo se a data for inválida (ex: 31/02/2024)
 }
 
 /**
@@ -209,14 +220,15 @@ export function normalizeTimelineData(apiData) {
   // Normalize Exams
   try {
     (apiData.exams || []).forEach((e) => {
-      if (!e || !e.date) return;
+      const eventDate = parseDate(e.date);
+      if (!e || !eventDate) return;
       const searchText = normalizeString(
-        [e.examName, e.professional, e.specialty].join(" ")
+        [e.examName, e.professional, e.specialty].filter(Boolean).join(" ")
       );
       events.push({
         type: "exam",
-        date: parseDate(e.date),
-        sortableDate: parseDate(e.date),
+        date: eventDate,
+        sortableDate: eventDate,
         title: `Exame Solicitado: ${e.examName || "Nome não informado"}`,
         summary: `Solicitado por ${e.professional || "Não informado"}`,
         details: e,
@@ -340,9 +352,13 @@ export function filterTimelineEvents(events, automationFilters) {
       switch (event.type) {
         case "consultation":
           const consultFilters = automationFilters.consultations || {};
-          const consultDetailsText = event.details.details
-            .map((d) => d.value)
-            .join(" ");
+          // Procura por um campo rotulado como CID ou CIAP para uma busca precisa.
+          const cidDetail = (event.details.details || []).find(
+            (d) =>
+              normalizeString(d.label).includes("cid") ||
+              normalizeString(d.label).includes("ciap")
+          );
+          const cidText = cidDetail ? cidDetail.value : "";
           return (
             checkText(
               event.details.specialty,
@@ -352,10 +368,7 @@ export function filterTimelineEvents(events, automationFilters) {
               event.details.professional,
               consultFilters["consultation-filter-professional"]
             ) &&
-            checkText(
-              consultDetailsText,
-              consultFilters["consultation-filter-cid"]
-            )
+            checkText(cidText, consultFilters["consultation-filter-cid"])
           );
 
         case "exam":

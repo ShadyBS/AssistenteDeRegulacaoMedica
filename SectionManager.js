@@ -142,6 +142,7 @@ export class SectionManager {
   setPatient(patient) {
     this.currentPatient = patient;
     this.allData = [];
+    this.clearFilters(false); // Reseta os filtros para o padrão ao trocar de paciente.
     this.clearAutomationFeedbackAndFilters(false);
     this.applyFiltersAndRender();
 
