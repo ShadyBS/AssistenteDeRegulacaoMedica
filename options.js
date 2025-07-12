@@ -806,21 +806,28 @@ async function openRuleEditor(ruleId = null) {
     ruleTriggersInput.value = rule.triggerKeywords.join(", ");
 
     Object.entries(rule.filterSettings).forEach(([sectionKey, filters]) => {
+      // --- INÍCIO DA CORREÇÃO ---
       // Preenche os filtros de data
-      if (filters.dateRange) {
+      if (filters && filters.dateRange) {
+        const { start, end } = filters.dateRange;
         const startOffsetEl = document.getElementById(
           `rule-${sectionKey}-start-offset`
         );
         const endOffsetEl = document.getElementById(
           `rule-${sectionKey}-end-offset`
         );
-        if (startOffsetEl && filters.dateRange.start !== null) {
-          startOffsetEl.value = Math.abs(filters.dateRange.start);
+        if (startOffsetEl && start !== null && !isNaN(start)) {
+          startOffsetEl.value = Math.abs(start);
+        } else if (startOffsetEl) {
+          startOffsetEl.value = "";
         }
-        if (endOffsetEl && filters.dateRange.end !== null) {
-          endOffsetEl.value = filters.dateRange.end;
+        if (endOffsetEl && end !== null && !isNaN(end)) {
+          endOffsetEl.value = end;
+        } else if (endOffsetEl) {
+          endOffsetEl.value = "";
         }
       }
+      // --- FIM DA CORREÇÃO ---
 
       // Preenche outros filtros
       Object.entries(filters).forEach(([filterId, value]) => {
@@ -851,8 +858,12 @@ async function openRuleEditor(ruleId = null) {
       "documents",
     ];
     sections.forEach((sectionKey) => {
-      document.getElementById(`rule-${sectionKey}-start-offset`).value = "";
-      document.getElementById(`rule-${sectionKey}-end-offset`).value = "";
+      const startEl = document.getElementById(
+        `rule-${sectionKey}-start-offset`
+      );
+      const endEl = document.getElementById(`rule-${sectionKey}-end-offset`);
+      if (startEl) startEl.value = "";
+      if (endEl) endEl.value = "";
     });
 
     document
@@ -907,6 +918,7 @@ function handleSaveRule() {
   sections.forEach((sectionKey) => {
     filterSettings[sectionKey] = {};
 
+    // --- INÍCIO DA CORREÇÃO ---
     // Salva as configurações de data
     const startOffsetEl = document.getElementById(
       `rule-${sectionKey}-start-offset`
@@ -917,12 +929,16 @@ function handleSaveRule() {
     const startVal = startOffsetEl.value;
     const endVal = endOffsetEl.value;
 
-    if (startVal !== "" || endVal !== "") {
+    const startNum = parseInt(startVal, 10);
+    const endNum = parseInt(endVal, 10);
+
+    if (!isNaN(startNum) || !isNaN(endNum)) {
       filterSettings[sectionKey].dateRange = {
-        start: startVal !== "" ? -parseInt(startVal, 10) : null,
-        end: endVal !== "" ? parseInt(endVal, 10) : null,
+        start: !isNaN(startNum) ? -startNum : null,
+        end: !isNaN(endNum) ? endNum : null,
       };
     }
+    // --- FIM DA CORREÇÃO ---
 
     // Salva as configurações dos outros filtros
     const sectionFilters = filterConfig[sectionKey] || [];

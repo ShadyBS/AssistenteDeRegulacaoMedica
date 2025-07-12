@@ -290,10 +290,33 @@ export class SectionManager {
     this.updateActiveFiltersIndicator();
   }
 
-  clearFilters() {
+  clearFilters(shouldRender = true) {
     const sectionLayout =
       this.globalSettings.filterLayout[this.sectionKey] || [];
     const layoutMap = new Map(sectionLayout.map((f) => [f.id, f]));
+
+    // --- INÍCIO DA CORREÇÃO ---
+    // Reseta o período de busca para o padrão global da seção
+    const dateRangeDefaults =
+      this.globalSettings.userPreferences.dateRangeDefaults;
+    const defaultRanges = {
+      consultations: { start: -6, end: 0 },
+      exams: { start: -6, end: 0 },
+      appointments: { start: -1, end: 3 },
+      regulations: { start: -12, end: 0 },
+      documents: { start: -24, end: 0 },
+    };
+    const range =
+      dateRangeDefaults[this.sectionKey] || defaultRanges[this.sectionKey];
+    if (this.elements.dateInitial)
+      this.elements.dateInitial.valueAsDate = Utils.calculateRelativeDate(
+        range.start
+      );
+    if (this.elements.dateFinal)
+      this.elements.dateFinal.valueAsDate = Utils.calculateRelativeDate(
+        range.end
+      );
+    // --- FIM DA CORREÇÃO ---
 
     (filterConfig[this.sectionKey] || []).forEach((filter) => {
       if (filter.type === "component") return;
@@ -325,7 +348,9 @@ export class SectionManager {
         }
       }
     });
-    this.clearAutomationFeedbackAndFilters(true);
+    if (shouldRender) {
+      this.applyFiltersAndRender();
+    }
   }
 
   handleSort(sortKey) {
@@ -604,17 +629,19 @@ export class SectionManager {
   applyAutomationFilters(filterSettings, ruleName) {
     if (!filterSettings) return;
 
+    // --- INÍCIO DA CORREÇÃO ---
     // Aplica o período de busca da regra, se definido
     if (filterSettings.dateRange) {
       const { start, end } = filterSettings.dateRange;
-      if (this.elements.dateInitial && start !== null) {
+      if (this.elements.dateInitial && start !== null && !isNaN(start)) {
         this.elements.dateInitial.valueAsDate =
           Utils.calculateRelativeDate(start);
       }
-      if (this.elements.dateFinal && end !== null) {
+      if (this.elements.dateFinal && end !== null && !isNaN(end)) {
         this.elements.dateFinal.valueAsDate = Utils.calculateRelativeDate(end);
       }
     }
+    // --- FIM DA CORREÇÃO ---
 
     Object.entries(filterSettings).forEach(([filterId, value]) => {
       // Pula a propriedade dateRange que já foi tratada
