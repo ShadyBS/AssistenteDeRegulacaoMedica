@@ -115,11 +115,10 @@
       .timeline-details-body {
         max-height: 0;
         overflow: hidden;
-        transition: max-height 0.3s ease-out;
+        transition: max-height 0.5s ease-in-out;
       }
       .timeline-details-body.show {
-        max-height: none;
-        overflow: visible;
+        max-height: 10000px; /* Use um valor grande para permitir a transição */
       }
       /* Permite quebra de palavras e rolagem para textos longos */
       .timeline-details-body,
@@ -127,11 +126,7 @@
         word-break: break-word;
         white-space: pre-wrap;
       }
-      #timeline-content {
-        max-height: 70vh;
-        overflow-y: auto;
-      }
-    </style>
+          </style>
   </head>
   <body class="bg-slate-50 text-slate-800 antialiased flex flex-col h-screen">
     <header
