@@ -5,7 +5,8 @@
   "main": "sidebar.js",
   "scripts": {
     "build:css": "tailwindcss -i ./src/input.css -o ./dist/output.css --minify",
-    "build:zips": "node build-zips.js"
+    "build:zips": "node build-zips.js",
+    "release": "node release.js"
   },
   "author": "",
   "license": "ISC",
