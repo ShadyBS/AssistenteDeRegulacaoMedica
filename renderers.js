@@ -535,15 +535,15 @@ export function renderTimeline(events, status) {
           if (event.type === "consultation") {
             const c = event.details;
             extraInfoHtml = `
-                <div class="timeline-details-body mt-2 pt-2 border-t border-slate-200 space-y-2">
-                    <p class="text-sm text-slate-500">${c.unit}</p>
+                <div class="timeline-details-body mt-2 pt-2 border-t border-slate-200">
+                    <p class="text-sm text-slate-500 mb-2">${c.unit}</p>
                     ${c.details
                       .map(
                         (d) => `
-                        <p class="text-xs font-semibold text-slate-500 uppercase">${
+                        <p class="text-xs font-semibold text-slate-500 uppercase mb-1">${
                           d.label
                         }</p>
-                        <p class="text-sm text-slate-700 whitespace-pre-wrap">${d.value.replace(
+                        <p class="text-sm text-slate-700 mb-2">${d.value.replace(
                           /\n/g,
                           "<br>"
                         )} <span class="copy-icon" title="Copiar" data-copy-text="${
@@ -589,11 +589,11 @@ export function renderTimeline(events, status) {
                 : "";
 
             extraInfoHtml = `
-                <div class="timeline-details-body mt-2 pt-2 border-t border-slate-200 space-y-1 text-sm">
-                    <p><strong>Status:</strong> ${r.status}</p>
-                    <p><strong>Prioridade:</strong> ${r.priority}</p>
-                    <p><strong>CID:</strong> ${r.cid}</p>
-                    <p><strong>Executante:</strong> ${
+                <div class="timeline-details-body mt-2 pt-2 border-t border-slate-200 text-sm">
+                    <p class="mb-1"><strong>Status:</strong> ${r.status}</p>
+                    <p class="mb-1"><strong>Prioridade:</strong> ${r.priority}</p>
+                    <p class="mb-1"><strong>CID:</strong> ${r.cid}</p>
+                    <p class="mb-2"><strong>Executante:</strong> ${
                       r.provider || "Não definido"
                     }</p>
                     ${attachmentsHtml}
