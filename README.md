@@ -17,7 +17,7 @@ Extensão para navegadores (Firefox, Chrome, Edge) que auxilia médicos regulado
 ### Firefox
 
 1. Baixe o arquivo `AssistenteDeRegulacao-firefox-vX.Y.Z.zip` na seção de [Releases](https://github.com/ShadyBS/AssistenteDeRegulacaoMedica/releases).
-2. Acesse `about:addons` > clique em ⚙️ > "Instalar Add-on a partir de arquivo..." e selecione o ZIP.
+2. Acesse `about:addons` > clique em ⚙️ > "Instalar Add-on a partir de arquivo..." e selecione o ZIP!
 
 ### Chrome/Edge
 
