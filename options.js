@@ -261,6 +261,7 @@ async function restoreOptions() {
     autoLoadRegulations: false,
     autoLoadDocuments: false,
     enableAutomaticDetection: true,
+    keepSessionAliveInterval: 10,
     patientFields: defaultFieldConfig,
     filterLayout: {},
     dateRangeDefaults: {},
@@ -275,6 +276,8 @@ async function restoreOptions() {
   document.getElementById("baseUrlInput").value = syncItems.baseUrl || "";
   document.getElementById("enableAutomaticDetection").checked =
     syncItems.enableAutomaticDetection;
+  document.getElementById("keepSessionAliveInterval").value =
+    syncItems.keepSessionAliveInterval;
   document.getElementById("autoLoadExamsCheckbox").checked =
     syncItems.autoLoadExams;
   document.getElementById("autoLoadConsultationsCheckbox").checked =
@@ -366,6 +369,10 @@ async function saveOptions() {
   const enableAutomaticDetection = document.getElementById(
     "enableAutomaticDetection"
   ).checked;
+  const keepSessionAliveInterval = parseInt(
+    document.getElementById("keepSessionAliveInterval").value,
+    10
+  ) || 0;
   const autoLoadExams = document.getElementById(
     "autoLoadExamsCheckbox"
   ).checked;
@@ -489,6 +496,7 @@ async function saveOptions() {
   await browser.storage.sync.set({
     baseUrl: baseUrl.endsWith("/") ? baseUrl.slice(0, -1) : baseUrl,
     enableAutomaticDetection,
+    keepSessionAliveInterval,
     autoLoadExams,
     autoLoadConsultations,
     autoLoadAppointments,

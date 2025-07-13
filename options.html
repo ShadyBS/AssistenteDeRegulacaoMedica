@@ -265,6 +265,27 @@
                 />
                 <span>Ativar deteção automática na página de regulação</span>
               </label>
+              <div class="mt-4 p-3 bg-slate-50 rounded-md border">
+                <h4 class="font-medium text-sm mb-2">Manter Sessão Ativa</h4>
+                <div class="flex items-center gap-4 text-sm">
+                  <div>
+                    <label for="keepSessionAliveInterval" class="block text-sm font-medium text-slate-600 mb-1">
+                      Renovar sessão a cada (minutos):
+                    </label>
+                    <input
+                      type="number"
+                      id="keepSessionAliveInterval"
+                      class="w-20 p-1 border rounded-md"
+                      value="10"
+                      min="0"
+                      max="60"
+                    />
+                  </div>
+                </div>
+                <p class="text-xs text-slate-400 mt-2">
+                  Use '0' para desativar. Envia uma pequena requisição periodicamente para evitar que a sessão expire.
+                </p>
+              </div>
             </div>
             <h3 class="text-md font-medium text-slate-600 mt-4 pt-4 border-t">
               Carregamento Automático por Secção (Modo Manual)

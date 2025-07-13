@@ -1079,3 +1079,34 @@ export async function fetchAllTimelineData({
 
   return timelineData;
 }
+
+/**
+ * Envia uma requisição para manter a sessão ativa no sistema.
+ * @returns {Promise<boolean>} True se a requisição foi bem-sucedida, false caso contrário.
+ */
+export async function keepSessionAlive() {
+  try {
+    const baseUrl = await getBaseUrl();
+    const url = new URL(`${baseUrl}/sigss/common/dataHora`);
+
+    const response = await fetch(url, {
+      method: "GET",
+      headers: {
+        Accept: "application/json, text/javascript, */*; q=0.01",
+        "X-Requested-With": "XMLHttpRequest",
+      },
+    });
+
+    if (!response.ok) {
+      console.warn(`Keep-alive falhou com status ${response.status}`);
+      return false;
+    }
+
+    const data = await response.json();
+    console.log("Sessão mantida ativa:", data);
+    return true;
+  } catch (error) {
+    console.error("Erro ao manter sessão ativa:", error);
+    return false;
+  }
+}
