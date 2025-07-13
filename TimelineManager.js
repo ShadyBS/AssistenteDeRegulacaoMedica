@@ -70,6 +70,16 @@ export class TimelineManager {
         return;
       }
 
+      const toggleDetailsBtn = event.target.closest(".timeline-toggle-details-btn");
+      if (toggleDetailsBtn) {
+        const timelineItem = toggleDetailsBtn.closest(".timeline-item");
+        const details = timelineItem?.querySelector(".timeline-details-body");
+        if (details) {
+          details.classList.toggle("show");
+        }
+        return;
+      }
+
       const toggleFilterBtn = event.target.closest(
         "#timeline-toggle-filter-btn"
       );

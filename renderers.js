@@ -534,6 +534,9 @@ export function renderTimeline(events, status) {
 
           if (event.type === "consultation") {
             const c = event.details;
+            const icon = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-search-2"><path d="M14 2v6h6"/><path d="M4 22h14a2 2 0 0 0 2-2V7.5L14.5 2H6a2 2 0 0 0-2 2v4"/><path d="M5 17a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/><path d="m9 21-1.5-1.5"/></svg>`;
+            topRightDetailsHtml = `<button class="timeline-toggle-details-btn mt-2 text-xs bg-gray-100 text-gray-800 py-1 px-3 rounded hover:bg-gray-200 flex items-center gap-1">${icon}<span>Detalhes</span></button>`;
+            
             extraInfoHtml = `
                 <div class="timeline-details-body mt-2 pt-2 border-t border-slate-200">
                     <p class="text-sm text-slate-500 mb-2">${c.unit}</p>
