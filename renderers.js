@@ -490,6 +490,9 @@ export function renderTimeline(events, status) {
           let extraInfoHtml = "";
 
           if (event.type === "appointment") {
+            const a = event.details;
+            const [idp, ids] = a.id.split("-");
+
             const statusStyles = {
               AGENDADO: "text-blue-600",
               PRESENTE: "text-green-600",
@@ -498,10 +501,14 @@ export function renderTimeline(events, status) {
               ATENDIDO: "text-purple-600",
             };
             const statusClass =
-              statusStyles[event.details.status] || "text-slate-600";
-            const timeHtml = `<div class="text-xs text-slate-500">às ${event.details.time}</div>`;
-            const statusHtml = `<div class="mt-1 text-xs font-semibold ${statusClass}">${event.details.status}</div>`;
-            topRightDetailsHtml = timeHtml + statusHtml;
+              statusStyles[a.status] || "text-slate-600";
+            const timeHtml = `<div class="text-xs text-slate-500">às ${a.time}</div>`;
+            const statusHtml = `<div class="mt-1 text-xs font-semibold ${statusClass}">${a.status}</div>`;
+
+            const icon = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-search-2"><path d="M14 2v6h6"/><path d="M4 22h14a2 2 0 0 0 2-2V7.5L14.5 2H6a2 2 0 0 0-2 2v4"/><path d="M5 17a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/><path d="m9 21-1.5-1.5"/></svg>`;
+            const detailsButtonHtml = `<button class="view-appointment-details-btn mt-2 text-xs bg-gray-100 text-gray-800 py-1 px-3 rounded hover:bg-gray-200 flex items-center gap-1" data-idp="${idp}" data-ids="${ids}" data-type="${a.type}">${icon}<span>Detalhes</span></button>`;
+
+            topRightDetailsHtml = timeHtml + statusHtml + detailsButtonHtml;
           } else if (event.type === "exam") {
             const statusText = event.details.hasResult
               ? "Com Resultado"
