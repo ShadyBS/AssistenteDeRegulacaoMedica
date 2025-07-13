@@ -65,19 +65,16 @@ function buildZips() {
 
 // Passo 6: Commit, tag e push no Git
 async function createGitTag(newVersion) {
+  const tagName = `v${newVersion}`;
   await git.add(".");
-  await git
-    .commit(`release: v${newVersion}`)
-    .catch(() => console.log("⚠️ Nenhum arquivo modificado para commit."));
-  const tags = await git.tags();
-  if (tags.all.includes(`v${newVersion}`)) {
-    console.log(`⚠️ Tag v${newVersion} já existe, pulando criação de tag.`);
-  } else {
-    await git.addTag(`v${newVersion}`);
-    await git.pushTags();
-    console.log(`✅ Tag v${newVersion} criada e enviada.`);
-  }
+  // O commit falhará se não houver nada para commitar, o que é bom.
+  await git.commit(`release: ${tagName}`);
+  // A criação da tag falhará se ela já existir, o que também é bom.
+  await git.addTag(tagName);
   await git.push("origin", "main");
+  // Faz o push da tag específica
+  await git.push("origin", tagName);
+  console.log(`✅ Commit e tag ${tagName} criados e enviados.`);
 }
 
 // Passo 7: Criar release no GitHub e fazer upload dos ZIPs
@@ -142,6 +139,28 @@ async function run() {
     );
     process.exit(1);
   }
+
+  // --- Verificações de segurança ---
+  console.log("🔍 Executando verificações de segurança...");
+  const status = await git.status();
+  if (!status.isClean()) {
+    console.error(
+      "❌ Seu diretório de trabalho tem modificações não commitadas."
+    );
+    console.error(
+      "   Faça o commit ou 'git stash' de suas alterações antes de criar uma release."
+    );
+    process.exit(1);
+  }
+
+  await git.fetch(["--tags"]);
+  const allTags = await git.tags();
+  if (allTags.all.includes(`v${newVersion}`)) {
+    console.error(`❌ A tag v${newVersion} já existe. Abortando.`);
+    process.exit(1);
+  }
+  console.log("✅ Verificações de segurança passaram.");
+
   const lastTag = await getLastTag();
   const changelog = await getChangelog(lastTag);
   updateManifestVersion(newVersion);
