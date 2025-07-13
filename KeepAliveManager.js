@@ -42,17 +42,14 @@ export class KeepAliveManager {
   updateInterval(minutes) {
     const newMinutes = parseInt(minutes, 10) || 0;
     
-    // Se o valor mudou, atualiza
-    if (this.intervalMinutes !== newMinutes) {
-      this.intervalMinutes = newMinutes;
-      
-      // Para o timer atual
-      this.stop();
-      
-      // Inicia novo timer se o valor for maior que 0
-      if (this.intervalMinutes > 0) {
-        this.start();
-      }
+    this.intervalMinutes = newMinutes;
+    
+    // Para o timer atual
+    this.stop();
+    
+    // Inicia novo timer se o valor for maior que 0
+    if (this.intervalMinutes > 0) {
+      this.start();
     }
   }
 
