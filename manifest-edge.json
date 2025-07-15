@@ -10,9 +10,7 @@
     "sidePanel",
     "clipboardWrite"
   ],
-  "host_permissions": [
-    "*://*/sigss/*"
-  ],
+  "host_permissions": ["*://*/sigss/*"],
   "content_security_policy": {
     "extension_pages": "script-src 'self'; object-src 'self'; connect-src http://* https://*;"
   },
@@ -45,12 +43,10 @@
       "matches": [
         "*://*/sigss/regulacaoRegulador*",
         "*://*/sigss/regulacaoRegulador/*",
-        "*://*/sigss/regulacaoControleSolicitacao/*"
+        "*://*/sigss/regulacaoControleSolicitacao/*",
+        "*://*/sigss/regulacaoControleSolicitacao*"
       ],
-      "js": [
-        "browser-polyfill.js",
-        "content-script.js"
-      ],
+      "js": ["browser-polyfill.js", "content-script.js"],
       "all_frames": true
     }
   ]
