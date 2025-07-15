@@ -1,5 +1,6 @@
 import "./browser-polyfill.js";
 import { fetchRegulationDetails } from "./api.js";
+import { KeepAliveManager } from "./KeepAliveManager.js";
 
 const api = typeof browser !== "undefined" ? browser : chrome;
 
@@ -44,6 +45,8 @@ async function openSidebar(tab) {
 }
 
 api.action.onClicked.addListener(openSidebar);
+
+new KeepAliveManager();
 
 api.runtime.onInstalled.addListener((details) => {
   if (api.sidePanel) {

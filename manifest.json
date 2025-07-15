@@ -7,11 +7,10 @@
     "storage",
     "scripting",
     "contextMenus",
-    "clipboardWrite"
+    "clipboardWrite",
+    "alarms"
   ],
-  "host_permissions": [
-    "*://*/sigss/*"
-  ],
+  "host_permissions": ["*://*/sigss/*"],
   "content_security_policy": {
     "extension_pages": "script-src 'self'; object-src 'self'; connect-src http://* https://*;"
   },
@@ -20,9 +19,7 @@
     "open_in_tab": true
   },
   "background": {
-    "scripts": [
-      "background.js"
-    ],
+    "service_worker": "background.js",
     "type": "module"
   },
   "action": {
@@ -55,10 +52,7 @@
         "*://*/sigss/regulacaoControleSolicitacao/*",
         "*://*/sigss/regulacaoControleSolicitacao*"
       ],
-      "js": [
-        "browser-polyfill.js",
-        "content-script.js"
-      ],
+      "js": ["browser-polyfill.js", "content-script.js"],
       "all_frames": true
     }
   ],

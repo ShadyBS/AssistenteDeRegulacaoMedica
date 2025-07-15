@@ -4,7 +4,6 @@ import { defaultFieldConfig } from "./field-config.js";
 import { filterConfig } from "./filter-config.js";
 import { SectionManager } from "./SectionManager.js";
 import { TimelineManager } from "./TimelineManager.js"; // Importa o novo gestor
-import { KeepAliveManager } from "./KeepAliveManager.js"; // Importa o gerenciador de keep-alive
 import * as Renderers from "./renderers.js";
 import * as Utils from "./utils.js";
 import * as Search from "./ui/search.js";
@@ -418,9 +417,6 @@ async function init() {
   applyUserPreferences(globalSettings);
   addGlobalEventListeners();
   setupAutoModeToggle();
-
-  // Inicializa o gerenciador de keep-alive
-  new KeepAliveManager();
 
   await checkForPendingRegulation();
 }
