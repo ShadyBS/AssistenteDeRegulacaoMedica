@@ -6,6 +6,7 @@ import { filterConfig } from "./filter-config.js";
 import * as Utils from "./utils.js";
 import * as API from "./api.js";
 import { store } from "./store.js";
+import { CONFIG, getSectionName, getTimeout } from "./config.js";
 
 /**
  * Gera o HTML para o indicador de ordenação (seta para cima/baixo).
@@ -110,7 +111,7 @@ export class SectionManager {
       Utils.debounce((e) => {
         if (e.target.matches("input[type='text'], input[type='date']"))
           this.applyFiltersAndRender();
-      }, 300)
+      }, getTimeout('DEBOUNCE_FILTERS'))
     );
 
     this.elements.section?.addEventListener("change", (e) => {
@@ -173,7 +174,7 @@ export class SectionManager {
 
     this.isLoading = true;
     this.elements.content.innerHTML =
-      '<p class="text-slate-500">Carregando...</p>';
+      `<p class="${CONFIG.CSS_CLASSES.BG_LOADING}">Carregando...</p>`;
 
     try {
       const fetchTypeElement = this.elements.mainFilters?.querySelector(
@@ -195,7 +196,7 @@ export class SectionManager {
         isenFullPKCrypto: this.currentPatient.isenFullPKCrypto,
         dataInicial: dataInicialValue
           ? new Date(dataInicialValue).toLocaleDateString("pt-BR")
-          : "01/01/1900",
+          : CONFIG.DATES.DEFAULT_START,
         dataFinal: dataFinalValue
           ? new Date(dataFinalValue).toLocaleDateString("pt-BR")
           : new Date().toLocaleDateString("pt-BR"),
@@ -213,21 +214,86 @@ export class SectionManager {
       this.allData = Array.isArray(result) ? result : result.jsonData || [];
     } catch (error) {
       console.error(`Erro ao buscar dados para ${this.sectionKey}:`, error);
-      const sectionNameMap = {
-        consultations: "consultas",
-        exams: "exames",
-        appointments: "agendamentos",
-        regulations: "regulações",
-        documents: "documentos",
-      };
-      const friendlyName = sectionNameMap[this.sectionKey] || this.sectionKey;
-      Utils.showMessage(
-        `Erro ao buscar ${friendlyName}. Verifique a conexão e a URL base.`
-      );
-      this.allData = [];
+      this.handleFetchError(error);
     } finally {
       this.isLoading = false;
       this.applyFiltersAndRender();
+    }
+  }
+
+  handleFetchError(error) {
+    const friendlyName = getSectionName(this.sectionKey) || this.sectionKey;
+    
+    // Determina o tipo de erro e define estado apropriado
+    let errorMessage = '';
+    let shouldShowEmptyState = false;
+    
+    if (error.name === 'TypeError' && error.message.includes('fetch')) {
+      // Erro de rede/conectividade
+      errorMessage = `Falha na conexão ao buscar ${friendlyName}. Verifique sua conexão com a internet.`;
+      shouldShowEmptyState = false;
+    } else if (error.message.includes('401') || error.message.includes('403')) {
+      // Erro de autenticação
+      errorMessage = `Sessão expirada ao buscar ${friendlyName}. Faça login novamente no SIGSS.`;
+      shouldShowEmptyState = false;
+    } else if (error.message.includes('404')) {
+      // Recurso não encontrado
+      errorMessage = `Serviço de ${friendlyName} temporariamente indisponível.`;
+      shouldShowEmptyState = true;
+    } else if (error.message.includes('timeout')) {
+      // Timeout
+      errorMessage = `Timeout ao buscar ${friendlyName}. Tente novamente em alguns segundos.`;
+      shouldShowEmptyState = false;
+    } else {
+      // Erro genérico
+      errorMessage = `Erro ao buscar ${friendlyName}. Verifique a conexão e a URL base.`;
+      shouldShowEmptyState = true;
+    }
+    
+    // Define estado dos dados baseado no tipo de erro
+    if (shouldShowEmptyState) {
+      this.allData = [];
+      this.setErrorState(errorMessage, 'empty');
+    } else {
+      // Mantém dados anteriores se houver, evita perda de estado
+      if (!this.allData || this.allData.length === 0) {
+        this.allData = [];
+      }
+      this.setErrorState(errorMessage, 'retry');
+    }
+    
+    Utils.showMessage(errorMessage, 'error');
+  }
+
+  setErrorState(message, type = 'empty') {
+    if (type === 'retry') {
+      // Estado de erro com opção de retry - mantém interface funcional
+      this.elements.content.innerHTML = `
+        <div class="p-4 text-center">
+          <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+            <p class="text-yellow-800 mb-3">${message}</p>
+            <button id="${this.prefix}-retry-btn" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition">
+              Tentar Novamente
+            </button>
+          </div>
+        </div>`;
+      
+      // Adiciona listener para retry
+      const retryBtn = this.elements.content.querySelector(`#${this.prefix}-retry-btn`);
+      if (retryBtn) {
+        retryBtn.addEventListener('click', () => {
+          this.fetchData();
+        });
+      }
+    } else {
+      // Estado vazio padrão - permitir que renderização normal aconteça
+      this.elements.content.innerHTML = `
+        <div class="p-4 text-center">
+          <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+            <p class="text-red-800">${message}</p>
+            <p class="text-red-600 text-sm mt-2">Os dados podem estar temporariamente indisponíveis.</p>
+          </div>
+        </div>`;
     }
   }
 

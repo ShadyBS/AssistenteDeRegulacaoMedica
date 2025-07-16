@@ -2,13 +2,15 @@
  * @file Contém funções utilitárias compartilhadas em toda a extensão.
  */
 
+import { CONFIG, getTimeout, getCSSClass, getUIConfig } from "./config.js";
+
 /**
  * Atraso na execução de uma função após o utilizador parar de digitar.
  * @param {Function} func A função a ser executada.
  * @param {number} [delay=500] O tempo de espera em milissegundos.
  * @returns {Function} A função com debounce.
  */
-export function debounce(func, delay = 500) {
+export function debounce(func, delay = CONFIG.TIMEOUTS.DEBOUNCE_DEFAULT) {
   let timeoutId;
   return (...args) => {
     clearTimeout(timeoutId);
@@ -39,9 +41,9 @@ export function showMessage(text, type = "error") {
   if (messageArea) {
     messageArea.textContent = text;
     const typeClasses = {
-      error: "bg-red-100 text-red-700",
-      success: "bg-green-100 text-green-700",
-      info: "bg-blue-100 text-blue-700",
+      error: getCSSClass("MESSAGE_ERROR"),
+      success: getCSSClass("MESSAGE_SUCCESS"),
+      info: getCSSClass("MESSAGE_INFO"),
     };
     messageArea.className = `p-3 rounded-md text-sm ${
       typeClasses[type] || typeClasses.error
@@ -89,8 +91,8 @@ export function parseDate(dateString) {
   if (isNaN(year) || isNaN(month) || isNaN(day)) return null;
 
   // Lida com anos de 2 dígitos (ex: '24' -> 2024)
-  if (year >= 0 && year < 100) {
-    year += 2000;
+  if (year >= 0 && year < getUIConfig("TWO_DIGIT_YEAR_THRESHOLD")) {
+    year += getUIConfig("YEAR_BASE");
   }
 
   const date = new Date(Date.UTC(year, month - 1, day));
@@ -140,8 +142,8 @@ export function getContrastYIQ(hexcolor) {
   var r = parseInt(hexcolor.substr(0, 2), 16);
   var g = parseInt(hexcolor.substr(2, 2), 16);
   var b = parseInt(hexcolor.substr(4, 2), 16);
-  var yiq = (r * 299 + g * 587 + b * 114) / 1000;
-  return yiq >= 128 ? "black" : "white";
+  var yiq = (r * getUIConfig("YIQ_FORMULA").RED_WEIGHT + g * getUIConfig("YIQ_FORMULA").GREEN_WEIGHT + b * getUIConfig("YIQ_FORMULA").BLUE_WEIGHT) / getUIConfig("YIQ_FORMULA").DIVISOR;
+  return yiq >= getUIConfig("YIQ_THRESHOLD") ? "black" : "white";
 }
 
 /**

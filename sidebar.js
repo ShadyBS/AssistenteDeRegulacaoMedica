@@ -9,6 +9,7 @@ import * as Utils from "./utils.js";
 import * as Search from "./ui/search.js";
 import * as PatientCard from "./ui/patient-card.js";
 import { store } from "./store.js";
+import { CONFIG, getTimeout, getCSSClass } from "./config.js";
 
 // --- ÍCONES ---
 const sectionIcons = {
@@ -686,7 +687,7 @@ function handleShowRegulationInfo() {
   modalTitle.textContent = "Dados da Regulação (JSON)";
   const formattedJson = JSON.stringify(currentRegulationData, null, 2);
 
-  modalContent.innerHTML = `<pre class="bg-slate-100 p-2 rounded-md text-xs whitespace-pre-wrap break-all">${formattedJson}</pre>`;
+  modalContent.innerHTML = `<pre class="${getCSSClass('BG_SLATE_100')} p-2 rounded-md text-xs whitespace-pre-wrap break-all">${formattedJson}</pre>`;
 
   infoModal.classList.remove("hidden");
 }
@@ -814,7 +815,7 @@ async function copyToClipboard(button) {
     setTimeout(() => {
       button.textContent = "📄";
       button.dataset.inProgress = "false";
-    }, 1200);
+    }, getTimeout("AUTO_REFRESH"));
   }
 }
 
@@ -900,8 +901,8 @@ function showModal(title, content) {
 function createDetailRow(label, value) {
   if (!value || String(value).trim() === "") return "";
   return `<div class="py-2 border-b border-slate-100 flex justify-between items-start gap-4">
-            <span class="font-semibold text-slate-600 flex-shrink-0">${label}:</span>
-            <span class="text-slate-800 text-right break-words">${value}</span>
+            <span class="font-semibold ${getCSSClass('TEXT_SECONDARY')} flex-shrink-0">${label}:</span>
+            <span class="${getCSSClass('TEXT_PRIMARY')} text-right break-words">${value}</span>
           </div>`;
 }
 
@@ -922,8 +923,8 @@ function formatRegulationDetailsForModal(data) {
   content += createDetailRow("Gravidade", data.reguGravidade);
   if (data.reguJustificativa && data.reguJustificativa !== "null") {
     content += `<div class="py-2">
-                      <span class="font-semibold text-slate-600">Justificativa:</span>
-                      <p class="text-slate-800 whitespace-pre-wrap mt-1 p-2 bg-slate-50 rounded">${data.reguJustificativa.replace(
+                      <span class="font-semibold ${getCSSClass('TEXT_SECONDARY')}">Justificativa:</span>
+                      <p class="${getCSSClass('TEXT_PRIMARY')} whitespace-pre-wrap mt-1 p-2 ${getCSSClass('BG_SLATE_50')} rounded">${data.reguJustificativa.replace(
                         /\\n/g,
                         "\n"
                       )}</p>
@@ -962,8 +963,8 @@ function formatAppointmentDetailsForModal(data) {
   content += createDetailRow("Convênio", data.convenio?.entidade?.entiNome);
   if (data.agcoObs) {
     content += `<div class="py-2">
-                        <span class="font-semibold text-slate-600">Observação:</span>
-                        <p class="text-slate-800 whitespace-pre-wrap mt-1 p-2 bg-slate-50 rounded">${data.agcoObs}</p>
+                        <span class="font-semibold ${getCSSClass('TEXT_SECONDARY')}">Observação:</span>
+                        <p class="${getCSSClass('TEXT_PRIMARY')} whitespace-pre-wrap mt-1 p-2 ${getCSSClass('BG_SLATE_50')} rounded">${data.agcoObs}</p>
                     </div>`;
   }
   return content;

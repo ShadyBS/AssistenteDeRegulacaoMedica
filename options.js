@@ -3,6 +3,7 @@ import { defaultFieldConfig } from "./field-config.js";
 import { filterConfig } from "./filter-config.js";
 import * as Utils from "./utils.js";
 import * as API from "./api.js"; // Importa a API para buscar prioridades
+import { CONFIG, getTimeout, getCSSClass } from "./config.js";
 
 // --- Constantes ---
 const CONFIG_VERSION = "1.3"; // Versão da estrutura de configuração
@@ -104,7 +105,7 @@ function createDraggableFilter(filter, priorities = []) {
         defaultValueControl = `<select class="filter-default-value-input w-full">${optionsHtml}</select>`;
         break;
       case "checkbox":
-        defaultValueControl = `<input type="checkbox" class="filter-default-value-input h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500">`;
+        defaultValueControl = `<input type="checkbox" class="filter-default-value-input ${getCSSClass('INPUT_CHECKBOX')}">`;
         break;
     }
   }
@@ -683,7 +684,7 @@ async function handleExport() {
   } finally {
     setTimeout(() => {
       statusMessage.textContent = "";
-    }, 3000);
+    }, getTimeout("MESSAGE_DISPLAY"));
   }
 }
 

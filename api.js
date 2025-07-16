@@ -1,11 +1,12 @@
 import "./browser-polyfill.js";
+import { CONFIG, getAPIConfig } from "./config.js";
 
 const api = typeof browser !== "undefined" ? browser : chrome;
 
 // Default configuration for batched API requests
 const DEFAULT_BATCH_CONFIG = {
-  ATTACHMENT_BATCH_SIZE: 5, // Process 5 attachments at a time
-  BATCH_DELAY_MS: 100, // 100ms delay between batches
+  ATTACHMENT_BATCH_SIZE: CONFIG.API.BATCH_SIZE, // Process 5 attachments at a time
+  BATCH_DELAY_MS: CONFIG.API.BATCH_DELAY_MS, // 100ms delay between batches
 };
 
 /**
@@ -51,7 +52,7 @@ async function getBatchConfig() {
  * @param {number} delayMs - Delay in milliseconds between batches
  * @returns {Promise<Array>} Array of processed results
  */
-async function processBatched(items, processor, batchSize = 5, delayMs = 100) {
+async function processBatched(items, processor, batchSize = CONFIG.API.BATCH_SIZE, delayMs = CONFIG.API.BATCH_DELAY_MS) {
   const results = [];
 
   for (let i = 0; i < items.length; i += batchSize) {
@@ -522,7 +523,7 @@ export async function fetchExamesSolicitados({
     tipoBusca: "reex",
     _search: "false",
     nd: Date.now(),
-    rows: "1000",
+    rows: String(CONFIG.API.MAX_ROWS),
     page: "1",
     sidx: "reex.reexData",
     sord: "asc",
@@ -693,7 +694,7 @@ export async function fetchAppointments({ isenPK, dataInicial, dataFinal }) {
     dataFinal,
     _search: "false",
     nd: Date.now(),
-    rows: "1000",
+    rows: String(CONFIG.API.MAX_ROWS),
     page: "1",
     sidx: "data",
     sord: "desc",
@@ -812,7 +813,7 @@ async function fetchRegulations({
     "filters[17]": "reguIsAgendadoFiltro:todos",
     _search: "false",
     nd: Date.now(),
-    rows: "1000",
+    rows: String(CONFIG.API.MAX_ROWS),
     page: "1",
     sidx: "regu.reguDataPrevista",
     sord: "desc",
@@ -954,7 +955,7 @@ export async function fetchDocuments({ isenPK }) {
     "isenPK.ids": ids,
     _search: "false",
     nd: Date.now(),
-    rows: "999",
+    rows: String(CONFIG.API.MAX_ROWS_REGULATIONS),
     page: "1",
     sidx: "isar.isarData desc, isar.isarPK.idp",
     sord: "desc",
@@ -1043,7 +1044,7 @@ export async function fetchRegulationAttachments({ reguIdp, reguIds, isenPK }) {
     "reguPK.ids": reguIds,
     _search: "false",
     nd: Date.now(),
-    rows: "999",
+    rows: String(CONFIG.API.MAX_ROWS_REGULATIONS),
     page: "1",
     sidx: "", // Corrigido para corresponder à requisição da aplicação
     sord: "asc", // Corrigido para corresponder à requisição da aplicação

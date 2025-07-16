@@ -4,6 +4,7 @@
 
 import { getSortIndicator } from "./SectionManager.js";
 import * as Utils from "./utils.js";
+import { CONFIG, getCSSClass } from "./config.js";
 
 export function renderConsultations(consultations, sortState) {
   const contentDiv = document.getElementById("consultations-content");
@@ -11,11 +12,11 @@ export function renderConsultations(consultations, sortState) {
 
   if (consultations.length === 0) {
     contentDiv.innerHTML =
-      '<p class="text-slate-500">Nenhuma consulta encontrada para os filtros aplicados.</p>';
+      `<p class="${getCSSClass('TEXT_MUTED')}">Nenhuma consulta encontrada para os filtros aplicados.</p>`;
     return;
   }
   const headers = `
-    <div class="flex justify-between text-xs font-bold text-slate-500 mb-2 px-3">
+    <div class="flex justify-between text-xs font-bold ${getCSSClass('TEXT_MUTED')} mb-2 px-3">
         <span class="sort-header w-2/3" data-sort-key="specialty">Especialidade/Profissional <span class="sort-indicator">${getSortIndicator(
           "specialty",
           sortState
@@ -32,14 +33,14 @@ export function renderConsultations(consultations, sortState) {
       .map(
         (c) => `
         <div class="p-3 mb-3 border rounded-lg ${
-          c.isNoShow ? "bg-red-50 border-red-200" : "bg-white"
+          c.isNoShow ? getCSSClass('PATIENT_NO_SHOW') : getCSSClass('PATIENT_NORMAL')
         } consultation-item">
             <div class="flex justify-between items-start cursor-pointer consultation-header">
                 <div>
-                    <p class="font-bold text-blue-700 pointer-events-none">${
+                    <p class="font-bold ${getCSSClass('TEXT_BLUE')} pointer-events-none">${
                       c.specialty
                     }</p>
-                    <p class="text-sm text-slate-600 pointer-events-none">${
+                    <p class="text-sm ${getCSSClass('TEXT_SECONDARY')} pointer-events-none">${
                       c.professional
                     }</p>
                 </div>
