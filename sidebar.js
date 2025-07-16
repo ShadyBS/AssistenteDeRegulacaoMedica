@@ -687,7 +687,14 @@ function handleShowRegulationInfo() {
   modalTitle.textContent = "Dados da Regulação (JSON)";
   const formattedJson = JSON.stringify(currentRegulationData, null, 2);
 
-  modalContent.innerHTML = `<pre class="${getCSSClass('BG_SLATE_100')} p-2 rounded-md text-xs whitespace-pre-wrap break-all">${formattedJson}</pre>`;
+  // Criar elemento pre de forma segura para evitar XSS
+  const preElement = document.createElement("pre");
+  preElement.className = `${getCSSClass('BG_SLATE_100')} p-2 rounded-md text-xs whitespace-pre-wrap break-all`;
+  preElement.textContent = formattedJson;
+  
+  // Limpar conteúdo anterior e adicionar o elemento de forma segura
+  modalContent.innerHTML = "";
+  modalContent.appendChild(preElement);
 
   infoModal.classList.remove("hidden");
 }
@@ -844,10 +851,18 @@ async function handleViewExamResult(button) {
         : `${baseUrl}${filePath}`;
       newTab.location.href = fullUrl;
     } else {
-      newTab.document.body.innerHTML = "<p>Resultado não encontrado.</p>";
+      // Criar elemento de forma segura para evitar XSS
+      const messageElement = document.createElement("p");
+      messageElement.textContent = "Resultado não encontrado.";
+      newTab.document.body.innerHTML = "";
+      newTab.document.body.appendChild(messageElement);
     }
   } catch (error) {
-    newTab.document.body.innerHTML = `<p>Erro: ${error.message}</p>`;
+    // Criar elemento de forma segura para evitar XSS
+    const errorElement = document.createElement("p");
+    errorElement.textContent = `Erro: ${error.message}`;
+    newTab.document.body.innerHTML = "";
+    newTab.document.body.appendChild(errorElement);
   }
 }
 
@@ -861,11 +876,18 @@ async function handleViewDocument(button) {
     if (docUrl) {
       newTab.location.href = docUrl;
     } else {
-      newTab.document.body.innerHTML =
-        "<p>URL do documento não encontrada.</p>";
+      // Criar elemento de forma segura para evitar XSS
+      const messageElement = document.createElement("p");
+      messageElement.textContent = "URL do documento não encontrada.";
+      newTab.document.body.innerHTML = "";
+      newTab.document.body.appendChild(messageElement);
     }
   } catch (error) {
-    newTab.document.body.innerHTML = `<p>Erro ao carregar documento: ${error.message}</p>`;
+    // Criar elemento de forma segura para evitar XSS
+    const errorElement = document.createElement("p");
+    errorElement.textContent = `Erro ao carregar documento: ${error.message}`;
+    newTab.document.body.innerHTML = "";
+    newTab.document.body.appendChild(errorElement);
     console.error("Falha ao visualizar documento:", error);
   }
 }
@@ -880,10 +902,18 @@ async function handleViewRegulationAttachment(button) {
     if (fileUrl) {
       newTab.location.href = fileUrl;
     } else {
-      newTab.document.body.innerHTML = "<p>URL do anexo não encontrada.</p>";
+      // Criar elemento de forma segura para evitar XSS
+      const messageElement = document.createElement("p");
+      messageElement.textContent = "URL do anexo não encontrada.";
+      newTab.document.body.innerHTML = "";
+      newTab.document.body.appendChild(messageElement);
     }
   } catch (error) {
-    newTab.document.body.innerHTML = `<p>Erro ao carregar anexo: ${error.message}</p>`;
+    // Criar elemento de forma segura para evitar XSS
+    const errorElement = document.createElement("p");
+    errorElement.textContent = `Erro ao carregar anexo: ${error.message}`;
+    newTab.document.body.innerHTML = "";
+    newTab.document.body.appendChild(errorElement);
     console.error("Falha ao visualizar anexo da regulação:", error);
   }
 }
@@ -894,7 +924,16 @@ function showModal(title, content) {
   const modalContent = document.getElementById("modal-content");
 
   modalTitle.textContent = title;
-  modalContent.innerHTML = content;
+  
+  // Verificar se o conteúdo é HTML válido ou texto simples
+  if (typeof content === 'string' && content.includes('<')) {
+    // Para conteúdo HTML, usar innerHTML apenas se for conteúdo conhecido/seguro
+    modalContent.innerHTML = content;
+  } else {
+    // Para conteúdo de texto simples, usar textContent para segurança
+    modalContent.textContent = content;
+  }
+  
   modal.classList.remove("hidden");
 }
 
@@ -995,7 +1034,7 @@ function formatExamAppointmentDetailsForModal(data) {
 
 async function handleShowRegulationDetailsModal(button) {
   const { idp, ids } = button.dataset;
-  showModal("Detalhes da Regulação", "<p>Carregando...</p>");
+  showModal("Detalhes da Regulação", "Carregando...");
   try {
     const data = await API.fetchRegulationDetails({
       reguIdp: idp,
@@ -1006,7 +1045,7 @@ async function handleShowRegulationDetailsModal(button) {
   } catch (error) {
     showModal(
       "Erro",
-      `<p>Não foi possível carregar os detalhes: ${error.message}</p>`
+      `Não foi possível carregar os detalhes: ${error.message}`
     );
   }
 }
@@ -1018,7 +1057,7 @@ async function handleShowAppointmentDetailsModal(button) {
     ? "Detalhes do Agendamento de Exame"
     : "Detalhes da Consulta Agendada";
 
-  showModal(title, "<p>Carregando...</p>");
+  showModal(title, "Carregando...");
 
   try {
     let data;
@@ -1034,7 +1073,7 @@ async function handleShowAppointmentDetailsModal(button) {
   } catch (error) {
     showModal(
       "Erro",
-      `<p>Não foi possível carregar os detalhes: ${error.message}</p>`
+      `Não foi possível carregar os detalhes: ${error.message}`
     );
   }
 }

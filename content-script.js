@@ -11,6 +11,8 @@
 
   const api = browser;
   let lastProcessedReguId = null;
+  let observer = null;
+  let debounceTimeout = null;
 
   const checkMaintenanceTab = () => {
     const maintenanceTabPanel = document.getElementById("tabs-manutencao");
@@ -52,15 +54,80 @@
     }
   };
 
-  const observer = new MutationObserver(() => {
-    clearTimeout(observer.debounceTimeout);
-    observer.debounceTimeout = setTimeout(checkMaintenanceTab, 250);
+  // Função para limpar recursos e desconectar o observer
+  const cleanup = () => {
+    if (observer) {
+      observer.disconnect();
+      observer = null;
+    }
+    if (debounceTimeout) {
+      clearTimeout(debounceTimeout);
+      debounceTimeout = null;
+    }
+    lastProcessedReguId = null;
+    console.log("[Assistente] Recursos limpos e observer desconectado.");
+  };
+
+  // Inicializa o MutationObserver
+  const initObserver = () => {
+    if (observer) {
+      cleanup();
+    }
+
+    observer = new MutationObserver(() => {
+      if (debounceTimeout) {
+        clearTimeout(debounceTimeout);
+      }
+      debounceTimeout = setTimeout(checkMaintenanceTab, 250);
+    });
+
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ["style", "aria-expanded", "class"],
+    });
+  };
+
+  // Listener para limpeza quando a extensão é desabilitada ou a página é recarregada
+  window.addEventListener("beforeunload", cleanup);
+  
+  // Listener para detectar desconexão da extensão
+  api.runtime.onMessage.addListener((message) => {
+    if (message.type === "EXTENSION_DISABLED" || message.type === "CLEANUP") {
+      cleanup();
+    }
   });
 
-  observer.observe(document.body, {
-    childList: true,
-    subtree: true,
-    attributes: true,
-    attributeFilter: ["style", "aria-expanded", "class"],
+  // Detecta quando a extensão é desabilitada
+  api.runtime.onConnect.addListener((port) => {
+    port.onDisconnect.addListener(() => {
+      cleanup();
+    });
   });
+
+  // Inicializa o observer
+  initObserver();
+
+  // Cleanup automático após 30 minutos de inatividade para prevenir vazamentos de memória
+  let inactivityTimer = null;
+  const resetInactivityTimer = () => {
+    if (inactivityTimer) {
+      clearTimeout(inactivityTimer);
+    }
+    inactivityTimer = setTimeout(() => {
+      console.log("[Assistente] Limpeza automática por inatividade.");
+      cleanup();
+    }, 30 * 60 * 1000); // 30 minutos
+  };
+
+  // Reseta o timer de inatividade a cada verificação
+  const originalCheck = checkMaintenanceTab;
+  checkMaintenanceTab = () => {
+    originalCheck();
+    resetInactivityTimer();
+  };
+
+  // Inicia o timer de inatividade
+  resetInactivityTimer();
 })();
