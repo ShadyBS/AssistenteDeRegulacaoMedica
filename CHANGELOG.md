@@ -1,5 +1,52 @@
 # Changelog - Assistente de Regulação Médica
 
+## [3.3.11] - 2025-01-16
+
+### 🐛 Correção de Bug
+
+- **Corrigido erro 400 ao visualizar detalhes de agendamentos de exame**
+  - Problema: Agendamentos de exame com IDs mal formatados causavam erro "Falha na comunicação com o servidor"
+  - Causa: IDs no formato "exam-525411" eram interpretados incorretamente como `idp="exam"` e `ids="525411"`
+  - Solução: Implementada detecção automática de prefixos nos IDs e extração correta dos valores numéricos
+  - Resultado: Agendamentos de exame agora podem ser visualizados corretamente tanto na timeline quanto na seção de agendamentos
+
+### 🔧 Melhorias Técnicas
+
+- **Tratamento robusto de IDs com prefixos**
+  - Detecção automática de IDs com prefixos não numéricos (ex: "exam-", "consult-", etc.)
+  - Fallback inteligente para extração de IDs quando formato não padrão é detectado
+  - Logging de avisos para identificar IDs problemáticos durante desenvolvimento
+
+- **Melhor estabilidade na visualização de detalhes**
+  - Prevenção de erros de servidor por IDs mal formatados
+  - Tratamento consistente entre timeline e seções regulares
+  - Melhor experiência do usuário ao acessar informações de agendamentos
+
+### 📚 Detalhes Técnicos
+
+- **Arquivos modificados:**
+  - `renderers.js` - Implementação de detecção e correção de IDs com prefixos
+  - `manifest.json` / `manifest-edge.json` - Atualização de versão
+
+- **Compatibilidade:**
+  - Mantida compatibilidade total com todas as funcionalidades existentes
+  - Correção aplicada tanto para timeline quanto para seções regulares de agendamentos
+  - Nenhuma alteração na interface do usuário
+
+### 🚀 Benefícios
+
+- **Visualização completa**: Todos os agendamentos de exame podem ser visualizados sem erros
+- **Melhor experiência**: Acesso sem falhas às informações detalhadas de agendamentos
+- **Maior robustez**: Sistema mais resiliente a variações no formato de IDs
+
+### 📋 Notas de Atualização
+
+Esta correção resolve um problema específico onde agendamentos de exame não podiam ter seus detalhes visualizados devido a IDs mal formatados. Agora todos os tipos de agendamentos funcionam corretamente.
+
+**Recomendação:** Atualização recomendada para usuários que visualizam frequentemente detalhes de agendamentos de exame.
+
+---
+
 ## [3.3.10] - 2025-01-16
 
 ### 🐛 Correções Críticas (Hotfix)

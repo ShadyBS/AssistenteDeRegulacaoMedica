@@ -186,7 +186,25 @@ export function renderAppointments(appointments, sortState) {
           typeText = "EXAME";
         }
 
-        const [idp, ids] = item.id.split("-");
+        // Corrigir problema com IDs que podem ter prefixos como "exam-"
+        let idp, ids;
+        const parts = item.id.split("-");
+        
+        // Verificar se o primeiro part não é numérico (indica prefixo)
+        if (parts.length >= 2 && isNaN(parts[0])) {
+          // Se o primeiro part não é numérico, é um prefixo (ex: "exam-525411")
+          // Usar o segundo part como ids e tentar obter idp de outras fontes
+          ids = parts[1];
+          
+          // Para exames, tentar obter o idp correto do objeto original
+          // Se não disponível, usar o mesmo valor como fallback
+          idp = item.examIdp || item.originalIdp || parts[1];
+          
+          console.warn(`ID com prefixo detectado: ${item.id}, usando idp=${idp}, ids=${ids}`);
+        } else {
+          // Formato normal: "idp-ids"
+          [idp, ids] = parts;
+        }
 
         return `
         <div class="p-3 mb-3 border rounded-lg bg-white">
@@ -492,7 +510,26 @@ export function renderTimeline(events, status) {
 
           if (event.type === "appointment") {
             const a = event.details;
-            const [idp, ids] = a.id.split("-");
+            
+            // Corrigir problema com IDs que podem ter prefixos como "exam-"
+            let idp, ids;
+            const parts = a.id.split("-");
+            
+            // Verificar se o primeiro part não é numérico (indica prefixo)
+            if (parts.length >= 2 && isNaN(parts[0])) {
+              // Se o primeiro part não é numérico, é um prefixo (ex: "exam-525411")
+              // Usar o segundo part como ids e tentar obter idp de outras fontes
+              ids = parts[1];
+              
+              // Para exames, tentar obter o idp correto do objeto original
+              // Se não disponível, usar o mesmo valor como fallback
+              idp = a.examIdp || a.originalIdp || parts[1];
+              
+              console.warn(`ID com prefixo detectado: ${a.id}, usando idp=${idp}, ids=${ids}`);
+            } else {
+              // Formato normal: "idp-ids"
+              [idp, ids] = parts;
+            }
 
             const statusStyles = {
               AGENDADO: "text-blue-600",
