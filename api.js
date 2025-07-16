@@ -348,10 +348,26 @@ function parseConsultasHTML(htmlString) {
 }
 
 export async function searchPatients(term) {
+  // Import validation utilities
+  const { validateSearchTerm, sanitizeSearchTerm } = await import('./validation.js');
+  
+  // Early exit for empty terms
   if (!term || term.length < 1) return [];
+  
+  // Validate and sanitize the search term
+  const validation = validateSearchTerm(term);
+  if (!validation.valid) {
+    throw new Error(`Invalid search term: ${validation.message}`);
+  }
+  
+  const sanitizedTerm = sanitizeSearchTerm(term);
+  if (!sanitizedTerm) {
+    throw new Error('Search term cannot be empty after sanitization');
+  }
+  
   const baseUrl = await getBaseUrl();
   const url = new URL(`${baseUrl}/sigss/usuarioServico/busca`);
-  url.search = new URLSearchParams({ searchString: term });
+  url.search = new URLSearchParams({ searchString: sanitizedTerm });
   const response = await fetch(url, {
     headers: {
       Accept: "application/json, text/javascript, */*; q=0.01",
@@ -573,8 +589,27 @@ export async function fetchResultadoExame({ idp, ids }) {
 }
 
 export async function fetchCadsusData({ cpf, cns }) {
+  // Import validation utilities
+  const { validateCPF, validateCNS } = await import('./validation.js');
+  
   if (!cpf && !cns) {
     return null;
+  }
+  
+  // Validate CPF if provided
+  if (cpf) {
+    const cpfValidation = validateCPF(cpf);
+    if (!cpfValidation.valid) {
+      throw new Error(`CPF inválido: ${cpfValidation.message}`);
+    }
+  }
+  
+  // Validate CNS if provided
+  if (cns) {
+    const cnsValidation = validateCNS(cns);
+    if (!cnsValidation.valid) {
+      throw new Error(`CNS inválido: ${cnsValidation.message}`);
+    }
   }
 
   const baseUrl = await getBaseUrl();

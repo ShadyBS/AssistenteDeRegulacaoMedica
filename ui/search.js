@@ -80,16 +80,29 @@ function renderPatientListItem(patient) {
 
 const handleSearchInput = Utils.debounce(async () => {
   const searchTerm = searchInput.value.trim();
+  
+  // Validate search term before API call
+  const { validateSearchTerm } = await import('../validation.js');
+  const validation = validateSearchTerm(searchTerm);
+  
   store.clearPatient();
   recentPatientsList.classList.add("hidden");
   searchResultsList.classList.remove("hidden");
+  
+  if (!validation.valid && searchTerm.length > 0) {
+    searchResultsList.innerHTML = `<li class="px-4 py-3 text-sm text-red-600">Erro: ${validation.message}</li>`;
+    return;
+  }
+  
   if (searchTerm.length < 1) {
     searchResultsList.innerHTML = "";
     return;
   }
   Utils.toggleLoader(true);
   try {
-    const patients = await API.searchPatients(searchTerm);
+    // Use sanitized search term for API call
+    const sanitizedTerm = validation.sanitized || searchTerm;
+    const patients = await API.searchPatients(sanitizedTerm);
     renderSearchResults(patients);
   } catch (error) {
     Utils.showMessage("Erro ao buscar pacientes.");

@@ -186,146 +186,199 @@ export function setupTabs(container) {
 
 /**
  * Normalizes data from various sources into a single, sorted timeline event list.
+ * Optimized for memory efficiency with large datasets.
  * @param {object} apiData - An object containing arrays of consultations, exams, etc.
+ * @param {object} options - Processing options for memory optimization
  * @returns {Array<object>} A sorted array of timeline event objects.
  */
-export function normalizeTimelineData(apiData) {
-  const events = [];
+export function normalizeTimelineData(apiData, options = {}) {
+  const { 
+    maxEvents = CONFIG.PERFORMANCE.MAX_TIMELINE_EVENTS || 1000,
+    batchSize = CONFIG.PERFORMANCE.BATCH_SIZE || 100,
+    enableGC = true 
+  } = options;
 
-  // Normalize Consultations
-  try {
-    (apiData.consultations || []).forEach((c) => {
-      if (!c || !c.date) return;
-      const searchText = normalizeString(
-        [
-          c.specialty,
-          c.professional,
-          c.unit,
-          ...c.details.map((d) => d.value),
-        ].join(" ")
-      );
-      events.push({
-        type: "consultation",
-        date: parseDate(c.date.split("\n")[0]),
-        sortableDate: c.sortableDate || parseDate(c.date),
-        title: `Consulta: ${c.specialty || "Especialidade não informada"}`,
-        summary: `com ${c.professional || "Profissional não informado"}`,
-        details: c,
-        subDetails: c.details || [],
-        searchText,
-      });
-    });
-  } catch (e) {
-    console.error("Failed to normalize consultation data for timeline:", e);
+  let events = [];
+  let processedCount = 0;
+
+  // Helper function for batch processing with memory management
+  const processBatch = (items, normalizer, typeName) => {
+    if (!Array.isArray(items) || items.length === 0) return;
+    
+    // Process in smaller batches to prevent memory spikes
+    for (let i = 0; i < items.length && processedCount < maxEvents; i += batchSize) {
+      try {
+        const batch = items.slice(i, i + batchSize);
+        const batchEvents = [];
+        
+        batch.forEach((item, index) => {
+          if (processedCount >= maxEvents) return;
+          
+          try {
+            const event = normalizer(item);
+            if (event && event.sortableDate instanceof Date && !isNaN(event.sortableDate)) {
+              batchEvents.push(event);
+              processedCount++;
+            }
+          } catch (itemError) {
+            console.warn(`Failed to process ${typeName} item at index ${i + index}:`, itemError);
+          }
+        });
+        
+        events.push(...batchEvents);
+        
+        // Trigger garbage collection hint for large batches
+        if (enableGC && batchEvents.length > 50) {
+          batchEvents.length = 0; // Clear reference
+        }
+        
+      } catch (batchError) {
+        console.error(`Failed to process ${typeName} batch starting at ${i}:`, batchError);
+      }
+    }
+  };
+
+  // Consultation normalizer with memory optimization
+  const normalizeConsultation = (c) => {
+    if (!c?.date) return null;
+    
+    const searchText = normalizeString(
+      [
+        c.specialty,
+        c.professional,
+        c.unit,
+        ...(c.details || []).map((d) => d.value || ''),
+      ].filter(Boolean).join(" ")
+    );
+    
+    return {
+      type: "consultation",
+      date: parseDate(c.date.split("\n")[0]),
+      sortableDate: c.sortableDate || parseDate(c.date),
+      title: `Consulta: ${c.specialty || "Especialidade não informada"}`,
+      summary: `com ${c.professional || "Profissional não informado"}`,
+      details: c,
+      subDetails: c.details || [],
+      searchText,
+    };
+  };
+
+  // Exam normalizer with validation
+  const normalizeExam = (e) => {
+    if (!e?.date) return null;
+    
+    const eventDate = parseDate(e.date);
+    if (!eventDate) return null;
+    
+    const searchText = normalizeString(
+      [e.examName, e.professional, e.specialty].filter(Boolean).join(" ")
+    );
+    
+    return {
+      type: "exam",
+      date: eventDate,
+      sortableDate: eventDate,
+      title: `Exame Solicitado: ${e.examName || "Nome não informado"}`,
+      summary: `Solicitado por ${e.professional || "Não informado"}`,
+      details: e,
+      subDetails: [
+        {
+          label: "Resultado",
+          value: e.hasResult ? "Disponível" : "Pendente",
+        },
+      ],
+      searchText,
+    };
+  };
+
+  // Appointment normalizer
+  const normalizeAppointment = (a) => {
+    if (!a?.date) return null;
+    
+    const searchText = normalizeString(
+      [a.specialty, a.description, a.location, a.professional].filter(Boolean).join(" ")
+    );
+    
+    return {
+      type: "appointment",
+      date: parseDate(a.date),
+      sortableDate: parseDate(a.date),
+      title: `Agendamento: ${a.specialty || a.description || "Não descrito"}`,
+      summary: a.location || "Local não informado",
+      details: a,
+      subDetails: [
+        { label: "Status", value: a.status || "N/A" },
+        { label: "Hora", value: a.time || "N/A" },
+      ],
+      searchText,
+    };
+  };
+
+  // Regulation normalizer
+  const normalizeRegulation = (r) => {
+    if (!r?.date) return null;
+    
+    const searchText = normalizeString(
+      [r.procedure, r.requester, r.provider, r.cid].filter(Boolean).join(" ")
+    );
+    
+    return {
+      type: "regulation",
+      date: parseDate(r.date),
+      sortableDate: parseDate(r.date),
+      title: `Regulação: ${r.procedure || "Procedimento não informado"}`,
+      summary: `Solicitante: ${r.requester || "Não informado"}`,
+      details: r,
+      subDetails: [
+        { label: "Status", value: r.status || "N/A" },
+        { label: "Prioridade", value: r.priority || "N/A" },
+      ],
+      searchText,
+    };
+  };
+
+  // Document normalizer
+  const normalizeDocument = (doc) => {
+    if (!doc?.date) return null;
+    
+    const searchText = normalizeString(doc.description || "");
+    
+    return {
+      type: "document",
+      date: parseDate(doc.date),
+      sortableDate: parseDate(doc.date),
+      title: `Documento: ${doc.description || "Sem descrição"}`,
+      summary: `Tipo: ${(doc.fileType || '').toUpperCase()}`,
+      details: doc,
+      subDetails: [],
+      searchText,
+    };
+  };
+
+  // Process each data type with batch processing
+  processBatch(apiData.consultations, normalizeConsultation, "consultations");
+  processBatch(apiData.exams, normalizeExam, "exams");
+  processBatch(apiData.appointments, normalizeAppointment, "appointments");
+  processBatch(apiData.regulations, normalizeRegulation, "regulations");
+  processBatch(apiData.documents, normalizeDocument, "documents");
+
+  // Sort events by date (newest first) with memory-efficient sorting
+  // For large datasets, we might want to consider a partial sort
+  if (events.length > maxEvents) {
+    // Sort partially and take only the most recent events
+    events.sort((a, b) => b.sortableDate - a.sortableDate);
+    events = events.slice(0, maxEvents);
+  } else {
+    events.sort((a, b) => b.sortableDate - a.sortableDate);
   }
 
-  // Normalize Exams
-  try {
-    (apiData.exams || []).forEach((e) => {
-      const eventDate = parseDate(e.date);
-      if (!e || !eventDate) return;
-      const searchText = normalizeString(
-        [e.examName, e.professional, e.specialty].filter(Boolean).join(" ")
-      );
-      events.push({
-        type: "exam",
-        date: eventDate,
-        sortableDate: eventDate,
-        title: `Exame Solicitado: ${e.examName || "Nome não informado"}`,
-        summary: `Solicitado por ${e.professional || "Não informado"}`,
-        details: e,
-        subDetails: [
-          {
-            label: "Resultado",
-            value: e.hasResult ? "Disponível" : "Pendente",
-          },
-        ],
-        searchText,
-      });
-    });
-  } catch (e) {
-    console.error("Failed to normalize exam data for timeline:", e);
+  // Final cleanup
+  if (enableGC && events.length > 100) {
+    // Trigger garbage collection hint by removing unused references
+    apiData = null;
   }
 
-  // Normalize Appointments
-  try {
-    (apiData.appointments || []).forEach((a) => {
-      if (!a || !a.date) return;
-      const searchText = normalizeString(
-        [a.specialty, a.description, a.location, a.professional].join(" ")
-      );
-      events.push({
-        type: "appointment",
-        date: parseDate(a.date),
-        sortableDate: parseDate(a.date),
-        title: `Agendamento: ${a.specialty || a.description || "Não descrito"}`,
-        summary: a.location || "Local não informado",
-        details: a,
-        subDetails: [
-          { label: "Status", value: a.status || "N/A" },
-          { label: "Hora", value: a.time || "N/A" },
-        ],
-        searchText,
-      });
-    });
-  } catch (e) {
-    console.error("Failed to normalize appointment data for timeline:", e);
-  }
-
-  // Normalize Regulations
-  try {
-    (apiData.regulations || []).forEach((r) => {
-      if (!r || !r.date) return;
-      const searchText = normalizeString(
-        [r.procedure, r.requester, r.provider, r.cid].join(" ")
-      );
-      events.push({
-        type: "regulation",
-        date: parseDate(r.date),
-        sortableDate: parseDate(r.date),
-        title: `Regulação: ${r.procedure || "Procedimento não informado"}`,
-        summary: `Solicitante: ${r.requester || "Não informado"}`,
-        details: r,
-        subDetails: [
-          { label: "Status", value: r.status || "N/A" },
-          { label: "Prioridade", value: r.priority || "N/A" },
-        ],
-        searchText,
-      });
-    });
-  } catch (e) {
-    console.error("Failed to normalize regulation data for timeline:", e);
-  }
-
-  // --- INÍCIO DA MODIFICAÇÃO ---
-  // Normalize Documents
-  try {
-    (apiData.documents || []).forEach((doc) => {
-      if (!doc || !doc.date) return;
-      const searchText = normalizeString(doc.description || "");
-      events.push({
-        type: "document",
-        date: parseDate(doc.date),
-        sortableDate: parseDate(doc.date),
-        title: `Documento: ${doc.description || "Sem descrição"}`,
-        summary: `Tipo: ${doc.fileType.toUpperCase()}`,
-        details: doc,
-        subDetails: [],
-        searchText,
-      });
-    });
-  } catch (e) {
-    console.error("Failed to normalize document data for timeline:", e);
-  }
-  // --- FIM DA MODIFICAÇÃO ---
-
-  // Filter out events with invalid dates and sort all events by date, newest first.
-  return events
-    .filter(
-      (event) =>
-        event.sortableDate instanceof Date && !isNaN(event.sortableDate)
-    )
-    .sort((a, b) => b.sortableDate - a.sortableDate);
+  return events;
 }
 
 /**

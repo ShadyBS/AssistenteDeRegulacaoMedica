@@ -101,6 +101,8 @@ export const CONFIG = {
     MAX_SEARCH_RESULTS: 10,         // Máximo de resultados de busca exibidos
     RESULTS_LIMIT: 250,             // Limite de resultados totais
     MATCHES_PER_FILE: 15,           // Máximo de matches por arquivo
+    MAX_TIMELINE_EVENTS: 1000,      // Máximo de eventos na timeline
+    BATCH_SIZE: 100,                // Tamanho do lote para processamento em lote
   },
 
   // Configurações específicas de seções
