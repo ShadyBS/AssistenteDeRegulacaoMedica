@@ -2,6 +2,84 @@ import "./browser-polyfill.js";
 
 const api = typeof browser !== "undefined" ? browser : chrome;
 
+// Default configuration for batched API requests
+const DEFAULT_BATCH_CONFIG = {
+  ATTACHMENT_BATCH_SIZE: 5, // Process 5 attachments at a time
+  BATCH_DELAY_MS: 100, // 100ms delay between batches
+};
+
+/**
+ * Gets the current batch configuration from storage or returns defaults.
+ * @returns {Promise<object>} The batch configuration object
+ */
+async function getBatchConfig() {
+  try {
+    const stored = await api.storage.sync.get({
+      batchAttachmentSize: DEFAULT_BATCH_CONFIG.ATTACHMENT_BATCH_SIZE,
+      batchDelayMs: DEFAULT_BATCH_CONFIG.BATCH_DELAY_MS,
+    });
+
+    return {
+      ATTACHMENT_BATCH_SIZE: Math.max(
+        1,
+        parseInt(stored.batchAttachmentSize, 10) ||
+          DEFAULT_BATCH_CONFIG.ATTACHMENT_BATCH_SIZE
+      ),
+      BATCH_DELAY_MS: Math.max(
+        0,
+        parseInt(stored.batchDelayMs, 10) || DEFAULT_BATCH_CONFIG.BATCH_DELAY_MS
+      ),
+    };
+  } catch (error) {
+    console.warn("Failed to load batch configuration, using defaults:", error);
+    return DEFAULT_BATCH_CONFIG;
+  }
+}
+
+/**
+ * Processes an array of items in batches to prevent overwhelming the server.
+ * This utility function implements rate limiting for API requests by:
+ * - Processing items in configurable batch sizes
+ * - Adding delays between batches to reduce server load
+ * - Handling individual item failures gracefully
+ * 
+ * Used to replace Promise.all() calls that could create too many concurrent requests.
+ * 
+ * @param {Array} items - Array of items to process
+ * @param {Function} processor - Async function to process each item
+ * @param {number} batchSize - Number of items to process per batch
+ * @param {number} delayMs - Delay in milliseconds between batches
+ * @returns {Promise<Array>} Array of processed results
+ */
+async function processBatched(items, processor, batchSize = 5, delayMs = 100) {
+  const results = [];
+
+  for (let i = 0; i < items.length; i += batchSize) {
+    const batch = items.slice(i, i + batchSize);
+
+    // Process current batch in parallel
+    const batchResults = await Promise.all(
+      batch.map(async (item, index) => {
+        try {
+          return await processor(item, i + index);
+        } catch (error) {
+          console.warn(`Batch processing error for item ${i + index}:`, error);
+          return null; // Return null for failed items
+        }
+      })
+    );
+
+    results.push(...batchResults);
+
+    // Add delay between batches (except for the last batch)
+    if (i + batchSize < items.length && delayMs > 0) {
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
+    }
+  }
+
+  return results;
+}
+
 /**
  * Obtém a URL base do sistema a partir das configurações salvas pelo usuário.
  * @returns {Promise<string>} A URL base salva.
@@ -652,13 +730,13 @@ export async function fetchAppointments({ isenPK, dataInicial, dataFinal }) {
     };
   });
 
-  const enrichedAppointments = [];
-  const batchSize = 10;
+  // Get current batch configuration for appointments
+  const batchConfig = await getBatchConfig();
 
-  for (let i = 0; i < basicAppointments.length; i += batchSize) {
-    const batch = basicAppointments.slice(i, i + batchSize);
-
-    const promises = batch.map(async (appt) => {
+  // Process appointment enrichment in batches to prevent overwhelming the server
+  const enrichedAppointments = await processBatched(
+    basicAppointments,
+    async (appt) => {
       if (appt.type.toUpperCase().includes("EXAME")) {
         return {
           ...appt,
@@ -695,11 +773,10 @@ export async function fetchAppointments({ isenPK, dataInicial, dataFinal }) {
         );
       }
       return appt;
-    });
-
-    const settledBatch = await Promise.all(promises);
-    enrichedAppointments.push(...settledBatch);
-  }
+    },
+    batchConfig.ATTACHMENT_BATCH_SIZE,
+    batchConfig.BATCH_DELAY_MS
+  );
 
   return enrichedAppointments;
 }
@@ -818,8 +895,13 @@ export async function fetchAllRegulations({
 
   const allRegulations = regulationsToFetch.flat();
 
-  const regulationsWithAttachments = await Promise.all(
-    allRegulations.map(async (regulation) => {
+  // Get current batch configuration
+  const batchConfig = await getBatchConfig();
+
+  // Process attachment fetching in batches to prevent overwhelming the server
+  const regulationsWithAttachments = await processBatched(
+    allRegulations,
+    async (regulation) => {
       if (regulation.idp && regulation.ids) {
         try {
           // CORREÇÃO: Usa o ID da própria regulação como o isenPK para esta chamada específica.
@@ -839,7 +921,9 @@ export async function fetchAllRegulations({
         }
       }
       return { ...regulation, attachments: [] };
-    })
+    },
+    batchConfig.ATTACHMENT_BATCH_SIZE,
+    batchConfig.BATCH_DELAY_MS
   );
 
   regulationsWithAttachments.sort((a, b) => {
@@ -1095,33 +1179,41 @@ export async function keepSessionAlive() {
         Accept: "application/json, text/javascript, */*; q=0.01",
         "X-Requested-With": "XMLHttpRequest",
         "Cache-Control": "no-cache",
-        "Pragma": "no-cache"
+        Pragma: "no-cache",
       },
-      cache: "no-cache"
+      cache: "no-cache",
     });
 
     if (!response.ok) {
-      console.warn(`Keep-alive falhou com status ${response.status} - ${response.statusText}`);
-      
+      console.warn(
+        `Keep-alive falhou com status ${response.status} - ${response.statusText}`
+      );
+
       // Se for erro 401 ou 403, provavelmente a sessão expirou
       if (response.status === 401 || response.status === 403) {
-        console.error("Sessão expirou - keep-alive não pode manter a sessão ativa");
+        console.error(
+          "Sessão expirou - keep-alive não pode manter a sessão ativa"
+        );
       }
-      
+
       return false;
     }
 
     const contentType = response.headers.get("content-type");
     if (!contentType || !contentType.includes("application/json")) {
-      console.warn("Keep-alive: resposta não é JSON, possível redirecionamento para login");
+      console.warn(
+        "Keep-alive: resposta não é JSON, possível redirecionamento para login"
+      );
       return false;
     }
 
     const data = await response.json();
-    
+
     // Verifica se a resposta contém dados válidos
     if (data && (data.dataHora || data.data || data.hora)) {
-      console.log(`Sessão mantida ativa: ${data.dataHora || data.data || 'OK'}`);
+      console.log(
+        `Sessão mantida ativa: ${data.dataHora || data.data || "OK"}`
+      );
       return true;
     } else {
       console.warn("Keep-alive: resposta JSON inválida ou vazia");
@@ -1129,12 +1221,12 @@ export async function keepSessionAlive() {
     }
   } catch (error) {
     console.error("Erro ao manter sessão ativa:", error);
-    
+
     // Se for erro de rede, pode ser problema de conectividade
     if (error.name === "TypeError" && error.message.includes("fetch")) {
       console.error("Erro de rede no keep-alive - verifique a conectividade");
     }
-    
+
     return false;
   }
 }
