@@ -10,6 +10,7 @@ import * as Search from "./ui/search.js";
 import * as PatientCard from "./ui/patient-card.js";
 import { store } from "./store.js";
 import { CONFIG, getTimeout, getCSSClass } from "./config.js";
+import { getMemoryManager } from "./MemoryManager.js";
 
 // --- ÍCONES ---
 const sectionIcons = {
@@ -25,10 +26,87 @@ const sectionIcons = {
 let currentRegulationData = null;
 let sectionManagers = {}; // Objeto para armazenar instâncias de SectionManager
 
+// Instância global do gerenciador de memória
+const memoryManager = getMemoryManager();
+
 // Controle de race condition para seleção de pacientes
 let patientSelectionInProgress = false;
 let pendingPatientSelection = null;
 let patientSelectionTimeout = null;
+
+/**
+ * Sistema de limpeza de recursos para mudança de paciente
+ */
+function cleanupPatientResources() {
+  console.log('[Sidebar] Limpando recursos do paciente anterior');
+  
+  // Limpa timeout de seleção de paciente se existir
+  if (patientSelectionTimeout) {
+    memoryManager.clearTimeout(patientSelectionTimeout);
+    patientSelectionTimeout = null;
+  }
+  
+  // Reseta variáveis de controle
+  patientSelectionInProgress = false;
+  pendingPatientSelection = null;
+  
+  // Limpa dados de regulação atual
+  currentRegulationData = null;
+  
+  // Limpa dados dos section managers
+  Object.values(sectionManagers).forEach((manager) => {
+    if (typeof manager.cleanup === "function") {
+      manager.cleanup();
+    }
+    if (typeof manager.clearAutomationFeedbackAndFilters === "function") {
+      manager.clearAutomationFeedbackAndFilters(false);
+    } else if (typeof manager.clearAutomation === "function") {
+      manager.clearAutomation();
+    }
+  });
+  
+  // Força limpeza de memória
+  memoryManager.performMemoryCleanup();
+  
+  console.log('[Sidebar] Limpeza de recursos concluída');
+}
+
+/**
+ * Registra callbacks de limpeza no MemoryManager
+ */
+function registerCleanupCallbacks() {
+  // Callback para limpeza de section managers
+  memoryManager.addCleanupCallback(() => {
+    console.log('[Sidebar] Executando limpeza de section managers');
+    Object.values(sectionManagers).forEach((manager) => {
+      if (typeof manager.cleanup === "function") {
+        try {
+          manager.cleanup();
+        } catch (error) {
+          console.error('[Sidebar] Erro ao limpar section manager:', error);
+        }
+      }
+    });
+    sectionManagers = {};
+  });
+  
+  // Callback para limpeza de timeouts globais
+  memoryManager.addCleanupCallback(() => {
+    console.log('[Sidebar] Limpando timeouts globais');
+    if (patientSelectionTimeout) {
+      clearTimeout(patientSelectionTimeout);
+      patientSelectionTimeout = null;
+    }
+  });
+  
+  // Callback para limpeza de variáveis globais
+  memoryManager.addCleanupCallback(() => {
+    console.log('[Sidebar] Limpando variáveis globais');
+    currentRegulationData = null;
+    patientSelectionInProgress = false;
+    pendingPatientSelection = null;
+  });
+}
 
 // --- FUNÇÃO AUXILIAR DE FILTRAGEM ---
 /**
@@ -333,21 +411,24 @@ async function selectPatient(patientInfo, forceRefresh = false) {
     return;
   }
 
-  // Limpar timeout anterior se existir
+  // Limpar timeout anterior se existir usando MemoryManager
   if (patientSelectionTimeout) {
-    clearTimeout(patientSelectionTimeout);
+    memoryManager.clearTimeout(patientSelectionTimeout);
     patientSelectionTimeout = null;
   }
 
   // Implementar debounce de 300ms para evitar múltiplas chamadas rápidas
-  patientSelectionTimeout = setTimeout(async () => {
+  patientSelectionTimeout = memoryManager.setTimeout(async () => {
+    // Limpa recursos do paciente anterior antes de carregar novo
+    cleanupPatientResources();
+    
     await executePatientSelection(patientInfo, forceRefresh);
     
     // Processar requisição pendente se existir
     if (pendingPatientSelection) {
       const pending = pendingPatientSelection;
       pendingPatientSelection = null;
-      setTimeout(() => {
+      memoryManager.setTimeout(() => {
         selectPatient(pending.patientInfo, pending.forceRefresh);
       }, 100); // Pequeno delay para evitar sobrecarga
     }
@@ -397,6 +478,15 @@ async function executePatientSelection(patientInfo, forceRefresh = false) {
 }
 
 async function init() {
+  console.log('[Sidebar] Iniciando aplicação');
+  
+  // Registra callbacks de limpeza no MemoryManager
+  registerCleanupCallbacks();
+  
+  // Registra referências globais importantes
+  memoryManager.setGlobalRef('sectionManagers', sectionManagers);
+  memoryManager.setGlobalRef('currentRegulationData', currentRegulationData);
+  
   let baseUrlConfigured = true;
 
   try {
@@ -469,6 +559,11 @@ async function init() {
   setupAutoModeToggle();
 
   await checkForPendingRegulation();
+  
+  // Log estatísticas iniciais do MemoryManager
+  memoryManager.logStats();
+  
+  console.log('[Sidebar] Aplicação inicializada com sucesso');
 }
 
 async function loadConfigAndData() {
@@ -749,38 +844,64 @@ function handleShowRegulationInfo() {
 }
 
 function addGlobalEventListeners() {
+  console.log('[Sidebar] Adicionando event listeners globais');
+  
   const mainContent = document.getElementById("main-content");
   const infoModal = document.getElementById("info-modal");
   const modalCloseBtn = document.getElementById("modal-close-btn");
   const infoBtn = document.getElementById("context-info-btn");
   const reloadBtn = document.getElementById("reload-sidebar-btn");
 
-  if (reloadBtn) {
-    reloadBtn.addEventListener("click", () => {
-      const patient = store.getPatient();
-      if (patient && patient.ficha) {
-        const confirmation = window.confirm(
-          "Um paciente está selecionado e o estado atual será perdido. Deseja realmente recarregar o assistente?"
-        );
-        if (confirmation) {
-          window.location.reload();
-        }
-      } else {
+  // Handler para botão de reload com confirmação
+  const reloadHandler = () => {
+    const patient = store.getPatient();
+    if (patient && patient.ficha) {
+      const confirmation = window.confirm(
+        "Um paciente está selecionado e o estado atual será perdido. Deseja realmente recarregar o assistente?"
+      );
+      if (confirmation) {
+        // Limpa recursos antes de recarregar
+        memoryManager.cleanup();
         window.location.reload();
       }
-    });
+    } else {
+      // Limpa recursos antes de recarregar
+      memoryManager.cleanup();
+      window.location.reload();
+    }
+  };
+
+  // Handler para fechar modal
+  const modalCloseHandler = () => infoModal.classList.add("hidden");
+  
+  // Handler para clique no backdrop do modal
+  const modalBackdropHandler = (e) => {
+    if (e.target === infoModal) infoModal.classList.add("hidden");
+  };
+
+  // Adiciona event listeners usando MemoryManager
+  if (reloadBtn) {
+    memoryManager.addEventListener(reloadBtn, "click", reloadHandler);
   }
 
-  modalCloseBtn.addEventListener("click", () =>
-    infoModal.classList.add("hidden")
-  );
-  infoModal.addEventListener("click", (e) => {
-    if (e.target === infoModal) infoModal.classList.add("hidden");
-  });
-  mainContent.addEventListener("click", handleGlobalActions);
-  infoBtn.addEventListener("click", handleShowRegulationInfo);
+  if (modalCloseBtn) {
+    memoryManager.addEventListener(modalCloseBtn, "click", modalCloseHandler);
+  }
+  
+  if (infoModal) {
+    memoryManager.addEventListener(infoModal, "click", modalBackdropHandler);
+  }
+  
+  if (mainContent) {
+    memoryManager.addEventListener(mainContent, "click", handleGlobalActions);
+  }
+  
+  if (infoBtn) {
+    memoryManager.addEventListener(infoBtn, "click", handleShowRegulationInfo);
+  }
 
-  browser.storage.onChanged.addListener((changes, areaName) => {
+  // Handler para mudanças no storage
+  const storageChangeHandler = (changes, areaName) => {
     if (areaName === "local" && changes.pendingRegulation) {
       // Apenas processa se a detecção automática estiver LIGADA
       browser.storage.sync
@@ -801,6 +922,8 @@ function addGlobalEventListeners() {
     }
 
     if (areaName === "sync" && changes.sectionHeaderStyles) {
+      // Limpa recursos antes de recarregar
+      memoryManager.cleanup();
       window.location.reload();
     }
 
@@ -808,7 +931,22 @@ function addGlobalEventListeners() {
       // Mantém o botão da sidebar sincronizado com a configuração
       setupAutoModeToggle();
     }
+  };
+
+  // Adiciona listener para mudanças no storage
+  browser.storage.onChanged.addListener(storageChangeHandler);
+  
+  // Registra callback para remover listener do storage na limpeza
+  memoryManager.addCleanupCallback(() => {
+    console.log('[Sidebar] Removendo listener de storage');
+    try {
+      browser.storage.onChanged.removeListener(storageChangeHandler);
+    } catch (error) {
+      console.error('[Sidebar] Erro ao remover listener de storage:', error);
+    }
   });
+  
+  console.log('[Sidebar] Event listeners globais adicionados');
 }
 
 async function handleGlobalActions(event) {
