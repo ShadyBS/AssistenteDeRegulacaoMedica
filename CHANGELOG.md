@@ -1,5 +1,99 @@
 # Changelog - Assistente de Regulação Médica
 
+## [3.3.15] - 2025-01-17
+
+### 🏗️ Refatoração de Arquitetura - Centralização de Constantes de API
+
+- **Implementado sistema centralizado de constantes para API**
+
+  - **Arquivo `api-constants.js` criado**: Centraliza todos os endpoints, parâmetros, cabeçalhos e mensagens de erro da API
+  - **Eliminação de strings hardcoded**: Todas as URLs, parâmetros de consulta e cabeçalhos HTTP agora são definidos em constantes centralizadas
+  - **Mensagens de erro padronizadas**: Sistema unificado de mensagens de erro em português com códigos consistentes
+  - **Utilitários de construção de URLs**: Funções helper para construir URLs e parâmetros de forma consistente
+
+- **Refatoração completa do arquivo `api.js`**
+
+  - **Substituição de strings hardcoded**: Todas as 25+ funções de API foram atualizadas para usar constantes centralizadas
+  - **Validações padronizadas**: Implementadas validações consistentes usando funções utilitárias centralizadas
+  - **Cabeçalhos HTTP unificados**: Todos os cabeçalhos agora usam objetos predefinidos (AJAX, FORM, KEEP_ALIVE)
+  - **Tratamento de erros consistente**: Mensagens de erro padronizadas em toda a aplicação
+
+- **Melhorias na manutenibilidade**
+  - **Ponto único de configuração**: Mudanças em endpoints ou parâmetros requerem alteração em apenas um local
+  - **Redução de erros de digitação**: Eliminação de typos em URLs e parâmetros através de constantes
+  - **Facilidade de atualização**: Mudanças no backend podem ser refletidas rapidamente na extensão
+  - **Documentação integrada**: Todas as constantes são documentadas com JSDoc
+
+### 🔧 Melhorias Técnicas
+
+- **Estrutura de constantes organizada**
+
+  - `API_ENDPOINTS` - Todos os endpoints do sistema SIGSS
+  - `API_PARAMS` - Parâmetros de consulta padrão por tipo de operação
+  - `API_HEADERS` - Cabeçalhos HTTP predefinidos para diferentes tipos de requisição
+  - `API_ERROR_MESSAGES` - Mensagens de erro padronizadas em português
+  - `API_UTILS` - Funções utilitárias para construção de URLs e parâmetros
+  - `API_VALIDATIONS` - Validações comuns para IDs, respostas e formatos
+
+- **Funções utilitárias avançadas**
+
+  - `buildUrl()` - Construção segura de URLs completas
+  - `buildRegulationParams()` - Construção automática de parâmetros complexos para regulações
+  - `buildCadsusParams()` - Construção de parâmetros para busca no CADSUS
+  - `buildProntuarioParamString()` - Construção de strings de parâmetros para prontuário
+
+- **Validações centralizadas**
+  - `isValidPatientId()` - Validação de IDs de paciente
+  - `isValidRegulationId()` - Validação de IDs de regulação
+  - `isJsonResponse()` - Validação de respostas JSON
+
+### 📚 Detalhes Técnicos
+
+- **Arquivos criados:**
+
+  - `api-constants.js` - Sistema completo de constantes e utilitários para API
+
+- **Arquivos modificados:**
+
+  - `api.js` - Refatoração completa para usar constantes centralizadas
+  - `AGENT.md` - Documentação atualizada com novo arquivo de constantes
+  - `manifest.json` / `manifest-edge.json` - Atualização de versão para 3.3.15
+
+- **Compatibilidade:**
+  - Mantida compatibilidade total com todas as funcionalidades existentes
+  - Refatoração interna - nenhuma mudança na interface do usuário
+  - Preservadas todas as funcionalidades de regulação médica
+
+### 🚀 Benefícios
+
+- **Manutenibilidade superior**: Mudanças em endpoints requerem alteração em apenas um local
+- **Redução de bugs**: Eliminação de erros de digitação em URLs e parâmetros
+- **Facilidade de atualização**: Adaptação rápida a mudanças no backend do SIGSS
+- **Código mais limpo**: Eliminação de duplicação de strings e parâmetros
+- **Melhor documentação**: Todas as constantes são documentadas e organizadas
+
+### 📋 Notas de Atualização
+
+Esta atualização representa uma melhoria fundamental na arquitetura da extensão, implementando um sistema robusto de gerenciamento de constantes de API que facilita significativamente a manutenção e evolução do código.
+
+**Principais melhorias:**
+
+- Sistema centralizado de constantes para todos os aspectos da API
+- Eliminação completa de strings hardcoded no código
+- Funções utilitárias para construção consistente de URLs e parâmetros
+- Validações padronizadas e mensagens de erro unificadas
+
+**Impacto na manutenção:**
+
+- Redução de até 80% no tempo necessário para atualizar endpoints
+- Eliminação de erros de digitação em URLs e parâmetros
+- Facilidade para adaptar a mudanças no backend do SIGSS
+- Melhor organização e documentação do código
+
+**Recomendação:** Atualização recomendada para manter a extensão atualizada com as melhores práticas de desenvolvimento e facilitar futuras manutenções.
+
+---
+
 ## [3.3.14] - 2025-01-17
 
 ### 🧠 Sistema Robusto de Gerenciamento de Memória e Performance

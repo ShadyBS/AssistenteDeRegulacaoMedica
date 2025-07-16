@@ -20,6 +20,7 @@
 - `background.js` - Service worker handling storage and API calls
 - `content-script.js` - Injected script to detect and extract regulation data
 - `api.js` - Handles CADSUS and regulation data fetching
+- `api-constants.js` - Centralized API endpoints, parameters, headers, and error messages
 - `src/` - Tailwind CSS source / `ui/` - Modular UI components
 - `dist-zips/` - Built extension packages
 

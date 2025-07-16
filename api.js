@@ -1,6 +1,18 @@
 import "./browser-polyfill.js";
 import { CONFIG, getAPIConfig } from "./config.js";
 import { getBrowserAPIInstance } from "./BrowserAPI.js";
+import {
+  API_ENDPOINTS,
+  API_PARAMS,
+  API_HEADERS,
+  API_ERROR_MESSAGES,
+  API_UTILS,
+  API_VALIDATIONS,
+  REGULATION_FILTERS,
+  PRONTUARIO_PARAMS,
+  DATA_FORMATS,
+  HTTP_STATUS,
+} from "./api-constants.js";
 
 const api = getBrowserAPIInstance();
 
@@ -137,14 +149,12 @@ function getTextFromHTML(htmlString) {
  */
 export async function fetchRegulationPriorities() {
   const baseUrl = await getBaseUrl();
-  const url = new URL(
-    `${baseUrl}/sigss/configuracaoGravidade/loadConfiguracaoRegra`
-  );
+  const url = API_UTILS.buildUrl(baseUrl, API_ENDPOINTS.REGULATION_PRIORITIES);
 
   try {
     const response = await fetch(url);
     if (!response.ok) {
-      console.error("Não foi possível buscar as prioridades de regulação.");
+      console.error(API_ERROR_MESSAGES.PRIORITIES_FETCH_FAILED);
       return [];
     }
     const data = await response.json();
@@ -166,14 +176,12 @@ export async function fetchRegulationPriorities() {
  * @returns {Promise<object>} O objeto com os dados da regulação.
  */
 export async function fetchRegulationDetails({ reguIdp, reguIds }) {
-  if (!reguIdp || !reguIds) {
-    throw new Error("IDs da regulação são necessários.");
+  if (!API_VALIDATIONS.isValidRegulationId(reguIdp, reguIds)) {
+    throw new Error(API_ERROR_MESSAGES.MISSING_REGULATION_ID);
   }
+  
   const baseUrl = await getBaseUrl();
-  // Este é o endpoint que vimos no arquivo HAR.
-  const url = new URL(
-    `${baseUrl}/sigss/regulacaoControleSolicitacao/visualiza`
-  );
+  const url = new URL(API_UTILS.buildUrl(baseUrl, API_ENDPOINTS.REGULATION_DETAILS));
   url.search = new URLSearchParams({
     "reguPK.idp": reguIdp,
     "reguPK.ids": reguIds,
@@ -181,10 +189,7 @@ export async function fetchRegulationDetails({ reguIdp, reguIds }) {
 
   const response = await fetch(url, {
     method: "GET",
-    headers: {
-      Accept: "application/json, text/javascript, */*; q=0.01",
-      "X-Requested-With": "XMLHttpRequest",
-    },
+    headers: API_HEADERS.AJAX,
   });
 
   if (!response.ok) {
@@ -192,16 +197,13 @@ export async function fetchRegulationDetails({ reguIdp, reguIds }) {
     return null;
   }
 
-  const contentType = response.headers.get("content-type");
-  if (contentType && contentType.includes("application/json")) {
-    const data = await response.json();
-    // O objeto de dados está aninhado sob a chave "regulacao"
-    return data.regulacao || null;
-  } else {
-    throw new Error(
-      "A resposta do servidor não foi JSON. A sessão pode ter expirado."
-    );
+  if (!API_VALIDATIONS.isJsonResponse(response)) {
+    throw new Error(API_ERROR_MESSAGES.INVALID_RESPONSE);
   }
+
+  const data = await response.json();
+  // O objeto de dados está aninhado sob a chave "regulacao"
+  return data.regulacao || null;
 }
 
 function parseConsultasHTML(htmlString) {
@@ -365,7 +367,7 @@ export async function searchPatients(term) {
   // Validate and sanitize the search term
   const validation = validateSearchTerm(term);
   if (!validation.valid) {
-    throw new Error(`Invalid search term: ${validation.message}`);
+    throw new Error(API_ERROR_MESSAGES.INVALID_SEARCH_TERM);
   }
 
   const sanitizedTerm = sanitizeSearchTerm(term);
@@ -374,16 +376,16 @@ export async function searchPatients(term) {
   }
 
   const baseUrl = await getBaseUrl();
-  const url = new URL(`${baseUrl}/sigss/usuarioServico/busca`);
+  const url = new URL(API_UTILS.buildUrl(baseUrl, API_ENDPOINTS.PATIENT_SEARCH));
   url.search = new URLSearchParams({ searchString: sanitizedTerm });
+  
   const response = await fetch(url, {
-    headers: {
-      Accept: "application/json, text/javascript, */*; q=0.01",
-      "X-Requested-With": "XMLHttpRequest",
-    },
+    headers: API_HEADERS.AJAX,
   });
+  
   if (!response.ok) handleFetchError(response);
   const data = await response.json();
+  
   return Array.isArray(data)
     ? data.map((p) => ({
         idp: p[0],
@@ -624,45 +626,17 @@ export async function fetchCadsusData({ cpf, cns, skipValidation = false }) {
   }
 
   const baseUrl = await getBaseUrl();
-  const url = new URL(
-    `${baseUrl}/sigss/usuarioServicoConsultaPDQ/consultarPaciente`
-  );
+  const url = new URL(API_UTILS.buildUrl(baseUrl, API_ENDPOINTS.CADSUS_SEARCH));
 
-  const params = new URLSearchParams({
-    _search: "false",
-    rows: "50",
-    page: "1",
-    sidx: "nome",
-    sord: "asc",
-    "pdq.cartaoNacionalSus": "",
-    "pdq.cpf": "",
-    "pdq.rg": "",
-    "pdq.nome": "",
-    "pdq.dataNascimento": "",
-    "pdq.sexo": "",
-    "pdq.nomeMae": "",
-  });
-
-  if (cpf) {
-    const formattedCpf = String(cpf)
-      .replace(/\D/g, "")
-      .replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
-    params.set("pdq.cpf", formattedCpf);
-  } else if (cns) {
-    params.set("pdq.cartaoNacionalSus", cns);
-  }
-
+  const params = API_UTILS.buildCadsusParams({ cpf, cns });
   url.search = params.toString();
 
   const response = await fetch(url, {
-    headers: {
-      Accept: "application/json, text/javascript, */*; q=0.01",
-      "X-Requested-With": "XMLHttpRequest",
-    },
+    headers: API_HEADERS.AJAX,
   });
 
   if (!response.ok) {
-    console.warn(`A busca no CADSUS falhou com status ${response.status}.`);
+    console.warn(`${API_ERROR_MESSAGES.CADSUS_SEARCH_FAILED} com status ${response.status}.`);
     return null;
   }
 
@@ -1230,26 +1204,21 @@ export async function fetchAllTimelineData({
 export async function keepSessionAlive() {
   try {
     const baseUrl = await getBaseUrl();
-    const url = new URL(`${baseUrl}/sigss/common/dataHora`);
+    const url = API_UTILS.buildUrl(baseUrl, API_ENDPOINTS.SYSTEM_DATETIME);
 
     const response = await fetch(url, {
       method: "GET",
-      headers: {
-        Accept: "application/json, text/javascript, */*; q=0.01",
-        "X-Requested-With": "XMLHttpRequest",
-        "Cache-Control": "no-cache",
-        Pragma: "no-cache",
-      },
+      headers: API_HEADERS.KEEP_ALIVE,
       cache: "no-cache",
     });
 
     if (!response.ok) {
       console.warn(
-        `Keep-alive falhou com status ${response.status} - ${response.statusText}`
+        `${API_ERROR_MESSAGES.KEEP_ALIVE_FAILED} com status ${response.status} - ${response.statusText}`
       );
 
       // Se for erro 401 ou 403, provavelmente a sessão expirou
-      if (response.status === 401 || response.status === 403) {
+      if (response.status === HTTP_STATUS.UNAUTHORIZED || response.status === HTTP_STATUS.FORBIDDEN) {
         console.error(
           "Sessão expirou - keep-alive não pode manter a sessão ativa"
         );
@@ -1258,11 +1227,8 @@ export async function keepSessionAlive() {
       return false;
     }
 
-    const contentType = response.headers.get("content-type");
-    if (!contentType || !contentType.includes("application/json")) {
-      console.warn(
-        "Keep-alive: resposta não é JSON, possível redirecionamento para login"
-      );
+    if (!API_VALIDATIONS.isJsonResponse(response)) {
+      console.warn(API_ERROR_MESSAGES.KEEP_ALIVE_NOT_JSON);
       return false;
     }
 
@@ -1275,7 +1241,7 @@ export async function keepSessionAlive() {
       );
       return true;
     } else {
-      console.warn("Keep-alive: resposta JSON inválida ou vazia");
+      console.warn(API_ERROR_MESSAGES.KEEP_ALIVE_INVALID_RESPONSE);
       return false;
     }
   } catch (error) {
