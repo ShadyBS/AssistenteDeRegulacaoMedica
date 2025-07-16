@@ -1,5 +1,42 @@
 # Changelog - Assistente de Regulação Médica
 
+## [3.3.12] - 2025-01-17
+
+### 🐛 Correção de Bug
+
+- **Corrigido erro 400 ao visualizar detalhes de agendamentos de exame**
+  - **Problema**: Ao clicar no botão de detalhes de um agendamento de exame (na timeline ou na seção de agendamentos), a requisição falhava com um erro `400 Bad Request`.
+  - **Causa**: O ID do agendamento de exame (ex: `EXAM-525429-1`) era processado incorretamente, fazendo com que os parâmetros da URL fossem enviados com o mesmo valor (ex: `idp=525429` e `ids=525429`), o que era rejeitado pelo servidor.
+  - **Solução**: O ID do agendamento de exame agora é normalizado na camada de API (`api.js`). O prefixo `EXAM-` é removido assim que os dados são recebidos, transformando `EXAM-IDP-IDS` em um formato consistente `IDP-IDS` antes de ser utilizado por qualquer outra parte do sistema.
+  - **Resultado**: Os links para visualização de detalhes de agendamentos de exame são gerados corretamente, eliminando o erro 400 e permitindo o acesso às informações.
+
+### 🔧 Melhorias Técnicas
+
+- **Normalização de dados na fonte (API Layer)**
+  - A lógica de tratamento de IDs de exames foi movida da camada de renderização para a camada de busca de dados (`api.js`).
+  - Isso garante que todos os componentes que consomem dados de agendamentos (timeline, seção de agendamentos, etc.) recebam um ID em formato consistente, simplificando o código.
+  - Centraliza a lógica de tratamento de dados, aumentando a robustez e facilitando a manutenção futura.
+
+### 📚 Detalhes Técnicos
+
+- **Arquivos modificados:**
+
+  - `api.js` - Implementada a normalização do ID do agendamento de exame na função `fetchAppointments`.
+  - `CHANGELOG.md` - Adicionada esta entrada de atualização.
+
+- **Compatibilidade:**
+  - Mantida compatibilidade total com todas as funcionalidades existentes. A mudança é interna e melhora a estabilidade de uma funcionalidade chave.
+
+### 🚀 Benefícios
+
+- **Acesso Confiável**: A visualização de detalhes de agendamentos de exame agora funciona de forma consistente e sem erros em toda a aplicação.
+- **Maior Estabilidade**: O tratamento centralizado dos dados reduz a chance de bugs similares em outras partes da extensão.
+- **Código Mais Limpo**: A lógica de normalização não precisa ser replicada em diferentes locais, simplificando o código.
+
+### 📋 Notas de Atualização
+
+Esta atualização refina a correção anterior para o problema na visualização de detalhes de exames. Ao mover a lógica para a camada de API, a solução se torna mais estável e consistente.
+
 ## [3.3.11] - 2025-01-16
 
 ### 🐛 Correção de Bug
@@ -13,6 +50,7 @@
 ### 🔧 Melhorias Técnicas
 
 - **Tratamento robusto de IDs com prefixos**
+
   - Detecção automática de IDs com prefixos não numéricos (ex: "exam-", "consult-", etc.)
   - Fallback inteligente para extração de IDs quando formato não padrão é detectado
   - Logging de avisos para identificar IDs problemáticos durante desenvolvimento
@@ -25,6 +63,7 @@
 ### 📚 Detalhes Técnicos
 
 - **Arquivos modificados:**
+
   - `renderers.js` - Implementação de detecção e correção de IDs com prefixos
   - `manifest.json` / `manifest-edge.json` - Atualização de versão
 
@@ -52,6 +91,7 @@ Esta correção resolve um problema específico onde agendamentos de exame não 
 ### 🐛 Correções Críticas (Hotfix)
 
 - **Corrigido bloqueio de carregamento de pacientes com CNS inválido**
+
   - Problema: Pacientes com CNS inválido não podiam ser carregados após seleção
   - Solução: Validação de CNS/CPF agora ocorre apenas durante a busca manual, não no carregamento de dados
   - Implementado parâmetro `skipValidation` na função `fetchCadsusData` para controlar quando validar
@@ -66,6 +106,7 @@ Esta correção resolve um problema específico onde agendamentos de exame não 
 ### 🔧 Melhorias de Usabilidade
 
 - **Carregamento de pacientes mais robusto**
+
   - Pacientes com dados de CNS problemáticos agora carregam normalmente
   - Busca CADSUS continua funcionando mesmo com CNS inválido no cadastro
   - Melhor separação entre validação de entrada do usuário e processamento interno
@@ -78,6 +119,7 @@ Esta correção resolve um problema específico onde agendamentos de exame não 
 ### 📚 Detalhes Técnicos
 
 - **Arquivos modificados:**
+
   - `api.js` - Adicionado parâmetro `skipValidation` em `fetchCadsusData`
   - `sidebar.js` - Usado `skipValidation: true` ao carregar dados do paciente
   - `utils.js` - Corrigida referência `global.gc()` para ambiente de browser
@@ -97,6 +139,7 @@ Esta correção resolve um problema específico onde agendamentos de exame não 
 ### 📋 Notas de Atualização
 
 Este hotfix corrige dois problemas críticos que afetavam a funcionalidade principal da extensão:
+
 1. Impossibilidade de carregar pacientes com CNS inválido
 2. Falha na timeline por erro de ambiente JavaScript
 
@@ -109,12 +152,14 @@ Este hotfix corrige dois problemas críticos que afetavam a funcionalidade princ
 ### ⚡ Melhorias de Performance e Estabilidade
 
 - **Eliminada condição de corrida na seleção de pacientes**
+
   - Implementado sistema de debouncing de 300ms para evitar múltiplas seleções simultâneas
   - Adicionado controle de estado para prevenir chamadas API duplicadas
   - Implementada fila de requisições pendentes para processar seleções sequencialmente
   - Melhorado logging para monitoramento de operações de seleção
 
 - **Aprimorado tratamento de erros no sistema de notificações**
+
   - Implementada proteção contra notificações recursivas no store
   - Adicionado sistema de contagem de erros com pause temporário após falhas consecutivas
   - Implementada remoção automática de listeners problemáticos que causam erros críticos
@@ -130,11 +175,13 @@ Este hotfix corrige dois problemas críticos que afetavam a funcionalidade princ
 ### 🔧 Melhorias Técnicas
 
 - **Gerenciamento de memória otimizado**
+
   - Implementado garbage collection automático durante processamento pesado
   - Reduzido uso de memória através de processamento em streaming
   - Eliminadas referências desnecessárias para facilitar coleta de lixo
 
 - **Controle de concorrência aprimorado**
+
   - Prevenção de operações simultâneas conflitantes
   - Implementado sistema de fila para operações sequenciais
   - Melhor controle de estado em operações assíncronas
@@ -147,6 +194,7 @@ Este hotfix corrige dois problemas críticos que afetavam a funcionalidade princ
 ### 📚 Detalhes Técnicos
 
 - **Arquivos modificados:**
+
   - `sidebar.js` - Sistema de debouncing para seleção de pacientes
   - `store.js` - Tratamento robusto de erros em notificações
   - `utils.js` - Algoritmo de streaming para processamento de timeline
@@ -177,11 +225,13 @@ Esta atualização foca em melhorias de performance e estabilidade, especialment
 ### 🔒 Correções de Segurança
 
 - **Corrigido vazamento de memória crítico** no MutationObserver do content script
+
   - Adicionado sistema de limpeza automática para desconectar observer quando não utilizado
   - Implementado timer de inatividade de 30 minutos para prevenir vazamentos prolongados
   - Adicionados listeners para detectar desabilitação da extensão e cleanup adequado
 
 - **Eliminadas vulnerabilidades XSS** na injeção de conteúdo DOM
+
   - Substituída injeção direta de HTML por criação segura de elementos DOM
   - Implementada verificação de conteúdo antes da injeção em modais
   - Protegidas mensagens de erro em abas externas contra execução de scripts maliciosos
@@ -193,6 +243,7 @@ Esta atualização foca em melhorias de performance e estabilidade, especialment
 ### 🛠️ Melhorias Técnicas
 
 - **Gerenciamento de recursos aprimorado**
+
   - Implementação de cleanup automático para prevenir vazamentos de memória
   - Sistema de debounce melhorado para observação de mudanças no DOM
   - Adicionado logging detalhado para monitoramento de performance
@@ -205,6 +256,7 @@ Esta atualização foca em melhorias de performance e estabilidade, especialment
 ### 📚 Detalhes Técnicos
 
 - **Arquivos modificados:**
+
   - `content-script.js` - Implementação completa de cleanup de MutationObserver
   - `sidebar.js` - Correção de vulnerabilidades XSS em múltiplas funções
   - `manifest.json` / `manifest-edge.json` - Atualização de versão

@@ -43,16 +43,21 @@ async function getBatchConfig() {
  * - Processing items in configurable batch sizes
  * - Adding delays between batches to reduce server load
  * - Handling individual item failures gracefully
- * 
+ *
  * Used to replace Promise.all() calls that could create too many concurrent requests.
- * 
+ *
  * @param {Array} items - Array of items to process
  * @param {Function} processor - Async function to process each item
  * @param {number} batchSize - Number of items to process per batch
  * @param {number} delayMs - Delay in milliseconds between batches
  * @returns {Promise<Array>} Array of processed results
  */
-async function processBatched(items, processor, batchSize = CONFIG.API.BATCH_SIZE, delayMs = CONFIG.API.BATCH_DELAY_MS) {
+async function processBatched(
+  items,
+  processor,
+  batchSize = CONFIG.API.BATCH_SIZE,
+  delayMs = CONFIG.API.BATCH_DELAY_MS
+) {
   const results = [];
 
   for (let i = 0; i < items.length; i += batchSize) {
@@ -349,22 +354,24 @@ function parseConsultasHTML(htmlString) {
 
 export async function searchPatients(term) {
   // Import validation utilities
-  const { validateSearchTerm, sanitizeSearchTerm } = await import('./validation.js');
-  
+  const { validateSearchTerm, sanitizeSearchTerm } = await import(
+    "./validation.js"
+  );
+
   // Early exit for empty terms
   if (!term || term.length < 1) return [];
-  
+
   // Validate and sanitize the search term
   const validation = validateSearchTerm(term);
   if (!validation.valid) {
     throw new Error(`Invalid search term: ${validation.message}`);
   }
-  
+
   const sanitizedTerm = sanitizeSearchTerm(term);
   if (!sanitizedTerm) {
-    throw new Error('Search term cannot be empty after sanitization');
+    throw new Error("Search term cannot be empty after sanitization");
   }
-  
+
   const baseUrl = await getBaseUrl();
   const url = new URL(`${baseUrl}/sigss/usuarioServico/busca`);
   url.search = new URLSearchParams({ searchString: sanitizedTerm });
@@ -592,12 +599,12 @@ export async function fetchCadsusData({ cpf, cns, skipValidation = false }) {
   if (!cpf && !cns) {
     return null;
   }
-  
+
   // Só validar se não for uma busca interna (quando skipValidation for false)
   if (!skipValidation) {
     // Import validation utilities
-    const { validateCPF, validateCNS } = await import('./validation.js');
-    
+    const { validateCPF, validateCNS } = await import("./validation.js");
+
     // Validate CPF if provided
     if (cpf) {
       const cpfValidation = validateCPF(cpf);
@@ -605,7 +612,7 @@ export async function fetchCadsusData({ cpf, cns, skipValidation = false }) {
         throw new Error(`CPF inválido: ${cpfValidation.message}`);
       }
     }
-    
+
     // Validate CNS if provided
     if (cns) {
       const cnsValidation = validateCNS(cns);
@@ -777,6 +784,18 @@ export async function fetchAppointments({ isenPK, dataInicial, dataFinal }) {
     basicAppointments,
     async (appt) => {
       if (appt.type.toUpperCase().includes("EXAME")) {
+        // CORREÇÃO: O ID de agendamentos de exame vem no formato "EXAM-IDP-IDS".
+        // A lógica posterior (renderizadores) espera "IDP-IDS".
+        // Normalizamos o ID aqui para garantir consistência.
+        const parts = (appt.id || "").split("-");
+        if (parts.length === 3 && parts[0].toUpperCase() === "EXAM") {
+          // Reconstrói o appt com o ID normalizado.
+          return {
+            ...appt,
+            id: `${parts[1]}-${parts[2]}`,
+            specialty: appt.description || "Exame sem descrição",
+          };
+        }
         return {
           ...appt,
           specialty: appt.description || "Exame sem descrição",
