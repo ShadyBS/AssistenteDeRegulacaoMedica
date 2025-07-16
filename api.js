@@ -588,27 +588,30 @@ export async function fetchResultadoExame({ idp, ids }) {
   return data?.path || null;
 }
 
-export async function fetchCadsusData({ cpf, cns }) {
-  // Import validation utilities
-  const { validateCPF, validateCNS } = await import('./validation.js');
-  
+export async function fetchCadsusData({ cpf, cns, skipValidation = false }) {
   if (!cpf && !cns) {
     return null;
   }
   
-  // Validate CPF if provided
-  if (cpf) {
-    const cpfValidation = validateCPF(cpf);
-    if (!cpfValidation.valid) {
-      throw new Error(`CPF inválido: ${cpfValidation.message}`);
+  // Só validar se não for uma busca interna (quando skipValidation for false)
+  if (!skipValidation) {
+    // Import validation utilities
+    const { validateCPF, validateCNS } = await import('./validation.js');
+    
+    // Validate CPF if provided
+    if (cpf) {
+      const cpfValidation = validateCPF(cpf);
+      if (!cpfValidation.valid) {
+        throw new Error(`CPF inválido: ${cpfValidation.message}`);
+      }
     }
-  }
-  
-  // Validate CNS if provided
-  if (cns) {
-    const cnsValidation = validateCNS(cns);
-    if (!cnsValidation.valid) {
-      throw new Error(`CNS inválido: ${cnsValidation.message}`);
+    
+    // Validate CNS if provided
+    if (cns) {
+      const cnsValidation = validateCNS(cns);
+      if (!cnsValidation.valid) {
+        throw new Error(`CNS inválido: ${cnsValidation.message}`);
+      }
     }
   }
 

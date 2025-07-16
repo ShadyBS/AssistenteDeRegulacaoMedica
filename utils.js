@@ -262,8 +262,10 @@ export function normalizeTimelineData(apiData, options = {}) {
       // Trigger garbage collection hint periodically
       if (enableGC && processedCount % 500 === 0) {
         // Force garbage collection by removing references
-        if (global.gc) {
-          global.gc();
+        // No ambiente de browser extension, não temos acesso ao global.gc()
+        // Apenas fazemos limpeza manual de referências
+        if (typeof window !== 'undefined' && window.gc) {
+          window.gc();
         }
       }
     };
@@ -417,8 +419,9 @@ export function normalizeTimelineData(apiData, options = {}) {
     apiData = null;
     
     // Trigger garbage collection if available
-    if (global.gc) {
-      global.gc();
+    // No ambiente de browser extension, não temos acesso ao global.gc()
+    if (typeof window !== 'undefined' && window.gc) {
+      window.gc();
     }
   }
 

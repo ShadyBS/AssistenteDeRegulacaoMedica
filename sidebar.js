@@ -371,6 +371,7 @@ async function executePatientSelection(patientInfo, forceRefresh = false) {
     const cadsus = await API.fetchCadsusData({
       cpf: Utils.getNestedValue(ficha, "entidadeFisica.entfCPF"),
       cns: ficha.isenNumCadSus,
+      skipValidation: true // Pular validação quando carregando dados do paciente selecionado
     });
     
     Object.values(sectionManagers).forEach((manager) => {
