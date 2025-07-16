@@ -25,6 +25,11 @@ const sectionIcons = {
 let currentRegulationData = null;
 let sectionManagers = {}; // Objeto para armazenar instâncias de SectionManager
 
+// Controle de race condition para seleção de pacientes
+let patientSelectionInProgress = false;
+let pendingPatientSelection = null;
+let patientSelectionTimeout = null;
+
 // --- FUNÇÃO AUXILIAR DE FILTRAGEM ---
 /**
  * Aplica um filtro de texto normalizado a um array de dados.
@@ -320,15 +325,54 @@ async function selectPatient(patientInfo, forceRefresh = false) {
   ) {
     return;
   }
-  Utils.toggleLoader(true);
-  Utils.clearMessage();
-  store.setPatientUpdating();
+
+  // Implementar debouncing para evitar múltiplas chamadas simultâneas
+  if (patientSelectionInProgress) {
+    // Armazena a última requisição para ser processada após a atual
+    pendingPatientSelection = { patientInfo, forceRefresh };
+    return;
+  }
+
+  // Limpar timeout anterior se existir
+  if (patientSelectionTimeout) {
+    clearTimeout(patientSelectionTimeout);
+    patientSelectionTimeout = null;
+  }
+
+  // Implementar debounce de 300ms para evitar múltiplas chamadas rápidas
+  patientSelectionTimeout = setTimeout(async () => {
+    await executePatientSelection(patientInfo, forceRefresh);
+    
+    // Processar requisição pendente se existir
+    if (pendingPatientSelection) {
+      const pending = pendingPatientSelection;
+      pendingPatientSelection = null;
+      setTimeout(() => {
+        selectPatient(pending.patientInfo, pending.forceRefresh);
+      }, 100); // Pequeno delay para evitar sobrecarga
+    }
+  }, 300);
+}
+
+async function executePatientSelection(patientInfo, forceRefresh = false) {
+  if (patientSelectionInProgress) {
+    console.warn("Tentativa de seleção de paciente já em progresso, ignorando...");
+    return;
+  }
+
+  patientSelectionInProgress = true;
+  
   try {
+    Utils.toggleLoader(true);
+    Utils.clearMessage();
+    store.setPatientUpdating();
+    
     const ficha = await API.fetchVisualizaUsuario(patientInfo);
     const cadsus = await API.fetchCadsusData({
       cpf: Utils.getNestedValue(ficha, "entidadeFisica.entfCPF"),
       cns: ficha.isenNumCadSus,
     });
+    
     Object.values(sectionManagers).forEach((manager) => {
       if (typeof manager.clearAutomationFeedbackAndFilters === "function") {
         manager.clearAutomationFeedbackAndFilters(false);
@@ -336,14 +380,18 @@ async function selectPatient(patientInfo, forceRefresh = false) {
         manager.clearAutomation();
       }
     });
+    
     store.setPatient(ficha, cadsus);
     await updateRecentPatients(store.getPatient());
+    
+    console.log("Seleção de paciente concluída com sucesso:", patientInfo.idp);
   } catch (error) {
     Utils.showMessage(error.message, "error");
-    console.error(error);
+    console.error("Erro na seleção de paciente:", error);
     store.clearPatient();
   } finally {
     Utils.toggleLoader(false);
+    patientSelectionInProgress = false;
   }
 }
 

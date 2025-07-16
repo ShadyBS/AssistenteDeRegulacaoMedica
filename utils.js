@@ -186,7 +186,7 @@ export function setupTabs(container) {
 
 /**
  * Normalizes data from various sources into a single, sorted timeline event list.
- * Optimized for memory efficiency with large datasets.
+ * Optimized for memory efficiency with large datasets using streaming approach.
  * @param {object} apiData - An object containing arrays of consultations, exams, etc.
  * @param {object} options - Processing options for memory optimization
  * @returns {Array<object>} A sorted array of timeline event objects.
@@ -198,44 +198,87 @@ export function normalizeTimelineData(apiData, options = {}) {
     enableGC = true 
   } = options;
 
-  let events = [];
+  // Use a priority queue-like approach to maintain only the most recent events
+  const eventHeap = [];
   let processedCount = 0;
+  let rejectedCount = 0;
 
-  // Helper function for batch processing with memory management
-  const processBatch = (items, normalizer, typeName) => {
-    if (!Array.isArray(items) || items.length === 0) return;
-    
-    // Process in smaller batches to prevent memory spikes
-    for (let i = 0; i < items.length && processedCount < maxEvents; i += batchSize) {
-      try {
-        const batch = items.slice(i, i + batchSize);
-        const batchEvents = [];
-        
-        batch.forEach((item, index) => {
-          if (processedCount >= maxEvents) return;
-          
-          try {
-            const event = normalizer(item);
-            if (event && event.sortableDate instanceof Date && !isNaN(event.sortableDate)) {
-              batchEvents.push(event);
-              processedCount++;
-            }
-          } catch (itemError) {
-            console.warn(`Failed to process ${typeName} item at index ${i + index}:`, itemError);
-          }
-        });
-        
-        events.push(...batchEvents);
-        
-        // Trigger garbage collection hint for large batches
-        if (enableGC && batchEvents.length > 50) {
-          batchEvents.length = 0; // Clear reference
+  // Helper function to insert event maintaining sorted order and size limit
+  const insertEvent = (event) => {
+    if (!event || !event.sortableDate || isNaN(event.sortableDate)) {
+      rejectedCount++;
+      return;
+    }
+
+    if (eventHeap.length < maxEvents) {
+      // If we haven't reached the limit, just add and maintain sort
+      eventHeap.push(event);
+      if (eventHeap.length % 100 === 0) {
+        // Re-sort periodically to maintain order
+        eventHeap.sort((a, b) => b.sortableDate - a.sortableDate);
+      }
+    } else {
+      // If at limit, only add if event is more recent than the oldest
+      const oldestEvent = eventHeap[eventHeap.length - 1];
+      if (event.sortableDate > oldestEvent.sortableDate) {
+        eventHeap.pop(); // Remove oldest
+        eventHeap.push(event);
+        // Keep sorted - find correct position and insert
+        let insertPos = eventHeap.length - 1;
+        while (insertPos > 0 && eventHeap[insertPos].sortableDate > eventHeap[insertPos - 1].sortableDate) {
+          [eventHeap[insertPos], eventHeap[insertPos - 1]] = [eventHeap[insertPos - 1], eventHeap[insertPos]];
+          insertPos--;
         }
-        
-      } catch (batchError) {
-        console.error(`Failed to process ${typeName} batch starting at ${i}:`, batchError);
+      } else {
+        rejectedCount++;
       }
     }
+  };
+
+  // Streaming processor for memory efficiency
+  const processStream = (items, normalizer, typeName) => {
+    if (!Array.isArray(items) || items.length === 0) return;
+    
+    let batchBuffer = [];
+    const processBatch = () => {
+      if (batchBuffer.length === 0) return;
+      
+      for (const item of batchBuffer) {
+        try {
+          const event = normalizer(item);
+          if (event) {
+            insertEvent(event);
+            processedCount++;
+          }
+        } catch (itemError) {
+          console.warn(`Failed to process ${typeName} item:`, itemError);
+          rejectedCount++;
+        }
+      }
+      
+      // Clear batch buffer to free memory
+      batchBuffer = [];
+      
+      // Trigger garbage collection hint periodically
+      if (enableGC && processedCount % 500 === 0) {
+        // Force garbage collection by removing references
+        if (global.gc) {
+          global.gc();
+        }
+      }
+    };
+
+    // Process items in streaming fashion
+    for (let i = 0; i < items.length; i++) {
+      batchBuffer.push(items[i]);
+      
+      if (batchBuffer.length >= batchSize) {
+        processBatch();
+      }
+    }
+    
+    // Process remaining items
+    processBatch();
   };
 
   // Consultation normalizer with memory optimization
@@ -355,30 +398,31 @@ export function normalizeTimelineData(apiData, options = {}) {
     };
   };
 
-  // Process each data type with batch processing
-  processBatch(apiData.consultations, normalizeConsultation, "consultations");
-  processBatch(apiData.exams, normalizeExam, "exams");
-  processBatch(apiData.appointments, normalizeAppointment, "appointments");
-  processBatch(apiData.regulations, normalizeRegulation, "regulations");
-  processBatch(apiData.documents, normalizeDocument, "documents");
+  // Process each data type with streaming processing
+  processStream(apiData.consultations, normalizeConsultation, "consultations");
+  processStream(apiData.exams, normalizeExam, "exams");
+  processStream(apiData.appointments, normalizeAppointment, "appointments");
+  processStream(apiData.regulations, normalizeRegulation, "regulations");
+  processStream(apiData.documents, normalizeDocument, "documents");
 
-  // Sort events by date (newest first) with memory-efficient sorting
-  // For large datasets, we might want to consider a partial sort
-  if (events.length > maxEvents) {
-    // Sort partially and take only the most recent events
-    events.sort((a, b) => b.sortableDate - a.sortableDate);
-    events = events.slice(0, maxEvents);
-  } else {
-    events.sort((a, b) => b.sortableDate - a.sortableDate);
-  }
+  // Final sort to ensure correct order
+  eventHeap.sort((a, b) => b.sortableDate - a.sortableDate);
 
-  // Final cleanup
-  if (enableGC && events.length > 100) {
-    // Trigger garbage collection hint by removing unused references
+  // Log processing statistics
+  console.log(`Timeline processing completed: ${processedCount} events processed, ${rejectedCount} rejected, ${eventHeap.length} in final timeline`);
+
+  // Final cleanup and memory optimization
+  if (enableGC) {
+    // Clear references to help garbage collection
     apiData = null;
+    
+    // Trigger garbage collection if available
+    if (global.gc) {
+      global.gc();
+    }
   }
 
-  return events;
+  return eventHeap;
 }
 
 /**
