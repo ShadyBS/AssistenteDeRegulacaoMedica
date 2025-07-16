@@ -201,9 +201,18 @@ export function validateBrazilianDate(dateStr) {
   const [day, month, year] = dateStr.split('/').map(Number);
   const date = new Date(year, month - 1, day);
   
-  // Verifica se a data é válida
+  // Verifica limites básicos antes de criar o objeto Date
+  if (day < 1 || day > 31) {
+    return { valid: false, message: 'Dia inválido (deve estar entre 1 e 31)' };
+  }
+  
+  if (month < 1 || month > 12) {
+    return { valid: false, message: 'Mês inválido (deve estar entre 1 e 12)' };
+  }
+  
+  // Verifica se a data é válida (JavaScript Date corrige automaticamente datas inválidas)
   if (date.getDate() !== day || date.getMonth() !== month - 1 || date.getFullYear() !== year) {
-    return { valid: false, message: 'Data inválida' };
+    return { valid: false, message: 'Data inválida (ex: 31/02 não existe)' };
   }
 
   // Verifica se a data não é muito antiga ou futura
