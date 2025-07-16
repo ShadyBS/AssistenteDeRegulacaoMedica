@@ -16,6 +16,7 @@
 ## Key Files & Directories
 - `manifest.json` - Firefox manifest / `manifest-edge.json` - Chromium manifest
 - `sidebar.js` - Main sidebar UI and data display logic
+- `MemoryManager.js` - Centralized memory/resource management for event listeners, timeouts, intervals, and global references
 - `background.js` - Service worker handling storage and API calls
 - `content-script.js` - Injected script to detect and extract regulation data
 - `api.js` - Handles CADSUS and regulation data fetching

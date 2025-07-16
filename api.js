@@ -1,7 +1,8 @@
 import "./browser-polyfill.js";
 import { CONFIG, getAPIConfig } from "./config.js";
+import { getBrowserAPIInstance } from "./BrowserAPI.js";
 
-const api = typeof browser !== "undefined" ? browser : chrome;
+const api = getBrowserAPIInstance();
 
 // Default configuration for batched API requests
 const DEFAULT_BATCH_CONFIG = {

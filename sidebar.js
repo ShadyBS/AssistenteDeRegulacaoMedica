@@ -11,6 +11,7 @@ import * as PatientCard from "./ui/patient-card.js";
 import { store } from "./store.js";
 import { CONFIG, getTimeout, getCSSClass } from "./config.js";
 import { getMemoryManager } from "./MemoryManager.js";
+import { getBrowserAPIInstance } from "./BrowserAPI.js";
 
 // --- ÍCONES ---
 const sectionIcons = {
@@ -28,6 +29,9 @@ let sectionManagers = {}; // Objeto para armazenar instâncias de SectionManager
 
 // Instância global do gerenciador de memória
 const memoryManager = getMemoryManager();
+
+// Instância global da API do browser
+const browserAPI = getBrowserAPIInstance();
 
 // Controle de race condition para seleção de pacientes
 let patientSelectionInProgress = false;
@@ -507,7 +511,7 @@ async function init() {
 
       if (openOptions) {
         openOptions.addEventListener("click", () =>
-          browser.runtime.openOptionsPage()
+          browserAPI.runtime.openOptionsPage()
         );
       }
       if (reloadSidebar) {
@@ -567,7 +571,7 @@ async function init() {
 }
 
 async function loadConfigAndData() {
-  const syncData = await browser.storage.sync.get({
+  const syncData = await browserAPI.storage.sync.get({
     patientFields: defaultFieldConfig,
     filterLayout: {},
     autoLoadExams: false,
@@ -580,7 +584,7 @@ async function loadConfigAndData() {
     sidebarSectionOrder: [],
     sectionHeaderStyles: {}, // Carrega a nova configuração de estilos
   });
-  const localData = await browser.storage.local.get({
+  const localData = await browserAPI.storage.local.get({
     recentPatients: [],
     savedFilterSets: {},
     automationRules: [],
@@ -726,7 +730,7 @@ function setupAutoModeToggle() {
   const toggle = document.getElementById("auto-mode-toggle");
   const label = document.getElementById("auto-mode-label");
 
-  browser.storage.sync
+  browserAPI.storage.sync
     .get({ enableAutomaticDetection: true })
     .then((settings) => {
       toggle.checked = settings.enableAutomaticDetection;
@@ -735,7 +739,7 @@ function setupAutoModeToggle() {
 
   toggle.addEventListener("change", (event) => {
     const isEnabled = event.target.checked;
-    browser.storage.sync.set({ enableAutomaticDetection: isEnabled });
+    browserAPI.storage.sync.set({ enableAutomaticDetection: isEnabled });
     label.textContent = isEnabled ? "Auto" : "Manual";
   });
 }
@@ -783,7 +787,7 @@ async function handleRegulationLoaded(regulationData) {
 }
 
 async function applyAutomationRules(regulationData) {
-  const { automationRules } = await browser.storage.local.get({
+  const { automationRules } = await browserAPI.storage.local.get({
     automationRules: [],
   });
   if (!automationRules || automationRules.length === 0) return;
@@ -904,7 +908,7 @@ function addGlobalEventListeners() {
   const storageChangeHandler = (changes, areaName) => {
     if (areaName === "local" && changes.pendingRegulation) {
       // Apenas processa se a detecção automática estiver LIGADA
-      browser.storage.sync
+      browserAPI.storage.sync
         .get({ enableAutomaticDetection: true })
         .then((settings) => {
           if (settings.enableAutomaticDetection) {
@@ -915,7 +919,7 @@ function addGlobalEventListeners() {
                 newValue
               );
               handleRegulationLoaded(newValue);
-              browser.storage.local.remove("pendingRegulation");
+              browserAPI.storage.local.remove("pendingRegulation");
             }
           }
         });
@@ -934,13 +938,13 @@ function addGlobalEventListeners() {
   };
 
   // Adiciona listener para mudanças no storage
-  browser.storage.onChanged.addListener(storageChangeHandler);
+  browserAPI.storage.onChanged.addListener(storageChangeHandler);
   
   // Registra callback para remover listener do storage na limpeza
   memoryManager.addCleanupCallback(() => {
     console.log('[Sidebar] Removendo listener de storage');
     try {
-      browser.storage.onChanged.removeListener(storageChangeHandler);
+      browserAPI.storage.onChanged.removeListener(storageChangeHandler);
     } catch (error) {
       console.error('[Sidebar] Erro ao remover listener de storage:', error);
     }
@@ -1021,7 +1025,7 @@ async function updateRecentPatients(patientData) {
     (p) => p.ficha.isenPK.idp !== newRecent.ficha.isenPK.idp
   );
   const updatedRecents = [newRecent, ...filtered].slice(0, 5);
-  await browser.storage.local.set({ recentPatients: updatedRecents });
+  await browserAPI.storage.local.set({ recentPatients: updatedRecents });
   store.setRecentPatients(updatedRecents);
 }
 
@@ -1292,12 +1296,12 @@ function handleShowAppointmentInfo(button) {
 
 async function checkForPendingRegulation() {
   try {
-    const { pendingRegulation } = await browser.storage.local.get(
+    const { pendingRegulation } = await browserAPI.storage.local.get(
       "pendingRegulation"
     );
     if (pendingRegulation && pendingRegulation.isenPKIdp) {
       await handleRegulationLoaded(pendingRegulation);
-      await browser.storage.local.remove("pendingRegulation");
+      await browserAPI.storage.local.remove("pendingRegulation");
     }
   } catch (e) {
     console.error("Erro ao verificar regulação pendente:", e);
