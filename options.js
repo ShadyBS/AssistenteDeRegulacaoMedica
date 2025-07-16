@@ -322,6 +322,7 @@ async function restoreOptions() {
     appointments: { start: -1, end: 3 },
     regulations: { start: -12, end: 0 },
     documents: { start: -24, end: 0 },
+    timeline: { start: -12, end: 0 },
   };
 
   // CORREÇÃO 2: Define os estilos padrão aqui.
@@ -369,10 +370,9 @@ async function saveOptions() {
   const enableAutomaticDetection = document.getElementById(
     "enableAutomaticDetection"
   ).checked;
-  const keepSessionAliveInterval = parseInt(
-    document.getElementById("keepSessionAliveInterval").value,
-    10
-  ) || 0;
+  const keepSessionAliveInterval =
+    parseInt(document.getElementById("keepSessionAliveInterval").value, 10) ||
+    0;
   const autoLoadExams = document.getElementById(
     "autoLoadExamsCheckbox"
   ).checked;
@@ -455,6 +455,7 @@ async function saveOptions() {
     "appointments",
     "regulations",
     "documents",
+    "timeline",
   ];
   sectionsForDate.forEach((section) => {
     const startEl = document.getElementById(`${section}-start-offset`);

@@ -1094,19 +1094,47 @@ export async function keepSessionAlive() {
       headers: {
         Accept: "application/json, text/javascript, */*; q=0.01",
         "X-Requested-With": "XMLHttpRequest",
+        "Cache-Control": "no-cache",
+        "Pragma": "no-cache"
       },
+      cache: "no-cache"
     });
 
     if (!response.ok) {
-      console.warn(`Keep-alive falhou com status ${response.status}`);
+      console.warn(`Keep-alive falhou com status ${response.status} - ${response.statusText}`);
+      
+      // Se for erro 401 ou 403, provavelmente a sessão expirou
+      if (response.status === 401 || response.status === 403) {
+        console.error("Sessão expirou - keep-alive não pode manter a sessão ativa");
+      }
+      
+      return false;
+    }
+
+    const contentType = response.headers.get("content-type");
+    if (!contentType || !contentType.includes("application/json")) {
+      console.warn("Keep-alive: resposta não é JSON, possível redirecionamento para login");
       return false;
     }
 
     const data = await response.json();
-    console.log("Sessão mantida ativa:", data);
-    return true;
+    
+    // Verifica se a resposta contém dados válidos
+    if (data && (data.dataHora || data.data || data.hora)) {
+      console.log(`Sessão mantida ativa: ${data.dataHora || data.data || 'OK'}`);
+      return true;
+    } else {
+      console.warn("Keep-alive: resposta JSON inválida ou vazia");
+      return false;
+    }
   } catch (error) {
     console.error("Erro ao manter sessão ativa:", error);
+    
+    // Se for erro de rede, pode ser problema de conectividade
+    if (error.name === "TypeError" && error.message.includes("fetch")) {
+      console.error("Erro de rede no keep-alive - verifique a conectividade");
+    }
+    
     return false;
   }
 }

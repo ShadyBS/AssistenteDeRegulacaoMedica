@@ -4,6 +4,17 @@ import { KeepAliveManager } from "./KeepAliveManager.js";
 
 const api = typeof browser !== "undefined" ? browser : chrome;
 
+// Instância global do KeepAliveManager
+let keepAliveManager = null;
+
+// Inicializa o KeepAliveManager
+function initializeKeepAlive() {
+  if (!keepAliveManager) {
+    keepAliveManager = new KeepAliveManager();
+    console.log("[Assistente Background] KeepAliveManager inicializado");
+  }
+}
+
 api.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
   if (message.type === "SAVE_REGULATION_DATA") {
     console.log(
@@ -34,6 +45,17 @@ api.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
     }
     return true;
   }
+  
+  // Comando para verificar status do KeepAlive
+  if (message.type === "GET_KEEPALIVE_STATUS") {
+    if (keepAliveManager) {
+      const status = await keepAliveManager.getStatus();
+      sendResponse(status);
+    } else {
+      sendResponse({ isActive: false, error: "KeepAliveManager não inicializado" });
+    }
+    return true;
+  }
 });
 
 async function openSidebar(tab) {
@@ -46,9 +68,19 @@ async function openSidebar(tab) {
 
 api.action.onClicked.addListener(openSidebar);
 
-new KeepAliveManager();
+// Inicializa o KeepAliveManager na inicialização
+initializeKeepAlive();
+
+// Reinicializa o KeepAliveManager quando o service worker é reativado
+api.runtime.onStartup.addListener(() => {
+  console.log("[Assistente Background] Service worker reiniciado - reinicializando KeepAlive");
+  initializeKeepAlive();
+});
 
 api.runtime.onInstalled.addListener((details) => {
+  console.log("[Assistente Background] Extensão instalada/atualizada - inicializando KeepAlive");
+  initializeKeepAlive();
+  
   if (api.sidePanel) {
     api.sidePanel
       .setPanelBehavior({ openPanelOnActionClick: false })
