@@ -1,5 +1,89 @@
 # Changelog - Assistente de Regulação Médica
 
+## [3.3.13] - 2025-01-17
+
+### 🚀 Melhorias de Resiliência e Experiência do Usuário
+
+- **Sistema robusto de tratamento de erros com retry automático**
+
+  - **Classificação inteligente de erros**: Implementado sistema que identifica automaticamente o tipo de erro (rede, autenticação, servidor, timeout, validação) para aplicar estratégias específicas de recuperação
+  - **Retry automático com backoff exponencial**: Tentativas automáticas de reconexão com delays progressivos (1s, 2s, 4s) para erros recuperáveis como problemas de rede e timeouts
+  - **Feedback visual em tempo real**: Interface mostra progresso das tentativas de retry com contador regressivo e opção de cancelamento
+  - **Mensagens de erro contextuais**: Cada tipo de erro apresenta mensagens específicas em português com sugestões práticas de resolução
+
+- **Interface de erro aprimorada e educativa**
+
+  - **Sugestões específicas por tipo de erro**: Orientações claras sobre como resolver cada situação (verificar conexão, fazer login, aguardar servidor, etc.)
+  - **Ações de recuperação integradas**: Botões para "Tentar Novamente" e "Limpar Filtros" diretamente na interface de erro
+  - **Preservação de estado inteligente**: Dados anteriores são mantidos para erros de autenticação/validação, mas limpos para erros de rede/servidor
+  - **Indicadores visuais de severidade**: Cores e ícones diferenciados para warnings (amarelo) e erros críticos (vermelho)
+
+- **Experiência do usuário otimizada durante falhas**
+  - **Cancelamento de retry**: Usuários podem interromper tentativas automáticas se desejarem
+  - **Histórico de tentativas**: Interface mostra quantas tentativas foram realizadas
+  - **Recuperação sem perda de contexto**: Filtros e configurações são preservados durante recuperação de erros
+  - **Feedback contínuo**: Animações e contadores mantêm usuário informado sobre o progresso
+
+### 🔧 Melhorias Técnicas
+
+- **Arquitetura de erro robusta**
+
+  - Sistema de classificação automática baseado em mensagens e códigos de erro
+  - Configuração centralizada para timeouts, delays e número máximo de tentativas
+  - Logging detalhado para debugging e monitoramento de padrões de erro
+
+- **Estratégias de retry diferenciadas**
+
+  - Erros de rede/timeout: Retry automático com backoff exponencial
+  - Erros de autenticação: Sem retry automático, orientação para relogin
+  - Erros de servidor: Retry com delays maiores
+  - Erros de validação: Sem retry, orientação para correção de dados
+
+- **Interface responsiva e acessível**
+  - Componentes de erro reutilizáveis e consistentes
+  - Suporte a temas claro/escuro através de classes Tailwind
+  - Acessibilidade melhorada com ícones SVG e textos descritivos
+
+### 📚 Detalhes Técnicos
+
+- **Arquivos modificados:**
+
+  - `SectionManager.js` - Implementação completa do sistema de retry e tratamento de erros
+  - `manifest.json` / `manifest-edge.json` - Atualização de versão para 3.3.13
+
+- **Novas funcionalidades:**
+
+  - Funções `classifyError()`, `generateUserFriendlyMessage()`, `calculateRetryDelay()`
+  - Métodos `showRetryFeedback()` e `showFinalError()` para interface de erro
+  - Sistema de configuração `ERROR_TYPES` e `RETRY_CONFIG`
+
+- **Compatibilidade:**
+  - Mantida compatibilidade total com todas as funcionalidades existentes
+  - Melhoria transparente - usuários verão melhor experiência sem mudanças de workflow
+  - Preservadas todas as funcionalidades de regulação médica
+
+### 🚀 Benefícios
+
+- **Maior confiabilidade**: Problemas temporários de rede são resolvidos automaticamente
+- **Melhor experiência**: Usuários recebem feedback claro e ações específicas para cada situação
+- **Redução de frustração**: Retry automático elimina necessidade de recarregar página manualmente
+- **Orientação educativa**: Mensagens explicam o problema e como resolvê-lo
+
+### 📋 Notas de Atualização
+
+Esta atualização transforma significativamente como a extensão lida com falhas de conectividade e erros de servidor. O sistema agora é muito mais resiliente e oferece uma experiência muito melhor durante problemas temporários.
+
+**Principais melhorias para o usuário:**
+
+- Reconexão automática durante instabilidades de rede
+- Mensagens de erro claras em português com orientações práticas
+- Interface visual que mostra progresso de recuperação
+- Preservação de dados e configurações durante falhas
+
+**Recomendação:** Atualização altamente recomendada para todos os usuários, especialmente aqueles que trabalham com conexões instáveis ou durante horários de pico do SIGSS.
+
+---
+
 ## [3.3.12] - 2025-01-17
 
 ### 🐛 Correção de Bug

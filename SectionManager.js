@@ -9,6 +9,166 @@ import { store } from "./store.js";
 import { CONFIG, getSectionName, getTimeout } from "./config.js";
 
 /**
+ * Tipos de erro para classificação e tratamento específico
+ */
+const ERROR_TYPES = {
+  NETWORK: 'network',
+  AUTHENTICATION: 'authentication', 
+  SERVER: 'server',
+  TIMEOUT: 'timeout',
+  VALIDATION: 'validation',
+  UNKNOWN: 'unknown'
+};
+
+/**
+ * Configurações para retry automático
+ */
+const RETRY_CONFIG = {
+  MAX_ATTEMPTS: 3,
+  BASE_DELAY: 1000, // 1 segundo
+  MAX_DELAY: 10000, // 10 segundos
+  BACKOFF_FACTOR: 2
+};
+
+/**
+ * Classifica o tipo de erro baseado na mensagem e propriedades
+ * @param {Error} error - O erro a ser classificado
+ * @returns {string} Tipo do erro
+ */
+function classifyError(error) {
+  if (!error) return ERROR_TYPES.UNKNOWN;
+  
+  const message = error.message?.toLowerCase() || '';
+  
+  // Erros de rede/conectividade
+  if (error.name === 'TypeError' && message.includes('fetch')) {
+    return ERROR_TYPES.NETWORK;
+  }
+  
+  if (message.includes('network') || message.includes('connection') || 
+      message.includes('conectividade') || message.includes('conexão')) {
+    return ERROR_TYPES.NETWORK;
+  }
+  
+  // Erros de autenticação
+  if (message.includes('401') || message.includes('403') || 
+      message.includes('unauthorized') || message.includes('forbidden') ||
+      message.includes('sessão') || message.includes('login')) {
+    return ERROR_TYPES.AUTHENTICATION;
+  }
+  
+  // Erros de timeout
+  if (message.includes('timeout') || message.includes('tempo limite')) {
+    return ERROR_TYPES.TIMEOUT;
+  }
+  
+  // Erros do servidor
+  if (message.includes('500') || message.includes('502') || 
+      message.includes('503') || message.includes('504') ||
+      message.includes('server') || message.includes('servidor')) {
+    return ERROR_TYPES.SERVER;
+  }
+  
+  // Erros de validação
+  if (message.includes('validation') || message.includes('validação') ||
+      message.includes('invalid') || message.includes('inválido')) {
+    return ERROR_TYPES.VALIDATION;
+  }
+  
+  return ERROR_TYPES.UNKNOWN;
+}
+
+/**
+ * Gera mensagem de erro amigável baseada no tipo
+ * @param {string} errorType - Tipo do erro
+ * @param {string} sectionName - Nome da seção
+ * @param {Error} originalError - Erro original
+ * @returns {object} Objeto com mensagem e sugestões
+ */
+function generateUserFriendlyMessage(errorType, sectionName, originalError) {
+  const messages = {
+    [ERROR_TYPES.NETWORK]: {
+      title: 'Problema de Conexão',
+      message: `Não foi possível conectar ao servidor para carregar ${sectionName}.`,
+      suggestions: [
+        'Verifique sua conexão com a internet',
+        'Tente novamente em alguns segundos',
+        'Verifique se o SIGSS está acessível'
+      ],
+      canRetry: true,
+      severity: 'warning'
+    },
+    [ERROR_TYPES.AUTHENTICATION]: {
+      title: 'Sessão Expirada',
+      message: `Sua sessão no SIGSS expirou. É necessário fazer login novamente.`,
+      suggestions: [
+        'Faça login no SIGSS em uma nova aba',
+        'Recarregue esta página após o login',
+        'Verifique suas credenciais'
+      ],
+      canRetry: false,
+      severity: 'error'
+    },
+    [ERROR_TYPES.SERVER]: {
+      title: 'Erro do Servidor',
+      message: `O servidor do SIGSS está temporariamente indisponível para ${sectionName}.`,
+      suggestions: [
+        'Tente novamente em alguns minutos',
+        'O problema pode ser temporário',
+        'Contate o suporte se persistir'
+      ],
+      canRetry: true,
+      severity: 'error'
+    },
+    [ERROR_TYPES.TIMEOUT]: {
+      title: 'Tempo Limite Excedido',
+      message: `A requisição para ${sectionName} demorou mais que o esperado.`,
+      suggestions: [
+        'Tente novamente com um período menor',
+        'Verifique a estabilidade da conexão',
+        'O servidor pode estar sobrecarregado'
+      ],
+      canRetry: true,
+      severity: 'warning'
+    },
+    [ERROR_TYPES.VALIDATION]: {
+      title: 'Dados Inválidos',
+      message: `Os dados fornecidos para ${sectionName} são inválidos.`,
+      suggestions: [
+        'Verifique os filtros aplicados',
+        'Confirme as datas selecionadas',
+        'Limpe os filtros e tente novamente'
+      ],
+      canRetry: false,
+      severity: 'warning'
+    },
+    [ERROR_TYPES.UNKNOWN]: {
+      title: 'Erro Inesperado',
+      message: `Ocorreu um erro inesperado ao carregar ${sectionName}.`,
+      suggestions: [
+        'Tente recarregar a página',
+        'Verifique a configuração da URL base',
+        'Contate o suporte técnico se persistir'
+      ],
+      canRetry: true,
+      severity: 'error'
+    }
+  };
+  
+  return messages[errorType] || messages[ERROR_TYPES.UNKNOWN];
+}
+
+/**
+ * Calcula delay para retry com backoff exponencial
+ * @param {number} attempt - Número da tentativa (começando em 1)
+ * @returns {number} Delay em milissegundos
+ */
+function calculateRetryDelay(attempt) {
+  const delay = RETRY_CONFIG.BASE_DELAY * Math.pow(RETRY_CONFIG.BACKOFF_FACTOR, attempt - 1);
+  return Math.min(delay, RETRY_CONFIG.MAX_DELAY);
+}
+
+/**
  * Gera o HTML para o indicador de ordenação (seta para cima/baixo).
  * @param {string} key - A chave da coluna atual.
  * @param {object} state - O objeto de estado de ordenação da secção.
@@ -221,82 +381,169 @@ export class SectionManager {
     }
   }
 
-  handleFetchError(error) {
+  /**
+   * Trata erros de fetch com retry automático e feedback amigável
+   * @param {Error} error - Erro ocorrido durante o fetch
+   * @param {number} attempt - Número da tentativa atual (padrão: 1)
+   */
+  async handleFetchError(error, attempt = 1) {
     const friendlyName = getSectionName(this.sectionKey) || this.sectionKey;
+    const errorType = classifyError(error);
+    const errorInfo = generateUserFriendlyMessage(errorType, friendlyName, error);
     
-    // Determina o tipo de erro e define estado apropriado
-    let errorMessage = '';
-    let shouldShowEmptyState = false;
+    console.error(`[${this.sectionKey}] Erro (tentativa ${attempt}):`, error);
     
-    if (error.name === 'TypeError' && error.message.includes('fetch')) {
-      // Erro de rede/conectividade
-      errorMessage = `Falha na conexão ao buscar ${friendlyName}. Verifique sua conexão com a internet.`;
-      shouldShowEmptyState = false;
-    } else if (error.message.includes('401') || error.message.includes('403')) {
-      // Erro de autenticação
-      errorMessage = `Sessão expirada ao buscar ${friendlyName}. Faça login novamente no SIGSS.`;
-      shouldShowEmptyState = false;
-    } else if (error.message.includes('404')) {
-      // Recurso não encontrado
-      errorMessage = `Serviço de ${friendlyName} temporariamente indisponível.`;
-      shouldShowEmptyState = true;
-    } else if (error.message.includes('timeout')) {
-      // Timeout
-      errorMessage = `Timeout ao buscar ${friendlyName}. Tente novamente em alguns segundos.`;
-      shouldShowEmptyState = false;
-    } else {
-      // Erro genérico
-      errorMessage = `Erro ao buscar ${friendlyName}. Verifique a conexão e a URL base.`;
-      shouldShowEmptyState = true;
+    // Verifica se deve tentar novamente
+    if (errorInfo.canRetry && attempt < RETRY_CONFIG.MAX_ATTEMPTS) {
+      const delay = calculateRetryDelay(attempt);
+      
+      // Mostra feedback de retry para o usuário
+      this.showRetryFeedback(attempt, delay, errorInfo);
+      
+      // Aguarda o delay e tenta novamente
+      setTimeout(async () => {
+        try {
+          console.log(`[${this.sectionKey}] Tentativa ${attempt + 1} de ${RETRY_CONFIG.MAX_ATTEMPTS}`);
+          await this.fetchData();
+        } catch (retryError) {
+          // Recursivamente tenta novamente ou falha definitivamente
+          await this.handleFetchError(retryError, attempt + 1);
+        }
+      }, delay);
+      
+      return;
     }
     
+    // Falha definitiva - mostra erro final
+    this.showFinalError(errorInfo, attempt);
+    
     // Define estado dos dados baseado no tipo de erro
-    if (shouldShowEmptyState) {
-      this.allData = [];
-      this.setErrorState(errorMessage, 'empty');
-    } else {
-      // Mantém dados anteriores se houver, evita perda de estado
+    if (errorType === ERROR_TYPES.AUTHENTICATION || errorType === ERROR_TYPES.VALIDATION) {
+      // Mantém dados anteriores para erros que não invalidam os dados
       if (!this.allData || this.allData.length === 0) {
         this.allData = [];
       }
-      this.setErrorState(errorMessage, 'retry');
+    } else {
+      // Limpa dados para outros tipos de erro
+      this.allData = [];
     }
     
-    Utils.showMessage(errorMessage, 'error');
+    // Mostra mensagem global
+    Utils.showMessage(errorInfo.message, errorInfo.severity === 'error' ? 'error' : 'warning');
   }
 
-  setErrorState(message, type = 'empty') {
-    if (type === 'retry') {
-      // Estado de erro com opção de retry - mantém interface funcional
-      this.elements.content.innerHTML = `
-        <div class="p-4 text-center">
-          <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-            <p class="text-yellow-800 mb-3">${message}</p>
-            <button id="${this.prefix}-retry-btn" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition">
-              Tentar Novamente
-            </button>
+  /**
+   * Mostra feedback durante tentativas de retry
+   * @param {number} attempt - Número da tentativa atual
+   * @param {number} delay - Delay até a próxima tentativa
+   * @param {object} errorInfo - Informações do erro
+   */
+  showRetryFeedback(attempt, delay, errorInfo) {
+    const delaySeconds = Math.ceil(delay / 1000);
+    const remainingAttempts = RETRY_CONFIG.MAX_ATTEMPTS - attempt;
+    
+    this.elements.content.innerHTML = `
+      <div class="p-4 text-center">
+        <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+          <div class="flex items-center justify-center mb-3">
+            <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-yellow-600"></div>
+            <span class="ml-2 text-yellow-800 font-medium">${errorInfo.title}</span>
           </div>
-        </div>`;
-      
-      // Adiciona listener para retry
-      const retryBtn = this.elements.content.querySelector(`#${this.prefix}-retry-btn`);
-      if (retryBtn) {
-        retryBtn.addEventListener('click', () => {
-          this.fetchData();
-        });
-      }
-    } else {
-      // Estado vazio padrão - permitir que renderização normal aconteça
-      this.elements.content.innerHTML = `
-        <div class="p-4 text-center">
-          <div class="bg-red-50 border border-red-200 rounded-lg p-4">
-            <p class="text-red-800">${message}</p>
-            <p class="text-red-600 text-sm mt-2">Os dados podem estar temporariamente indisponíveis.</p>
-          </div>
-        </div>`;
+          <p class="text-yellow-700 mb-3">${errorInfo.message}</p>
+          <p class="text-yellow-600 text-sm mb-3">
+            Tentando novamente em ${delaySeconds} segundos... 
+            (${remainingAttempts} tentativa${remainingAttempts !== 1 ? 's' : ''} restante${remainingAttempts !== 1 ? 's' : ''})
+          </p>
+          <button id="${this.prefix}-cancel-retry-btn" 
+                  class="px-3 py-1 text-sm bg-yellow-600 text-white rounded hover:bg-yellow-700 transition">
+            Cancelar Retry
+          </button>
+        </div>
+      </div>`;
+    
+    // Adiciona listener para cancelar retry
+    const cancelBtn = this.elements.content.querySelector(`#${this.prefix}-cancel-retry-btn`);
+    if (cancelBtn) {
+      cancelBtn.addEventListener('click', () => {
+        this.showFinalError(errorInfo, attempt);
+      });
     }
   }
 
+  /**
+   * Mostra erro final quando todas as tentativas falharam
+   * @param {object} errorInfo - Informações do erro
+   * @param {number} totalAttempts - Total de tentativas realizadas
+   */
+  showFinalError(errorInfo, totalAttempts) {
+    const severityClass = errorInfo.severity === 'error' ? 'red' : 'yellow';
+    const bgClass = `bg-${severityClass}-50`;
+    const borderClass = `border-${severityClass}-200`;
+    const textClass = `text-${severityClass}-800`;
+    const textSecondaryClass = `text-${severityClass}-600`;
+    
+    let attemptsText = '';
+    if (totalAttempts > 1) {
+      attemptsText = `<p class="${textSecondaryClass} text-sm mb-3">
+        Falhou após ${totalAttempts} tentativa${totalAttempts !== 1 ? 's' : ''}
+      </p>`;
+    }
+    
+    const suggestionsHtml = errorInfo.suggestions.map(suggestion => 
+      `<li class="${textSecondaryClass} text-sm">${suggestion}</li>`
+    ).join('');
+    
+    this.elements.content.innerHTML = `
+      <div class="p-4">
+        <div class="${bgClass} ${borderClass} border rounded-lg p-4">
+          <div class="flex items-center mb-3">
+            <svg class="h-5 w-5 ${textClass} mr-2" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+            </svg>
+            <h3 class="${textClass} font-medium">${errorInfo.title}</h3>
+          </div>
+          <p class="${textClass} mb-3">${errorInfo.message}</p>
+          ${attemptsText}
+          
+          <div class="mb-4">
+            <h4 class="${textClass} text-sm font-medium mb-2">Sugestões:</h4>
+            <ul class="list-disc list-inside space-y-1">
+              ${suggestionsHtml}
+            </ul>
+          </div>
+          
+          <div class="flex gap-2">
+            <button id="${this.prefix}-retry-manual-btn" 
+                    class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition text-sm">
+              Tentar Novamente
+            </button>
+            <button id="${this.prefix}-clear-filters-btn" 
+                    class="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition text-sm">
+              Limpar Filtros
+            </button>
+          </div>
+        </div>
+      </div>`;
+    
+    // Adiciona listeners para ações
+    const retryBtn = this.elements.content.querySelector(`#${this.prefix}-retry-manual-btn`);
+    const clearBtn = this.elements.content.querySelector(`#${this.prefix}-clear-filters-btn`);
+    
+    if (retryBtn) {
+      retryBtn.addEventListener('click', () => {
+        this.fetchData();
+      });
+    }
+    
+    if (clearBtn) {
+      clearBtn.addEventListener('click', () => {
+        this.clearFilters();
+        this.fetchData();
+      });
+    }
+  }
+
+  
   applyFiltersAndRender() {
     let filteredData = [...this.allData];
     if (this.config.filterLogic) {
