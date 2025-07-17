@@ -13,6 +13,7 @@ import {
   DATA_FORMATS,
   HTTP_STATUS,
 } from "./api-constants.js";
+import { parseConsultasHTML } from "./consultation-parser.js";
 
 const api = getBrowserAPIInstance();
 
@@ -206,154 +207,6 @@ export async function fetchRegulationDetails({ reguIdp, reguIds }) {
   return data.regulacao || null;
 }
 
-function parseConsultasHTML(htmlString) {
-  const parser = new DOMParser();
-  const doc = parser.parseFromString(htmlString, "text/html");
-  const rows = Array.from(doc.querySelectorAll("tbody > tr"));
-  const consultations = [];
-  const getFormattedText = (element) => {
-    if (!element) return "";
-    const clone = element.cloneNode(true);
-    clone
-      .querySelectorAll("br")
-      .forEach((br) =>
-        br.parentNode.replaceChild(document.createTextNode("\n"), br)
-      );
-    return clone.textContent || "";
-  };
-  const parseDateForSorting = (dateString) => {
-    const datePart = (
-      dateString.split("\n").find((p) => p.startsWith("At")) || dateString
-    )
-      .replace("At", "")
-      .trim();
-    const match = datePart.match(
-      /(\d{2})\/(\d{2})\/(\d{4})(?: (\d{2}):(\d{2}):(\d{2}))?/
-    );
-    if (!match) return null;
-    const [, day, month, year, hour = 0, minute = 0, second = 0] = match;
-    return new Date(year, month - 1, day, hour, minute, second);
-  };
-  let i = 0;
-  while (i < rows.length) {
-    const mainRow = rows[i];
-    const mainCells = mainRow.querySelectorAll("td");
-    if (mainCells.length < 5 || !mainCells[0].className.includes("width10")) {
-      i++;
-      continue;
-    }
-    const dateText = mainCells[1].textContent.trim().replace(/\s+/g, " ");
-    const consultation = {
-      priority: mainCells[0].textContent.trim(),
-      date: dateText.replace("At", "\nAt"),
-      sortableDate: parseDateForSorting(dateText),
-      unit: mainCells[2].textContent.trim(),
-      specialty: mainCells[3].textContent.trim(),
-      professional: mainCells[4].textContent
-        .trim()
-        .replace(/Insc\.: \d+/, "")
-        .trim(),
-      details: [],
-      isNoShow: mainRow.textContent.includes("FALTOU A CONSULTA"),
-    };
-    let endIndex = rows.findIndex(
-      (row, index) =>
-        index > i &&
-        row.querySelectorAll("td").length > 5 &&
-        row.querySelectorAll("td")[0].className.includes("width10")
-    );
-    if (endIndex === -1) endIndex = rows.length;
-    const blockRows = rows.slice(i + 1, endIndex);
-    const isSoapNote = blockRows.some((row) =>
-      row.textContent.includes("SOAP -")
-    );
-    if (isSoapNote) {
-      const soapSections = ["SUBJETIVO", "OBJETIVO", "AVALIAÇÃO", "PLANO"];
-      soapSections.forEach((sectionName) => {
-        const headerRowIndex = blockRows.findIndex((row) =>
-          row.textContent.includes(`SOAP - ${sectionName}`)
-        );
-        if (headerRowIndex === -1) return;
-        let content = "",
-          ciapCid = "",
-          obsNota = "";
-        const contentEndIndex = blockRows.findIndex(
-          (row, index) =>
-            index > headerRowIndex && row.textContent.includes("SOAP -")
-        );
-        const sectionRows = blockRows.slice(
-          headerRowIndex + 1,
-          contentEndIndex !== -1 ? contentEndIndex : blockRows.length
-        );
-        sectionRows.forEach((row) => {
-          const diagCell = Array.from(row.querySelectorAll("td")).find(
-            (cell) =>
-              cell.textContent.includes("CID -") ||
-              cell.textContent.includes("CIAP -")
-          );
-          if (diagCell) {
-            ciapCid = diagCell.textContent.trim();
-            if (diagCell.nextElementSibling)
-              ciapCid += ` - ${diagCell.nextElementSibling.textContent.trim()}`;
-          }
-          const descDiv = row.querySelector(".divHpdnObs");
-          if (descDiv) content += getFormattedText(descDiv);
-          const obsCell = Array.from(row.querySelectorAll("td")).find((cell) =>
-            cell.textContent.trim().startsWith("OBS./NOTA:")
-          );
-          if (obsCell)
-            obsNota = obsCell.textContent.replace("OBS./NOTA:", "").trim();
-        });
-        let finalValue = "";
-        if (ciapCid) finalValue += ciapCid.trim();
-        if (obsNota)
-          finalValue += (finalValue ? "\n" : "") + `Obs.: ${obsNota.trim()}`;
-        if (content)
-          finalValue +=
-            (finalValue ? "\n" : "") + `Descrição: ${content.trim()}`;
-        if (finalValue.trim())
-          consultation.details.push({ label: sectionName, value: finalValue });
-      });
-    } else {
-      blockRows.forEach((row) => {
-        const cidCell = Array.from(row.querySelectorAll("td")).find((cell) =>
-          cell.textContent.includes("CID -")
-        );
-        if (cidCell) {
-          const descCell = cidCell.nextElementSibling;
-          if (descCell)
-            consultation.details.push({
-              label: "Hipótese Diagnóstica",
-              value: `${cidCell.textContent.trim()} - ${descCell.textContent.trim()}`,
-            });
-        }
-        const rowText = row.textContent.trim();
-        if (rowText.includes("DESCRIÇÃO DA CONSULTA")) {
-          const nextRow = row.nextElementSibling;
-          const descDiv = nextRow?.querySelector(".divHpdnObs");
-          if (descDiv)
-            consultation.details.push({
-              label: "Descrição da Consulta",
-              value: getFormattedText(descDiv).trim(),
-            });
-        }
-        if (rowText.includes("OBSERVAÇÃO DE ENFERMAGEM:")) {
-          const obsCell = row.querySelector("td[colspan]");
-          if (obsCell)
-            consultation.details.push({
-              label: "Observação de Enfermagem",
-              value: getFormattedText(obsCell)
-                .replace("OBSERVAÇÃO DE ENFERMAGEM:", "")
-                .trim(),
-            });
-        }
-      });
-    }
-    consultations.push(consultation);
-    i = endIndex;
-  }
-  return consultations;
-}
 
 export async function searchPatients(term) {
   // Import validation utilities
@@ -399,36 +252,29 @@ export async function searchPatients(term) {
 }
 
 export async function fetchVisualizaUsuario({ idp, ids }) {
-  if (!idp || !ids)
+  if (!API_VALIDATIONS.isValidRegulationId(idp, ids)) {
     throw new Error(`ID inválido. idp: '${idp}', ids: '${ids}'.`);
+  }
+  
   const baseUrl = await getBaseUrl();
-  const url = `${baseUrl}/sigss/usuarioServico/visualiza`;
-  const body = `isenPK.idp=${encodeURIComponent(
-    idp
-  )}&isenPK.ids=${encodeURIComponent(ids)}`;
+  const url = API_UTILS.buildUrl(baseUrl, API_ENDPOINTS.PATIENT_DETAILS);
+  const body = `isenPK.idp=${encodeURIComponent(idp)}&isenPK.ids=${encodeURIComponent(ids)}`;
+  
   const response = await fetch(url, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
-      "X-Requested-With": "XMLHttpRequest",
-      Accept: "application/json, text/javascript, */*; q=0.01",
-    },
+    headers: API_HEADERS.FORM,
     body,
   });
+  
   if (!response.ok) handleFetchError(response);
 
-  const contentType = response.headers.get("content-type");
-  if (contentType && contentType.indexOf("application/json") !== -1) {
-    const patientData = await response.json();
-    return patientData?.usuarioServico || {};
-  } else {
-    console.error(
-      "A resposta do servidor não foi JSON. Provável expiração de sessão."
-    );
-    throw new Error(
-      "A sessão pode ter expirado. Por favor, faça login no sistema novamente."
-    );
+  if (!API_VALIDATIONS.isJsonResponse(response)) {
+    console.error(API_ERROR_MESSAGES.INVALID_RESPONSE);
+    throw new Error(API_ERROR_MESSAGES.SESSION_EXPIRED);
   }
+
+  const patientData = await response.json();
+  return patientData?.usuarioServico || {};
 }
 
 export async function fetchProntuarioHash({
@@ -436,18 +282,29 @@ export async function fetchProntuarioHash({
   dataInicial,
   dataFinal,
 }) {
+  if (!isenFullPKCrypto) {
+    throw new Error("ID criptografado necessário.");
+  }
+
   const baseUrl = await getBaseUrl();
-  const url = `${baseUrl}/sigss/common/queryStrToParamHash`;
-  const rawParamString = `isenFullPKCrypto=${isenFullPKCrypto}&moip_idp=4&moip_ids=1&dataInicial=${dataInicial}&dataFinal=${dataFinal}&ppdc=t&consulta_basica=t&obs_enfermagem=t&encaminhamento=t&consulta_especializada=t&consulta_odonto=t&exame_solicitado=t&exame=t&triagem=t&procedimento=t&vacina=t&proc_odonto=t&medicamento_receitado=t&demais_orientacoes=t&medicamento_retirado=t&aih=t&acs=t&lista_espera=t&beneficio=f&internacao=t&apac=t&procedimento_coletivo=t&justificativa=&responsavelNome=&responsavelCPF=&isOdonto=t&isSoOdonto=f`;
+  const url = API_UTILS.buildUrl(baseUrl, API_ENDPOINTS.PARAM_HASH);
+  
+  const paramString = API_UTILS.buildProntuarioParamString({
+    isenFullPKCrypto,
+    dataInicial,
+    dataFinal,
+  });
+
   const response = await fetch(url, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
-    },
-    body: `paramString=${encodeURIComponent(rawParamString)}`,
+    headers: API_HEADERS.FORM,
+    body: `paramString=${paramString}`,
   });
-  if (!response.ok)
-    throw new Error("Não foi possível gerar o passe de acesso.");
+
+  if (!response.ok) {
+    throw new Error(API_ERROR_MESSAGES.HASH_GENERATION_FAILED);
+  }
+
   const data = await response.json();
   if (data?.string) return data.string;
   throw new Error(data.mensagem || "Resposta não continha o hash.");
