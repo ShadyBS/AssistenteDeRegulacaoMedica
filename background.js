@@ -1,8 +1,9 @@
 import "./browser-polyfill.js";
 import { fetchRegulationDetails } from "./api.js";
 import { KeepAliveManager } from "./KeepAliveManager.js";
+import { getBrowserAPIInstance } from "./BrowserAPI.js";
 
-const api = typeof browser !== "undefined" ? browser : chrome;
+const api = getBrowserAPIInstance();
 
 // Instância global do KeepAliveManager
 let keepAliveManager = null;

@@ -9,6 +9,9 @@ import * as Utils from "./utils.js";
 import * as Search from "./ui/search.js";
 import * as PatientCard from "./ui/patient-card.js";
 import { store } from "./store.js";
+import { CONFIG, getTimeout, getCSSClass } from "./config.js";
+import { getMemoryManager } from "./MemoryManager.js";
+import { getBrowserAPIInstance } from "./BrowserAPI.js";
 
 // --- ÍCONES ---
 const sectionIcons = {
@@ -23,6 +26,91 @@ const sectionIcons = {
 
 let currentRegulationData = null;
 let sectionManagers = {}; // Objeto para armazenar instâncias de SectionManager
+
+// Instância global do gerenciador de memória
+const memoryManager = getMemoryManager();
+
+// Instância global da API do browser
+const browserAPI = getBrowserAPIInstance();
+
+// Controle de race condition para seleção de pacientes
+let patientSelectionInProgress = false;
+let pendingPatientSelection = null;
+let patientSelectionTimeout = null;
+
+/**
+ * Sistema de limpeza de recursos para mudança de paciente
+ */
+function cleanupPatientResources() {
+  console.log('[Sidebar] Limpando recursos do paciente anterior');
+  
+  // Limpa timeout de seleção de paciente se existir
+  if (patientSelectionTimeout) {
+    memoryManager.clearTimeout(patientSelectionTimeout);
+    patientSelectionTimeout = null;
+  }
+  
+  // Reseta variáveis de controle
+  patientSelectionInProgress = false;
+  pendingPatientSelection = null;
+  
+  // Limpa dados de regulação atual
+  currentRegulationData = null;
+  
+  // Limpa dados dos section managers
+  Object.values(sectionManagers).forEach((manager) => {
+    if (typeof manager.cleanup === "function") {
+      manager.cleanup();
+    }
+    if (typeof manager.clearAutomationFeedbackAndFilters === "function") {
+      manager.clearAutomationFeedbackAndFilters(false);
+    } else if (typeof manager.clearAutomation === "function") {
+      manager.clearAutomation();
+    }
+  });
+  
+  // Força limpeza de memória
+  memoryManager.performMemoryCleanup();
+  
+  console.log('[Sidebar] Limpeza de recursos concluída');
+}
+
+/**
+ * Registra callbacks de limpeza no MemoryManager
+ */
+function registerCleanupCallbacks() {
+  // Callback para limpeza de section managers
+  memoryManager.addCleanupCallback(() => {
+    console.log('[Sidebar] Executando limpeza de section managers');
+    Object.values(sectionManagers).forEach((manager) => {
+      if (typeof manager.cleanup === "function") {
+        try {
+          manager.cleanup();
+        } catch (error) {
+          console.error('[Sidebar] Erro ao limpar section manager:', error);
+        }
+      }
+    });
+    sectionManagers = {};
+  });
+  
+  // Callback para limpeza de timeouts globais
+  memoryManager.addCleanupCallback(() => {
+    console.log('[Sidebar] Limpando timeouts globais');
+    if (patientSelectionTimeout) {
+      clearTimeout(patientSelectionTimeout);
+      patientSelectionTimeout = null;
+    }
+  });
+  
+  // Callback para limpeza de variáveis globais
+  memoryManager.addCleanupCallback(() => {
+    console.log('[Sidebar] Limpando variáveis globais');
+    currentRegulationData = null;
+    patientSelectionInProgress = false;
+    pendingPatientSelection = null;
+  });
+}
 
 // --- FUNÇÃO AUXILIAR DE FILTRAGEM ---
 /**
@@ -319,15 +407,58 @@ async function selectPatient(patientInfo, forceRefresh = false) {
   ) {
     return;
   }
-  Utils.toggleLoader(true);
-  Utils.clearMessage();
-  store.setPatientUpdating();
+
+  // Implementar debouncing para evitar múltiplas chamadas simultâneas
+  if (patientSelectionInProgress) {
+    // Armazena a última requisição para ser processada após a atual
+    pendingPatientSelection = { patientInfo, forceRefresh };
+    return;
+  }
+
+  // Limpar timeout anterior se existir usando MemoryManager
+  if (patientSelectionTimeout) {
+    memoryManager.clearTimeout(patientSelectionTimeout);
+    patientSelectionTimeout = null;
+  }
+
+  // Implementar debounce de 300ms para evitar múltiplas chamadas rápidas
+  patientSelectionTimeout = memoryManager.setTimeout(async () => {
+    // Limpa recursos do paciente anterior antes de carregar novo
+    cleanupPatientResources();
+    
+    await executePatientSelection(patientInfo, forceRefresh);
+    
+    // Processar requisição pendente se existir
+    if (pendingPatientSelection) {
+      const pending = pendingPatientSelection;
+      pendingPatientSelection = null;
+      memoryManager.setTimeout(() => {
+        selectPatient(pending.patientInfo, pending.forceRefresh);
+      }, 100); // Pequeno delay para evitar sobrecarga
+    }
+  }, 300);
+}
+
+async function executePatientSelection(patientInfo, forceRefresh = false) {
+  if (patientSelectionInProgress) {
+    console.warn("Tentativa de seleção de paciente já em progresso, ignorando...");
+    return;
+  }
+
+  patientSelectionInProgress = true;
+  
   try {
+    Utils.toggleLoader(true);
+    Utils.clearMessage();
+    store.setPatientUpdating();
+    
     const ficha = await API.fetchVisualizaUsuario(patientInfo);
     const cadsus = await API.fetchCadsusData({
       cpf: Utils.getNestedValue(ficha, "entidadeFisica.entfCPF"),
       cns: ficha.isenNumCadSus,
+      skipValidation: true // Pular validação quando carregando dados do paciente selecionado
     });
+    
     Object.values(sectionManagers).forEach((manager) => {
       if (typeof manager.clearAutomationFeedbackAndFilters === "function") {
         manager.clearAutomationFeedbackAndFilters(false);
@@ -335,18 +466,31 @@ async function selectPatient(patientInfo, forceRefresh = false) {
         manager.clearAutomation();
       }
     });
+    
     store.setPatient(ficha, cadsus);
     await updateRecentPatients(store.getPatient());
+    
+    console.log("Seleção de paciente concluída com sucesso:", patientInfo.idp);
   } catch (error) {
     Utils.showMessage(error.message, "error");
-    console.error(error);
+    console.error("Erro na seleção de paciente:", error);
     store.clearPatient();
   } finally {
     Utils.toggleLoader(false);
+    patientSelectionInProgress = false;
   }
 }
 
 async function init() {
+  console.log('[Sidebar] Iniciando aplicação');
+  
+  // Registra callbacks de limpeza no MemoryManager
+  registerCleanupCallbacks();
+  
+  // Registra referências globais importantes
+  memoryManager.setGlobalRef('sectionManagers', sectionManagers);
+  memoryManager.setGlobalRef('currentRegulationData', currentRegulationData);
+  
   let baseUrlConfigured = true;
 
   try {
@@ -367,7 +511,7 @@ async function init() {
 
       if (openOptions) {
         openOptions.addEventListener("click", () =>
-          browser.runtime.openOptionsPage()
+          browserAPI.runtime.openOptionsPage()
         );
       }
       if (reloadSidebar) {
@@ -419,10 +563,15 @@ async function init() {
   setupAutoModeToggle();
 
   await checkForPendingRegulation();
+  
+  // Log estatísticas iniciais do MemoryManager
+  memoryManager.logStats();
+  
+  console.log('[Sidebar] Aplicação inicializada com sucesso');
 }
 
 async function loadConfigAndData() {
-  const syncData = await browser.storage.sync.get({
+  const syncData = await browserAPI.storage.sync.get({
     patientFields: defaultFieldConfig,
     filterLayout: {},
     autoLoadExams: false,
@@ -435,7 +584,7 @@ async function loadConfigAndData() {
     sidebarSectionOrder: [],
     sectionHeaderStyles: {}, // Carrega a nova configuração de estilos
   });
-  const localData = await browser.storage.local.get({
+  const localData = await browserAPI.storage.local.get({
     recentPatients: [],
     savedFilterSets: {},
     automationRules: [],
@@ -581,7 +730,7 @@ function setupAutoModeToggle() {
   const toggle = document.getElementById("auto-mode-toggle");
   const label = document.getElementById("auto-mode-label");
 
-  browser.storage.sync
+  browserAPI.storage.sync
     .get({ enableAutomaticDetection: true })
     .then((settings) => {
       toggle.checked = settings.enableAutomaticDetection;
@@ -590,7 +739,7 @@ function setupAutoModeToggle() {
 
   toggle.addEventListener("change", (event) => {
     const isEnabled = event.target.checked;
-    browser.storage.sync.set({ enableAutomaticDetection: isEnabled });
+    browserAPI.storage.sync.set({ enableAutomaticDetection: isEnabled });
     label.textContent = isEnabled ? "Auto" : "Manual";
   });
 }
@@ -638,7 +787,7 @@ async function handleRegulationLoaded(regulationData) {
 }
 
 async function applyAutomationRules(regulationData) {
-  const { automationRules } = await browser.storage.local.get({
+  const { automationRules } = await browserAPI.storage.local.get({
     automationRules: [],
   });
   if (!automationRules || automationRules.length === 0) return;
@@ -686,47 +835,80 @@ function handleShowRegulationInfo() {
   modalTitle.textContent = "Dados da Regulação (JSON)";
   const formattedJson = JSON.stringify(currentRegulationData, null, 2);
 
-  modalContent.innerHTML = `<pre class="bg-slate-100 p-2 rounded-md text-xs whitespace-pre-wrap break-all">${formattedJson}</pre>`;
+  // Criar elemento pre de forma segura para evitar XSS
+  const preElement = document.createElement("pre");
+  preElement.className = `${getCSSClass('BG_SLATE_100')} p-2 rounded-md text-xs whitespace-pre-wrap break-all`;
+  preElement.textContent = formattedJson;
+  
+  // Limpar conteúdo anterior e adicionar o elemento de forma segura
+  modalContent.innerHTML = "";
+  modalContent.appendChild(preElement);
 
   infoModal.classList.remove("hidden");
 }
 
 function addGlobalEventListeners() {
+  console.log('[Sidebar] Adicionando event listeners globais');
+  
   const mainContent = document.getElementById("main-content");
   const infoModal = document.getElementById("info-modal");
   const modalCloseBtn = document.getElementById("modal-close-btn");
   const infoBtn = document.getElementById("context-info-btn");
   const reloadBtn = document.getElementById("reload-sidebar-btn");
 
-  if (reloadBtn) {
-    reloadBtn.addEventListener("click", () => {
-      const patient = store.getPatient();
-      if (patient && patient.ficha) {
-        const confirmation = window.confirm(
-          "Um paciente está selecionado e o estado atual será perdido. Deseja realmente recarregar o assistente?"
-        );
-        if (confirmation) {
-          window.location.reload();
-        }
-      } else {
+  // Handler para botão de reload com confirmação
+  const reloadHandler = () => {
+    const patient = store.getPatient();
+    if (patient && patient.ficha) {
+      const confirmation = window.confirm(
+        "Um paciente está selecionado e o estado atual será perdido. Deseja realmente recarregar o assistente?"
+      );
+      if (confirmation) {
+        // Limpa recursos antes de recarregar
+        memoryManager.cleanup();
         window.location.reload();
       }
-    });
+    } else {
+      // Limpa recursos antes de recarregar
+      memoryManager.cleanup();
+      window.location.reload();
+    }
+  };
+
+  // Handler para fechar modal
+  const modalCloseHandler = () => infoModal.classList.add("hidden");
+  
+  // Handler para clique no backdrop do modal
+  const modalBackdropHandler = (e) => {
+    if (e.target === infoModal) infoModal.classList.add("hidden");
+  };
+
+  // Adiciona event listeners usando MemoryManager
+  if (reloadBtn) {
+    memoryManager.addEventListener(reloadBtn, "click", reloadHandler);
   }
 
-  modalCloseBtn.addEventListener("click", () =>
-    infoModal.classList.add("hidden")
-  );
-  infoModal.addEventListener("click", (e) => {
-    if (e.target === infoModal) infoModal.classList.add("hidden");
-  });
-  mainContent.addEventListener("click", handleGlobalActions);
-  infoBtn.addEventListener("click", handleShowRegulationInfo);
+  if (modalCloseBtn) {
+    memoryManager.addEventListener(modalCloseBtn, "click", modalCloseHandler);
+  }
+  
+  if (infoModal) {
+    memoryManager.addEventListener(infoModal, "click", modalBackdropHandler);
+  }
+  
+  if (mainContent) {
+    memoryManager.addEventListener(mainContent, "click", handleGlobalActions);
+  }
+  
+  if (infoBtn) {
+    memoryManager.addEventListener(infoBtn, "click", handleShowRegulationInfo);
+  }
 
-  browser.storage.onChanged.addListener((changes, areaName) => {
+  // Handler para mudanças no storage
+  const storageChangeHandler = (changes, areaName) => {
     if (areaName === "local" && changes.pendingRegulation) {
       // Apenas processa se a detecção automática estiver LIGADA
-      browser.storage.sync
+      browserAPI.storage.sync
         .get({ enableAutomaticDetection: true })
         .then((settings) => {
           if (settings.enableAutomaticDetection) {
@@ -737,13 +919,15 @@ function addGlobalEventListeners() {
                 newValue
               );
               handleRegulationLoaded(newValue);
-              browser.storage.local.remove("pendingRegulation");
+              browserAPI.storage.local.remove("pendingRegulation");
             }
           }
         });
     }
 
     if (areaName === "sync" && changes.sectionHeaderStyles) {
+      // Limpa recursos antes de recarregar
+      memoryManager.cleanup();
       window.location.reload();
     }
 
@@ -751,7 +935,22 @@ function addGlobalEventListeners() {
       // Mantém o botão da sidebar sincronizado com a configuração
       setupAutoModeToggle();
     }
+  };
+
+  // Adiciona listener para mudanças no storage
+  browserAPI.storage.onChanged.addListener(storageChangeHandler);
+  
+  // Registra callback para remover listener do storage na limpeza
+  memoryManager.addCleanupCallback(() => {
+    console.log('[Sidebar] Removendo listener de storage');
+    try {
+      browserAPI.storage.onChanged.removeListener(storageChangeHandler);
+    } catch (error) {
+      console.error('[Sidebar] Erro ao remover listener de storage:', error);
+    }
   });
+  
+  console.log('[Sidebar] Event listeners globais adicionados');
 }
 
 async function handleGlobalActions(event) {
@@ -814,7 +1013,7 @@ async function copyToClipboard(button) {
     setTimeout(() => {
       button.textContent = "📄";
       button.dataset.inProgress = "false";
-    }, 1200);
+    }, getTimeout("AUTO_REFRESH"));
   }
 }
 
@@ -826,7 +1025,7 @@ async function updateRecentPatients(patientData) {
     (p) => p.ficha.isenPK.idp !== newRecent.ficha.isenPK.idp
   );
   const updatedRecents = [newRecent, ...filtered].slice(0, 5);
-  await browser.storage.local.set({ recentPatients: updatedRecents });
+  await browserAPI.storage.local.set({ recentPatients: updatedRecents });
   store.setRecentPatients(updatedRecents);
 }
 
@@ -843,10 +1042,18 @@ async function handleViewExamResult(button) {
         : `${baseUrl}${filePath}`;
       newTab.location.href = fullUrl;
     } else {
-      newTab.document.body.innerHTML = "<p>Resultado não encontrado.</p>";
+      // Criar elemento de forma segura para evitar XSS
+      const messageElement = document.createElement("p");
+      messageElement.textContent = "Resultado não encontrado.";
+      newTab.document.body.innerHTML = "";
+      newTab.document.body.appendChild(messageElement);
     }
   } catch (error) {
-    newTab.document.body.innerHTML = `<p>Erro: ${error.message}</p>`;
+    // Criar elemento de forma segura para evitar XSS
+    const errorElement = document.createElement("p");
+    errorElement.textContent = `Erro: ${error.message}`;
+    newTab.document.body.innerHTML = "";
+    newTab.document.body.appendChild(errorElement);
   }
 }
 
@@ -860,11 +1067,18 @@ async function handleViewDocument(button) {
     if (docUrl) {
       newTab.location.href = docUrl;
     } else {
-      newTab.document.body.innerHTML =
-        "<p>URL do documento não encontrada.</p>";
+      // Criar elemento de forma segura para evitar XSS
+      const messageElement = document.createElement("p");
+      messageElement.textContent = "URL do documento não encontrada.";
+      newTab.document.body.innerHTML = "";
+      newTab.document.body.appendChild(messageElement);
     }
   } catch (error) {
-    newTab.document.body.innerHTML = `<p>Erro ao carregar documento: ${error.message}</p>`;
+    // Criar elemento de forma segura para evitar XSS
+    const errorElement = document.createElement("p");
+    errorElement.textContent = `Erro ao carregar documento: ${error.message}`;
+    newTab.document.body.innerHTML = "";
+    newTab.document.body.appendChild(errorElement);
     console.error("Falha ao visualizar documento:", error);
   }
 }
@@ -879,10 +1093,18 @@ async function handleViewRegulationAttachment(button) {
     if (fileUrl) {
       newTab.location.href = fileUrl;
     } else {
-      newTab.document.body.innerHTML = "<p>URL do anexo não encontrada.</p>";
+      // Criar elemento de forma segura para evitar XSS
+      const messageElement = document.createElement("p");
+      messageElement.textContent = "URL do anexo não encontrada.";
+      newTab.document.body.innerHTML = "";
+      newTab.document.body.appendChild(messageElement);
     }
   } catch (error) {
-    newTab.document.body.innerHTML = `<p>Erro ao carregar anexo: ${error.message}</p>`;
+    // Criar elemento de forma segura para evitar XSS
+    const errorElement = document.createElement("p");
+    errorElement.textContent = `Erro ao carregar anexo: ${error.message}`;
+    newTab.document.body.innerHTML = "";
+    newTab.document.body.appendChild(errorElement);
     console.error("Falha ao visualizar anexo da regulação:", error);
   }
 }
@@ -893,15 +1115,24 @@ function showModal(title, content) {
   const modalContent = document.getElementById("modal-content");
 
   modalTitle.textContent = title;
-  modalContent.innerHTML = content;
+  
+  // Verificar se o conteúdo é HTML válido ou texto simples
+  if (typeof content === 'string' && content.includes('<')) {
+    // Para conteúdo HTML, usar innerHTML apenas se for conteúdo conhecido/seguro
+    modalContent.innerHTML = content;
+  } else {
+    // Para conteúdo de texto simples, usar textContent para segurança
+    modalContent.textContent = content;
+  }
+  
   modal.classList.remove("hidden");
 }
 
 function createDetailRow(label, value) {
   if (!value || String(value).trim() === "") return "";
   return `<div class="py-2 border-b border-slate-100 flex justify-between items-start gap-4">
-            <span class="font-semibold text-slate-600 flex-shrink-0">${label}:</span>
-            <span class="text-slate-800 text-right break-words">${value}</span>
+            <span class="font-semibold ${getCSSClass('TEXT_SECONDARY')} flex-shrink-0">${label}:</span>
+            <span class="${getCSSClass('TEXT_PRIMARY')} text-right break-words">${value}</span>
           </div>`;
 }
 
@@ -922,8 +1153,8 @@ function formatRegulationDetailsForModal(data) {
   content += createDetailRow("Gravidade", data.reguGravidade);
   if (data.reguJustificativa && data.reguJustificativa !== "null") {
     content += `<div class="py-2">
-                      <span class="font-semibold text-slate-600">Justificativa:</span>
-                      <p class="text-slate-800 whitespace-pre-wrap mt-1 p-2 bg-slate-50 rounded">${data.reguJustificativa.replace(
+                      <span class="font-semibold ${getCSSClass('TEXT_SECONDARY')}">Justificativa:</span>
+                      <p class="${getCSSClass('TEXT_PRIMARY')} whitespace-pre-wrap mt-1 p-2 ${getCSSClass('BG_SLATE_50')} rounded">${data.reguJustificativa.replace(
                         /\\n/g,
                         "\n"
                       )}</p>
@@ -962,8 +1193,8 @@ function formatAppointmentDetailsForModal(data) {
   content += createDetailRow("Convênio", data.convenio?.entidade?.entiNome);
   if (data.agcoObs) {
     content += `<div class="py-2">
-                        <span class="font-semibold text-slate-600">Observação:</span>
-                        <p class="text-slate-800 whitespace-pre-wrap mt-1 p-2 bg-slate-50 rounded">${data.agcoObs}</p>
+                        <span class="font-semibold ${getCSSClass('TEXT_SECONDARY')}">Observação:</span>
+                        <p class="${getCSSClass('TEXT_PRIMARY')} whitespace-pre-wrap mt-1 p-2 ${getCSSClass('BG_SLATE_50')} rounded">${data.agcoObs}</p>
                     </div>`;
   }
   return content;
@@ -994,7 +1225,7 @@ function formatExamAppointmentDetailsForModal(data) {
 
 async function handleShowRegulationDetailsModal(button) {
   const { idp, ids } = button.dataset;
-  showModal("Detalhes da Regulação", "<p>Carregando...</p>");
+  showModal("Detalhes da Regulação", "Carregando...");
   try {
     const data = await API.fetchRegulationDetails({
       reguIdp: idp,
@@ -1005,7 +1236,7 @@ async function handleShowRegulationDetailsModal(button) {
   } catch (error) {
     showModal(
       "Erro",
-      `<p>Não foi possível carregar os detalhes: ${error.message}</p>`
+      `Não foi possível carregar os detalhes: ${error.message}`
     );
   }
 }
@@ -1017,7 +1248,7 @@ async function handleShowAppointmentDetailsModal(button) {
     ? "Detalhes do Agendamento de Exame"
     : "Detalhes da Consulta Agendada";
 
-  showModal(title, "<p>Carregando...</p>");
+  showModal(title, "Carregando...");
 
   try {
     let data;
@@ -1033,7 +1264,7 @@ async function handleShowAppointmentDetailsModal(button) {
   } catch (error) {
     showModal(
       "Erro",
-      `<p>Não foi possível carregar os detalhes: ${error.message}</p>`
+      `Não foi possível carregar os detalhes: ${error.message}`
     );
   }
 }
@@ -1065,12 +1296,12 @@ function handleShowAppointmentInfo(button) {
 
 async function checkForPendingRegulation() {
   try {
-    const { pendingRegulation } = await browser.storage.local.get(
+    const { pendingRegulation } = await browserAPI.storage.local.get(
       "pendingRegulation"
     );
     if (pendingRegulation && pendingRegulation.isenPKIdp) {
       await handleRegulationLoaded(pendingRegulation);
-      await browser.storage.local.remove("pendingRegulation");
+      await browserAPI.storage.local.remove("pendingRegulation");
     }
   } catch (e) {
     console.error("Erro ao verificar regulação pendente:", e);

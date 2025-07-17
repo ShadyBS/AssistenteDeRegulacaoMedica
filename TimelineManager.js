@@ -5,6 +5,7 @@ import * as API from "./api.js";
 import * as Utils from "./utils.js";
 import * as Renderers from "./renderers.js";
 import { store } from "./store.js";
+import { CONFIG, getTimeout } from "./config.js";
 
 export class TimelineManager {
   constructor(sectionKey, config, globalSettings) {
@@ -56,7 +57,7 @@ export class TimelineManager {
 
     this.elements.searchKeyword?.addEventListener(
       "input",
-      Utils.debounce(() => this.render(), 300)
+      Utils.debounce(() => this.render(), getTimeout("DEBOUNCE_TIMELINE"))
     );
     this.elements.dateInitial?.addEventListener("change", () => this.render());
     this.elements.dateFinal?.addEventListener("change", () => this.render());
@@ -143,7 +144,7 @@ export class TimelineManager {
       const params = {
         isenPK: `${this.currentPatient.isenPK.idp}-${this.currentPatient.isenPK.ids}`,
         isenFullPKCrypto: this.currentPatient.isenFullPKCrypto,
-        dataInicial: "01/01/1900", // Busca sempre o histórico completo
+        dataInicial: CONFIG.DATES.TIMELINE_DEFAULT_START, // Busca sempre o histórico completo
         dataFinal: new Date().toLocaleDateString("pt-BR"),
       };
 

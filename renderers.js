@@ -4,6 +4,7 @@
 
 import { getSortIndicator } from "./SectionManager.js";
 import * as Utils from "./utils.js";
+import { CONFIG, getCSSClass } from "./config.js";
 
 export function renderConsultations(consultations, sortState) {
   const contentDiv = document.getElementById("consultations-content");
@@ -11,11 +12,11 @@ export function renderConsultations(consultations, sortState) {
 
   if (consultations.length === 0) {
     contentDiv.innerHTML =
-      '<p class="text-slate-500">Nenhuma consulta encontrada para os filtros aplicados.</p>';
+      `<p class="${getCSSClass('TEXT_MUTED')}">Nenhuma consulta encontrada para os filtros aplicados.</p>`;
     return;
   }
   const headers = `
-    <div class="flex justify-between text-xs font-bold text-slate-500 mb-2 px-3">
+    <div class="flex justify-between text-xs font-bold ${getCSSClass('TEXT_MUTED')} mb-2 px-3">
         <span class="sort-header w-2/3" data-sort-key="specialty">Especialidade/Profissional <span class="sort-indicator">${getSortIndicator(
           "specialty",
           sortState
@@ -32,14 +33,14 @@ export function renderConsultations(consultations, sortState) {
       .map(
         (c) => `
         <div class="p-3 mb-3 border rounded-lg ${
-          c.isNoShow ? "bg-red-50 border-red-200" : "bg-white"
+          c.isNoShow ? getCSSClass('PATIENT_NO_SHOW') : getCSSClass('PATIENT_NORMAL')
         } consultation-item">
             <div class="flex justify-between items-start cursor-pointer consultation-header">
                 <div>
-                    <p class="font-bold text-blue-700 pointer-events-none">${
+                    <p class="font-bold ${getCSSClass('TEXT_BLUE')} pointer-events-none">${
                       c.specialty
                     }</p>
-                    <p class="text-sm text-slate-600 pointer-events-none">${
+                    <p class="text-sm ${getCSSClass('TEXT_SECONDARY')} pointer-events-none">${
                       c.professional
                     }</p>
                 </div>
@@ -185,7 +186,25 @@ export function renderAppointments(appointments, sortState) {
           typeText = "EXAME";
         }
 
-        const [idp, ids] = item.id.split("-");
+        // Corrigir problema com IDs que podem ter prefixos como "exam-"
+        let idp, ids;
+        const parts = item.id.split("-");
+        
+        // Verificar se o primeiro part não é numérico (indica prefixo)
+        if (parts.length >= 2 && isNaN(parts[0])) {
+          // Se o primeiro part não é numérico, é um prefixo (ex: "exam-525411")
+          // Usar o segundo part como ids e tentar obter idp de outras fontes
+          ids = parts[1];
+          
+          // Para exames, tentar obter o idp correto do objeto original
+          // Se não disponível, usar o mesmo valor como fallback
+          idp = item.examIdp || item.originalIdp || parts[1];
+          
+          console.warn(`ID com prefixo detectado: ${item.id}, usando idp=${idp}, ids=${ids}`);
+        } else {
+          // Formato normal: "idp-ids"
+          [idp, ids] = parts;
+        }
 
         return `
         <div class="p-3 mb-3 border rounded-lg bg-white">
@@ -491,7 +510,26 @@ export function renderTimeline(events, status) {
 
           if (event.type === "appointment") {
             const a = event.details;
-            const [idp, ids] = a.id.split("-");
+            
+            // Corrigir problema com IDs que podem ter prefixos como "exam-"
+            let idp, ids;
+            const parts = a.id.split("-");
+            
+            // Verificar se o primeiro part não é numérico (indica prefixo)
+            if (parts.length >= 2 && isNaN(parts[0])) {
+              // Se o primeiro part não é numérico, é um prefixo (ex: "exam-525411")
+              // Usar o segundo part como ids e tentar obter idp de outras fontes
+              ids = parts[1];
+              
+              // Para exames, tentar obter o idp correto do objeto original
+              // Se não disponível, usar o mesmo valor como fallback
+              idp = a.examIdp || a.originalIdp || parts[1];
+              
+              console.warn(`ID com prefixo detectado: ${a.id}, usando idp=${idp}, ids=${ids}`);
+            } else {
+              // Formato normal: "idp-ids"
+              [idp, ids] = parts;
+            }
 
             const statusStyles = {
               AGENDADO: "text-blue-600",
