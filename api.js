@@ -1092,15 +1092,29 @@ export async function keepSessionAlive() {
     const data = await response.json();
 
     // Verifica se a resposta contém dados válidos
-    if (data && (data.dataHora || data.data || data.hora)) {
-      console.log(
-        `Sessão mantida ativa: ${data.dataHora || data.data || "OK"}`
-      );
-      return true;
-    } else {
-      console.warn(API_ERROR_MESSAGES.KEEP_ALIVE_INVALID_RESPONSE);
-      return false;
+    // A resposta pode ser um objeto com propriedades ou uma string direta
+    if (data) {
+      // Se for um objeto com propriedades específicas
+      if (typeof data === 'object' && (data.dataHora || data.data || data.hora)) {
+        console.log(
+          `Sessão mantida ativa: ${data.dataHora || data.data || "OK"}`
+        );
+        return true;
+      }
+      // Se for uma string direta com data/hora (formato ISO ou similar)
+      else if (typeof data === 'string' && data.trim().length > 0) {
+        console.log(`Sessão mantida ativa: ${data}`);
+        return true;
+      }
+      // Se for qualquer outro valor não-nulo/não-vazio
+      else if (data !== null && data !== undefined && data !== '') {
+        console.log(`Sessão mantida ativa: ${JSON.stringify(data)}`);
+        return true;
+      }
     }
+    
+    console.warn(API_ERROR_MESSAGES.KEEP_ALIVE_INVALID_RESPONSE);
+    return false;
   } catch (error) {
     console.error("Erro ao manter sessão ativa:", error);
 
