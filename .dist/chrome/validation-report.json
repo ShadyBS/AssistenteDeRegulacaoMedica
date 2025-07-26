@@ -1,14 +1,13 @@
 {
-  "timestamp": "2025-07-26T22:45:48.601Z",
+  "timestamp": "2025-07-26T23:15:36.655Z",
   "summary": {
-    "errors": 2,
+    "errors": 1,
     "warnings": 11,
     "fixes": 0,
     "status": "FAIL"
   },
   "details": {
     "errors": [
-      "renderers.js: Uso potencialmente inseguro de innerHTML com concatenação (5 ocorrência(s))",
       "validate.js: Uso de eval() detectado (proibido em Manifest V3) (2 ocorrência(s))",
       "\n❌ Validação falhou - corrija os erros antes de continuar"
     ],

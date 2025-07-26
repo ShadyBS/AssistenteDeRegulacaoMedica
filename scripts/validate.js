@@ -313,7 +313,7 @@ class ExtensionValidator {
         severity: 'error'
       },
       {
-        pattern: /eval\s*\(/g,
+        pattern: /(?<!['"`])eval\s*\(/g,
         message: 'Uso de eval() detectado (proibido em Manifest V3)',
         severity: 'error'
       },

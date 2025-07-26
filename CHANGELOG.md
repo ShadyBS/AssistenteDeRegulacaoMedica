@@ -3,6 +3,13 @@
 ## [Unreleased]
 
 ### Fixed
+- **Otimizada performance do MutationObserver no content-script.js**
+  - **Problema**: MutationObserver monitorava todo o document.body com configuração excessiva, causando alto consumo de CPU e memória
+  - **Impacto**: Páginas SIGSS ficavam lentas devido ao monitoramento desnecessário de atributos "style" e "class"
+  - **Localização**: Função `initObserver()` no content-script.js linha 70
+  - **Solução**: Reduzido `attributeFilter` para apenas `["aria-expanded"]`, que é o único atributo necessário para detectar abertura da aba de manutenção
+  - **Resultado**: Redução significativa no uso de CPU e melhoria na responsividade das páginas SIGSS
+  - **Compliance**: Otimização alinhada com melhores práticas de performance para extensões de navegador
 - **Corrigido vulnerabilidade XSS crítica na função showModal() do sidebar.js**
   - **Problema**: Uso inseguro de `innerHTML` com conteúdo potencialmente não sanitizado na linha 1089
   - **Impacto**: Vulnerabilidade XSS crítica que poderia comprometer dados médicos sensíveis

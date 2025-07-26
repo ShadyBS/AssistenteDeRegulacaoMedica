@@ -1,5 +1,5 @@
 {
-  "timestamp": "2025-07-26T22:46:59.209Z",
+  "timestamp": "2025-07-26T23:16:28.741Z",
   "mode": "production",
   "targets": [
     "chrome",
@@ -11,21 +11,21 @@
       "version": "3.3.15",
       "manifest": "Assistente de Regulação Médica",
       "zipPath": "C:\\AssistenteDeRegulacaoMedica\\dist-zips\\AssistenteDeRegulacao-chrome-v3.3.15.zip",
-      "size": 137579,
-      "fileCount": 48
+      "size": 141660,
+      "fileCount": 49
     },
     {
       "target": "firefox",
       "version": "3.3.15",
       "manifest": "Assistente de Regulação Médica",
       "zipPath": "C:\\AssistenteDeRegulacaoMedica\\dist-zips\\AssistenteDeRegulacao-firefox-v3.3.15.zip",
-      "size": 137614,
-      "fileCount": 48
+      "size": 141695,
+      "fileCount": 49
     }
   ],
   "summary": {
     "totalBuilds": 2,
-    "totalSize": 275193,
-    "totalFiles": 96
+    "totalSize": 283355,
+    "totalFiles": 98
   }
 }

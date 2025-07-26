@@ -1116,18 +1116,164 @@ function showModal(title, content) {
 
   modalTitle.textContent = title;
   
-  // Verificar se o conteúdo é HTML válido ou texto simples
-  if (typeof content === 'string' && content.includes('<')) {
-    // Para conteúdo HTML, usar innerHTML apenas se for conteúdo conhecido/seguro
-    modalContent.innerHTML = content;
-  } else {
-    // Para conteúdo de texto simples, usar textContent para segurança
+  // Sempre usar textContent para segurança contra XSS
+  if (typeof content === 'string') {
     modalContent.textContent = content;
+  } else if (content instanceof HTMLElement) {
+    modalContent.innerHTML = '';
+    modalContent.appendChild(content);
+  } else {
+    // Fallback para outros tipos - converter para string segura
+    modalContent.textContent = String(content);
   }
   
   modal.classList.remove("hidden");
 }
 
+function createDetailRowElement(label, value) {
+  if (!value || String(value).trim() === "") return null;
+  
+  const div = document.createElement('div');
+  div.className = `py-2 border-b border-slate-100 flex justify-between items-start gap-4`;
+  
+  const labelSpan = document.createElement('span');
+  labelSpan.className = `font-semibold ${getCSSClass('TEXT_SECONDARY')} flex-shrink-0`;
+  labelSpan.textContent = `${label}:`;
+  
+  const valueSpan = document.createElement('span');
+  valueSpan.className = `${getCSSClass('TEXT_PRIMARY')} text-right break-words`;
+  valueSpan.textContent = String(value);
+  
+  div.appendChild(labelSpan);
+  div.appendChild(valueSpan);
+  
+  return div;
+}
+
+function createRegulationDetailsElement(data) {
+  if (!data) {
+    const p = document.createElement('p');
+    p.textContent = 'Dados da regulação não encontrados.';
+    return p;
+  }
+  
+  const container = document.createElement('div');
+  
+  const details = [
+    { label: 'Status', value: data.reguStatus },
+    { label: 'Tipo', value: data.reguTipo === "ENC" ? "Consulta" : "Exame" },
+    { label: 'Data Solicitação', value: data.reguDataStr },
+    { label: 'Procedimento', value: data.prciNome },
+    { label: 'CID', value: `${data.tcidCod} - ${data.tcidDescricao}` },
+    { label: 'Profissional Sol.', value: data.prsaEntiNome },
+    { label: 'Unidade Sol.', value: data.limoSolicitanteNome },
+    { label: 'Unidade Desejada', value: data.limoDesejadaNome },
+    { label: 'Gravidade', value: data.reguGravidade }
+  ];
+  
+  details.forEach(detail => {
+    const row = createDetailRowElement(detail.label, detail.value);
+    if (row) container.appendChild(row);
+  });
+  
+  // Adicionar justificativa se existir
+  if (data.reguJustificativa && data.reguJustificativa !== "null") {
+    const justDiv = document.createElement('div');
+    justDiv.className = 'py-2';
+    
+    const justLabel = document.createElement('span');
+    justLabel.className = `font-semibold ${getCSSClass('TEXT_SECONDARY')}`;
+    justLabel.textContent = 'Justificativa:';
+    
+    const justText = document.createElement('p');
+    justText.className = `${getCSSClass('TEXT_PRIMARY')} whitespace-pre-wrap mt-1 p-2 ${getCSSClass('BG_SLATE_50')} rounded`;
+    justText.textContent = data.reguJustificativa.replace(/\\n/g, "\n");
+    
+    justDiv.appendChild(justLabel);
+    justDiv.appendChild(justText);
+    container.appendChild(justDiv);
+  }
+  
+  return container;
+}
+
+function createAppointmentDetailsElement(data) {
+  if (!data) {
+    const p = document.createElement('p');
+    p.textContent = 'Dados do agendamento não encontrados.';
+    return p;
+  }
+  
+  const container = document.createElement('div');
+  
+  let status = "Agendado";
+  if (data.agcoIsCancelado === "t") status = "Cancelado";
+  else if (data.agcoIsFaltante === "t") status = "Faltou";
+  else if (data.agcoIsAtendido === "t") status = "Atendido";
+  
+  const details = [
+    { label: 'Status', value: status },
+    { label: 'Data', value: `${data.agcoData} às ${data.agcoHoraPrevista}` },
+    { label: 'Local', value: data.unidadeSaudeDestino?.entidade?.entiNome },
+    { label: 'Profissional', value: data.profissionalDestino?.entidadeFisica?.entidade?.entiNome },
+    { label: 'Especialidade', value: data.atividadeProfissionalCnes?.apcnNome },
+    { label: 'Procedimento', value: data.procedimento?.prciNome },
+    { label: 'Convênio', value: data.convenio?.entidade?.entiNome }
+  ];
+  
+  details.forEach(detail => {
+    const row = createDetailRowElement(detail.label, detail.value);
+    if (row) container.appendChild(row);
+  });
+  
+  // Adicionar observação se existir
+  if (data.agcoObs) {
+    const obsDiv = document.createElement('div');
+    obsDiv.className = 'py-2';
+    
+    const obsLabel = document.createElement('span');
+    obsLabel.className = `font-semibold ${getCSSClass('TEXT_SECONDARY')}`;
+    obsLabel.textContent = 'Observação:';
+    
+    const obsText = document.createElement('p');
+    obsText.className = `${getCSSClass('TEXT_PRIMARY')} whitespace-pre-wrap mt-1 p-2 ${getCSSClass('BG_SLATE_50')} rounded`;
+    obsText.textContent = data.agcoObs;
+    
+    obsDiv.appendChild(obsLabel);
+    obsDiv.appendChild(obsText);
+    container.appendChild(obsDiv);
+  }
+  
+  return container;
+}
+
+function createExamAppointmentDetailsElement(data) {
+  if (!data) {
+    const p = document.createElement('p');
+    p.textContent = 'Dados do agendamento de exame não encontrados.';
+    return p;
+  }
+  
+  const container = document.createElement('div');
+  
+  const details = [
+    { label: 'Data Agendamento', value: data.examDataCad },
+    { label: 'Unidade Origem', value: data.ligacaoModularOrigem?.limoNome },
+    { label: 'Unidade Destino', value: data.ligacaoModularDestino?.limoNome },
+    { label: 'Profissional Sol.', value: data.profissional?.entidadeFisica?.entidade?.entiNome },
+    { label: 'Caráter', value: data.CaraterAtendimento?.caraDescri },
+    { label: 'Critério', value: data.criterioExame?.critNome }
+  ];
+  
+  details.forEach(detail => {
+    const row = createDetailRowElement(detail.label, detail.value);
+    if (row) container.appendChild(row);
+  });
+  
+  return container;
+}
+
+// Manter as funções antigas para compatibilidade (agora não são mais usadas)
 function createDetailRow(label, value) {
   if (!value || String(value).trim() === "") return "";
   return `<div class="py-2 border-b border-slate-100 flex justify-between items-start gap-4">
@@ -1231,8 +1377,8 @@ async function handleShowRegulationDetailsModal(button) {
       reguIdp: idp,
       reguIds: ids,
     });
-    const content = formatRegulationDetailsForModal(data);
-    showModal("Detalhes da Regulação", content);
+    const contentElement = createRegulationDetailsElement(data);
+    showModal("Detalhes da Regulação", contentElement);
   } catch (error) {
     showModal(
       "Erro",
@@ -1252,15 +1398,15 @@ async function handleShowAppointmentDetailsModal(button) {
 
   try {
     let data;
-    let content;
+    let contentElement;
     if (isExam) {
       data = await API.fetchExamAppointmentDetails({ idp, ids });
-      content = formatExamAppointmentDetailsForModal(data);
+      contentElement = createExamAppointmentDetailsElement(data);
     } else {
       data = await API.fetchAppointmentDetails({ idp, ids });
-      content = formatAppointmentDetailsForModal(data);
+      contentElement = createAppointmentDetailsElement(data);
     }
-    showModal(title, content);
+    showModal(title, contentElement);
   } catch (error) {
     showModal(
       "Erro",
@@ -1274,23 +1420,35 @@ function handleShowAppointmentInfo(button) {
   const modalTitle = document.getElementById("modal-title");
   const modalContent = document.getElementById("modal-content");
   const infoModal = document.getElementById("info-modal");
+  
   modalTitle.textContent = "Detalhes do Agendamento";
-  modalContent.innerHTML = `
-        <p><strong>ID:</strong> ${data.id}</p>
-        <p><strong>Tipo:</strong> ${
-          data.isSpecialized
-            ? "Especializada"
-            : data.isOdonto
-            ? "Odontológica"
-            : data.type
-        }</p>
-        <p><strong>Status:</strong> ${data.status}</p>
-        <p><strong>Data:</strong> ${data.date} às ${data.time}</p>
-        <p><strong>Local:</strong> ${data.location}</p>
-        <p><strong>Profissional:</strong> ${data.professional}</p>
-        <p><strong>Especialidade:</strong> ${data.specialty || "N/A"}</p>
-        <p><strong>Procedimento:</strong> ${data.description}</p>
-    `;
+  
+  // Criar conteúdo de forma segura usando DOM
+  modalContent.innerHTML = '';
+  
+  const appointmentDetails = [
+    { label: 'ID', value: data.id },
+    { 
+      label: 'Tipo', 
+      value: data.isSpecialized ? "Especializada" : data.isOdonto ? "Odontológica" : data.type 
+    },
+    { label: 'Status', value: data.status },
+    { label: 'Data', value: `${data.date} às ${data.time}` },
+    { label: 'Local', value: data.location },
+    { label: 'Profissional', value: data.professional },
+    { label: 'Especialidade', value: data.specialty || "N/A" },
+    { label: 'Procedimento', value: data.description }
+  ];
+  
+  appointmentDetails.forEach(detail => {
+    const p = document.createElement('p');
+    const strong = document.createElement('strong');
+    strong.textContent = `${detail.label}: `;
+    p.appendChild(strong);
+    p.appendChild(document.createTextNode(detail.value));
+    modalContent.appendChild(p);
+  });
+  
   infoModal.classList.remove("hidden");
 }
 

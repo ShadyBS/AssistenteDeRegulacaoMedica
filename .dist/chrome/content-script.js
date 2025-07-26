@@ -85,7 +85,7 @@
       childList: true,
       subtree: true,
       attributes: true,
-      attributeFilter: ["style", "aria-expanded", "class"],
+      attributeFilter: ["aria-expanded"], // Apenas o atributo necessário para detectar abertura da aba
     });
   };
 
