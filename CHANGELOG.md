@@ -3,6 +3,18 @@
 ## [Unreleased]
 
 ### Fixed
+- **Corrigido vulnerabilidade XSS crítica na função showModal() do sidebar.js**
+  - **Problema**: Uso inseguro de `innerHTML` com conteúdo potencialmente não sanitizado na linha 1089
+  - **Impacto**: Vulnerabilidade XSS crítica que poderia comprometer dados médicos sensíveis
+  - **Navegador Afetado**: Ambos (Chrome e Firefox)
+  - **Localização**: Função `showModal()` e funções relacionadas de exibição de detalhes
+  - **Solução**: 
+    - Substituída verificação `content.includes('<')` por uso sempre seguro de `textContent`
+    - Criadas funções seguras de criação de elementos DOM (`createRegulationDetailsElement`, `createAppointmentDetailsElement`, `createExamAppointmentDetailsElement`)
+    - Refatorada função `handleShowAppointmentInfo()` para usar criação segura de elementos DOM
+    - Implementado fallback seguro para tipos não esperados de conteúdo
+  - **Compliance**: Agora totalmente compatível com políticas de segurança para dados médicos e Manifest V3
+
 - **Corrigido problema crítico de compatibilidade com Manifest V3 no Firefox**
   - **Problema**: Background script usava array `scripts` em vez de `service_worker` para Manifest V3
   - **Impacto**: Incompatibilidade com Manifest V3 no Firefox, poderia causar rejeição na store
