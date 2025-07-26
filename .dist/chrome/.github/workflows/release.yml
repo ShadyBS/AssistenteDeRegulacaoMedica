@@ -1,0 +1,463 @@
+# Release Workflow - Assistente de Regulação Médica
+# 
+# Workflow automático para releases quando uma tag é criada
+# Executa build completo, cria GitHub release e opcionalmente faz upload para stores
+
+name: 🚀 Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g., 1.2.3)'
+        required: true
+        type: string
+      skip_stores:
+        description: 'Skip store uploads'
+        required: false
+        default: false
+        type: boolean
+      prerelease:
+        description: 'Mark as prerelease'
+        required: false
+        default: false
+        type: boolean
+
+# Configurações globais
+env:
+  NODE_VERSION: '18.x'
+  CACHE_VERSION: 'v1'
+
+# Permissões necessárias
+permissions:
+  contents: write
+  packages: write
+  pull-requests: read
+
+jobs:
+  # === JOB 1: PREPARAÇÃO ===
+  prepare:
+    name: 🔧 Prepare Release
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      tag: ${{ steps.version.outputs.tag }}
+      is-prerelease: ${{ steps.version.outputs.is-prerelease }}
+      should-upload-stores: ${{ steps.config.outputs.should-upload-stores }}
+    
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: 🔢 Extract Version
+        id: version
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            VERSION="${{ github.event.inputs.version }}"
+            TAG="v${VERSION}"
+            IS_PRERELEASE="${{ github.event.inputs.prerelease }}"
+          else
+            TAG="${{ github.ref_name }}"
+            VERSION="${TAG#v}"
+            IS_PRERELEASE="false"
+            if [[ "$VERSION" =~ -[a-zA-Z] ]]; then
+              IS_PRERELEASE="true"
+            fi
+          fi
+          
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+          echo "is-prerelease=$IS_PRERELEASE" >> $GITHUB_OUTPUT
+          
+          echo "📦 Version: $VERSION"
+          echo "🏷️ Tag: $TAG"
+          echo "🔄 Prerelease: $IS_PRERELEASE"
+      
+      - name: ⚙️ Configure Release
+        id: config
+        run: |
+          SHOULD_UPLOAD_STORES="true"
+          
+          if [[ "${{ github.event.inputs.skip_stores }}" == "true" ]]; then
+            SHOULD_UPLOAD_STORES="false"
+          fi
+          
+          if [[ "${{ steps.version.outputs.is-prerelease }}" == "true" ]]; then
+            SHOULD_UPLOAD_STORES="false"
+          fi
+          
+          echo "should-upload-stores=$SHOULD_UPLOAD_STORES" >> $GITHUB_OUTPUT
+          echo "🏪 Upload to stores: $SHOULD_UPLOAD_STORES"
+
+  # === JOB 2: VALIDAÇÃO PRÉ-RELEASE ===
+  validate:
+    name: 🔍 Pre-Release Validation
+    runs-on: ubuntu-latest
+    needs: prepare
+    timeout-minutes: 10
+    
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+      
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      
+      - name: 📦 Install Dependencies
+        run: |
+          npm ci --prefer-offline --no-audit
+          echo "✅ Dependencies installed"
+      
+      - name: 🔧 Run ESLint
+        run: |
+          npm run lint
+          echo "✅ ESLint passed"
+      
+      - name: 📄 Validate Manifests
+        run: |
+          npm run validate:manifests
+          echo "✅ Manifests validated"
+      
+      - name: 🔍 Full Validation
+        run: |
+          npm run validate
+          echo "✅ Full validation completed"
+      
+      - name: 🔒 Security Check
+        run: |
+          npm audit --audit-level=moderate
+          echo "✅ Security check passed"
+
+  # === JOB 3: BUILD RELEASE ===
+  build:
+    name: 🏗️ Build Release
+    runs-on: ubuntu-latest
+    needs: [prepare, validate]
+    timeout-minutes: 15
+    
+    outputs:
+      chrome-zip: ${{ steps.artifacts.outputs.chrome-zip }}
+      firefox-zip: ${{ steps.artifacts.outputs.firefox-zip }}
+    
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+      
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      
+      - name: 📦 Install Dependencies
+        run: |
+          npm ci --prefer-offline --no-audit
+          echo "✅ Dependencies installed"
+      
+      - name: 🎨 Build CSS
+        run: |
+          npm run build:css
+          echo "✅ CSS compiled"
+      
+      - name: 🏗️ Build Extensions
+        run: |
+          npm run build
+          echo "✅ Extensions built for all targets"
+      
+      - name: 📦 Create Distribution ZIPs
+        run: |
+          npm run build:zips
+          echo "✅ Distribution ZIPs created"
+      
+      - name: 📊 Collect Artifacts Info
+        id: artifacts
+        run: |
+          CHROME_ZIP=$(ls dist-zips/*chrome*.zip | head -1)
+          FIREFOX_ZIP=$(ls dist-zips/*firefox*.zip | head -1)
+          
+          echo "chrome-zip=$CHROME_ZIP" >> $GITHUB_OUTPUT
+          echo "firefox-zip=$FIREFOX_ZIP" >> $GITHUB_OUTPUT
+          
+          echo "📦 Chrome ZIP: $CHROME_ZIP"
+          echo "📦 Firefox ZIP: $FIREFOX_ZIP"
+          
+          # Informações dos arquivos
+          echo "### 📦 Build Artifacts" >> $GITHUB_STEP_SUMMARY
+          echo "| Target | File | Size |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------|------|------|" >> $GITHUB_STEP_SUMMARY
+          
+          for zip in dist-zips/*.zip; do
+            if [[ -f "$zip" ]]; then
+              SIZE=$(du -h "$zip" | cut -f1)
+              BASENAME=$(basename "$zip")
+              TARGET=$(echo "$BASENAME" | grep -o -E "(chrome|firefox)")
+              echo "| $TARGET | $BASENAME | $SIZE |" >> $GITHUB_STEP_SUMMARY
+            fi
+          done
+      
+      - name: 📤 Upload Release Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-builds-${{ needs.prepare.outputs.version }}
+          path: |
+            dist-zips/*.zip
+            .dist/
+          retention-days: 30
+          if-no-files-found: error
+
+  # === JOB 4: CRIAR GITHUB RELEASE ===
+  github-release:
+    name: 🚀 Create GitHub Release
+    runs-on: ubuntu-latest
+    needs: [prepare, validate, build]
+    timeout-minutes: 10
+    
+    outputs:
+      release-url: ${{ steps.release.outputs.html_url }}
+      release-id: ${{ steps.release.outputs.id }}
+    
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: 📥 Download Build Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: release-builds-${{ needs.prepare.outputs.version }}
+          path: ./release-artifacts/
+      
+      - name: 📝 Generate Changelog
+        id: changelog
+        run: |
+          # Busca última tag
+          LAST_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+          
+          if [[ -n "$LAST_TAG" ]]; then
+            echo "📋 Generating changelog since $LAST_TAG"
+            CHANGELOG=$(git log --pretty=format:"- %s" $LAST_TAG..HEAD | grep -E "^- (feat|fix|docs|style|refactor|perf|test|chore|security)" | head -20)
+          else
+            echo "📋 First release - generating basic changelog"
+            CHANGELOG="- Primeira release do Assistente de Regulação Médica"
+          fi
+          
+          if [[ -z "$CHANGELOG" ]]; then
+            CHANGELOG="- Atualizações diversas e melhorias"
+          fi
+          
+          # Categoriza mudanças
+          FEATURES=$(echo "$CHANGELOG" | grep "feat:" | sed 's/^- feat: /- /' || true)
+          FIXES=$(echo "$CHANGELOG" | grep "fix:" | sed 's/^- fix: /- /' || true)
+          OTHERS=$(echo "$CHANGELOG" | grep -v -E "(feat:|fix:)" || true)
+          
+          # Monta changelog formatado
+          FORMATTED_CHANGELOG="## 🎉 Release ${{ needs.prepare.outputs.version }}"
+          
+          if [[ -n "$FEATURES" ]]; then
+            FORMATTED_CHANGELOG="$FORMATTED_CHANGELOG
+
+### ✨ Novas Funcionalidades
+$FEATURES"
+          fi
+          
+          if [[ -n "$FIXES" ]]; then
+            FORMATTED_CHANGELOG="$FORMATTED_CHANGELOG
+
+### 🐛 Correções
+$FIXES"
+          fi
+          
+          if [[ -n "$OTHERS" ]]; then
+            FORMATTED_CHANGELOG="$FORMATTED_CHANGELOG
+
+### 🔧 Outras Alterações
+$OTHERS"
+          fi
+          
+          FORMATTED_CHANGELOG="$FORMATTED_CHANGELOG
+
+### 📦 Downloads
+- **Chrome/Edge**: AssistenteDeRegulacao-chrome-v${{ needs.prepare.outputs.version }}.zip
+- **Firefox**: AssistenteDeRegulacao-firefox-v${{ needs.prepare.outputs.version }}.zip
+
+### 🔧 Instalação
+1. Baixe o arquivo ZIP correspondente ao seu navegador
+2. Extraia o arquivo em uma pasta local
+3. Abra as extensões do navegador
+4. Ative o modo desenvolvedor
+5. Clique em 'Carregar extensão sem compactação'
+6. Selecione a pasta extraída"
+          
+          # Salva changelog em arquivo
+          echo "$FORMATTED_CHANGELOG" > changelog.md
+          echo "changelog-file=changelog.md" >> $GITHUB_OUTPUT
+      
+      - name: 🚀 Create Release
+        id: release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ needs.prepare.outputs.tag }}
+          release_name: "Release ${{ needs.prepare.outputs.version }}"
+          body_path: changelog.md
+          draft: false
+          prerelease: ${{ needs.prepare.outputs.is-prerelease }}
+      
+      - name: 📤 Upload Chrome ZIP
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.release.outputs.upload_url }}
+          asset_path: ./release-artifacts/dist-zips/${{ needs.build.outputs.chrome-zip }}
+          asset_name: AssistenteDeRegulacao-chrome-v${{ needs.prepare.outputs.version }}.zip
+          asset_content_type: application/zip
+      
+      - name: 📤 Upload Firefox ZIP
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.release.outputs.upload_url }}
+          asset_path: ./release-artifacts/dist-zips/${{ needs.build.outputs.firefox-zip }}
+          asset_name: AssistenteDeRegulacao-firefox-v${{ needs.prepare.outputs.version }}.zip
+          asset_content_type: application/zip
+      
+      - name: 📋 Release Summary
+        run: |
+          echo "### 🚀 GitHub Release Created" >> $GITHUB_STEP_SUMMARY
+          echo "- **Version**: ${{ needs.prepare.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Tag**: ${{ needs.prepare.outputs.tag }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Prerelease**: ${{ needs.prepare.outputs.is-prerelease }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **URL**: ${{ steps.release.outputs.html_url }}" >> $GITHUB_STEP_SUMMARY
+
+  # === JOB 5: UPLOAD PARA STORES (OPCIONAL) ===
+  store-upload:
+    name: 🏪 Upload to Stores
+    runs-on: ubuntu-latest
+    needs: [prepare, github-release]
+    if: needs.prepare.outputs.should-upload-stores == 'true'
+    timeout-minutes: 20
+    
+    strategy:
+      fail-fast: false
+      matrix:
+        store: [chrome, firefox]
+    
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+      
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      
+      - name: 📦 Install Dependencies
+        run: npm ci --prefer-offline --no-audit
+      
+      - name: 📥 Download Build Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: release-builds-${{ needs.prepare.outputs.version }}
+          path: ./release-artifacts/
+      
+      - name: 📁 Prepare Artifacts
+        run: |
+          mkdir -p dist-zips
+          cp ./release-artifacts/dist-zips/*.zip dist-zips/
+          ls -la dist-zips/
+      
+      - name: 🔵 Upload to Chrome Web Store
+        if: matrix.store == 'chrome'
+        env:
+          CHROME_EXTENSION_ID: ${{ secrets.CHROME_EXTENSION_ID }}
+          CHROME_CLIENT_ID: ${{ secrets.CHROME_CLIENT_ID }}
+          CHROME_CLIENT_SECRET: ${{ secrets.CHROME_CLIENT_SECRET }}
+          CHROME_REFRESH_TOKEN: ${{ secrets.CHROME_REFRESH_TOKEN }}
+        run: |
+          if [[ -n "$CHROME_EXTENSION_ID" ]]; then
+            echo "🔵 Uploading to Chrome Web Store..."
+            npm run upload:chrome
+            echo "✅ Chrome Web Store upload completed"
+          else
+            echo "⚠️ Chrome Web Store credentials not configured"
+          fi
+      
+      - name: 🦊 Upload to Firefox Add-ons
+        if: matrix.store == 'firefox'
+        env:
+          FIREFOX_JWT_ISSUER: ${{ secrets.FIREFOX_JWT_ISSUER }}
+          FIREFOX_JWT_SECRET: ${{ secrets.FIREFOX_JWT_SECRET }}
+        run: |
+          if [[ -n "$FIREFOX_JWT_ISSUER" ]]; then
+            echo "🦊 Uploading to Firefox Add-ons..."
+            npm run upload:firefox
+            echo "✅ Firefox Add-ons upload completed"
+          else
+            echo "⚠️ Firefox Add-ons credentials not configured"
+          fi
+
+  # === JOB 6: NOTIFICAÇÕES E CLEANUP ===
+  notify:
+    name: 📢 Notifications & Cleanup
+    runs-on: ubuntu-latest
+    needs: [prepare, github-release, store-upload]
+    if: always()
+    timeout-minutes: 5
+    
+    steps:
+      - name: 📊 Generate Final Report
+        run: |
+          echo "# 🚀 Release Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## 📋 Release Information" >> $GITHUB_STEP_SUMMARY
+          echo "- **Version**: ${{ needs.prepare.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Tag**: ${{ needs.prepare.outputs.tag }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Prerelease**: ${{ needs.prepare.outputs.is-prerelease }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Release URL**: ${{ needs.github-release.outputs.release-url }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## 🎯 Job Results" >> $GITHUB_STEP_SUMMARY
+          echo "- **Validation**: ${{ needs.validate.result == 'success' && '✅' || '❌' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Build**: ${{ needs.build.result == 'success' && '✅' || '❌' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **GitHub Release**: ${{ needs.github-release.result == 'success' && '✅' || '❌' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Store Upload**: ${{ needs.store-upload.result == 'success' && '✅' || needs.store-upload.result == 'skipped' && '⏭️' || '❌' }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Status geral
+          if [[ "${{ needs.github-release.result }}" == "success" ]]; then
+            echo "## 🎉 Release Status: ✅ SUCCESS" >> $GITHUB_STEP_SUMMARY
+            echo "Release ${{ needs.prepare.outputs.version }} has been successfully created!" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### 📋 Next Steps" >> $GITHUB_STEP_SUMMARY
+            echo "1. 🔗 Check the release: ${{ needs.github-release.outputs.release-url }}" >> $GITHUB_STEP_SUMMARY
+            echo "2. 📦 Test the downloaded ZIPs" >> $GITHUB_STEP_SUMMARY
+            echo "3. 🏪 Monitor store approval status" >> $GITHUB_STEP_SUMMARY
+            echo "4. 📢 Announce the release to users" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "## ❌ Release Status: FAILED" >> $GITHUB_STEP_SUMMARY
+            echo "Release process encountered errors. Please check the logs." >> $GITHUB_STEP_SUMMARY
+          fi
+      
+      - name: 🎯 Set Final Status
+        run: |
+          if [[ "${{ needs.github-release.result }}" == "success" ]]; then
+            echo "✅ Release workflow completed successfully"
+            exit 0
+          else
+            echo "❌ Release workflow failed"
+            exit 1
+          fi

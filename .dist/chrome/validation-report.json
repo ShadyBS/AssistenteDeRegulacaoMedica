@@ -1,0 +1,30 @@
+{
+  "timestamp": "2025-07-26T22:45:48.601Z",
+  "summary": {
+    "errors": 2,
+    "warnings": 11,
+    "fixes": 0,
+    "status": "FAIL"
+  },
+  "details": {
+    "errors": [
+      "renderers.js: Uso potencialmente inseguro de innerHTML com concatenação (5 ocorrência(s))",
+      "validate.js: Uso de eval() detectado (proibido em Manifest V3) (2 ocorrência(s))",
+      "\n❌ Validação falhou - corrija os erros antes de continuar"
+    ],
+    "warnings": [
+      "Firefox pode não suportar service_worker completamente (manifest.json)",
+      "Problemas encontrados no código JavaScript",
+      "jest.setup.js: Uso direto de chrome.* API (use browser.* para compatibilidade) (2 ocorrência(s))",
+      "release.js: Uso direto de chrome.* API (use browser.* para compatibilidade) (1 ocorrência(s))",
+      "validate.js: Uso de document.write() detectado (1 ocorrência(s))",
+      "validate.js: URL javascript: detectada (2 ocorrência(s))",
+      "validate.js: Uso direto de chrome.* API (use browser.* para compatibilidade) (6 ocorrência(s))",
+      "sidebar.js: Uso de document.write() detectado (3 ocorrência(s))",
+      "jest.setup.js: Uso direto de chrome.* API sem fallback para browser.*",
+      "jest.setup.js: API específica do Chrome detectada: chrome.storage.local",
+      "release.js: Uso direto de chrome.* API sem fallback para browser.*"
+    ],
+    "fixes": []
+  }
+}

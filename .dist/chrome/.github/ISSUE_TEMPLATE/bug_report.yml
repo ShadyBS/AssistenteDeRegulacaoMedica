@@ -1,0 +1,177 @@
+name: 🐛 Bug Report
+description: Relatar um bug ou problema na extensão
+title: "[BUG] "
+labels: ["bug", "needs-triage"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## 🐛 Relatório de Bug
+        
+        Obrigado por reportar um bug! Por favor, preencha as informações abaixo para nos ajudar a reproduzir e corrigir o problema.
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: ✅ Checklist
+      description: Confirme que você verificou os itens abaixo
+      options:
+        - label: Procurei por issues similares e não encontrei duplicatas
+          required: true
+        - label: Testei com a versão mais recente da extensão
+          required: true
+        - label: O problema persiste após recarregar a extensão
+          required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: 📝 Descrição do Bug
+      description: Descreva claramente o que está acontecendo
+      placeholder: Ex: A extensão não carrega os dados do paciente quando...
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: 🔄 Passos para Reproduzir
+      description: Liste os passos exatos para reproduzir o problema
+      placeholder: |
+        1. Acesse a página...
+        2. Clique em...
+        3. Observe que...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: ✅ Comportamento Esperado
+      description: Descreva o que deveria acontecer
+      placeholder: A extensão deveria...
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: ❌ Comportamento Atual
+      description: Descreva o que realmente acontece
+      placeholder: Em vez disso, a extensão...
+    validations:
+      required: true
+
+  - type: dropdown
+    id: browser
+    attributes:
+      label: 🌐 Navegador
+      description: Em qual navegador o problema ocorre?
+      options:
+        - Firefox
+        - Chrome
+        - Edge
+        - Outro (especificar nos comentários)
+    validations:
+      required: true
+
+  - type: input
+    id: browser-version
+    attributes:
+      label: 📊 Versão do Navegador
+      description: Qual versão do navegador você está usando?
+      placeholder: Ex: Firefox 120.0, Chrome 119.0.6045.105
+    validations:
+      required: true
+
+  - type: input
+    id: extension-version
+    attributes:
+      label: 🔢 Versão da Extensão
+      description: Qual versão da extensão você está usando?
+      placeholder: Ex: 3.3.15
+    validations:
+      required: true
+
+  - type: dropdown
+    id: os
+    attributes:
+      label: 💻 Sistema Operacional
+      description: Qual sistema operacional você está usando?
+      options:
+        - Windows 10
+        - Windows 11
+        - macOS
+        - Linux
+        - Outro (especificar nos comentários)
+    validations:
+      required: true
+
+  - type: textarea
+    id: console-logs
+    attributes:
+      label: 📋 Logs do Console
+      description: |
+        Cole aqui os logs do console do navegador (F12 → Console)
+        **IMPORTANTE**: Remova qualquer informação sensível (CPF, CNS, etc.)
+      placeholder: |
+        [Timestamp] Error: ...
+        [Timestamp] Warning: ...
+      render: text
+
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: 📸 Screenshots/Vídeos
+      description: |
+        Se possível, adicione screenshots ou vídeos que demonstrem o problema
+        **IMPORTANTE**: Remova qualquer informação sensível dos pacientes
+      placeholder: Cole aqui links ou arraste imagens
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: 📋 Contexto Adicional
+      description: Qualquer outra informação relevante sobre o problema
+      placeholder: |
+        - O problema começou após...
+        - Acontece apenas quando...
+        - Outras extensões instaladas...
+
+  - type: dropdown
+    id: severity
+    attributes:
+      label: 🚨 Severidade
+      description: Qual o impacto deste bug no seu trabalho?
+      options:
+        - Crítico (impede o trabalho)
+        - Alto (dificulta muito o trabalho)
+        - Médio (causa inconveniência)
+        - Baixo (problema menor)
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: medical-impact
+    attributes:
+      label: 🏥 Impacto Médico
+      description: Este bug afeta dados médicos ou decisões clínicas?
+      options:
+        - label: Este bug pode afetar dados médicos ou decisões de regulação
+        - label: Este bug afeta apenas a interface, sem impacto nos dados médicos
+
+  - type: markdown
+    attributes:
+      value: |
+        ---
+        
+        ## 🔒 Privacidade e Segurança
+        
+        **IMPORTANTE**: Nunca inclua informações pessoais de pacientes (CPF, CNS, nomes, etc.) neste relatório. 
+        Use dados fictícios ou remova informações sensíveis antes de enviar.
+        
+        ## 📞 Contato
+        
+        Para problemas urgentes que afetem o atendimento médico, entre em contato diretamente com a equipe de suporte.

@@ -1,0 +1,213 @@
+name: ✨ Feature Request
+description: Sugerir uma nova funcionalidade para a extensão
+title: "[FEATURE] "
+labels: ["enhancement", "needs-triage"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## ✨ Solicitação de Funcionalidade
+        
+        Obrigado por sugerir uma nova funcionalidade! Suas ideias nos ajudam a melhorar a extensão para todos os médicos reguladores.
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: ✅ Checklist
+      description: Confirme que você verificou os itens abaixo
+      options:
+        - label: Procurei por solicitações similares e não encontrei duplicatas
+          required: true
+        - label: Esta funcionalidade não existe na versão atual da extensão
+          required: true
+        - label: Esta funcionalidade seria útil para outros médicos reguladores
+          required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: 🎯 Problema ou Necessidade
+      description: Descreva o problema que esta funcionalidade resolveria
+      placeholder: |
+        Como médico regulador, eu preciso...
+        Atualmente é difícil/impossível...
+        Isso me ajudaria a...
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: 💡 Solução Proposta
+      description: Descreva detalhadamente a funcionalidade que você gostaria
+      placeholder: |
+        Eu gostaria que a extensão...
+        A funcionalidade deveria...
+        Quando eu clicar/fizer X, deveria...
+    validations:
+      required: true
+
+  - type: textarea
+    id: user-story
+    attributes:
+      label: 📖 História do Usuário
+      description: Descreva como você usaria esta funcionalidade no dia a dia
+      placeholder: |
+        Como médico regulador, eu quero [funcionalidade] para que eu possa [benefício].
+        
+        Cenário de uso:
+        1. Quando estou analisando uma solicitação...
+        2. Eu preciso...
+        3. Para que eu possa...
+    validations:
+      required: true
+
+  - type: dropdown
+    id: category
+    attributes:
+      label: 📂 Categoria
+      description: Em qual área da extensão esta funcionalidade se encaixa?
+      options:
+        - Interface do Usuário
+        - Busca e Filtros
+        - Dados do Paciente
+        - Integração SIGSS
+        - Relatórios e Exportação
+        - Configurações
+        - Performance
+        - Acessibilidade
+        - Outro (especificar nos comentários)
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: 🚨 Prioridade
+      description: Qual a importância desta funcionalidade para seu trabalho?
+      options:
+        - Crítica (essencial para o trabalho)
+        - Alta (muito importante)
+        - Média (seria útil)
+        - Baixa (nice to have)
+    validations:
+      required: true
+
+  - type: dropdown
+    id: frequency
+    attributes:
+      label: 🔄 Frequência de Uso
+      description: Com que frequência você usaria esta funcionalidade?
+      options:
+        - Várias vezes por dia
+        - Diariamente
+        - Algumas vezes por semana
+        - Semanalmente
+        - Mensalmente
+        - Raramente
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: 🔄 Alternativas Consideradas
+      description: Você considerou outras formas de resolver este problema?
+      placeholder: |
+        Atualmente eu faço...
+        Tentei usar...
+        Outras soluções que considerei...
+
+  - type: textarea
+    id: mockup
+    attributes:
+      label: 🎨 Mockup ou Wireframe
+      description: |
+        Se você tem uma ideia visual da funcionalidade, descreva ou anexe um esboço
+        Pode ser um desenho simples, screenshot editado, ou descrição detalhada da interface
+      placeholder: |
+        A funcionalidade apareceria...
+        Teria um botão que...
+        O layout seria...
+
+  - type: checkboxes
+    id: impact
+    attributes:
+      label: 🏥 Impacto no Trabalho Médico
+      description: Como esta funcionalidade impactaria o trabalho de regulação?
+      options:
+        - label: Reduziria o tempo de análise de solicitações
+        - label: Melhoraria a precisão das decisões de regulação
+        - label: Facilitaria o acesso a informações importantes
+        - label: Reduziria erros manuais
+        - label: Melhoraria a experiência do usuário
+        - label: Ajudaria na conformidade com protocolos médicos
+
+  - type: textarea
+    id: technical-considerations
+    attributes:
+      label: 🔧 Considerações Técnicas
+      description: |
+        Há alguma consideração técnica específica? (opcional)
+        Ex: integração com sistemas específicos, performance, compatibilidade
+      placeholder: |
+        Esta funcionalidade precisaria...
+        Deveria ser compatível com...
+        Considerações de performance...
+
+  - type: dropdown
+    id: browsers
+    attributes:
+      label: 🌐 Compatibilidade de Navegadores
+      description: Em quais navegadores esta funcionalidade deveria funcionar?
+      multiple: true
+      options:
+        - Firefox
+        - Chrome
+        - Edge
+        - Todos os navegadores suportados
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: 📋 Contexto Adicional
+      description: Qualquer outra informação relevante sobre esta solicitação
+      placeholder: |
+        Esta funcionalidade seria especialmente útil porque...
+        Outros médicos da minha equipe também...
+        Referências ou exemplos similares...
+
+  - type: checkboxes
+    id: contribution
+    attributes:
+      label: 🤝 Contribuição
+      description: Você estaria disposto a ajudar com esta funcionalidade?
+      options:
+        - label: Posso ajudar testando a funcionalidade quando estiver pronta
+        - label: Posso fornecer feedback detalhado durante o desenvolvimento
+        - label: Posso ajudar com documentação ou casos de uso
+        - label: Tenho conhecimento técnico e posso contribuir com código
+
+  - type: markdown
+    attributes:
+      value: |
+        ---
+        
+        ## 🔒 Privacidade e Segurança
+        
+        **IMPORTANTE**: Nunca inclua informações pessoais de pacientes (CPF, CNS, nomes, etc.) nesta solicitação. 
+        Use dados fictícios ou exemplos genéricos.
+        
+        ## 📈 Processo de Avaliação
+        
+        Sua solicitação será avaliada pela equipe de desenvolvimento considerando:
+        - Impacto no trabalho médico
+        - Viabilidade técnica
+        - Recursos disponíveis
+        - Alinhamento com objetivos do projeto
+        
+        ## 📞 Contato
+        
+        Para discussões mais detalhadas sobre esta funcionalidade, entre em contato com a equipe de desenvolvimento.

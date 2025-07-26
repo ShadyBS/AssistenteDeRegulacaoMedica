@@ -37,8 +37,8 @@ AssistenteDeRegulacaoMedica/
 ├── 💾 store.js                   # Gerenciamento de estado
 ├── 🔧 utils.js                   # Utilitários gerais
 ├── ⚙️ config.js                  # Configurações da extensão
-├── 🏗️ build-zips.js              # Script de build para distribuição
-├── 🚀 release.js                 # Script de release automatizado
+├── 🏗️ build-zips.js              # Script de build legado
+├── 🚀 release.js                 # Script de release legado
 ├── 📚 src/input.css              # CSS fonte (Tailwind)
 ├── 📦 dist/output.css            # CSS compilado
 ├── 🎨 ui/                        # Componentes de interface
@@ -47,7 +47,29 @@ AssistenteDeRegulacaoMedica/
 │   ├── MemoryManager.js          # Gerenciamento de memória
 │   ├── SectionManager.js         # Gerenciamento de seções
 │   └── TimelineManager.js        # Processamento de timeline
-└── 📋 options.html/js            # Página de configurações
+├── 📋 options.html/js            # Página de configurações
+├── 🏗️ scripts/                   # Sistema de build e automação
+│   ├── build.js                  # Build principal (Chrome/Firefox)
+│   ├── validate.js               # Validações de qualidade
+│   ├── version.js                # Gerenciamento de versões
+│   ├── release.js                # Sistema de release completo
+│   └── store-upload.js           # Upload para stores
+├── ⚙️ webpack.config.js           # Configuração de bundling
+├── 🔧 .eslintrc.js               # Regras de linting
+├── 🧪 jest.config.js             # Configuração de testes
+├── 📚 BUILD.md                   # Documentação do sistema de build
+├── 🔄 .github/workflows/         # GitHub Actions CI/CD
+│   ├── build.yml                 # Build automático
+│   ├── release.yml               # Release pipeline
+│   └── security.yml              # Security scanning
+├── 🎯 .vscode/                   # Integração VSCode
+│   ├── tasks.json                # Tasks integradas
+│   ├── launch.json               # Configurações de debug
+│   ├── settings.json             # Settings do workspace
+│   └── extensions.json           # Extensões recomendadas
+└── 📁 .dist/                     # Build output (gitignored)
+    ├── chrome/                   # Build para Chrome/Edge
+    └── firefox/                  # Build para Firefox
 ```
 
 ### Arquivos Críticos - ⚠️ NÃO MODIFICAR SEM CUIDADO
@@ -134,7 +156,30 @@ npm run validate:manifests
 - **Documentar** novas APIs ou mudanças significativas
 - **Atualizar** este arquivo se necessário
 
-#### 6. Versionamento (se aplicável)
+#### 6. Commit Obrigatório (SEMPRE EXECUTAR)
+```bash
+# ⚠️ FLUXO OBRIGATÓRIO APÓS QUALQUER MODIFICAÇÃO ⚠️
+
+# 1. Validação completa (OBRIGATÓRIO)
+npm run validate              # ESLint + manifests + segurança
+npm run build                 # Build para ambos navegadores
+npm run test                  # Executar testes (se configurados)
+
+# 2. Atualizar documentação (OBRIGATÓRIO)
+# - Atualizar CHANGELOG.md na seção [Unreleased]
+# - Documentar mudanças significativas
+
+# 3. Commit automático (OBRIGATÓRIO)
+git add .
+git commit -m "<tipo>(<escopo>): <descrição>"
+
+# Exemplos de commits obrigatórios:
+# git commit -m "feat(api): adicionar validação de CNS"
+# git commit -m "fix(ui): corrigir layout da sidebar"
+# git commit -m "docs(agents): atualizar fluxo de commits"
+```
+
+#### 7. Versionamento (se aplicável)
 ```bash
 # Para correções
 npm run release:patch
@@ -150,29 +195,71 @@ npm run release:major
 
 #### Scripts de Desenvolvimento
 ```bash
-npm run dev                    # CSS watch mode
+npm run dev                    # CSS watch mode (Webpack)
 npm run build:css             # Build CSS produção
 npm run build:css:watch       # CSS desenvolvimento
 ```
 
-#### Scripts de Build
+#### Scripts de Build (Novo Sistema)
 ```bash
-npm run build:zips            # Gerar ZIPs de distribuição
-npm run build:all             # CSS + ZIPs
+npm run build                  # Build principal (Chrome + Firefox)
+npm run build:chrome          # Build apenas Chrome/Edge
+npm run build:firefox         # Build apenas Firefox
+npm run build:all             # CSS + ZIPs (legado)
+npm run build:zips            # Gerar ZIPs de distribuição (legado)
 npm run clean                 # Limpar arquivos temporários
 ```
 
 #### Scripts de Validação
 ```bash
+npm run validate              # Validação completa de qualidade
 npm run validate:manifests    # Validar estrutura dos manifests
+npm run lint                  # ESLint
+npm run lint:fix             # ESLint com correções automáticas
+npm run test                  # Executar testes
+```
+
+#### Scripts de Versionamento
+```bash
+npm run version:patch         # Incremento patch (1.0.0 → 1.0.1)
+npm run version:minor         # Incremento minor (1.0.0 → 1.1.0)
+npm run version:major         # Incremento major (1.0.0 → 2.0.0)
 ```
 
 #### Scripts de Release
 ```bash
-npm run release 1.2.3         # Release específica
-npm run release:patch         # Incremento patch
-npm run release:minor         # Incremento minor
-npm run release:major         # Incremento major
+npm run release:patch         # Release completo com incremento patch
+npm run release:minor         # Release completo com incremento minor
+npm run release:major         # Release completo com incremento major
+npm run release:dry           # Simular release sem fazer alterações
+npm run release 1.2.3         # Release específica (legado)
+```
+
+#### Scripts de Upload para Stores
+```bash
+npm run upload:chrome         # Upload para Chrome Web Store
+npm run upload:firefox        # Upload para Firefox Add-ons
+```
+
+#### Scripts de Validação + Commit (OBRIGATÓRIOS)
+```bash
+# ⚠️ SCRIPTS OBRIGATÓRIOS PARA AGENTES DE IA ⚠️
+
+# Script completo: validação + build + commit
+npm run validate:commit       # Executa validação completa + commit automático
+
+# Script de pré-commit (apenas validações)
+npm run pre:commit           # Validação + build sem commit
+
+# Script de commit seguro (com validações)
+npm run safe:commit          # Validação + build + commit + push
+
+# Fluxo manual obrigatório:
+npm run validate             # 1. Validação completa
+npm run build               # 2. Build para ambos navegadores  
+npm run test                # 3. Testes (se configurados)
+git add .                   # 4. Adicionar arquivos
+git commit -m "tipo(escopo): descrição"  # 5. Commit obrigatório
 ```
 
 ### Processo de Teste
@@ -514,15 +601,92 @@ npm run release 1.2.3
 ### Quando Usar Cada Script
 
 #### Durante Desenvolvimento
-1. **`npm run dev`** - Para desenvolvimento ativo de CSS
-2. **`npm run validate:manifests`** - Antes de commits importantes
-3. **`npm run build:all`** - Para testar build completo
+1. **`npm run dev`** - Para desenvolvimento ativo de CSS (Webpack watch)
+2. **`npm run validate`** - Validação completa de qualidade
+3. **`npm run build`** - Build moderno (Chrome + Firefox)
+4. **`npm run build:all`** - Build legado (CSS + ZIPs)
+
+#### Antes de Commit
+1. **`npm run validate`** - Validação completa (ESLint + manifests + segurança)
+2. **`npm run build`** - Build para ambos navegadores
+3. **`npm run test`** - Executar testes (se configurados)
 
 #### Antes de Release
 1. **`npm run clean`** - Limpar arquivos antigos
-2. **`npm run build:all`** - Build completo
-3. **`npm run validate:manifests`** - Validação final
+2. **`npm run validate`** - Validação completa
+3. **`npm run build`** - Build final
 4. **`npm run release:patch/minor/major`** - Release automatizado
+
+#### Para Upload em Stores
+1. **`npm run upload:chrome`** - Upload para Chrome Web Store
+2. **`npm run upload:firefox`** - Upload para Firefox Add-ons
+
+### Sistema de Build Moderno vs Legado
+
+#### Sistema Moderno (Recomendado)
+```bash
+# Build principal - usa Webpack e scripts modernos
+npm run build                  # Chrome + Firefox
+npm run build:chrome          # Apenas Chrome/Edge  
+npm run build:firefox         # Apenas Firefox
+
+# Validação completa
+npm run validate              # ESLint + manifests + segurança
+
+# Release automatizado
+npm run release:minor         # Versionamento + build + GitHub release
+```
+
+#### Sistema Legado (Compatibilidade)
+```bash
+# Build tradicional - usa scripts antigos
+npm run build:all             # CSS + ZIPs
+npm run build:zips            # Apenas ZIPs
+
+# Validação básica
+npm run validate:manifests    # Apenas manifests
+
+# Release manual
+npm run release 1.2.3         # Script legado
+```
+
+### Integração com VSCode
+
+#### Tasks Disponíveis (Ctrl+Shift+P → "Tasks: Run Task")
+- **🏗️ Build: All Targets** - Build completo para ambos navegadores
+- **🔵 Build: Chrome Only** - Build apenas para Chrome/Edge
+- **🦊 Build: Firefox Only** - Build apenas para Firefox
+- **🔄 Dev: CSS Watch** - Modo desenvolvimento com watch
+- **🔍 Validate: All** - Validação completa de qualidade
+- **🚀 Release: Patch** - Release automático com incremento patch
+- **🚀 Release: Minor** - Release automático com incremento minor
+- **🚀 Release: Major** - Release automático com incremento major
+
+#### Configurações de Debug (F5)
+- **🔵 Debug: Chrome Extension** - Debug da extensão no Chrome
+- **🦊 Debug: Firefox Extension** - Debug da extensão no Firefox
+- **🔧 Debug: Background Script** - Debug do service worker
+- **🏗️ Debug: Build Script** - Debug dos scripts de build
+
+### GitHub Actions CI/CD
+
+#### Workflows Automáticos
+- **Build Workflow** - Executa em PRs e pushes
+  - Matrix build (Chrome + Firefox)
+  - Validação completa
+  - Security scanning
+  - Upload de artifacts
+
+- **Release Workflow** - Executa em tags v*.*.*
+  - Build para produção
+  - GitHub Release automático
+  - Upload de ZIPs como assets
+  - Changelog automático
+
+- **Security Workflow** - Executa semanalmente
+  - Dependency scanning
+  - Code security analysis
+  - Manifest validation
 
 ### Fluxo de Build e Deploy
 
@@ -1035,6 +1199,8 @@ npm run build:all
 - ❌ **NUNCA** edite arquivos em `dist/` ou `dist-zips/` manualmente
 - ❌ **NUNCA** faça commit de arquivos gerados
 - ❌ **NUNCA** pule validações antes de release
+- ❌ **NUNCA** deixe de fazer commit após modificações de código
+- ❌ **NUNCA** faça commit sem executar validações completas
 
 ### 🔒 Práticas de Segurança Obrigatórias
 
@@ -1252,12 +1418,15 @@ npm run release 1.2.3
 - [ ] Apliquei sanitização adequada
 - [ ] Segui padrões de nomenclatura
 
-#### ✅ Antes de Commit
-- [ ] `npm run validate:manifests` passou
-- [ ] `npm run build:all` executou com sucesso
-- [ ] Testei em múltiplos navegadores
-- [ ] Atualizei CHANGELOG.md
-- [ ] Usei Conventional Commits
+#### ✅ Antes de Commit (OBRIGATÓRIO)
+- [ ] **Executei validações completas**: `npm run validate` passou
+- [ ] **Build bem-sucedido**: `npm run build` executou sem erros
+- [ ] **Testes passaram**: `npm run test` (se configurados)
+- [ ] **Testei funcionalidade** em Firefox E Chrome/Edge
+- [ ] **Atualizei CHANGELOG.md** na seção `[Unreleased]`
+- [ ] **Documentei mudanças** significativas
+- [ ] **Usei Conventional Commits** no formato correto
+- [ ] **Executei commit**: `git add . && git commit -m "tipo(escopo): descrição"`
 
 ---
 
@@ -1291,4 +1460,23 @@ Para dúvidas ou problemas:
 
 **Este documento é a fonte única da verdade para desenvolvimento neste projeto. Consulte-o sempre antes de fazer modificações.**
 
-**Última atualização:** 2025-01-23 - Versão 1.0.0
+**Última atualização:** 2025-01-23 - Versão 2.0.0
+
+### 📋 Histórico de Atualizações
+
+#### v2.0.0 - 2025-01-23
+- ✅ **Sistema completo de build/release** implementado
+- ✅ **Integração avançada com VSCode** (tasks, debug, settings)
+- ✅ **GitHub Actions CI/CD** (build, release, security)
+- ✅ **Scripts de automação** para versionamento e stores
+- ✅ **Webpack configuration** para bundling otimizado
+- ✅ **ESLint e Jest** configurados para extensões
+- ✅ **Documentação BUILD.md** criada
+- ✅ **Templates de issues** para GitHub
+- ✅ **Estrutura modular** com diretório `scripts/`
+
+#### v1.0.0 - 2025-01-17
+- ✅ Versão inicial do guia para agentes de IA
+- ✅ Documentação completa da arquitetura existente
+- ✅ Padrões de código e convenções estabelecidos
+- ✅ Fluxos de trabalho e validações definidos

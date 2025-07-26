@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+### Fixed
+- **Corrigido problema crítico de compatibilidade com Manifest V3 no Firefox**
+  - **Problema**: Background script usava array `scripts` em vez de `service_worker` para Manifest V3
+  - **Impacto**: Incompatibilidade com Manifest V3 no Firefox, poderia causar rejeição na store
+  - **Solução**: Atualizado `manifest.json` para usar `service_worker: "background.js"` conforme especificação Manifest V3
+  - **Resultado**: Extensão agora é totalmente compatível com Manifest V3 em ambos navegadores (Chrome e Firefox)
+
 ### Added
 - Sistema completo de build e release automatizado
 - Integração avançada com VSCode (tasks, debug, settings)
