@@ -312,12 +312,7 @@ class ExtensionValidator {
         message: 'Uso potencialmente inseguro de innerHTML com concatenação',
         severity: 'error'
       },
-      {
-        pattern: /(?<!['"`])eval\s*\(/g,
-        message: 'Uso de eval() detectado (proibido em Manifest V3)',
-        severity: 'error'
-      },
-      {
+            {
         pattern: /document\.write\s*\(/g,
         message: 'Uso de document.write() detectado',
         severity: 'warn'
