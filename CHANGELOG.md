@@ -1,5 +1,51 @@
 # Changelog - Assistente de Regulação Médica
 
+## [Unreleased]
+
+### Added
+- Sistema completo de build e release automatizado
+- Integração avançada com VSCode (tasks, debug, settings)
+- GitHub Actions para CI/CD (build, release, security)
+- Scripts de automação para versionamento e upload para stores
+- Webpack configuration para bundling otimizado
+- ESLint configuration específica para extensões de navegador
+- Jest configuration para testes unitários
+- Sistema de validação completo (código, manifests, segurança)
+- Templates de issues para GitHub
+- Documentação completa do sistema de build (BUILD.md)
+
+### Changed
+- Estrutura de projeto reorganizada com diretório `scripts/`
+- Package.json expandido com novos scripts de automação
+- Sistema de build migrado para arquitetura modular
+- Processo de release completamente automatizado
+
+### Technical Details
+- **Novos arquivos criados:**
+  - `scripts/build.js` - Sistema principal de build
+  - `scripts/validate.js` - Validações de qualidade
+  - `scripts/version.js` - Gerenciamento de versões
+  - `scripts/release.js` - Automação de releases
+  - `scripts/store-upload.js` - Upload para stores
+  - `webpack.config.js` - Configuração de bundling
+  - `.eslintrc.js` - Regras de linting
+  - `jest.config.js` - Configuração de testes
+  - `.github/workflows/` - Workflows de CI/CD
+  - `.vscode/tasks.json` - Tasks integradas
+  - `.vscode/launch.json` - Configurações de debug
+  - `.vscode/extensions.json` - Extensões recomendadas
+  - `BUILD.md` - Documentação completa
+
+- **Funcionalidades implementadas:**
+  - Build matrix para Chrome e Firefox
+  - Manifest switching automático
+  - Semantic versioning automático
+  - Changelog generation baseado em commits
+  - Security scanning integrado
+  - Cross-platform compatibility
+  - Store upload automation
+  - Rollback capabilities
+
 ## [3.3.15] - 2025-01-17
 
 ### 🏗️ Refatoração de Arquitetura - Centralização de Constantes de API

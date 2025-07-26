@@ -1,0 +1,531 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    // === BUILD TASKS ===
+    {
+      "label": "🏗️ Build: All Targets",
+      "type": "shell",
+      "command": "npm",
+      "args": ["run", "build"],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared",
+        "showReuseMessage": true,
+        "clear": false
+      },
+      "problemMatcher": [],
+      "detail": "Build completo para Chrome e Firefox"
+    },
+    {
+      "label": "🔵 Build: Chrome Only",
+      "type": "shell",
+      "command": "npm",
+      "args": ["run", "build:chrome"],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      },
+      "problemMatcher": [],
+      "detail": "Build apenas para Chrome/Edge"
+    },
+    {
+      "label": "🦊 Build: Firefox Only",
+      "type": "shell",
+      "command": "npm",
+      "args": ["run", "build:firefox"],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      },
+      "problemMatcher": [],
+      "detail": "Build apenas para Firefox"
+    },
+    {
+      "label": "🎨 Build: CSS Only",
+      "type": "shell",
+      "command": "npm",
+      "args": ["run", "build:css"],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "silent",
+        "focus": false,
+        "panel": "shared"
+      },
+      "problemMatcher": [],
+      "detail": "Compila apenas o CSS com Tailwind"
+    },
+    {
+      "label": "📦 Build: ZIPs Only",
+      "type": "shell",
+      "command": "npm",
+      "args": ["run", "build:zips"],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      },
+      "problemMatcher": [],
+      "detail": "Gera apenas os ZIPs de distribuição"
+    },
+    
+    // === DEVELOPMENT TASKS ===
+    {
+      "label": "🔄 Dev: CSS Watch",
+      "type": "shell",
+      "command": "npm",
+      "args": ["run", "dev"],
+      "group": "build",
+      "isBackground": true,
+      "presentation": {
+        "echo": true,
+        "reveal": "silent",
+        "focus": false,
+        "panel": "dedicated"
+      },
+      "problemMatcher": {
+        "owner": "tailwind",
+        "fileLocation": "relative",
+        "pattern": {
+          "regexp": "^(.*):(\\d+):(\\d+):\\s+(warning|error):\\s+(.*)$",
+          "file": 1,
+          "line": 2,
+          "column": 3,
+          "severity": 4,
+          "message": 5
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "^Rebuilding\\.\\.\\.$",
+          "endsPattern": "^Done in \\d+ms\\.$"
+        }
+      },
+      "detail": "Modo desenvolvimento com watch do CSS"
+    },
+    {
+      "label": "🔄 Dev: Webpack Watch",
+      "type": "shell",
+      "command": "npx",
+      "args": ["webpack", "--mode=development", "--watch"],
+      "group": "build",
+      "isBackground": true,
+      "presentation": {
+        "echo": true,
+        "reveal": "silent",
+        "focus": false,
+        "panel": "dedicated"
+      },
+      "problemMatcher": {
+        "owner": "webpack",
+        "fileLocation": "relative",
+        "pattern": [
+          {
+            "regexp": "^ERROR in (.*)$",
+            "file": 1
+          },
+          {
+            "regexp": "^(.*)\\((\\d+),(\\d+)\\): (.*)$",
+            "file": 1,
+            "line": 2,
+            "column": 3,
+            "message": 4
+          }
+        ],
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "^webpack \\d+\\.\\d+\\.\\d+",
+          "endsPattern": "^webpack compiled"
+        }
+      },
+      "detail": "Webpack em modo watch para desenvolvimento"
+    },
+    
+    // === VALIDATION TASKS ===
+    {
+      "label": "🔍 Validate: All",
+      "type": "shell",
+      "command": "npm",
+      "args": ["run", "validate"],
+      "group": "test",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      },
+      "problemMatcher": [],
+      "detail": "Executa todas as validações de qualidade"
+    },
+    {
+      "label": "📄 Validate: Manifests",
+      "type": "shell",
+      "command": "npm",
+      "args": ["run", "validate:manifests"],
+      "group": "test",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      },
+      "problemMatcher": [],
+      "detail": "Valida estrutura dos manifests"
+    },
+    {
+      "label": "🔧 Lint: JavaScript",
+      "type": "shell",
+      "command": "npm",
+      "args": ["run", "lint"],
+      "group": "test",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      },
+      "problemMatcher": {
+        "owner": "eslint",
+        "fileLocation": "relative",
+        "pattern": [
+          {
+            "regexp": "^([^\\s].*)$",
+            "file": 1
+          },
+          {
+            "regexp": "^\\s+(\\d+):(\\d+)\\s+(error|warning|info)\\s+(.*)\\s\\s+(.*)$",
+            "line": 1,
+            "column": 2,
+            "severity": 3,
+            "message": 4,
+            "code": 5,
+            "loop": true
+          }
+        ]
+      },
+      "detail": "Executa ESLint nos arquivos JavaScript"
+    },
+    {
+      "label": "🔧 Lint: Fix",
+      "type": "shell",
+      "command": "npm",
+      "args": ["run", "lint:fix"],
+      "group": "test",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      },
+      "problemMatcher": [],
+      "detail": "Aplica correções automáticas do ESLint"
+    },
+    
+    // === VERSION TASKS ===
+    {
+      "label": "🔢 Version: Patch",
+      "type": "shell",
+      "command": "npm",
+      "args": ["run", "version:patch"],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      },
+      "problemMatcher": [],
+      "detail": "Incrementa versão patch (1.0.0 → 1.0.1)"
+    },
+    {
+      "label": "🔢 Version: Minor",
+      "type": "shell",
+      "command": "npm",
+      "args": ["run", "version:minor"],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      },
+      "problemMatcher": [],
+      "detail": "Incrementa versão minor (1.0.0 → 1.1.0)"
+    },
+    {
+      "label": "🔢 Version: Major",
+      "type": "shell",
+      "command": "npm",
+      "args": ["run", "version:major"],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      },
+      "problemMatcher": [],
+      "detail": "Incrementa versão major (1.0.0 → 2.0.0)"
+    },
+    
+    // === RELEASE TASKS ===
+    {
+      "label": "🚀 Release: Patch",
+      "type": "shell",
+      "command": "npm",
+      "args": ["run", "release:patch"],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      },
+      "problemMatcher": [],
+      "detail": "Release completo com incremento patch"
+    },
+    {
+      "label": "🚀 Release: Minor",
+      "type": "shell",
+      "command": "npm",
+      "args": ["run", "release:minor"],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      },
+      "problemMatcher": [],
+      "detail": "Release completo com incremento minor"
+    },
+    {
+      "label": "🚀 Release: Major",
+      "type": "shell",
+      "command": "npm",
+      "args": ["run", "release:major"],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      },
+      "problemMatcher": [],
+      "detail": "Release completo com incremento major"
+    },
+    {
+      "label": "🔍 Release: Dry Run",
+      "type": "shell",
+      "command": "npm",
+      "args": ["run", "release:dry"],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      },
+      "problemMatcher": [],
+      "detail": "Simula processo de release sem fazer alterações"
+    },
+    
+    // === STORE UPLOAD TASKS ===
+    {
+      "label": "🔵 Upload: Chrome Store",
+      "type": "shell",
+      "command": "npm",
+      "args": ["run", "upload:chrome"],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      },
+      "problemMatcher": [],
+      "detail": "Upload para Chrome Web Store"
+    },
+    {
+      "label": "🦊 Upload: Firefox Store",
+      "type": "shell",
+      "command": "npm",
+      "args": ["run", "upload:firefox"],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      },
+      "problemMatcher": [],
+      "detail": "Upload para Firefox Add-ons"
+    },
+    
+    // === UTILITY TASKS ===
+    {
+      "label": "🧹 Clean: All",
+      "type": "shell",
+      "command": "npm",
+      "args": ["run", "clean"],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "silent",
+        "focus": false,
+        "panel": "shared"
+      },
+      "problemMatcher": [],
+      "detail": "Limpa todos os arquivos gerados"
+    },
+    {
+      "label": "📦 Install: Dependencies",
+      "type": "shell",
+      "command": "npm",
+      "args": ["install"],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      },
+      "problemMatcher": [],
+      "detail": "Instala dependências do projeto"
+    },
+    {
+      "label": "🔄 Update: Dependencies",
+      "type": "shell",
+      "command": "npm",
+      "args": ["update"],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      },
+      "problemMatcher": [],
+      "detail": "Atualiza dependências do projeto"
+    },
+    
+    // === TESTING TASKS ===
+    {
+      "label": "🧪 Test: All",
+      "type": "shell",
+      "command": "npm",
+      "args": ["test"],
+      "group": "test",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      },
+      "problemMatcher": {
+        "owner": "jest",
+        "fileLocation": "relative",
+        "pattern": [
+          {
+            "regexp": "^\\s*✕\\s+(.*)\\s+\\((\\d+)\\s+ms\\)$",
+            "message": 1
+          },
+          {
+            "regexp": "^\\s+at\\s+.*\\((.*):(\\d+):(\\d+)\\)$",
+            "file": 1,
+            "line": 2,
+            "column": 3
+          }
+        ]
+      },
+      "detail": "Executa todos os testes"
+    },
+    
+    // === COMPOSITE TASKS ===
+    {
+      "label": "🎯 Quick Build",
+      "dependsOrder": "sequence",
+      "dependsOn": [
+        "🎨 Build: CSS Only",
+        "📦 Build: ZIPs Only"
+      ],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      },
+      "detail": "Build rápido: CSS + ZIPs"
+    },
+    {
+      "label": "🔍 Full Validation",
+      "dependsOrder": "sequence",
+      "dependsOn": [
+        "🔧 Lint: JavaScript",
+        "📄 Validate: Manifests",
+        "🔍 Validate: All"
+      ],
+      "group": "test",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      },
+      "detail": "Validação completa: Lint + Manifests + Qualidade"
+    },
+    {
+      "label": "🚀 Pre-Release Check",
+      "dependsOrder": "sequence",
+      "dependsOn": [
+        "🧹 Clean: All",
+        "🔍 Full Validation",
+        "🏗️ Build: All Targets"
+      ],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      },
+      "detail": "Verificação completa antes de release"
+    }
+  ],
+  
+  // Configurações de input para tasks interativas
+  "inputs": [
+    {
+      "id": "versionNumber",
+      "description": "Número da versão (ex: 1.2.3)",
+      "default": "1.0.0",
+      "type": "promptString"
+    },
+    {
+      "id": "releaseType",
+      "description": "Tipo de release",
+      "default": "patch",
+      "type": "pickString",
+      "options": [
+        "patch",
+        "minor",
+        "major",
+        "prerelease"
+      ]
+    }
+  ]
+}
