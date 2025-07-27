@@ -12,6 +12,7 @@ import { store } from "./store.js";
 import { CONFIG, getTimeout, getCSSClass } from "./config.js";
 import { getMemoryManager } from "./MemoryManager.js";
 import { getBrowserAPIInstance } from "./BrowserAPI.js";
+import { encryptForStorage, decryptFromStorage, cleanupExpiredData, MEDICAL_DATA_CONFIG } from "./crypto-utils.js";
 
 // --- ÍCONES ---
 const sectionIcons = {
@@ -484,6 +485,14 @@ async function executePatientSelection(patientInfo, forceRefresh = false) {
 async function init() {
   console.log('[Sidebar] Iniciando aplicação');
   
+  // ✅ SEGURANÇA: Limpeza automática de dados médicos expirados na inicialização
+  try {
+    await cleanupExpiredData(browserAPI);
+    console.log('[Sidebar] Limpeza de dados expirados concluída');
+  } catch (error) {
+    console.error('[Sidebar] Erro na limpeza de dados expirados:', error);
+  }
+  
   // Registra callbacks de limpeza no MemoryManager
   registerCleanupCallbacks();
   
@@ -570,6 +579,9 @@ async function init() {
   console.log('[Sidebar] Aplicação inicializada com sucesso');
 }
 
+/**
+ * ✅ SEGURANÇA: Carrega configurações e dados com descriptografia segura
+ */
 async function loadConfigAndData() {
   const syncData = await browserAPI.storage.sync.get({
     patientFields: defaultFieldConfig,
@@ -584,12 +596,61 @@ async function loadConfigAndData() {
     sidebarSectionOrder: [],
     sectionHeaderStyles: {}, // Carrega a nova configuração de estilos
   });
+  
   const localData = await browserAPI.storage.local.get({
     recentPatients: [],
     savedFilterSets: {},
     automationRules: [],
   });
-  store.setRecentPatients(localData.recentPatients);
+  
+  // ✅ SEGURANÇA: Descriptografar dados de pacientes recentes se estiverem criptografados
+  let recentPatients = [];
+  if (localData.recentPatients) {
+    try {
+      // Verifica se os dados estão criptografados (string) ou não (array)
+      if (typeof localData.recentPatients === 'string') {
+        // Dados criptografados - descriptografar
+        const decryptedPatients = await decryptFromStorage(localData.recentPatients);
+        if (decryptedPatients !== null) {
+          recentPatients = decryptedPatients;
+          console.log('[Sidebar] Pacientes recentes descriptografados com sucesso');
+        } else {
+          console.warn('[Sidebar] Dados de pacientes recentes expiraram ou são inválidos');
+          // Remove dados expirados/inválidos
+          await browserAPI.storage.local.remove(['recentPatients', 'recentPatientsTimestamp']);
+        }
+      } else if (Array.isArray(localData.recentPatients)) {
+        // Dados não criptografados (formato antigo) - migrar para formato criptografado
+        recentPatients = localData.recentPatients;
+        console.log('[Sidebar] Migrando pacientes recentes para formato criptografado');
+        
+        // Criptografar e salvar no novo formato
+        if (recentPatients.length > 0) {
+          try {
+            const encryptedRecentPatients = await encryptForStorage(
+              recentPatients, 
+              MEDICAL_DATA_CONFIG.DEFAULT_TTL_MINUTES * 24 // 24 horas
+            );
+            
+            await browserAPI.storage.local.set({ 
+              recentPatients: encryptedRecentPatients,
+              recentPatientsTimestamp: Date.now()
+            });
+            
+            console.log('[Sidebar] Migração para formato criptografado concluída');
+          } catch (error) {
+            console.error('[Sidebar] Erro na migração para formato criptografado:', error);
+          }
+        }
+      }
+    } catch (error) {
+      console.error('[Sidebar] Erro ao descriptografar pacientes recentes:', error);
+      // Em caso de erro, remove dados corrompidos
+      await browserAPI.storage.local.remove(['recentPatients', 'recentPatientsTimestamp']);
+    }
+  }
+  
+  store.setRecentPatients(recentPatients);
   store.setSavedFilterSets(localData.savedFilterSets);
 
   return {
@@ -1017,16 +1078,46 @@ async function copyToClipboard(button) {
   }
 }
 
+/**
+ * ✅ SEGURANÇA: Atualiza lista de pacientes recentes com criptografia
+ * Dados médicos sensíveis são criptografados antes do armazenamento
+ */
 async function updateRecentPatients(patientData) {
   if (!patientData || !patientData.ficha) return;
-  const newRecent = { ...patientData };
-  const currentRecents = store.getRecentPatients();
-  const filtered = (currentRecents || []).filter(
-    (p) => p.ficha.isenPK.idp !== newRecent.ficha.isenPK.idp
-  );
-  const updatedRecents = [newRecent, ...filtered].slice(0, 5);
-  await browserAPI.storage.local.set({ recentPatients: updatedRecents });
-  store.setRecentPatients(updatedRecents);
+  
+  try {
+    const newRecent = { ...patientData };
+    const currentRecents = store.getRecentPatients();
+    const filtered = (currentRecents || []).filter(
+      (p) => p.ficha.isenPK.idp !== newRecent.ficha.isenPK.idp
+    );
+    const updatedRecents = [newRecent, ...filtered].slice(0, 5);
+    
+    // ✅ SEGURANÇA: Criptografar dados de pacientes recentes antes do armazenamento
+    // TTL de 24 horas para dados de pacientes recentes (menos sensível que dados de regulação)
+    const encryptedRecentPatients = await encryptForStorage(
+      updatedRecents, 
+      MEDICAL_DATA_CONFIG.DEFAULT_TTL_MINUTES * 24 // 24 horas
+    );
+    
+    await browserAPI.storage.local.set({ 
+      recentPatients: encryptedRecentPatients,
+      recentPatientsTimestamp: Date.now()
+    });
+    
+    store.setRecentPatients(updatedRecents);
+    
+    console.log('[Sidebar] Pacientes recentes atualizados e criptografados no storage');
+  } catch (error) {
+    console.error('[Sidebar] Erro ao atualizar pacientes recentes:', error);
+    // Fallback: manter apenas no store sem persistir se a criptografia falhar
+    const currentRecents = store.getRecentPatients();
+    const filtered = (currentRecents || []).filter(
+      (p) => p.ficha.isenPK.idp !== patientData.ficha.isenPK.idp
+    );
+    const updatedRecents = [patientData, ...filtered].slice(0, 5);
+    store.setRecentPatients(updatedRecents);
+  }
 }
 
 async function handleViewExamResult(button) {

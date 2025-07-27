@@ -13,7 +13,7 @@
   ],
   "host_permissions": ["*://*/sigss/*"],
   "content_security_policy": {
-    "extension_pages": "script-src 'self'; object-src 'none'; connect-src 'self' https://*.gov.br https://*.mv.com.br https://*.cloudmv.com.br http://localhost:* http://127.0.0.1:*; base-uri 'self'; frame-ancestors 'none';"
+    "extension_pages": "script-src 'self'; object-src 'none'; connect-src 'self' https://*.gov.br https://*.mv.com.br https://*.cloudmv.com.br http://*.gov.br http://*.mv.com.br http://*.cloudmv.com.br http://localhost:* http://127.0.0.1:*; base-uri 'self'; frame-ancestors 'none';"
   },
   "options_ui": {
     "page": "options.html",

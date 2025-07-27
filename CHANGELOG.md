@@ -11,6 +11,7 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 - **CRÍTICO**: Implementado rate limiting para mensagens (100 mensagens/minuto por origem) para prevenir spam
 - **CRÍTICO**: Implementada criptografia AES-GCM para dados médicos sensíveis no storage local
 - **CRÍTICO**: Implementada CSP restritiva nos manifests, limitando connect-src apenas a domínios SIGSS autorizados
+- **CRÍTICO**: Corrigida CSP para restringir conexões apenas a domínios específicos (gov.br, mv.com.br, cloudmv.com.br) mantendo compatibilidade HTTP
 - Implementado sistema de TTL automático para dados médicos com limpeza periódica
 - Adicionado sistema de validação de estrutura de mensagens no background script
 - Implementada whitelist rigorosa de origens autorizadas para content scripts
