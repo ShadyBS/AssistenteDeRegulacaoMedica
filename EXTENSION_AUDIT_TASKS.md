@@ -230,23 +230,37 @@
   - Funcionalidade mantida
   - Builds otimizados para ambos navegadores
 
-### TASK-A-006: Implementar Rate Limiting para API Calls
+### ✅ TASK-A-006: Implementar Rate Limiting para API Calls [CONCLUÍDA]
 - **📁 Arquivo:** `api.js`
 - **🎯 Problema:** Falta de rate limiting pode causar sobrecarga do servidor SIGSS
 - **⚡ Impacto:** Possível bloqueio de IP por uso excessivo da API
 - **🌐 Navegador:** Ambos (Chrome/Firefox)
-- **📍 Localização:** Todas as funções de API
+- **��� Localização:** Todas as funções de API
 - **🔧 Ação Required:**
-  - [ ] Implementar rate limiting baseado em token bucket
-  - [ ] Adicionar queue para requisições
-  - [ ] Implementar backoff exponencial
-  - [ ] Adicionar cache para reduzir chamadas
-  - [ ] Implementar monitoramento de rate limits
+  - [x] Implementar rate limiting baseado em token bucket
+  - [x] Adicionar queue para requisições
+  - [x] Implementar backoff exponencial
+  - [x] Adicionar cache para reduzir chamadas
+  - [x] Implementar monitoramento de rate limits
 - **✅ Critério de Aceitação:**
   - Rate limiting funciona corretamente
   - Queue processa requisições em ordem
   - Cache reduz chamadas desnecessárias
   - Monitoramento reporta métricas
+- **📅 Data de Conclusão:** 2025-01-23
+- **🔧 Implementações Realizadas:**
+  - Sistema completo de rate limiting baseado em token bucket (2 req/s, burst de 10)
+  - Queue inteligente para requisições com processamento sequencial (máx 50 requisições)
+  - Cache automático de respostas JSON com TTL configurável (5 min default)
+  - Monitoramento detalhado com métricas de hit rate, wait time e error rate
+  - Sistema de backoff exponencial integrado ao retry handler existente
+  - Relatórios automáticos com recomendações baseadas em métricas
+  - Histórico persistente de métricas no storage local (últimos 100 relatórios)
+  - Configuração dinâmica de parâmetros via configureRateLimiter()
+  - Limpeza automática de cache expirado a cada 5 minutos
+  - Funções de debugging: getRateLimitMetrics(), getRateLimitReport(), etc.
+  - Aplicado rate limiting em funções críticas: fetchRegulationPriorities, searchPatients
+  - Cache inteligente com TTLs otimizados: 10min para prioridades, 1min para buscas
 
 ### TASK-A-007: Corrigir Compatibilidade Firefox Sidebar
 - **📁 Arquivo:** `manifest.json`

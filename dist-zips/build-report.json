@@ -1,27 +1,31 @@
 {
-  "timestamp": "2025-07-27T13:40:12.778Z",
+  "timestamp": "2025-07-27T14:33:04.098Z",
+  "mode": "production",
+  "targets": [
+    "chrome",
+    "firefox"
+  ],
   "builds": [
+    {
+      "target": "chrome",
+      "version": "3.3.15",
+      "manifest": "Assistente de Regulação Médica",
+      "zipPath": "C:\\AssistenteDeRegulacaoMedica\\dist-zips\\AssistenteDeRegulacao-chrome-v3.3.15.zip",
+      "size": 612745,
+      "fileCount": 112
+    },
     {
       "target": "firefox",
       "version": "3.3.15",
-      "zipName": "AssistenteDeRegulacao-firefox-v3.3.15.zip",
-      "manifestSource": "manifest.json",
+      "manifest": "Assistente de Regulação Médica",
       "zipPath": "C:\\AssistenteDeRegulacaoMedica\\dist-zips\\AssistenteDeRegulacao-firefox-v3.3.15.zip",
-      "hash": "563908dbed0f8c85fbd5c9b82da905cd1148777d3f5759dcfae6e10dfeb98c61",
-      "size": 2076064
-    },
-    {
-      "target": "chromium",
-      "version": "3.3.15",
-      "zipName": "AssistenteDeRegulacao-chromium-v3.3.15.zip",
-      "manifestSource": "manifest-edge.json",
-      "zipPath": "C:\\AssistenteDeRegulacaoMedica\\dist-zips\\AssistenteDeRegulacao-chromium-v3.3.15.zip",
-      "hash": "483c47a6151bd980906e74a4a6c37d31430100ab8c8fc83a2cb64b1e0b0b9f75",
-      "size": 2076029
+      "size": 612780,
+      "fileCount": 112
     }
   ],
   "summary": {
     "totalBuilds": 2,
-    "totalSize": 4152093
+    "totalSize": 1225525,
+    "totalFiles": 224
   }
 }

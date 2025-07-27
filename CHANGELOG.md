@@ -34,6 +34,16 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 - **TASK-A-005**: Asset optimization automática no build system
 - **TASK-A-005**: Cache de build filesystem para builds mais rápidos
 - **TASK-A-005**: Scripts NPM otimizados para análise e otimização de bundle
+- **TASK-A-006**: Sistema completo de rate limiting baseado em token bucket para API calls
+- **TASK-A-006**: Queue inteligente para requisições com processamento sequencial
+- **TASK-A-006**: Cache automático de respostas JSON com TTL configurável
+- **TASK-A-006**: Monitoramento detalhado de métricas de rate limiting
+- **TASK-A-006**: Sistema de backoff exponencial para requisições falhadas
+- **TASK-A-006**: Relatórios automáticos de performance e recomendações
+- **TASK-A-006**: Histórico persistente de métricas no storage local
+- **TASK-A-006**: Configuração dinâmica de parâmetros de rate limiting
+- **TASK-A-006**: Limpeza automática de cache expirado a cada 5 minutos
+- **TASK-A-006**: Funções de debugging para análise de comportamento da API
 
 ### Changed
 - **TASK-A-001**: Debouncing do MutationObserver aumentado de 250ms para 500ms para melhor performance

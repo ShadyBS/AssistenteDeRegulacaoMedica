@@ -257,6 +257,471 @@ class APIErrorBoundary {
   }
 }
 
+// ✅ TASK-A-006: Rate Limiting System
+class TokenBucket {
+  constructor(capacity = 10, refillRate = 2, refillInterval = 1000) {
+    this.capacity = capacity; // Máximo de tokens
+    this.tokens = capacity; // Tokens atuais
+    this.refillRate = refillRate; // Tokens adicionados por intervalo
+    this.refillInterval = refillInterval; // Intervalo em ms
+    this.lastRefill = Date.now();
+    
+    // Auto-refill tokens
+    this.refillTimer = setInterval(() => {
+      this.refill();
+    }, this.refillInterval);
+  }
+
+  refill() {
+    const now = Date.now();
+    const timePassed = now - this.lastRefill;
+    const tokensToAdd = Math.floor((timePassed / this.refillInterval) * this.refillRate);
+    
+    if (tokensToAdd > 0) {
+      this.tokens = Math.min(this.capacity, this.tokens + tokensToAdd);
+      this.lastRefill = now;
+    }
+  }
+
+  consume(tokens = 1) {
+    this.refill(); // Atualiza tokens antes de consumir
+    
+    if (this.tokens >= tokens) {
+      this.tokens -= tokens;
+      return true;
+    }
+    return false;
+  }
+
+  getAvailableTokens() {
+    this.refill();
+    return this.tokens;
+  }
+
+  getWaitTime(tokens = 1) {
+    this.refill();
+    
+    if (this.tokens >= tokens) {
+      return 0;
+    }
+    
+    const tokensNeeded = tokens - this.tokens;
+    const timeNeeded = Math.ceil(tokensNeeded / this.refillRate) * this.refillInterval;
+    return timeNeeded;
+  }
+
+  destroy() {
+    if (this.refillTimer) {
+      clearInterval(this.refillTimer);
+      this.refillTimer = null;
+    }
+  }
+}
+
+class RequestQueue {
+  constructor(maxSize = 100) {
+    this.queue = [];
+    this.maxSize = maxSize;
+    this.processing = false;
+  }
+
+  enqueue(request) {
+    if (this.queue.length >= this.maxSize) {
+      throw new Error(`Request queue is full (max: ${this.maxSize})`);
+    }
+    
+    return new Promise((resolve, reject) => {
+      this.queue.push({
+        request,
+        resolve,
+        reject,
+        timestamp: Date.now()
+      });
+      
+      this.processQueue();
+    });
+  }
+
+  async processQueue() {
+    if (this.processing || this.queue.length === 0) {
+      return;
+    }
+    
+    this.processing = true;
+    
+    while (this.queue.length > 0) {
+      const item = this.queue.shift();
+      
+      try {
+        const result = await item.request();
+        item.resolve(result);
+      } catch (error) {
+        item.reject(error);
+      }
+      
+      // Pequeno delay entre processamentos
+      await new Promise(resolve => setTimeout(resolve, 50));
+    }
+    
+    this.processing = false;
+  }
+
+  getQueueSize() {
+    return this.queue.length;
+  }
+
+  clear() {
+    this.queue.forEach(item => {
+      item.reject(new Error('Queue cleared'));
+    });
+    this.queue = [];
+  }
+}
+
+class APICache {
+  constructor(defaultTTL = 300000) { // 5 minutos default
+    this.cache = new Map();
+    this.defaultTTL = defaultTTL;
+    
+    // Limpeza automática a cada 5 minutos
+    this.cleanupTimer = setInterval(() => {
+      this.cleanup();
+    }, 300000);
+  }
+
+  generateKey(url, options = {}) {
+    const keyData = {
+      url: url.toString(),
+      method: options.method || 'GET',
+      body: options.body || '',
+      headers: JSON.stringify(options.headers || {})
+    };
+    
+    return btoa(JSON.stringify(keyData)).replace(/[^a-zA-Z0-9]/g, '');
+  }
+
+  set(key, value, ttl = this.defaultTTL) {
+    const expiresAt = Date.now() + ttl;
+    this.cache.set(key, {
+      value,
+      expiresAt,
+      createdAt: Date.now()
+    });
+  }
+
+  get(key) {
+    const item = this.cache.get(key);
+    
+    if (!item) {
+      return null;
+    }
+    
+    if (Date.now() > item.expiresAt) {
+      this.cache.delete(key);
+      return null;
+    }
+    
+    return item.value;
+  }
+
+  has(key) {
+    return this.get(key) !== null;
+  }
+
+  delete(key) {
+    return this.cache.delete(key);
+  }
+
+  cleanup() {
+    const now = Date.now();
+    let cleaned = 0;
+    
+    for (const [key, item] of this.cache.entries()) {
+      if (now > item.expiresAt) {
+        this.cache.delete(key);
+        cleaned++;
+      }
+    }
+    
+    if (cleaned > 0) {
+      console.log(`[API Cache] Limpeza automática: ${cleaned} itens removidos`);
+    }
+  }
+
+  clear() {
+    this.cache.clear();
+  }
+
+  getStats() {
+    const now = Date.now();
+    let valid = 0;
+    let expired = 0;
+    
+    for (const [key, item] of this.cache.entries()) {
+      if (now > item.expiresAt) {
+        expired++;
+      } else {
+        valid++;
+      }
+    }
+    
+    return {
+      total: this.cache.size,
+      valid,
+      expired,
+      hitRate: this.hitCount / (this.hitCount + this.missCount) || 0
+    };
+  }
+
+  destroy() {
+    if (this.cleanupTimer) {
+      clearInterval(this.cleanupTimer);
+      this.cleanupTimer = null;
+    }
+    this.clear();
+  }
+}
+
+class RateLimitMonitor {
+  constructor() {
+    this.metrics = {
+      totalRequests: 0,
+      rateLimitedRequests: 0,
+      cacheHits: 0,
+      cacheMisses: 0,
+      averageWaitTime: 0,
+      queuedRequests: 0,
+      errors: 0
+    };
+    
+    this.requestTimes = [];
+    this.maxHistorySize = 1000;
+  }
+
+  recordRequest(waitTime = 0, fromCache = false, error = false) {
+    this.metrics.totalRequests++;
+    
+    if (waitTime > 0) {
+      this.metrics.rateLimitedRequests++;
+    }
+    
+    if (fromCache) {
+      this.metrics.cacheHits++;
+    } else {
+      this.metrics.cacheMisses++;
+    }
+    
+    if (error) {
+      this.metrics.errors++;
+    }
+    
+    this.requestTimes.push({
+      timestamp: Date.now(),
+      waitTime,
+      fromCache,
+      error
+    });
+    
+    // Manter apenas os últimos registros
+    if (this.requestTimes.length > this.maxHistorySize) {
+      this.requestTimes.splice(0, this.requestTimes.length - this.maxHistorySize);
+    }
+    
+    // Calcular tempo médio de espera
+    const totalWaitTime = this.requestTimes.reduce((sum, req) => sum + req.waitTime, 0);
+    this.metrics.averageWaitTime = totalWaitTime / this.requestTimes.length;
+  }
+
+  recordQueueSize(size) {
+    this.metrics.queuedRequests = size;
+  }
+
+  getMetrics() {
+    return {
+      ...this.metrics,
+      cacheHitRate: this.metrics.cacheHits / (this.metrics.cacheHits + this.metrics.cacheMisses) || 0,
+      errorRate: this.metrics.errors / this.metrics.totalRequests || 0,
+      rateLimitRate: this.metrics.rateLimitedRequests / this.metrics.totalRequests || 0
+    };
+  }
+
+  getRecentActivity(minutes = 5) {
+    const cutoff = Date.now() - (minutes * 60 * 1000);
+    return this.requestTimes.filter(req => req.timestamp > cutoff);
+  }
+
+  reset() {
+    this.metrics = {
+      totalRequests: 0,
+      rateLimitedRequests: 0,
+      cacheHits: 0,
+      cacheMisses: 0,
+      averageWaitTime: 0,
+      queuedRequests: 0,
+      errors: 0
+    };
+    this.requestTimes = [];
+  }
+}
+
+class RateLimiter {
+  constructor(options = {}) {
+    const {
+      tokensPerSecond = 2,
+      burstCapacity = 10,
+      queueMaxSize = 100,
+      cacheDefaultTTL = 300000, // 5 minutos
+      enableCache = true,
+      enableQueue = true
+    } = options;
+    
+    this.tokenBucket = new TokenBucket(burstCapacity, tokensPerSecond, 1000);
+    this.requestQueue = enableQueue ? new RequestQueue(queueMaxSize) : null;
+    this.cache = enableCache ? new APICache(cacheDefaultTTL) : null;
+    this.monitor = new RateLimitMonitor();
+    this.enableCache = enableCache;
+    this.enableQueue = enableQueue;
+  }
+
+  async execute(url, options = {}, cacheOptions = {}) {
+    const startTime = Date.now();
+    let fromCache = false;
+    let waitTime = 0;
+    
+    try {
+      // Verificar cache primeiro
+      if (this.enableCache && this.cache) {
+        const cacheKey = this.cache.generateKey(url, options);
+        const cachedResult = this.cache.get(cacheKey);
+        
+        if (cachedResult) {
+          fromCache = true;
+          this.monitor.recordRequest(0, true, false);
+          console.log(`[Rate Limiter] Cache hit para ${url}`);
+          return cachedResult;
+        }
+      }
+      
+      // Função de requisição
+      const makeRequest = async () => {
+        // Verificar tokens disponíveis
+        if (!this.tokenBucket.consume(1)) {
+          waitTime = this.tokenBucket.getWaitTime(1);
+          
+          if (waitTime > 0) {
+            console.log(`[Rate Limiter] Aguardando ${waitTime}ms para ${url}`);
+            await new Promise(resolve => setTimeout(resolve, waitTime));
+            
+            // Tentar consumir novamente após espera
+            if (!this.tokenBucket.consume(1)) {
+              throw new Error('Rate limit exceeded after waiting');
+            }
+          }
+        }
+        
+        // Fazer a requisição
+        const response = await fetch(url, options);
+        
+        // Verificar se a resposta é JSON para cache
+        let result;
+        const contentType = response.headers.get('content-type');
+        
+        if (contentType && contentType.includes('application/json')) {
+          result = await response.clone().json();
+        } else {
+          result = response;
+        }
+        
+        // Armazenar no cache se habilitado
+        if (this.enableCache && this.cache && response.ok) {
+          const cacheKey = this.cache.generateKey(url, options);
+          const ttl = cacheOptions.ttl || this.cache.defaultTTL;
+          
+          // Só cachear respostas JSON
+          if (contentType && contentType.includes('application/json')) {
+            this.cache.set(cacheKey, result, ttl);
+            console.log(`[Rate Limiter] Resultado cacheado para ${url} (TTL: ${ttl}ms)`);
+          }
+        }
+        
+        return result;
+      };
+      
+      // Executar com ou sem queue
+      let result;
+      if (this.enableQueue && this.requestQueue) {
+        this.monitor.recordQueueSize(this.requestQueue.getQueueSize());
+        result = await this.requestQueue.enqueue(makeRequest);
+      } else {
+        result = await makeRequest();
+      }
+      
+      this.monitor.recordRequest(waitTime, fromCache, false);
+      return result;
+      
+    } catch (error) {
+      this.monitor.recordRequest(waitTime, fromCache, true);
+      throw error;
+    }
+  }
+
+  getMetrics() {
+    const baseMetrics = this.monitor.getMetrics();
+    
+    return {
+      ...baseMetrics,
+      tokenBucket: {
+        availableTokens: this.tokenBucket.getAvailableTokens(),
+        capacity: this.tokenBucket.capacity,
+        refillRate: this.tokenBucket.refillRate
+      },
+      queue: this.requestQueue ? {
+        size: this.requestQueue.getQueueSize(),
+        maxSize: this.requestQueue.maxSize
+      } : null,
+      cache: this.cache ? this.cache.getStats() : null
+    };
+  }
+
+  clearCache() {
+    if (this.cache) {
+      this.cache.clear();
+      console.log('[Rate Limiter] Cache limpo');
+    }
+  }
+
+  resetMetrics() {
+    this.monitor.reset();
+    console.log('[Rate Limiter] Métricas resetadas');
+  }
+
+  destroy() {
+    if (this.tokenBucket) {
+      this.tokenBucket.destroy();
+    }
+    
+    if (this.requestQueue) {
+      this.requestQueue.clear();
+    }
+    
+    if (this.cache) {
+      this.cache.destroy();
+    }
+    
+    console.log('[Rate Limiter] Destruído');
+  }
+}
+
+// Instância global do Rate Limiter
+const rateLimiter = new RateLimiter({
+  tokensPerSecond: 2, // 2 requisições por segundo
+  burstCapacity: 10, // Até 10 requisições em burst
+  queueMaxSize: 50, // Máximo 50 requisições na fila
+  cacheDefaultTTL: 300000, // Cache de 5 minutos
+  enableCache: true,
+  enableQueue: true
+});
+
 // Instância global do Error Boundary
 const apiErrorBoundary = new APIErrorBoundary();
 
@@ -266,6 +731,16 @@ function createFallback(defaultValue, operationName) {
     console.warn(`[Fallback] Retornando valor padrão para ${operationName}`);
     return Promise.resolve(defaultValue);
   };
+}
+
+// ✅ TASK-A-006: Wrapper para fetch com rate limiting
+async function rateLimitedFetch(url, options = {}, cacheOptions = {}) {
+  try {
+    return await rateLimiter.execute(url, options, cacheOptions);
+  } catch (error) {
+    console.error(`[Rate Limited Fetch] Erro para ${url}:`, error);
+    throw error;
+  }
 }
 
 // Default configuration for batched API requests
@@ -433,14 +908,9 @@ export async function fetchRegulationPriorities() {
       const baseUrl = await getBaseUrl();
       const url = API_UTILS.buildUrl(baseUrl, API_ENDPOINTS.REGULATION_PRIORITIES);
 
-      const response = await fetch(url);
-      if (!response.ok) {
-        const error = new Error(API_ERROR_MESSAGES.PRIORITIES_FETCH_FAILED);
-        error.status = response.status;
-        throw error;
-      }
+      // ✅ TASK-A-006: Rate limiting aplicado
+      const data = await rateLimitedFetch(url, {}, { ttl: 600000 }); // Cache por 10 minutos
       
-      const data = await response.json();
       // Filtra apenas as ativas e ordena pela ordem de exibição definida no sistema
       return data
         .filter((p) => p.coreIsAtivo === "t")
@@ -517,17 +987,10 @@ export async function searchPatients(term) {
       const url = new URL(API_UTILS.buildUrl(baseUrl, API_ENDPOINTS.PATIENT_SEARCH));
       url.search = new URLSearchParams({ searchString: sanitizedTerm });
       
-      const response = await fetch(url, {
+      // ✅ TASK-A-006: Rate limiting aplicado com cache curto para buscas
+      const data = await rateLimitedFetch(url, {
         headers: API_HEADERS.AJAX,
-      });
-      
-      if (!response.ok) {
-        const error = new Error("Falha na comunicação com o servidor.");
-        error.status = response.status;
-        throw error;
-      }
-      
-      const data = await response.json();
+      }, { ttl: 60000 }); // Cache por 1 minuto para buscas
       
       return Array.isArray(data)
         ? data.map((p) => ({
@@ -1459,4 +1922,273 @@ export function resetCircuitBreaker() {
   apiErrorBoundary.circuitBreaker.failureCount = 0;
   apiErrorBoundary.circuitBreaker.lastFailureTime = null;
   console.log('[Circuit Breaker] Reset manual executado');
+}
+
+// ✅ TASK-A-006: Funções de Monitoramento de Rate Limiting
+/**
+ * Obtém as métricas atuais do rate limiter.
+ * @returns {object} Métricas detalhadas do rate limiting
+ */
+export function getRateLimitMetrics() {
+  return rateLimiter.getMetrics();
+}
+
+/**
+ * Obtém a atividade recente do rate limiter.
+ * @param {number} minutes - Número de minutos para buscar atividade (padrão: 5)
+ * @returns {Array} Lista de requisições recentes
+ */
+export function getRateLimitActivity(minutes = 5) {
+  return rateLimiter.monitor.getRecentActivity(minutes);
+}
+
+/**
+ * Limpa o cache do rate limiter.
+ * @returns {void}
+ */
+export function clearRateLimitCache() {
+  rateLimiter.clearCache();
+}
+
+/**
+ * Reseta as métricas do rate limiter.
+ * @returns {void}
+ */
+export function resetRateLimitMetrics() {
+  rateLimiter.resetMetrics();
+}
+
+/**
+ * Obtém o status atual do token bucket.
+ * @returns {object} Status do token bucket
+ */
+export function getTokenBucketStatus() {
+  return {
+    availableTokens: rateLimiter.tokenBucket.getAvailableTokens(),
+    capacity: rateLimiter.tokenBucket.capacity,
+    refillRate: rateLimiter.tokenBucket.refillRate,
+    waitTimeForNextToken: rateLimiter.tokenBucket.getWaitTime(1)
+  };
+}
+
+/**
+ * Obtém o status atual da fila de requisições.
+ * @returns {object} Status da fila
+ */
+export function getRequestQueueStatus() {
+  if (!rateLimiter.requestQueue) {
+    return { enabled: false };
+  }
+  
+  return {
+    enabled: true,
+    currentSize: rateLimiter.requestQueue.getQueueSize(),
+    maxSize: rateLimiter.requestQueue.maxSize,
+    processing: rateLimiter.requestQueue.processing
+  };
+}
+
+/**
+ * Obtém estatísticas detalhadas do cache.
+ * @returns {object} Estatísticas do cache
+ */
+export function getCacheStats() {
+  if (!rateLimiter.cache) {
+    return { enabled: false };
+  }
+  
+  return {
+    enabled: true,
+    ...rateLimiter.cache.getStats(),
+    defaultTTL: rateLimiter.cache.defaultTTL
+  };
+}
+
+/**
+ * Força a limpeza do cache expirado.
+ * @returns {void}
+ */
+export function cleanupExpiredCache() {
+  if (rateLimiter.cache) {
+    rateLimiter.cache.cleanup();
+  }
+}
+
+/**
+ * Obtém um relatório completo do sistema de rate limiting.
+ * @returns {object} Relatório completo
+ */
+export function getRateLimitReport() {
+  const metrics = getRateLimitMetrics();
+  const tokenBucket = getTokenBucketStatus();
+  const queue = getRequestQueueStatus();
+  const cache = getCacheStats();
+  const recentActivity = getRateLimitActivity(10); // Últimos 10 minutos
+  
+  return {
+    timestamp: new Date().toISOString(),
+    summary: {
+      totalRequests: metrics.totalRequests,
+      cacheHitRate: metrics.cacheHitRate,
+      errorRate: metrics.errorRate,
+      rateLimitRate: metrics.rateLimitRate,
+      averageWaitTime: metrics.averageWaitTime
+    },
+    tokenBucket,
+    queue,
+    cache,
+    recentActivity: {
+      count: recentActivity.length,
+      requests: recentActivity.slice(-10) // Últimas 10 requisições
+    },
+    recommendations: generateRateLimitRecommendations(metrics, tokenBucket, queue, cache)
+  };
+}
+
+/**
+ * Gera recomendações baseadas nas métricas atuais.
+ * @param {object} metrics - Métricas do rate limiter
+ * @param {object} tokenBucket - Status do token bucket
+ * @param {object} queue - Status da fila
+ * @param {object} cache - Status do cache
+ * @returns {Array} Lista de recomendações
+ */
+function generateRateLimitRecommendations(metrics, tokenBucket, queue, cache) {
+  const recommendations = [];
+  
+  // Análise de rate limiting
+  if (metrics.rateLimitRate > 0.3) {
+    recommendations.push({
+      type: 'warning',
+      category: 'rate_limit',
+      message: `Taxa de rate limiting alta (${(metrics.rateLimitRate * 100).toFixed(1)}%). Considere aumentar a capacidade do token bucket.`,
+      action: 'increase_capacity'
+    });
+  }
+  
+  // Análise de cache
+  if (cache.enabled && metrics.cacheHitRate < 0.5) {
+    recommendations.push({
+      type: 'info',
+      category: 'cache',
+      message: `Taxa de cache hit baixa (${(metrics.cacheHitRate * 100).toFixed(1)}%). Considere aumentar o TTL do cache.`,
+      action: 'increase_ttl'
+    });
+  }
+  
+  // Análise de erros
+  if (metrics.errorRate > 0.1) {
+    recommendations.push({
+      type: 'error',
+      category: 'errors',
+      message: `Taxa de erro alta (${(metrics.errorRate * 100).toFixed(1)}%). Verifique a conectividade e saúde do servidor.`,
+      action: 'check_server_health'
+    });
+  }
+  
+  // Análise da fila
+  if (queue.enabled && queue.currentSize > queue.maxSize * 0.8) {
+    recommendations.push({
+      type: 'warning',
+      category: 'queue',
+      message: `Fila de requisições quase cheia (${queue.currentSize}/${queue.maxSize}). Considere aumentar o tamanho da fila.`,
+      action: 'increase_queue_size'
+    });
+  }
+  
+  // Análise de tokens
+  if (tokenBucket.availableTokens < tokenBucket.capacity * 0.2) {
+    recommendations.push({
+      type: 'info',
+      category: 'tokens',
+      message: `Poucos tokens disponíveis (${tokenBucket.availableTokens}/${tokenBucket.capacity}). Sistema sob carga.`,
+      action: 'monitor_load'
+    });
+  }
+  
+  return recommendations;
+}
+
+/**
+ * Configura o rate limiter com novos parâmetros.
+ * @param {object} config - Nova configuração
+ * @returns {void}
+ */
+export function configureRateLimiter(config = {}) {
+  const {
+    tokensPerSecond,
+    burstCapacity,
+    queueMaxSize,
+    cacheDefaultTTL
+  } = config;
+  
+  console.log('[Rate Limiter] Reconfigurando com:', config);
+  
+  // Destruir instância atual
+  rateLimiter.destroy();
+  
+  // Criar nova instância com configuração atualizada
+  const newConfig = {
+    tokensPerSecond: tokensPerSecond || 2,
+    burstCapacity: burstCapacity || 10,
+    queueMaxSize: queueMaxSize || 50,
+    cacheDefaultTTL: cacheDefaultTTL || 300000,
+    enableCache: true,
+    enableQueue: true
+  };
+  
+  // Substituir instância global
+  Object.assign(rateLimiter, new RateLimiter(newConfig));
+  
+  console.log('[Rate Limiter] Reconfiguração concluída');
+}
+
+/**
+ * Salva as métricas atuais no storage para análise posterior.
+ * @returns {Promise<void>}
+ */
+export async function saveRateLimitMetrics() {
+  try {
+    const report = getRateLimitReport();
+    const stored = await api.storage.local.get({ rateLimitHistory: [] });
+    const history = stored.rateLimitHistory || [];
+    
+    // Manter apenas os últimos 100 relatórios
+    history.unshift(report);
+    if (history.length > 100) {
+      history.splice(100);
+    }
+    
+    await api.storage.local.set({ rateLimitHistory: history });
+    console.log('[Rate Limiter] Métricas salvas no storage');
+  } catch (error) {
+    console.warn('[Rate Limiter] Falha ao salvar métricas:', error);
+  }
+}
+
+/**
+ * Obtém o histórico de métricas salvas.
+ * @returns {Promise<Array>} Histórico de métricas
+ */
+export async function getRateLimitHistory() {
+  try {
+    const stored = await api.storage.local.get({ rateLimitHistory: [] });
+    return stored.rateLimitHistory || [];
+  } catch (error) {
+    console.warn('[Rate Limiter] Falha ao recuperar histórico:', error);
+    return [];
+  }
+}
+
+/**
+ * Limpa o histórico de métricas.
+ * @returns {Promise<void>}
+ */
+export async function clearRateLimitHistory() {
+  try {
+    await api.storage.local.remove('rateLimitHistory');
+    console.log('[Rate Limiter] Histórico de métricas limpo');
+  } catch (error) {
+    console.warn('[Rate Limiter] Falha ao limpar histórico:', error);
+  }
 }
