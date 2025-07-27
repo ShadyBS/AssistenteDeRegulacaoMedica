@@ -17,6 +17,257 @@ import { parseConsultasHTML } from "./consultation-parser.js";
 
 const api = getBrowserAPIInstance();
 
+// ✅ TASK-A-002: Error Boundaries e Circuit Breaker Pattern
+class CircuitBreaker {
+  constructor(threshold = 5, timeout = 60000, resetTimeout = 30000) {
+    this.threshold = threshold; // Número de falhas antes de abrir o circuito
+    this.timeout = timeout; // Timeout para requisições
+    this.resetTimeout = resetTimeout; // Tempo para tentar fechar o circuito
+    this.failureCount = 0;
+    this.lastFailureTime = null;
+    this.state = 'CLOSED'; // CLOSED, OPEN, HALF_OPEN
+  }
+
+  async execute(operation, operationName = 'API Operation') {
+    if (this.state === 'OPEN') {
+      if (Date.now() - this.lastFailureTime > this.resetTimeout) {
+        this.state = 'HALF_OPEN';
+        console.log(`[Circuit Breaker] Tentando fechar circuito para ${operationName}`);
+      } else {
+        const error = new Error(`Circuit breaker is OPEN for ${operationName}`);
+        error.circuitBreakerOpen = true;
+        throw error;
+      }
+    }
+
+    try {
+      const result = await Promise.race([
+        operation(),
+        new Promise((_, reject) => 
+          setTimeout(() => reject(new Error(`Timeout after ${this.timeout}ms`)), this.timeout)
+        )
+      ]);
+
+      // Sucesso - reset do circuit breaker
+      if (this.state === 'HALF_OPEN') {
+        this.state = 'CLOSED';
+        this.failureCount = 0;
+        console.log(`[Circuit Breaker] Circuito fechado para ${operationName}`);
+      }
+
+      return result;
+    } catch (error) {
+      this.failureCount++;
+      this.lastFailureTime = Date.now();
+
+      if (this.failureCount >= this.threshold) {
+        this.state = 'OPEN';
+        console.error(`[Circuit Breaker] Circuito aberto para ${operationName} após ${this.failureCount} falhas`);
+      }
+
+      throw error;
+    }
+  }
+
+  getState() {
+    return {
+      state: this.state,
+      failureCount: this.failureCount,
+      lastFailureTime: this.lastFailureTime
+    };
+  }
+}
+
+// ✅ TASK-A-002: Retry Logic com Backoff Exponencial
+class RetryHandler {
+  constructor(maxRetries = 3, baseDelay = 1000, maxDelay = 10000) {
+    this.maxRetries = maxRetries;
+    this.baseDelay = baseDelay;
+    this.maxDelay = maxDelay;
+  }
+
+  async execute(operation, operationName = 'API Operation') {
+    let lastError;
+    
+    for (let attempt = 0; attempt <= this.maxRetries; attempt++) {
+      try {
+        return await operation();
+      } catch (error) {
+        lastError = error;
+        
+        // Não fazer retry para erros que não são temporários
+        if (this.isNonRetryableError(error)) {
+          console.error(`[Retry Handler] Erro não recuperável em ${operationName}:`, error.message);
+          throw error;
+        }
+
+        if (attempt === this.maxRetries) {
+          console.error(`[Retry Handler] Falha final em ${operationName} após ${this.maxRetries + 1} tentativas`);
+          break;
+        }
+
+        const delay = Math.min(
+          this.baseDelay * Math.pow(2, attempt),
+          this.maxDelay
+        );
+        
+        console.warn(`[Retry Handler] Tentativa ${attempt + 1}/${this.maxRetries + 1} falhou para ${operationName}, tentando novamente em ${delay}ms:`, error.message);
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
+    }
+    
+    throw lastError;
+  }
+
+  isNonRetryableError(error) {
+    // Erros que não devem ser retentados
+    if (error.circuitBreakerOpen) return true;
+    if (error.message.includes('URL_BASE_NOT_CONFIGURED')) return true;
+    if (error.message.includes('inválido')) return true;
+    if (error.message.includes('necessário')) return true;
+    
+    // Códigos HTTP que não devem ser retentados
+    if (error.status) {
+      const nonRetryableStatuses = [400, 401, 403, 404, 422];
+      return nonRetryableStatuses.includes(error.status);
+    }
+    
+    return false;
+  }
+}
+
+// ✅ TASK-A-002: Logging Estruturado para Erros
+class ErrorLogger {
+  static log(error, context = {}) {
+    const timestamp = new Date().toISOString();
+    const errorInfo = {
+      timestamp,
+      message: error.message,
+      stack: error.stack,
+      name: error.name,
+      context,
+      userAgent: navigator.userAgent,
+      url: window.location?.href || 'extension-context'
+    };
+
+    // Log estruturado no console
+    console.error(`[API Error] ${timestamp}:`, errorInfo);
+
+    // Salvar no storage para debugging (últimos 50 erros)
+    this.saveToStorage(errorInfo).catch(storageError => {
+      console.warn('[Error Logger] Falha ao salvar erro no storage:', storageError);
+    });
+  }
+
+  static async saveToStorage(errorInfo) {
+    try {
+      const stored = await api.storage.local.get({ apiErrors: [] });
+      const errors = stored.apiErrors || [];
+      
+      // Manter apenas os últimos 50 erros
+      errors.unshift(errorInfo);
+      if (errors.length > 50) {
+        errors.splice(50);
+      }
+      
+      await api.storage.local.set({ apiErrors: errors });
+    } catch (error) {
+      // Falha silenciosa para não criar loop de erros
+    }
+  }
+
+  static async getStoredErrors() {
+    try {
+      const stored = await api.storage.local.get({ apiErrors: [] });
+      return stored.apiErrors || [];
+    } catch (error) {
+      console.warn('[Error Logger] Falha ao recuperar erros do storage:', error);
+      return [];
+    }
+  }
+
+  static async clearStoredErrors() {
+    try {
+      await api.storage.local.remove('apiErrors');
+      console.log('[Error Logger] Erros armazenados limpos');
+    } catch (error) {
+      console.warn('[Error Logger] Falha ao limpar erros do storage:', error);
+    }
+  }
+}
+
+// ✅ TASK-A-002: Wrapper para Operações de API com Error Boundaries
+class APIErrorBoundary {
+  constructor() {
+    this.circuitBreaker = new CircuitBreaker();
+    this.retryHandler = new RetryHandler();
+  }
+
+  async execute(operation, operationName = 'API Operation', options = {}) {
+    const {
+      enableRetry = true,
+      enableCircuitBreaker = true,
+      fallback = null,
+      context = {}
+    } = options;
+
+    try {
+      const wrappedOperation = async () => {
+        if (enableRetry) {
+          return await this.retryHandler.execute(operation, operationName);
+        } else {
+          return await operation();
+        }
+      };
+
+      if (enableCircuitBreaker) {
+        return await this.circuitBreaker.execute(wrappedOperation, operationName);
+      } else {
+        return await wrappedOperation();
+      }
+    } catch (error) {
+      // Log estruturado do erro
+      ErrorLogger.log(error, {
+        operationName,
+        context,
+        circuitBreakerState: this.circuitBreaker.getState()
+      });
+
+      // Tentar fallback se disponível
+      if (fallback && typeof fallback === 'function') {
+        try {
+          console.warn(`[API Error Boundary] Usando fallback para ${operationName}`);
+          return await fallback();
+        } catch (fallbackError) {
+          ErrorLogger.log(fallbackError, {
+            operationName: `${operationName} (fallback)`,
+            context
+          });
+          throw fallbackError;
+        }
+      }
+
+      // Re-throw o erro original se não há fallback
+      throw error;
+    }
+  }
+
+  getCircuitBreakerState() {
+    return this.circuitBreaker.getState();
+  }
+}
+
+// Instância global do Error Boundary
+const apiErrorBoundary = new APIErrorBoundary();
+
+// ✅ TASK-A-002: Função helper para criar fallbacks
+function createFallback(defaultValue, operationName) {
+  return () => {
+    console.warn(`[Fallback] Retornando valor padrão para ${operationName}`);
+    return Promise.resolve(defaultValue);
+  };
+}
+
 // Default configuration for batched API requests
 const DEFAULT_BATCH_CONFIG = {
   ATTACHMENT_BATCH_SIZE: CONFIG.API.BATCH_SIZE, // Process 5 attachments at a time
@@ -177,24 +428,30 @@ function getTextFromHTML(htmlString) {
  * @returns {Promise<Array<object>>} Uma lista de objetos de prioridade.
  */
 export async function fetchRegulationPriorities() {
-  const baseUrl = await getBaseUrl();
-  const url = API_UTILS.buildUrl(baseUrl, API_ENDPOINTS.REGULATION_PRIORITIES);
+  return await apiErrorBoundary.execute(
+    async () => {
+      const baseUrl = await getBaseUrl();
+      const url = API_UTILS.buildUrl(baseUrl, API_ENDPOINTS.REGULATION_PRIORITIES);
 
-  try {
-    const response = await fetch(url);
-    if (!response.ok) {
-      console.error(API_ERROR_MESSAGES.PRIORITIES_FETCH_FAILED);
-      return [];
+      const response = await fetch(url);
+      if (!response.ok) {
+        const error = new Error(API_ERROR_MESSAGES.PRIORITIES_FETCH_FAILED);
+        error.status = response.status;
+        throw error;
+      }
+      
+      const data = await response.json();
+      // Filtra apenas as ativas e ordena pela ordem de exibição definida no sistema
+      return data
+        .filter((p) => p.coreIsAtivo === "t")
+        .sort((a, b) => a.coreOrdemExibicao - b.coreOrdemExibicao);
+    },
+    'fetchRegulationPriorities',
+    {
+      fallback: createFallback([], 'fetchRegulationPriorities'),
+      context: { endpoint: API_ENDPOINTS.REGULATION_PRIORITIES }
     }
-    const data = await response.json();
-    // Filtra apenas as ativas e ordena pela ordem de exibição definida no sistema
-    return data
-      .filter((p) => p.coreIsAtivo === "t")
-      .sort((a, b) => a.coreOrdemExibicao - b.coreOrdemExibicao);
-  } catch (error) {
-    console.error("Erro de rede ao buscar prioridades:", error);
-    return []; // Retorna lista vazia em caso de falha de rede
-  }
+  );
 }
 
 /**
@@ -243,38 +500,52 @@ export async function searchPatients(term) {
   // Early exit for empty terms
   if (!term || term.length < 1) return [];
 
-  // Validate and sanitize the search term
-  const validation = validateSearchTerm(term);
-  if (!validation.valid) {
-    throw new Error(API_ERROR_MESSAGES.INVALID_SEARCH_TERM);
-  }
+  return await apiErrorBoundary.execute(
+    async () => {
+      // Validate and sanitize the search term
+      const validation = validateSearchTerm(term);
+      if (!validation.valid) {
+        throw new Error(API_ERROR_MESSAGES.INVALID_SEARCH_TERM);
+      }
 
-  const sanitizedTerm = sanitizeSearchTerm(term);
-  if (!sanitizedTerm) {
-    throw new Error("Search term cannot be empty after sanitization");
-  }
+      const sanitizedTerm = sanitizeSearchTerm(term);
+      if (!sanitizedTerm) {
+        throw new Error("Search term cannot be empty after sanitization");
+      }
 
-  const baseUrl = await getBaseUrl();
-  const url = new URL(API_UTILS.buildUrl(baseUrl, API_ENDPOINTS.PATIENT_SEARCH));
-  url.search = new URLSearchParams({ searchString: sanitizedTerm });
-  
-  const response = await fetch(url, {
-    headers: API_HEADERS.AJAX,
-  });
-  
-  if (!response.ok) handleFetchError(response);
-  const data = await response.json();
-  
-  return Array.isArray(data)
-    ? data.map((p) => ({
-        idp: p[0],
-        ids: p[1],
-        value: p[5],
-        cns: p[6],
-        dataNascimento: p[7],
-        cpf: p[15],
-      }))
-    : [];
+      const baseUrl = await getBaseUrl();
+      const url = new URL(API_UTILS.buildUrl(baseUrl, API_ENDPOINTS.PATIENT_SEARCH));
+      url.search = new URLSearchParams({ searchString: sanitizedTerm });
+      
+      const response = await fetch(url, {
+        headers: API_HEADERS.AJAX,
+      });
+      
+      if (!response.ok) {
+        const error = new Error("Falha na comunicação com o servidor.");
+        error.status = response.status;
+        throw error;
+      }
+      
+      const data = await response.json();
+      
+      return Array.isArray(data)
+        ? data.map((p) => ({
+            idp: p[0],
+            ids: p[1],
+            value: p[5],
+            cns: p[6],
+            dataNascimento: p[7],
+            cpf: p[15],
+          }))
+        : [];
+    },
+    'searchPatients',
+    {
+      fallback: createFallback([], 'searchPatients'),
+      context: { searchTerm: term?.substring(0, 10) + '...' }
+    }
+  );
 }
 
 export async function fetchVisualizaUsuario({ idp, ids }) {
@@ -486,49 +757,59 @@ export async function fetchCadsusData({ cpf, cns, skipValidation = false }) {
     return null;
   }
 
-  // Só validar se não for uma busca interna (quando skipValidation for false)
-  if (!skipValidation) {
-    // ✅ SEGURANÇA: Usando imports estáticos já disponíveis no topo do arquivo
+  return await apiErrorBoundary.execute(
+    async () => {
+      // Só validar se não for uma busca interna (quando skipValidation for false)
+      if (!skipValidation) {
+        // ✅ SEGURANÇA: Usando imports estáticos já disponíveis no topo do arquivo
 
-    // Validate CPF if provided
-    if (cpf) {
-      const cpfValidation = validateCPF(cpf);
-      if (!cpfValidation.valid) {
-        throw new Error(`CPF inválido: ${cpfValidation.message}`);
+        // Validate CPF if provided
+        if (cpf) {
+          const cpfValidation = validateCPF(cpf);
+          if (!cpfValidation.valid) {
+            throw new Error(`CPF inválido: ${cpfValidation.message}`);
+          }
+        }
+
+        // Validate CNS if provided
+        if (cns) {
+          const cnsValidation = validateCNS(cns);
+          if (!cnsValidation.valid) {
+            throw new Error(`CNS inválido: ${cnsValidation.message}`);
+          }
+        }
       }
-    }
 
-    // Validate CNS if provided
-    if (cns) {
-      const cnsValidation = validateCNS(cns);
-      if (!cnsValidation.valid) {
-        throw new Error(`CNS inválido: ${cnsValidation.message}`);
+      const baseUrl = await getBaseUrl();
+      const url = new URL(API_UTILS.buildUrl(baseUrl, API_ENDPOINTS.CADSUS_SEARCH));
+
+      const params = API_UTILS.buildCadsusParams({ cpf, cns });
+      url.search = params.toString();
+
+      const response = await fetch(url, {
+        headers: API_HEADERS.AJAX,
+      });
+
+      if (!response.ok) {
+        const error = new Error(API_ERROR_MESSAGES.CADSUS_SEARCH_FAILED);
+        error.status = response.status;
+        throw error;
       }
+
+      const data = await response.json();
+
+      if (data && data.rows && data.rows.length > 0) {
+        return data.rows[0].cell;
+      }
+
+      return null;
+    },
+    'fetchCadsusData',
+    {
+      fallback: createFallback(null, 'fetchCadsusData'),
+      context: { cpf: cpf ? '***' : null, cns: cns ? '***' : null }
     }
-  }
-
-  const baseUrl = await getBaseUrl();
-  const url = new URL(API_UTILS.buildUrl(baseUrl, API_ENDPOINTS.CADSUS_SEARCH));
-
-  const params = API_UTILS.buildCadsusParams({ cpf, cns });
-  url.search = params.toString();
-
-  const response = await fetch(url, {
-    headers: API_HEADERS.AJAX,
-  });
-
-  if (!response.ok) {
-    console.warn(`${API_ERROR_MESSAGES.CADSUS_SEARCH_FAILED} com status ${response.status}.`);
-    return null;
-  }
-
-  const data = await response.json();
-
-  if (data && data.rows && data.rows.length > 0) {
-    return data.rows[0].cell;
-  }
-
-  return null;
+  );
 }
 
 export async function fetchAppointmentDetails({ idp, ids }) {
@@ -1084,70 +1365,98 @@ export async function fetchAllTimelineData({
  * @returns {Promise<boolean>} True se a requisição foi bem-sucedida, false caso contrário.
  */
 export async function keepSessionAlive() {
-  try {
-    const baseUrl = await getBaseUrl();
-    const url = API_UTILS.buildUrl(baseUrl, API_ENDPOINTS.SYSTEM_DATETIME);
+  return await apiErrorBoundary.execute(
+    async () => {
+      const baseUrl = await getBaseUrl();
+      const url = API_UTILS.buildUrl(baseUrl, API_ENDPOINTS.SYSTEM_DATETIME);
 
-    const response = await fetch(url, {
-      method: "GET",
-      headers: API_HEADERS.KEEP_ALIVE,
-      cache: "no-cache",
-    });
+      const response = await fetch(url, {
+        method: "GET",
+        headers: API_HEADERS.KEEP_ALIVE,
+        cache: "no-cache",
+      });
 
-    if (!response.ok) {
-      console.warn(
-        `${API_ERROR_MESSAGES.KEEP_ALIVE_FAILED} com status ${response.status} - ${response.statusText}`
-      );
+      if (!response.ok) {
+        // Se for erro 401 ou 403, provavelmente a sessão expirou
+        if (response.status === HTTP_STATUS.UNAUTHORIZED || response.status === HTTP_STATUS.FORBIDDEN) {
+          const error = new Error("Sessão expirou - keep-alive não pode manter a sessão ativa");
+          error.status = response.status;
+          throw error;
+        }
 
-      // Se for erro 401 ou 403, provavelmente a sessão expirou
-      if (response.status === HTTP_STATUS.UNAUTHORIZED || response.status === HTTP_STATUS.FORBIDDEN) {
-        console.error(
-          "Sessão expirou - keep-alive não pode manter a sessão ativa"
-        );
+        const error = new Error(`${API_ERROR_MESSAGES.KEEP_ALIVE_FAILED} com status ${response.status} - ${response.statusText}`);
+        error.status = response.status;
+        throw error;
       }
 
-      return false;
-    }
-
-    if (!API_VALIDATIONS.isJsonResponse(response)) {
-      console.warn(API_ERROR_MESSAGES.KEEP_ALIVE_NOT_JSON);
-      return false;
-    }
-
-    const data = await response.json();
-
-    // Verifica se a resposta contém dados válidos
-    // A resposta pode ser um objeto com propriedades ou uma string direta
-    if (data) {
-      // Se for um objeto com propriedades específicas
-      if (typeof data === 'object' && (data.dataHora || data.data || data.hora)) {
-        console.log(
-          `Sessão mantida ativa: ${data.dataHora || data.data || "OK"}`
-        );
-        return true;
+      if (!API_VALIDATIONS.isJsonResponse(response)) {
+        throw new Error(API_ERROR_MESSAGES.KEEP_ALIVE_NOT_JSON);
       }
-      // Se for uma string direta com data/hora (formato ISO ou similar)
-      else if (typeof data === 'string' && data.trim().length > 0) {
-        console.log(`Sessão mantida ativa: ${data}`);
-        return true;
-      }
-      // Se for qualquer outro valor não-nulo/não-vazio
-      else if (data !== null && data !== undefined && data !== '') {
-        console.log(`Sessão mantida ativa: ${JSON.stringify(data)}`);
-        return true;
-      }
-    }
-    
-    console.warn(API_ERROR_MESSAGES.KEEP_ALIVE_INVALID_RESPONSE);
-    return false;
-  } catch (error) {
-    console.error("Erro ao manter sessão ativa:", error);
 
-    // Se for erro de rede, pode ser problema de conectividade
-    if (error.name === "TypeError" && error.message.includes("fetch")) {
-      console.error("Erro de rede no keep-alive - verifique a conectividade");
-    }
+      const data = await response.json();
 
-    return false;
-  }
+      // Verifica se a resposta contém dados válidos
+      // A resposta pode ser um objeto com propriedades ou uma string direta
+      if (data) {
+        // Se for um objeto com propriedades específicas
+        if (typeof data === 'object' && (data.dataHora || data.data || data.hora)) {
+          console.log(`Sessão mantida ativa: ${data.dataHora || data.data || "OK"}`);
+          return true;
+        }
+        // Se for uma string direta com data/hora (formato ISO ou similar)
+        else if (typeof data === 'string' && data.trim().length > 0) {
+          console.log(`Sessão mantida ativa: ${data}`);
+          return true;
+        }
+        // Se for qualquer outro valor não-nulo/não-vazio
+        else if (data !== null && data !== undefined && data !== '') {
+          console.log(`Sessão mantida ativa: ${JSON.stringify(data)}`);
+          return true;
+        }
+      }
+      
+      throw new Error(API_ERROR_MESSAGES.KEEP_ALIVE_INVALID_RESPONSE);
+    },
+    'keepSessionAlive',
+    {
+      fallback: createFallback(false, 'keepSessionAlive'),
+      context: { endpoint: API_ENDPOINTS.SYSTEM_DATETIME }
+    }
+  );
+}
+
+// ✅ TASK-A-002: Funções de Debugging e Monitoramento
+/**
+ * Obtém os erros armazenados para debugging.
+ * @returns {Promise<Array>} Lista dos últimos erros de API
+ */
+export async function getAPIErrors() {
+  return await ErrorLogger.getStoredErrors();
+}
+
+/**
+ * Limpa os erros armazenados.
+ * @returns {Promise<void>}
+ */
+export async function clearAPIErrors() {
+  return await ErrorLogger.clearStoredErrors();
+}
+
+/**
+ * Obtém o estado atual do Circuit Breaker.
+ * @returns {object} Estado do circuit breaker
+ */
+export function getCircuitBreakerState() {
+  return apiErrorBoundary.getCircuitBreakerState();
+}
+
+/**
+ * Força o reset do Circuit Breaker (para debugging).
+ * @returns {void}
+ */
+export function resetCircuitBreaker() {
+  apiErrorBoundary.circuitBreaker.state = 'CLOSED';
+  apiErrorBoundary.circuitBreaker.failureCount = 0;
+  apiErrorBoundary.circuitBreaker.lastFailureTime = null;
+  console.log('[Circuit Breaker] Reset manual executado');
 }

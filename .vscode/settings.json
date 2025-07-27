@@ -1,6 +1,6 @@
 {
   "codium.codeCompletion.enable": false,
-  
+
   // === EDITOR SETTINGS ===
   "editor.tabSize": 2,
   "editor.insertSpaces": true,
@@ -8,13 +8,13 @@
   "editor.trimAutoWhitespace": true,
   "editor.formatOnSave": true,
   "editor.codeActionsOnSave": {
-    "source.fixAll.eslint": true,
-    "source.organizeImports": true
+    "source.fixAll.eslint": "explicit",
+    "source.organizeImports": "explicit"
   },
   "editor.rulers": [80, 120],
   "editor.wordWrap": "bounded",
   "editor.wordWrapColumn": 120,
-  
+
   // === FILES SETTINGS ===
   "files.eol": "\n",
   "files.trimTrailingWhitespace": true,
@@ -22,7 +22,7 @@
   "files.trimFinalNewlines": true,
   "files.encoding": "utf8",
   "files.autoSave": "onFocusChange",
-  
+
   // === SEARCH SETTINGS ===
   "search.exclude": {
     "**/node_modules": true,
@@ -41,7 +41,7 @@
     "**/Thumbs.db": true,
     "**/*.log": true
   },
-  
+
   // === EXTENSION SPECIFIC ===
   "eslint.enable": true,
   "eslint.validate": ["javascript"],
@@ -50,7 +50,7 @@
   "javascript.format.semicolons": "insert",
   "javascript.suggest.autoImports": true,
   "javascript.updateImportsOnFileMove.enabled": "always",
-  
+
   // === JSON SCHEMAS ===
   "json.format.enable": true,
   "json.schemas": [
@@ -63,7 +63,7 @@
       "url": "https://json.schemastore.org/package"
     }
   ],
-  
+
   // === CSS/TAILWIND ===
   "css.validate": true,
   "css.lint.unknownAtRules": "ignore",
@@ -71,26 +71,26 @@
     "html": "html",
     "javascript": "javascript"
   },
-  
+
   // === TERMINAL SETTINGS ===
   "terminal.integrated.defaultProfile.windows": "PowerShell",
-  
+
   // === DEBUGGING SETTINGS ===
   "debug.console.fontSize": 12,
   "debug.inlineValues": "auto",
   "debug.showBreakpointsInOverviewRuler": true,
-  
+
   // === GIT SETTINGS ===
   "git.enableSmartCommit": true,
   "git.confirmSync": false,
   "git.autofetch": true,
-  
+
   // === LANGUAGE SPECIFIC ===
   "[javascript]": {
     "editor.defaultFormatter": "vscode.typescript-language-features",
     "editor.formatOnSave": true,
     "editor.codeActionsOnSave": {
-      "source.fixAll.eslint": true
+      "source.fixAll.eslint": "explicit"
     }
   },
   "[json]": {
@@ -109,7 +109,7 @@
     "editor.wordWrap": "on",
     "editor.formatOnSave": false
   },
-  
+
   // === PROJECT SPECIFIC ===
   "files.associations": {
     "*.json": "jsonc",
@@ -117,7 +117,7 @@
     "*config.js": "javascript",
     "*Config.js": "javascript"
   },
-  
+
   // === PERFORMANCE ===
   "telemetry.telemetryLevel": "off",
   "npm.enableScriptExplorer": true,
