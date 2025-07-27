@@ -329,8 +329,9 @@ class ExtensionBuilder {
     this.log(`⚡ Otimizando assets para ${target}...`);
     
     try {
-      // Minificar JavaScript files se necessário
+      // Otimiza JavaScript files
       const jsFiles = await this.findFiles(outputDir, '.js');
+      let optimizedCount = 0;
       
       for (const jsFile of jsFiles) {
         // Pular arquivos já minificados ou bibliotecas
@@ -338,17 +339,151 @@ class ExtensionBuilder {
           continue;
         }
         
-        // Aqui poderia adicionar minificação de JS se necessário
-        // Por enquanto, apenas log
-        if (this.verbose) {
-          this.log(`   • JS: ${path.basename(jsFile)}`);
+        // Remove comentários e espaços desnecessários
+        const content = await fs.readFile(jsFile, 'utf8');
+        const originalSize = content.length;
+        
+        // Otimizações básicas
+        let optimized = content
+          // Remove comentários de linha
+          .replace(/\/\/.*$/gm, '')
+          // Remove comentários de bloco (preserva JSDoc importantes)
+          .replace(/\/\*(?!\*\s*@)[\s\S]*?\*\//g, '')
+          // Remove espaços múltiplos
+          .replace(/\s+/g, ' ')
+          // Remove espaços antes/depois de operadores
+          .replace(/\s*([{}();,=])\s*/g, '$1')
+          // Remove quebras de linha desnecessárias
+          .replace(/\n\s*\n/g, '\n')
+          .trim();
+        
+        if (optimized.length < originalSize) {
+          await fs.writeFile(jsFile, optimized);
+          optimizedCount++;
+          
+          if (this.verbose) {
+            const savings = ((originalSize - optimized.length) / originalSize * 100).toFixed(1);
+            this.log(`   • ${path.basename(jsFile)}: -${savings}%`);
+          }
         }
       }
       
-      this.log(`   ✓ ${jsFiles.length} arquivos JS processados`);
+      // Otimiza CSS files
+      const cssFiles = await this.findFiles(outputDir, '.css');
+      for (const cssFile of cssFiles) {
+        if (cssFile.includes('.min.')) continue;
+        
+        const content = await fs.readFile(cssFile, 'utf8');
+        const originalSize = content.length;
+        
+        // Otimizações básicas de CSS
+        let optimized = content
+          // Remove comentários
+          .replace(/\/\*[\s\S]*?\*\//g, '')
+          // Remove espaços desnecessários
+          .replace(/\s+/g, ' ')
+          // Remove espaços ao redor de caracteres especiais
+          .replace(/\s*([{}:;,>+~])\s*/g, '$1')
+          // Remove último ponto e vírgula antes de }
+          .replace(/;}/g, '}')
+          .trim();
+        
+        if (optimized.length < originalSize) {
+          await fs.writeFile(cssFile, optimized);
+          
+          if (this.verbose) {
+            const savings = ((originalSize - optimized.length) / originalSize * 100).toFixed(1);
+            this.log(`   • ${path.basename(cssFile)}: -${savings}%`);
+          }
+        }
+      }
+      
+      // Remove arquivos desnecessários
+      await this.removeUnnecessaryFiles(outputDir);
+      
+      this.log(`   ✓ ${optimizedCount} arquivos JS otimizados`);
       
     } catch (error) {
       this.log(`   ⚠️  Erro na otimização: ${error.message}`, 'warn');
+    }
+  }
+
+  /**
+   * Remove arquivos desnecessários do build
+   */
+  async removeUnnecessaryFiles(outputDir) {
+    const unnecessaryPatterns = [
+      '**/*.map', // Source maps
+      '**/*.md',  // Documentação
+      '**/*.txt', // Arquivos de texto
+      '**/LICENSE*', // Licenças
+      '**/CHANGELOG*', // Changelogs
+      '**/.DS_Store', // macOS
+      '**/Thumbs.db', // Windows
+      '**/*.log' // Logs
+    ];
+    
+    for (const pattern of unnecessaryPatterns) {
+      try {
+        const files = await this.findFilesByPattern(outputDir, pattern);
+        for (const file of files) {
+          await fs.remove(file);
+          if (this.verbose) {
+            this.log(`   - Removido: ${path.relative(outputDir, file)}`);
+          }
+        }
+      } catch (error) {
+        // Ignora erros de arquivos não encontrados
+      }
+    }
+  }
+
+  /**
+   * Encontra arquivos por padrão glob
+   */
+  async findFilesByPattern(dir, pattern) {
+    const files = [];
+    
+    // Implementação simples sem dependência externa
+    const glob = (dir, pattern) => {
+      const results = [];
+      const items = fs.readdirSync(dir);
+      
+      for (const item of items) {
+        const fullPath = path.join(dir, item);
+        const stats = fs.statSync(fullPath);
+        
+        if (stats.isDirectory()) {
+          results.push(...glob(fullPath, pattern));
+        } else {
+          // Verifica padrões simples
+          if (pattern.includes('*.map') && item.endsWith('.map')) {
+            results.push(fullPath);
+          } else if (pattern.includes('*.md') && item.endsWith('.md')) {
+            results.push(fullPath);
+          } else if (pattern.includes('*.txt') && item.endsWith('.txt')) {
+            results.push(fullPath);
+          } else if (pattern.includes('LICENSE') && item.includes('LICENSE')) {
+            results.push(fullPath);
+          } else if (pattern.includes('CHANGELOG') && item.includes('CHANGELOG')) {
+            results.push(fullPath);
+          } else if (pattern.includes('.DS_Store') && item === '.DS_Store') {
+            results.push(fullPath);
+          } else if (pattern.includes('Thumbs.db') && item === 'Thumbs.db') {
+            results.push(fullPath);
+          } else if (pattern.includes('*.log') && item.endsWith('.log')) {
+            results.push(fullPath);
+          }
+        }
+      }
+      
+      return results;
+    };
+    
+    try {
+      return glob(dir, pattern);
+    } catch (error) {
+      return [];
     }
   }
 

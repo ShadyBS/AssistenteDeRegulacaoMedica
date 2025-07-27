@@ -1,17 +1,13 @@
 {
-  "timestamp": "2025-07-27T12:43:30.230Z",
+  "timestamp": "2025-07-27T13:28:28.854Z",
   "summary": {
-    "errors": 2,
+    "errors": 0,
     "warnings": 2,
     "fixes": 0,
-    "status": "FAIL"
+    "status": "PASS"
   },
   "details": {
-    "errors": [
-      "sorter.js: Uso potencialmente inseguro de innerHTML com concatenação (1 ocorrência(s))",
-      "sorter.js: Uso potencialmente inseguro de innerHTML com concatenação (1 ocorrência(s))",
-      "\n❌ Validação falhou - corrija os erros antes de continuar"
-    ],
+    "errors": [],
     "warnings": [
       "Firefox pode não suportar service_worker completamente (manifest.json)",
       "Problemas encontrados no código JavaScript"

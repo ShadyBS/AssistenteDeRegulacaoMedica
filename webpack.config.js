@@ -1,11 +1,13 @@
 /**
  * Webpack Configuration - Assistente de Regulação Médica
  * 
- * Configuração para build de extensão de navegador com suporte a:
+ * Configuração otimizada para build de extensão de navegador com:
  * - Chrome/Edge (Manifest V3)
  * - Firefox (Manifest V3)
- * - Hot reload para desenvolvimento
- * - Otimizações para produção
+ * - Tree shaking agressivo
+ * - Code splitting inteligente
+ * - Bundle size otimizado
+ * - Lazy loading de módulos
  */
 
 const path = require('path');
@@ -13,13 +15,16 @@ const fs = require('fs');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const TerserPlugin = require('terser-webpack-plugin');
+const { BundleAnalyzerPlugin } = require('webpack-bundle-analyzer');
 
 module.exports = (env, argv) => {
   const isProduction = argv.mode === 'production';
   const target = env.target || 'chrome'; // chrome or firefox
   const isDevelopment = !isProduction;
+  const analyze = env.analyze === 'true';
   
   console.log(`🔧 Webpack build: ${target} (${isProduction ? 'production' : 'development'})`);
+  if (analyze) console.log('📊 Bundle analysis enabled');
   
   // Configurações específicas por target
   const targetConfigs = {
@@ -45,48 +50,83 @@ module.exports = (env, argv) => {
     // Modo de desenvolvimento ou produção
     mode: isProduction ? 'production' : 'development',
     
-    // Source maps para debugging
-    devtool: isProduction ? 'source-map' : 'cheap-module-source-map',
+    // Source maps otimizados
+    devtool: isProduction ? false : 'cheap-module-source-map', // Remove source maps em produção para reduzir tamanho
     
-    // Entry points para diferentes scripts da extensão
+    // Entry points otimizados com lazy loading
     entry: {
+      // Core scripts (sempre carregados)
       background: './background.js',
       'content-script': './content-script.js',
-      sidebar: './sidebar.js',
-      options: './options.js',
-      // Adicione outros entry points conforme necessário
+      
+      // UI scripts (carregados sob demanda)
+      sidebar: {
+        import: './sidebar.js',
+        dependOn: 'shared'
+      },
+      options: {
+        import: './options.js', 
+        dependOn: 'shared'
+      },
+      
+      // Shared dependencies
+      shared: ['./api-constants.js', './validation.js', './utils.js']
     },
     
-    // Configuração de output
+    // Configuração de output otimizada
     output: {
       path: config.outputPath,
-      filename: '[name].js',
-      clean: true, // Limpa o diretório de output antes do build
+      filename: (pathData) => {
+        // Nomes otimizados para cache busting
+        const isShared = pathData.chunk.name === 'shared';
+        return isShared ? 'shared/[name].[contenthash:8].js' : '[name].js';
+      },
+      chunkFilename: 'chunks/[name].[contenthash:8].js',
+      clean: true,
+      // Configurações otimizadas para extensões
       environment: {
-        // Configurações para compatibilidade com extensões
-        arrowFunction: false,
+        arrowFunction: true, // Habilita arrow functions para código mais compacto
         bigIntLiteral: false,
-        const: false,
-        destructuring: false,
-        dynamicImport: false,
-        forOf: false,
+        const: true, // Habilita const para melhor otimização
+        destructuring: true, // Habilita destructuring
+        dynamicImport: false, // Desabilita dynamic imports por segurança
+        forOf: true,
         module: false,
       },
     },
     
-    // Configuração de módulos
+    // Configuração de módulos otimizada
     module: {
       rules: [
-        // CSS/Tailwind
+        // CSS/Tailwind com otimizações
         {
           test: /\.css$/i,
           use: [
             isProduction ? MiniCssExtractPlugin.loader : 'style-loader',
-            'css-loader',
+            {
+              loader: 'css-loader',
+              options: {
+                importLoaders: 1,
+                modules: false,
+                sourceMap: !isProduction
+              }
+            },
+            // PostCSS para otimizações adicionais
+            {
+              loader: 'postcss-loader',
+              options: {
+                postcssOptions: {
+                  plugins: [
+                    ['autoprefixer'],
+                    ...(isProduction ? [['cssnano', { preset: 'default' }]] : [])
+                  ]
+                }
+              }
+            }
           ],
         },
         
-        // JavaScript (se precisar de transpilação)
+        // JavaScript com otimizações agressivas
         {
           test: /\.js$/,
           exclude: /node_modules/,
@@ -99,43 +139,74 @@ module.exports = (env, argv) => {
                     chrome: '88',
                     firefox: '78'
                   },
-                  modules: false
+                  modules: false, // Preserva ES modules para tree shaking
+                  useBuiltIns: 'usage',
+                  corejs: 3,
+                  // Otimizações específicas
+                  bugfixes: true,
+                  shippedProposals: true
                 }]
-              ]
+              ],
+              plugins: [
+                // Plugins para redução de bundle size
+                ...(isProduction ? [
+                  ['transform-remove-console', { exclude: ['error', 'warn'] }],
+                  ['transform-remove-debugger']
+                ] : [])
+              ],
+              // Cache para builds mais rápidos
+              cacheDirectory: true,
+              cacheCompression: false
             }
           }
         },
         
-        // Assets (imagens, ícones, etc.)
+        // Assets otimizados
         {
           test: /\.(png|jpg|jpeg|gif|svg|ico)$/i,
-          type: 'asset/resource',
+          type: 'asset',
+          parser: {
+            dataUrlCondition: {
+              maxSize: 8 * 1024 // 8kb - inline pequenos assets
+            }
+          },
           generator: {
-            filename: 'assets/[name][ext]'
+            filename: 'assets/[name].[hash:8][ext]'
           }
         },
         
-        // Fonts
+        // Fonts otimizados
         {
           test: /\.(woff|woff2|eot|ttf|otf)$/i,
           type: 'asset/resource',
           generator: {
-            filename: 'fonts/[name][ext]'
+            filename: 'fonts/[name].[hash:8][ext]'
           }
         },
       ],
     },
     
-    // Plugins
+    // Plugins otimizados
     plugins: [
-      // Extração de CSS em produção
+      // Extração de CSS otimizada
       ...(isProduction ? [
         new MiniCssExtractPlugin({
-          filename: '[name].css',
+          filename: 'styles/[name].[contenthash:8].css',
+          chunkFilename: 'styles/[name].[contenthash:8].css',
+          ignoreOrder: true // Ignora ordem de CSS para melhor otimização
         })
       ] : []),
       
-      // Copia arquivos estáticos
+      // Bundle analyzer (apenas quando solicitado)
+      ...(analyze ? [
+        new BundleAnalyzerPlugin({
+          analyzerMode: 'static',
+          openAnalyzer: false,
+          reportFilename: `bundle-analysis-${target}.html`
+        })
+      ] : []),
+      
+      // Copia arquivos estáticos com otimizações
       new CopyWebpackPlugin({
         patterns: [
           // Manifest específico do target
@@ -145,9 +216,8 @@ module.exports = (env, argv) => {
             transform(content) {
               const manifest = JSON.parse(content.toString());
               
-              // Aplicar transformações específicas se necessário
+              // Otimizações específicas do target
               if (target === 'chrome') {
-                // Otimizações específicas para Chrome
                 if (manifest.background && manifest.background.scripts) {
                   manifest.background = {
                     service_worker: manifest.background.scripts[0]
@@ -155,24 +225,40 @@ module.exports = (env, argv) => {
                 }
               }
               
-              return JSON.stringify(manifest, null, 2);
+              // Remove campos desnecessários em produção
+              if (isProduction) {
+                delete manifest.developer;
+                delete manifest.homepage_url;
+              }
+              
+              return JSON.stringify(manifest, null, isProduction ? 0 : 2);
             }
           },
           
-          // HTML files
+          // HTML files com minificação
           {
             from: '*.html',
             to: '[name][ext]',
+            transform: isProduction ? (content) => {
+              // Minificação básica de HTML
+              return content.toString()
+                .replace(/\s+/g, ' ')
+                .replace(/>\s+</g, '><')
+                .trim();
+            } : undefined,
             globOptions: {
               ignore: ['**/node_modules/**']
             }
           },
           
-          // Ícones
+          // Ícones (apenas necessários)
           {
             from: 'icons/',
             to: 'icons/',
-            noErrorOnMissing: true
+            noErrorOnMissing: true,
+            globOptions: {
+              ignore: isProduction ? ['**/*.svg'] : [] // Remove SVGs em produção se não usados
+            }
           },
           
           // CSS compilado do Tailwind
@@ -182,146 +268,219 @@ module.exports = (env, argv) => {
             noErrorOnMissing: true
           },
           
-          // Outros assets necessários
+          // Browser polyfill (apenas se necessário)
           {
             from: 'browser-polyfill.js',
             to: 'browser-polyfill.js',
             noErrorOnMissing: true
           },
           
-          // Arquivos de configuração e dados
+          // Arquivos essenciais apenas
           {
-            from: '*-config.js',
-            to: '[name][ext]',
-            noErrorOnMissing: true
+            from: 'api-constants.js',
+            to: 'api-constants.js'
           },
-          
-          // Managers
           {
-            from: '*Manager.js',
-            to: '[name][ext]',
-            noErrorOnMissing: true
-          },
-          
-          // Outros arquivos JS necessários
-          {
-            from: 'api*.js',
-            to: '[name][ext]',
-            noErrorOnMissing: true
+            from: 'validation.js', 
+            to: 'validation.js'
           },
           {
             from: 'utils.js',
-            to: 'utils.js',
-            noErrorOnMissing: true
+            to: 'utils.js'
           },
+          
+          // Managers (lazy loaded)
           {
-            from: 'validation.js',
-            to: 'validation.js',
-            noErrorOnMissing: true
-          },
-          {
-            from: 'store.js',
-            to: 'store.js',
-            noErrorOnMissing: true
-          },
-          {
-            from: 'renderers.js',
-            to: 'renderers.js',
+            from: '*Manager.js',
+            to: 'managers/[name][ext]',
             noErrorOnMissing: true
           },
           
-          // UI components
+          // API files
+          {
+            from: 'api.js',
+            to: 'api.js'
+          },
+          {
+            from: 'store.js',
+            to: 'store.js'
+          },
+          {
+            from: 'renderers.js',
+            to: 'renderers.js'
+          },
+          
+          // UI components (apenas se existirem)
           {
             from: 'ui/',
             to: 'ui/',
-            noErrorOnMissing: true
+            noErrorOnMissing: true,
+            globOptions: {
+              ignore: isProduction ? ['**/*.md', '**/*.txt'] : []
+            }
           }
         ],
       }),
     ],
     
-    // Otimizações
+    // Otimizações agressivas
     optimization: {
       minimize: isProduction,
       minimizer: [
         new TerserPlugin({
           terserOptions: {
             compress: {
-              drop_console: isProduction, // Remove console.log em produção
+              // Otimizações agressivas para redução de tamanho
+              drop_console: isProduction,
               drop_debugger: isProduction,
+              pure_funcs: isProduction ? ['console.log', 'console.info', 'console.debug'] : [],
+              passes: 2, // Múltiplas passadas de otimização
+              unsafe: false, // Mantém segurança para extensões
+              unsafe_comps: false,
+              unsafe_math: false,
+              unsafe_proto: false,
+              // Otimizações específicas
+              dead_code: true,
+              evaluate: true,
+              if_return: true,
+              join_vars: true,
+              reduce_vars: true,
+              unused: true,
+              // Preserva funcionalidade de extensão
+              keep_fargs: false,
+              keep_infinity: true
             },
             mangle: {
-              // Preserva nomes de funções importantes para extensões
+              // Preserva nomes importantes para extensões
               keep_fnames: /^(chrome|browser|webextension)/,
+              reserved: ['chrome', 'browser', 'webextension'],
+              safari10: true
             },
             format: {
-              comments: false, // Remove comentários
+              comments: false,
+              ascii_only: true, // Melhor compatibilidade
+              ecma: 2018
             },
+            ecma: 2018,
+            safari10: true
           },
           extractComments: false,
+          parallel: true
         }),
       ],
       
-      // Split chunks para otimização (cuidado com extensões)
+      // Code splitting inteligente
       splitChunks: {
         chunks: 'all',
+        minSize: 20000, // 20kb mínimo para criar chunk
+        maxSize: 200000, // 200kb máximo por chunk
         cacheGroups: {
+          // Vendor libraries
           vendor: {
             test: /[\\/]node_modules[\\/]/,
             name: 'vendors',
             chunks: 'all',
+            priority: 10,
+            reuseExistingChunk: true
           },
+          
+          // Shared utilities
+          shared: {
+            name: 'shared',
+            minChunks: 2,
+            chunks: 'all',
+            priority: 5,
+            reuseExistingChunk: true,
+            test: /\.(js)$/,
+            enforce: true
+          },
+          
+          // CSS comum
+          styles: {
+            name: 'styles',
+            test: /\.css$/,
+            chunks: 'all',
+            priority: 15,
+            reuseExistingChunk: true
+          }
         },
       },
+      
+      // Tree shaking agressivo
+      usedExports: true,
+      sideEffects: false, // Habilita tree shaking agressivo
+      
+      // Otimização de módulos
+      moduleIds: isProduction ? 'deterministic' : 'named',
+      chunkIds: isProduction ? 'deterministic' : 'named',
+      
+      // Concatenação de módulos
+      concatenateModules: isProduction,
+      
+      // Remoção de módulos vazios
+      removeEmptyChunks: true,
+      
+      // Merge de chunks duplicados
+      mergeDuplicateChunks: true,
+      
+      // Otimização de imports
+      providedExports: true,
+      innerGraph: true
     },
     
-    // Configurações de resolução
+    // Configurações de resolução otimizadas
     resolve: {
       extensions: ['.js', '.json'],
       alias: {
-        // Aliases úteis para imports
+        // Aliases para imports mais eficientes
         '@': path.resolve(__dirname),
         '@ui': path.resolve(__dirname, 'ui'),
         '@managers': path.resolve(__dirname),
+        '@utils': path.resolve(__dirname, 'utils.js'),
+        '@api': path.resolve(__dirname, 'api.js'),
+        '@constants': path.resolve(__dirname, 'api-constants.js')
       },
+      // Cache de resolução
+      cache: true,
+      // Otimização de busca de módulos
+      modules: ['node_modules'],
+      // Fallbacks desnecessários removidos
+      fallback: false
     },
     
     // Configurações específicas para extensões
     target: 'web',
     
-    // Externals (bibliotecas que não devem ser bundled)
+    // Externals otimizados
     externals: {
-      // Browser APIs são fornecidas pelo navegador
+      // Browser APIs fornecidas pelo navegador
       'chrome': 'chrome',
-      'browser': 'browser',
+      'browser': 'browser'
     },
     
     // Configurações de desenvolvimento
     ...(isDevelopment && {
       watchOptions: {
         ignored: /node_modules/,
-        poll: 1000, // Polling para sistemas que não suportam file watching
-      },
-      
-      // Configurações de dev server (não aplicável para extensões, mas útil para debugging)
-      devServer: {
-        static: {
-          directory: config.outputPath,
-        },
-        compress: true,
-        port: 9000,
-        hot: false, // Hot reload não funciona bem com extensões
-      },
+        poll: 1000,
+        aggregateTimeout: 300
+      }
     }),
     
-    // Configurações de performance
+    // Configurações de performance otimizadas
     performance: {
       hints: isProduction ? 'warning' : false,
-      maxEntrypointSize: 512000, // 512kb
-      maxAssetSize: 512000,
+      maxEntrypointSize: 300000, // 300kb (reduzido de 512kb)
+      maxAssetSize: 300000,
+      assetFilter: (assetFilename) => {
+        // Ignora arquivos que não afetam performance
+        return !assetFilename.endsWith('.map') && 
+               !assetFilename.endsWith('.html') &&
+               !assetFilename.includes('icons/');
+      }
     },
     
-    // Configurações de stats (output do build)
+    // Configurações de stats otimizadas
     stats: {
       colors: true,
       modules: false,
@@ -330,7 +489,31 @@ module.exports = (env, argv) => {
       chunkModules: false,
       entrypoints: false,
       excludeAssets: /\.(map|txt|html|jpg|png|svg)$/,
+      // Mostra informações de otimização
+      optimizationBailout: isProduction,
+      reasons: false,
+      source: false,
+      timings: true,
+      version: false,
+      warnings: true,
+      errors: true,
+      errorDetails: true
     },
+    
+    // Cache para builds mais rápidos
+    cache: {
+      type: 'filesystem',
+      buildDependencies: {
+        config: [__filename]
+      }
+    },
+    
+    // Experiments para funcionalidades avançadas
+    experiments: {
+      // Habilita otimizações futuras
+      topLevelAwait: false, // Desabilitado para compatibilidade com extensões
+      outputModule: false
+    }
   };
 };
 
