@@ -3,6 +3,10 @@ import { fetchRegulationDetails } from "./api.js";
 import { KeepAliveManager } from "./KeepAliveManager.js";
 import { getBrowserAPIInstance } from "./BrowserAPI.js";
 import { encryptForStorage, decryptFromStorage, cleanupExpiredData, MEDICAL_DATA_CONFIG } from "./crypto-utils.js";
+import { createComponentLogger } from "./logger.js";
+
+// Logger específico para background script
+const logger = createComponentLogger('Background');
 
 const api = getBrowserAPIInstance();
 
@@ -13,7 +17,7 @@ let keepAliveManager = null;
 function initializeKeepAlive() {
   if (!keepAliveManager) {
     keepAliveManager = new KeepAliveManager();
-    console.log("[Assistente Background] KeepAliveManager inicializado");
+    logger.info("KeepAliveManager inicializado", { operation: 'initializeKeepAlive' });
   }
 }
 
@@ -28,7 +32,10 @@ async function setupDataCleanup() {
   // Listener para o alarme de limpeza
   api.alarms.onAlarm.addListener(async (alarm) => {
     if (alarm.name === 'cleanupExpiredData') {
-      console.log('[Assistente Background] Executando limpeza automática de dados expirados');
+      logger.info('Executando limpeza automática de dados expirados', { 
+        operation: 'setupDataCleanup',
+        alarmName: alarm.name 
+      });
       await cleanupExpiredData(api);
     }
   });
@@ -73,7 +80,11 @@ api.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
   // Rate limiting check
   const senderId = sender?.id || sender?.tab?.id || 'unknown';
   if (!checkRateLimit(senderId)) {
-    console.warn(`[Assistente Background] ${timestamp} - Rate limit excedido para sender:`, senderId);
+    logger.warn('Rate limit excedido para sender', { 
+      operation: 'onMessage',
+      senderId,
+      timestamp 
+    });
     return false;
   }
 
@@ -81,10 +92,12 @@ api.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
   if (!sender || !sender.tab) {
     // Mensagens de outras partes da extensão (popup, sidebar, etc.)
     if (!sender.id || sender.id !== api.runtime.id) {
-      console.warn(`[Assistente Background] ${timestamp} - Mensagem rejeitada - origem não confiável:`, {
+      logger.warn('Mensagem rejeitada - origem não confiável', {
+        operation: 'onMessage',
         senderId: sender?.id,
         expectedId: api.runtime.id,
-        url: sender?.url
+        url: sender?.url,
+        timestamp
       });
       return false;
     }

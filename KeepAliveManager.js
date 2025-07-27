@@ -4,6 +4,11 @@
  */
 import * as API from "./api.js";
 import { getBrowserAPIInstance } from "./BrowserAPI.js";
+import { createComponentLogger } from "./logger.js";
+
+// Logger específico para KeepAliveManager
+const logger = createComponentLogger('KeepAliveManager');
+
 
 export class KeepAliveManager {
   constructor() {

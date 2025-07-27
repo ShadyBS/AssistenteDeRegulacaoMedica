@@ -11,6 +11,11 @@
  */
 
 import { CONFIG } from "./config.js";
+import { createComponentLogger } from "./logger.js";
+
+// Logger específico para MemoryManager
+const logger = createComponentLogger('MemoryManager');
+
 
 /**
  * Classe para gerenciamento centralizado de memória e recursos

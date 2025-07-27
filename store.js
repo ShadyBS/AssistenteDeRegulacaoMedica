@@ -1,4 +1,11 @@
 /**
+};
+import { createComponentLogger } from "./logger.js";
+
+// Logger específico para Store
+const logger = createComponentLogger('Store');
+
+/**
  * @file store.js - Gestor de estado centralizado para a aplicação.
  * Implementa um padrão simples de "publish-subscribe" para gerir o estado global.
  */

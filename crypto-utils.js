@@ -1,4 +1,11 @@
 /**
+};
+import { createComponentLogger } from "./logger.js";
+
+// Logger específico para Cryptoutils
+const logger = createComponentLogger('Cryptoutils');
+
+/**
  * @file Utilitários de criptografia para dados médicos sensíveis
  * ✅ SEGURANÇA: Implementa criptografia AES-GCM para proteger dados médicos no storage
  */

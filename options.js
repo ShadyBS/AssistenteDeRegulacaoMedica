@@ -5,6 +5,11 @@ import * as Utils from "./utils.js";
 import * as API from "./api.js"; // Importa a API para buscar prioridades
 import { CONFIG, getTimeout, getCSSClass } from "./config.js";
 import { getBrowserAPIInstance } from "./BrowserAPI.js";
+import { createComponentLogger } from "./logger.js";
+
+// Logger específico para Options
+const logger = createComponentLogger('Options');
+
 
 // --- Constantes ---
 const CONFIG_VERSION = "1.3"; // Versão da estrutura de configuração

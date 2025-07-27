@@ -6,6 +6,11 @@ import * as Utils from "./utils.js";
 import * as Renderers from "./renderers.js";
 import { store } from "./store.js";
 import { CONFIG, getTimeout } from "./config.js";
+import { createComponentLogger } from "./logger.js";
+
+// Logger específico para TimelineManager
+const logger = createComponentLogger('TimelineManager');
+
 
 export class TimelineManager {
   constructor(sectionKey, config, globalSettings) {

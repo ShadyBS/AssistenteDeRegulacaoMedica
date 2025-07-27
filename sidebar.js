@@ -13,6 +13,11 @@ import { CONFIG, getTimeout, getCSSClass } from "./config.js";
 import { getMemoryManager } from "./MemoryManager.js";
 import { getBrowserAPIInstance } from "./BrowserAPI.js";
 import { encryptForStorage, decryptFromStorage, cleanupExpiredData, MEDICAL_DATA_CONFIG } from "./crypto-utils.js";
+import { createComponentLogger } from "./logger.js";
+
+// Logger específico para Sidebar
+const logger = createComponentLogger('Sidebar');
+
 
 // --- ÍCONES ---
 const sectionIcons = {

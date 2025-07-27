@@ -7,6 +7,11 @@ import * as Utils from "./utils.js";
 import * as API from "./api.js";
 import { store } from "./store.js";
 import { CONFIG, getSectionName, getTimeout } from "./config.js";
+import { createComponentLogger } from "./logger.js";
+
+// Logger específico para SectionManager
+const logger = createComponentLogger('SectionManager');
+
 
 /**
  * Tipos de erro para classificação e tratamento específico
