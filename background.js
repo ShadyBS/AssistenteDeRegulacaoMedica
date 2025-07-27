@@ -34,42 +34,129 @@ async function setupDataCleanup() {
   });
 }
 
-// ✅ SEGURANÇA: Validação de origem para message passing
+// ✅ SEGURANÇA: Rate limiting para mensagens
+const messageRateLimit = new Map();
+const RATE_LIMIT_WINDOW = 60000; // 1 minuto
+const MAX_MESSAGES_PER_WINDOW = 100; // máximo 100 mensagens por minuto por origem
+
+function checkRateLimit(senderId) {
+  const now = Date.now();
+  const key = senderId || 'unknown';
+  
+  if (!messageRateLimit.has(key)) {
+    messageRateLimit.set(key, { count: 1, windowStart: now });
+    return true;
+  }
+  
+  const rateData = messageRateLimit.get(key);
+  
+  // Reset window if expired
+  if (now - rateData.windowStart > RATE_LIMIT_WINDOW) {
+    messageRateLimit.set(key, { count: 1, windowStart: now });
+    return true;
+  }
+  
+  // Check if limit exceeded
+  if (rateData.count >= MAX_MESSAGES_PER_WINDOW) {
+    return false;
+  }
+  
+  // Increment counter
+  rateData.count++;
+  return true;
+}
+
+// ✅ SEGURANÇA: Validação rigorosa de origem para message passing
 api.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
+  const timestamp = new Date().toISOString();
+  
+  // Rate limiting check
+  const senderId = sender?.id || sender?.tab?.id || 'unknown';
+  if (!checkRateLimit(senderId)) {
+    console.warn(`[Assistente Background] ${timestamp} - Rate limit excedido para sender:`, senderId);
+    return false;
+  }
+
   // Validar origem da mensagem
   if (!sender || !sender.tab) {
-    // Mensagens de outras partes da extensão (popup, sidebar, etc.) são permitidas
-    // mas verificamos se é realmente da nossa extensão
+    // Mensagens de outras partes da extensão (popup, sidebar, etc.)
     if (!sender.id || sender.id !== api.runtime.id) {
-      console.warn("[Assistente Background] Mensagem rejeitada - origem não confiável:", sender);
+      console.warn(`[Assistente Background] ${timestamp} - Mensagem rejeitada - origem não confiável:`, {
+        senderId: sender?.id,
+        expectedId: api.runtime.id,
+        url: sender?.url
+      });
       return false;
     }
   } else {
     // Mensagens de content scripts devem vir de páginas SIGSS autorizadas
     const allowedOrigins = [
-      'gov.br',
-      'mv.com.br', 
-      'cloudmv.com.br',
-      'localhost',
+      'sigss.saude.gov.br',
+      'sigss-hom.saude.gov.br', 
+      'sigss.mv.com.br',
+      'sigss.cloudmv.com.br',
+      'localhost:3000',
+      'localhost:8080',
       '127.0.0.1'
     ];
     
     const senderUrl = sender.tab.url || sender.url || '';
-    const isAuthorized = allowedOrigins.some(domain => 
-      senderUrl.includes(domain) || senderUrl.includes('sigss')
-    );
+    const senderOrigin = new URL(senderUrl).origin;
+    
+    const isAuthorized = allowedOrigins.some(domain => {
+      if (domain.startsWith('http')) {
+        return senderOrigin === domain;
+      }
+      return senderUrl.includes(domain);
+    });
     
     if (!isAuthorized) {
-      console.warn("[Assistente Background] Mensagem rejeitada - origem não autorizada:", senderUrl);
+      console.warn(`[Assistente Background] ${timestamp} - Mensagem rejeitada - origem não autorizada:`, {
+        senderUrl,
+        senderOrigin,
+        allowedOrigins,
+        tabId: sender.tab.id
+      });
       return false;
     }
   }
 
   // Validar estrutura da mensagem
   if (!message || typeof message !== 'object' || !message.type) {
-    console.warn("[Assistente Background] Mensagem rejeitada - estrutura inválida:", message);
+    console.warn(`[Assistente Background] ${timestamp} - Mensagem rejeitada - estrutura inválida:`, {
+      message,
+      messageType: typeof message,
+      hasType: message?.type,
+      senderId
+    });
     return false;
   }
+
+  // Validar tipos de mensagem permitidos
+  const allowedMessageTypes = [
+    'SAVE_REGULATION_DATA',
+    'GET_KEEPALIVE_STATUS',
+    'GET_PATIENT_DATA',
+    'VALIDATE_CNS',
+    'VALIDATE_CPF',
+    'CLEAR_CACHE'
+  ];
+
+  if (!allowedMessageTypes.includes(message.type)) {
+    console.warn(`[Assistente Background] ${timestamp} - Tipo de mensagem não permitido:`, {
+      messageType: message.type,
+      allowedTypes: allowedMessageTypes,
+      senderId
+    });
+    return false;
+  }
+
+  // Log de mensagem autorizada
+  console.log(`[Assistente Background] ${timestamp} - Mensagem autorizada:`, {
+    type: message.type,
+    senderId,
+    origin: sender?.tab?.url || sender?.url || 'extension'
+  });
 
   if (message.type === "SAVE_REGULATION_DATA") {
     console.log(

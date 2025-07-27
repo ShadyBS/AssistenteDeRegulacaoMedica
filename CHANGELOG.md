@@ -7,18 +7,24 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ### Security
 - **CRÍTICO**: Eliminados imports dinâmicos inseguros em api.js e ui/search.js, substituídos por imports estáticos
-- **CRÍTICO**: Implementada validação de origem em message passing no background.js para prevenir mensagens maliciosas
+- **CRÍTICO**: Implementada validação rigorosa de origem em message passing no background.js para prevenir mensagens maliciosas
+- **CRÍTICO**: Implementado rate limiting para mensagens (100 mensagens/minuto por origem) para prevenir spam
 - **CRÍTICO**: Implementada criptografia AES-GCM para dados médicos sensíveis no storage local
 - **CRÍTICO**: Implementada CSP restritiva nos manifests, limitando connect-src apenas a domínios SIGSS autorizados
 - Implementado sistema de TTL automático para dados médicos com limpeza periódica
 - Adicionado sistema de validação de estrutura de mensagens no background script
-- Implementada whitelist de origens autorizadas para content scripts
+- Implementada whitelist rigorosa de origens autorizadas para content scripts
+- Implementada whitelist de tipos de mensagem permitidos para prevenir ataques
+- Adicionado logging detalhado de tentativas suspeitas com timestamps
 
 ### Added
 - Módulo crypto-utils.js com criptografia segura para dados médicos
 - Sistema de limpeza automática de dados expirados a cada 30 minutos
 - Validação rigorosa de origem para todas as mensagens entre componentes
 - Logging de segurança para tentativas de acesso não autorizado
+- Rate limiting baseado em janela deslizante para controle de mensagens
+- Validação de URL origin usando API nativa para maior precisão
+- Sistema de logging estruturado com timestamps ISO para auditoria
 
 ### Fixed
 - Corrigido problema crítico de compatibilidade com API browser em content-script.js
@@ -30,6 +36,8 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 - Dados médicos agora são criptografados antes do armazenamento com TTL de 30 minutos
 - Imports dinâmicos substituídos por imports estáticos para melhor segurança
 - Otimizado sistema de processamento em lote com delay exponencial entre tentativas
+- Validação de origem aprimorada com verificação de URL origin nativa
+- Logging de segurança melhorado com informações detalhadas para debugging
 
 ## [3.3.15] - 2025-01-17
 
