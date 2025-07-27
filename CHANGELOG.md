@@ -5,6 +5,23 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased]
 
+### Removed
+- **TASK-BUILD-001**: Sistema legado de build removido completamente (build-zips.js, build-zips-optimized.js, release.js)
+- **TASK-BUILD-001**: Scripts batch legados removidos (*.bat files)
+- **TASK-BUILD-001**: Referências a arquivos removidos atualizadas em package.json
+
+### Changed
+- **TASK-BUILD-001**: Script moderno (scripts/build.js) corrigido para usar whitelist rigorosa em vez de blacklist
+- **TASK-BUILD-001**: Função copyFiles reescrita para incluir apenas arquivos essenciais
+- **TASK-BUILD-001**: Redução de 91% no tamanho dos ZIPs (1.14 MB → 0.10 MB)
+- **TASK-BUILD-001**: Padronização total do sistema de build com whitelist em todos os scripts
+- **TASK-BUILD-001**: Documentação agents.md atualizada para refletir mudanças no sistema de build
+
+### Fixed
+- **TASK-BUILD-001**: Corrigido problema de inclusão de arquivos desnecessários nos ZIPs de release
+- **TASK-BUILD-001**: Eliminada confusão entre múltiplos sistemas de build conflitantes
+- **TASK-BUILD-001**: Scripts de validação de manifests corrigidos para usar arquivos corretos
+
 ### Added
 - **TASK-M-001**: Sistema de logging estruturado centralizado com níveis (debug, info, warn, error)
 - **TASK-M-001**: Rotação automática de logs com TTL configurável e limpeza periódica

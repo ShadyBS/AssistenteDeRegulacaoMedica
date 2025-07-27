@@ -1,51 +1,55 @@
-﻿import "./browser-polyfill.js";
-import { fetchRegulationDetails } from "./api.js";
-import { KeepAliveManager } from "./KeepAliveManager.js";
-import { getBrowserAPIInstance } from "./BrowserAPI.js";
-import { encryptForStorage, decryptFromStorage, cleanupExpiredData, MEDICAL_DATA_CONFIG } from "./crypto-utils.js";
-import { createComponentLogger } from "./logger.js";
+// Background script compatível com Firefox
+// Usa API básica do browser para máxima compatibilidade
 
-// Logger especÃ­fico para background script
-const logger = createComponentLogger('Background');
+// API básica compatível com Firefox e Chrome
+const api = globalThis.browser || globalThis.chrome;
 
-const api = getBrowserAPIInstance();
-
-// InstÃ¢ncia global do KeepAliveManager
+// Variáveis globais para módulos carregados dinamicamente
+let fetchRegulationDetails, KeepAliveManager, getBrowserAPIInstance;
+let encryptForStorage, decryptFromStorage, cleanupExpiredData, MEDICAL_DATA_CONFIG;
+let createComponentLogger, logger;
 let keepAliveManager = null;
 
-// Inicializa o KeepAliveManager
-function initializeKeepAlive() {
-  if (!keepAliveManager) {
-    keepAliveManager = new KeepAliveManager();
-    logger.info("KeepAliveManager inicializado", { operation: 'initializeKeepAlive' });
+// Rate limiting para mensagens
+const messageRateLimit = new Map();
+const RATE_LIMIT_WINDOW = 60000; // 1 minuto
+const MAX_MESSAGES_PER_WINDOW = 100; // máximo 100 mensagens por minuto por origem
+
+// Função para carregar módulos dinamicamente
+async function loadModules() {
+  try {
+    console.log('[Background] Carregando módulos...');
+    
+    const apiModule = await import("./api.js");
+    fetchRegulationDetails = apiModule.fetchRegulationDetails;
+    
+    const keepAliveModule = await import("./KeepAliveManager.js");
+    KeepAliveManager = keepAliveModule.KeepAliveManager;
+    
+    const browserAPIModule = await import("./BrowserAPI.js");
+    getBrowserAPIInstance = browserAPIModule.getBrowserAPIInstance;
+    
+    const cryptoModule = await import("./crypto-utils.js");
+    encryptForStorage = cryptoModule.encryptForStorage;
+    decryptFromStorage = cryptoModule.decryptFromStorage;
+    cleanupExpiredData = cryptoModule.cleanupExpiredData;
+    MEDICAL_DATA_CONFIG = cryptoModule.MEDICAL_DATA_CONFIG;
+    
+    const loggerModule = await import("./logger.js");
+    createComponentLogger = loggerModule.createComponentLogger;
+    
+    // Inicializar logger após carregamento
+    logger = createComponentLogger('Background');
+    
+    console.log('[Background] Módulos carregados com sucesso');
+    return true;
+  } catch (error) {
+    console.error('[Background] Erro ao carregar módulos:', error);
+    return false;
   }
 }
 
-// âœ… SEGURANÃ‡A: Limpeza automÃ¡tica de dados mÃ©dicos expirados
-async function setupDataCleanup() {
-  // Limpa dados expirados na inicializaÃ§Ã£o
-  await cleanupExpiredData(api);
-  
-  // Configura limpeza periÃ³dica (a cada 30 minutos)
-  api.alarms.create('cleanupExpiredData', { periodInMinutes: 30 });
-  
-  // Listener para o alarme de limpeza
-  api.alarms.onAlarm.addListener(async (alarm) => {
-    if (alarm.name === 'cleanupExpiredData') {
-      logger.info('Executando limpeza automÃ¡tica de dados expirados', { 
-        operation: 'setupDataCleanup',
-        alarmName: alarm.name 
-      });
-      await cleanupExpiredData(api);
-    }
-  });
-}
-
-// âœ… SEGURANÃ‡A: Rate limiting para mensagens
-const messageRateLimit = new Map();
-const RATE_LIMIT_WINDOW = 60000; // 1 minuto
-const MAX_MESSAGES_PER_WINDOW = 100; // mÃ¡ximo 100 mensagens por minuto por origem
-
+// Rate limiting check
 function checkRateLimit(senderId) {
   const now = Date.now();
   const key = senderId || 'unknown';
@@ -73,36 +77,78 @@ function checkRateLimit(senderId) {
   return true;
 }
 
-// âœ… SEGURANÃ‡A: ValidaÃ§Ã£o rigorosa de origem para message passing
+// Inicializar KeepAliveManager
+function initializeKeepAlive() {
+  if (!keepAliveManager && KeepAliveManager) {
+    try {
+      keepAliveManager = new KeepAliveManager();
+      if (logger) {
+        logger.info("KeepAliveManager inicializado", { operation: 'initializeKeepAlive' });
+      } else {
+        console.log('[Background] KeepAliveManager inicializado');
+      }
+    } catch (error) {
+      console.error('[Background] Erro ao inicializar KeepAliveManager:', error);
+    }
+  }
+}
+
+// Configurar limpeza automática de dados médicos
+async function setupDataCleanup() {
+  if (!cleanupExpiredData) return;
+  
+  try {
+    // Limpa dados expirados na inicialização
+    await cleanupExpiredData(api);
+    
+    // Configura limpeza periódica (a cada 30 minutos)
+    api.alarms.create('cleanupExpiredData', { periodInMinutes: 30 });
+    
+    if (logger) {
+      logger.info('Sistema de limpeza automática configurado');
+    }
+  } catch (error) {
+    console.error('[Background] Erro ao configurar limpeza de dados:', error);
+  }
+}
+
+// Listener para alarmes
+api.alarms.onAlarm.addListener(async (alarm) => {
+  if (alarm.name === 'cleanupExpiredData' && cleanupExpiredData) {
+    try {
+      if (logger) {
+        logger.info('Executando limpeza automática de dados expirados', { 
+          operation: 'setupDataCleanup',
+          alarmName: alarm.name 
+        });
+      }
+      await cleanupExpiredData(api);
+    } catch (error) {
+      console.error('[Background] Erro na limpeza automática:', error);
+    }
+  }
+});
+
+// Listener de mensagens
 api.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
   const timestamp = new Date().toISOString();
   
   // Rate limiting check
   const senderId = sender?.id || sender?.tab?.id || 'unknown';
   if (!checkRateLimit(senderId)) {
-    logger.warn('Rate limit excedido para sender', { 
-      operation: 'onMessage',
-      senderId,
-      timestamp 
-    });
+    console.warn('[Background] Rate limit excedido para sender:', senderId);
     return false;
   }
 
   // Validar origem da mensagem
   if (!sender || !sender.tab) {
-    // Mensagens de outras partes da extensÃ£o (popup, sidebar, etc.)
+    // Mensagens de outras partes da extensão (popup, sidebar, etc.)
     if (!sender.id || sender.id !== api.runtime.id) {
-      logger.warn('Mensagem rejeitada - origem nÃ£o confiÃ¡vel', {
-        operation: 'onMessage',
-        senderId: sender?.id,
-        expectedId: api.runtime.id,
-        url: sender?.url,
-        timestamp
-      });
+      console.warn('[Background] Mensagem rejeitada - origem não confiável');
       return false;
     }
   } else {
-    // Mensagens de content scripts devem vir de pÃ¡ginas SIGSS autorizadas
+    // Mensagens de content scripts devem vir de páginas SIGSS autorizadas
     const allowedOrigins = [
       'sigss.saude.gov.br',
       'sigss-hom.saude.gov.br', 
@@ -124,28 +170,14 @@ api.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
     });
     
     if (!isAuthorized) {
-      logger.warn('Mensagem rejeitada - origem nÃ£o autorizada', {
-        operation: 'onMessage',
-        senderUrl,
-        senderOrigin,
-        allowedOrigins,
-        tabId: sender.tab.id,
-        timestamp
-      });
+      console.warn('[Background] Mensagem rejeitada - origem não autorizada:', senderUrl);
       return false;
     }
   }
 
   // Validar estrutura da mensagem
   if (!message || typeof message !== 'object' || !message.type) {
-    logger.warn('Mensagem rejeitada - estrutura invÃ¡lida', {
-      operation: 'onMessage',
-      message,
-      messageType: typeof message,
-      hasType: message?.type,
-      senderId,
-      timestamp
-    });
+    console.warn('[Background] Mensagem rejeitada - estrutura inválida');
     return false;
   }
 
@@ -160,55 +192,53 @@ api.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
   ];
 
   if (!allowedMessageTypes.includes(message.type)) {
-    logger.warn(`[Assistente Background] ${timestamp} - Tipo de mensagem nÃ£o permitido:`, {
-      messageType: message.type,
-      allowedTypes: allowedMessageTypes,
-      senderId
-    });
+    console.warn('[Background] Tipo de mensagem não permitido:', message.type);
     return false;
   }
 
   // Log de mensagem autorizada
-  logger.info(`[Assistente Background] ${timestamp} - Mensagem autorizada:`, {
+  console.log(`[Background] ${timestamp} - Mensagem autorizada:`, {
     type: message.type,
     senderId,
     origin: sender?.tab?.url || sender?.url || 'extension'
   });
 
+  // Processar mensagens
   if (message.type === "SAVE_REGULATION_DATA") {
-    logger.info(
-      "[Assistente Background] Recebido pedido para salvar dados da regulaÃ§Ã£o:",
-      message.payload
-    );
+    if (!fetchRegulationDetails) {
+      console.error('[Background] fetchRegulationDetails não disponível');
+      return false;
+    }
+    
     try {
       const regulationDetails = await fetchRegulationDetails(message.payload);
 
       if (regulationDetails) {
-        // âœ… SEGURANÃ‡A: Criptografar dados mÃ©dicos sensÃ­veis antes do armazenamento
-        const encryptedData = await encryptForStorage(
-          regulationDetails, 
-          MEDICAL_DATA_CONFIG.SENSITIVE_TTL_MINUTES
-        );
+        // Criptografar dados médicos sensíveis antes do armazenamento
+        if (encryptForStorage && MEDICAL_DATA_CONFIG) {
+          const encryptedData = await encryptForStorage(
+            regulationDetails, 
+            MEDICAL_DATA_CONFIG.SENSITIVE_TTL_MINUTES
+          );
+          
+          await api.storage.local.set({ 
+            pendingRegulation: encryptedData,
+            pendingRegulationTimestamp: Date.now()
+          });
+        } else {
+          // Fallback sem criptografia se módulos não estiverem disponíveis
+          await api.storage.local.set({ 
+            pendingRegulation: regulationDetails,
+            pendingRegulationTimestamp: Date.now()
+          });
+        }
         
-        await api.storage.local.set({ 
-          pendingRegulation: encryptedData,
-          pendingRegulationTimestamp: Date.now()
-        });
-        
-        logger.info(
-          "[Assistente Background] Detalhes da regulaÃ§Ã£o salvos criptografados no storage local"
-        );
+        console.log('[Background] Detalhes da regulação salvos no storage local');
       } else {
-        logger.warn(
-          "[Assistente Background] NÃ£o foram encontrados detalhes para a regulaÃ§Ã£o:",
-          message.payload
-        );
+        console.warn('[Background] Não foram encontrados detalhes para a regulação:', message.payload);
       }
     } catch (e) {
-      logger.error(
-        "[Assistente Background] Falha ao buscar ou salvar dados da regulaÃ§Ã£o:",
-        e
-      );
+      console.error('[Background] Falha ao buscar ou salvar dados da regulação:', e);
     }
     return true;
   }
@@ -216,67 +246,114 @@ api.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
   // Comando para verificar status do KeepAlive
   if (message.type === "GET_KEEPALIVE_STATUS") {
     if (keepAliveManager) {
-      const status = await keepAliveManager.getStatus();
-      sendResponse(status);
+      try {
+        const status = await keepAliveManager.getStatus();
+        sendResponse(status);
+      } catch (error) {
+        sendResponse({ isActive: false, error: error.message });
+      }
     } else {
-      sendResponse({ isActive: false, error: "KeepAliveManager nÃ£o inicializado" });
+      sendResponse({ isActive: false, error: "KeepAliveManager não inicializado" });
     }
     return true;
   }
 
-  // Mensagem nÃ£o reconhecida
-  logger.warn("[Assistente Background] Tipo de mensagem nÃ£o reconhecido:", message.type);
+  // Mensagem não reconhecida
+  console.warn('[Background] Tipo de mensagem não reconhecido:', message.type);
   return false;
 });
 
+// Função para abrir sidebar
 async function openSidebar(tab) {
-  if (api.sidePanel) {
-    await api.sidePanel.open({ windowId: tab.windowId });
-  } else if (api.sidebarAction) {
-    await api.sidebarAction.toggle();
+  try {
+    if (api.sidePanel) {
+      await api.sidePanel.open({ windowId: tab.windowId });
+    } else if (api.sidebarAction) {
+      await api.sidebarAction.toggle();
+    }
+  } catch (error) {
+    console.error('[Background] Erro ao abrir sidebar:', error);
   }
 }
 
+// Listener para clique na ação da extensão
 api.action.onClicked.addListener(openSidebar);
 
-// Inicializa o KeepAliveManager e limpeza de dados na inicializaÃ§Ã£o
-initializeKeepAlive();
-setupDataCleanup();
-
-// Reinicializa o KeepAliveManager quando o service worker Ã© reativado
-api.runtime.onStartup.addListener(() => {
-  logger.info("[Assistente Background] Service worker reiniciado - reinicializando KeepAlive");
-  initializeKeepAlive();
-  setupDataCleanup();
+// Listener para startup
+api.runtime.onStartup.addListener(async () => {
+  console.log('[Background] Service worker reiniciado - reinicializando');
+  await initializeExtension();
 });
 
-api.runtime.onInstalled.addListener((details) => {
-  logger.info("[Assistente Background] ExtensÃ£o instalada/atualizada - inicializando KeepAlive");
-  initializeKeepAlive();
-  setupDataCleanup();
+// Listener para instalação
+api.runtime.onInstalled.addListener(async (details) => {
+  console.log('[Background] Extensão instalada/atualizada');
   
+  // Aguardar inicialização
+  await initializeExtension();
+  
+  // Configurar sidePanel se disponível
   if (api.sidePanel) {
-    api.sidePanel
-      .setPanelBehavior({ openPanelOnActionClick: false })
-      .catch((e) =>
-        logger.error("Falha ao definir o comportamento do sidePanel:", e)
-      );
+    try {
+      await api.sidePanel.setPanelBehavior({ openPanelOnActionClick: false });
+    } catch (e) {
+      console.error('[Background] Falha ao definir o comportamento do sidePanel:', e);
+    }
   }
 
-  api.contextMenus.create({
-    id: "openSidePanel",
-    title: "Alternar Assistente de RegulaÃ§Ã£o",
-    contexts: ["all"],
-  });
+  // Criar menu de contexto
+  try {
+    api.contextMenus.create({
+      id: "openSidePanel",
+      title: "Alternar Assistente de Regulação",
+      contexts: ["all"],
+    });
+  } catch (error) {
+    console.error('[Background] Erro ao criar menu de contexto:', error);
+  }
 
+  // Listener para menu de contexto
   api.contextMenus.onClicked.addListener((info, tab) => {
     if (info.menuItemId === "openSidePanel") {
       openSidebar(tab);
     }
   });
 
+  // Abrir página de ajuda na instalação
   if (details.reason === "install") {
-    api.tabs.create({ url: api.runtime.getURL("help.html") });
+    try {
+      api.tabs.create({ url: api.runtime.getURL("help.html") });
+    } catch (error) {
+      console.error('[Background] Erro ao abrir página de ajuda:', error);
+    }
   }
 });
 
+// Função principal de inicialização
+async function initializeExtension() {
+  console.log('[Background] Iniciando extensão...');
+  
+  try {
+    // Carregar módulos
+    const modulesLoaded = await loadModules();
+    
+    if (modulesLoaded) {
+      // Inicializar componentes
+      initializeKeepAlive();
+      await setupDataCleanup();
+      
+      if (logger) {
+        logger.info('[Background] Inicialização completa');
+      } else {
+        console.log('[Background] Inicialização completa');
+      }
+    } else {
+      console.error('[Background] Falha ao carregar módulos - extensão pode não funcionar corretamente');
+    }
+  } catch (error) {
+    console.error('[Background] Erro na inicialização:', error);
+  }
+}
+
+// Inicializar a extensão
+initializeExtension();

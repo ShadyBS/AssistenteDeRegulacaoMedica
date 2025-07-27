@@ -1138,6 +1138,118 @@
         </div>
       </section>
 
+      <!-- NOVA SEÇÃO: Sistema de Logging -->
+      <section
+        id="logging-system-section"
+        class="bg-white p-4 rounded-lg border border-slate-200 shadow-sm"
+      >
+        <h2 class="text-md font-semibold text-slate-700 mb-3">
+          Sistema de Logging
+        </h2>
+        <p class="text-sm text-slate-500 mb-4">
+          Configure o nível de logging para debugging e monitore o funcionamento da extensão.
+          Os logs são úteis para identificar problemas e enviar informações para o desenvolvedor.
+        </p>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <!-- Configurações de Logging -->
+          <div class="space-y-4">
+            <div>
+              <label for="logLevel" class="block font-medium mb-2 text-sm">
+                Nível de Logging
+              </label>
+              <select
+                id="logLevel"
+                class="w-full px-3 py-2 border border-slate-300 rounded-md bg-white"
+              >
+                <option value="ERROR">ERROR - Apenas erros críticos</option>
+                <option value="WARN">WARN - Avisos e erros</option>
+                <option value="INFO">INFO - Informações gerais (padrão)</option>
+                <option value="DEBUG">DEBUG - Informações detalhadas</option>
+              </select>
+              <p class="text-xs text-slate-400 mt-1">
+                DEBUG mostra mais detalhes, útil para identificar problemas.
+              </p>
+            </div>
+
+            <div class="flex items-center gap-4">
+              <label class="flex items-center">
+                <input
+                  type="checkbox"
+                  id="enableConsoleLogging"
+                  class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 mr-2"
+                  checked
+                />
+                <span class="text-sm">Mostrar logs no console do navegador</span>
+              </label>
+            </div>
+
+            <div class="flex items-center gap-4">
+              <label class="flex items-center">
+                <input
+                  type="checkbox"
+                  id="enableStorageLogging"
+                  class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 mr-2"
+                  checked
+                />
+                <span class="text-sm">Salvar logs no storage da extensão</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Estatísticas e Ações -->
+          <div class="space-y-4">
+            <div class="p-3 bg-slate-50 rounded-md border">
+              <h4 class="font-medium text-sm mb-2">Estatísticas dos Logs</h4>
+              <div id="logStats" class="text-xs text-slate-600 space-y-1">
+                <div>Total de logs: <span id="totalLogs">-</span></div>
+                <div>Erros: <span id="errorLogs">-</span></div>
+                <div>Avisos: <span id="warnLogs">-</span></div>
+                <div>Informações: <span id="infoLogs">-</span></div>
+                <div>Debug: <span id="debugLogs">-</span></div>
+              </div>
+              <button
+                id="refreshLogStats"
+                class="mt-2 text-xs text-blue-600 hover:underline"
+              >
+                Atualizar Estatísticas
+              </button>
+            </div>
+
+            <div class="space-y-2">
+              <button
+                id="exportLogsBtn"
+                class="w-full px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition text-sm font-medium"
+              >
+                Exportar Logs para Debugging
+              </button>
+              <button
+                id="clearLogsBtn"
+                class="w-full px-3 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition text-sm font-medium"
+              >
+                Limpar Todos os Logs
+              </button>
+              <button
+                id="testLoggingBtn"
+                class="w-full px-3 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition text-sm font-medium"
+              >
+                Testar Sistema de Logging
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-4 p-3 bg-blue-50 rounded-md border border-blue-200">
+          <h4 class="font-medium text-sm text-blue-800 mb-1">💡 Como usar os logs para debugging</h4>
+          <ul class="text-xs text-blue-700 space-y-1">
+            <li>• Configure o nível para <strong>DEBUG</strong> quando tiver problemas</li>
+            <li>• Reproduza o problema e exporte os logs</li>
+            <li>• Envie o arquivo de logs para o desenvolvedor junto com a descrição do problema</li>
+            <li>• Use <strong>INFO</strong> para uso normal (menos detalhes, melhor performance)</li>
+          </ul>
+        </div>
+      </section>
+
       <!-- Seção de Gestão de Dados (Existente) -->
       <section
         id="data-management-section"

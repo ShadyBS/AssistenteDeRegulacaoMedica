@@ -49,40 +49,55 @@ const BUILD_CONFIGS = {
   }
 };
 
-// Arquivos a serem ignorados no build
-const IGNORE_PATTERNS = [
-  '.dist',
-  'dist-zips',
-  'src',
-  'scripts',
-  'node_modules',
-  '.git',
-  '.github',
-  '.vscode',
-  '.qodo',
-  'build-zips.js',
-  'build-zips.bat',
-  'release.js',
-  'build-release.bat',
-  'rollback-release.bat',
-  '.env',
-  '.env.local',
-  '.env.example',
-  '.gitignore',
-  'package-lock.json',
-  'package.json',
-  'tailwind.config.js',
-  'webpack.config.js',
-  'README.md',
-  'CHANGELOG.md',
-  'LICENSE',
-  'BUILD.md',
-  'agents.md',
-  '*.log',
-  '*.tmp',
-  '.DS_Store',
-  'Thumbs.db'
+// WHITELIST: Arquivos PERMITIDOS na extensão (apenas o essencial)
+const EXTENSION_FILES = [
+  // Core da extensão (obrigatórios)
+  "background.js",
+  "content-script.js",
+  "sidebar.js",
+  "sidebar.html",
+  "options.js",
+  "options.html",
+  
+  // APIs e utilitários essenciais
+  "api.js",
+  "api-constants.js",
+  "utils.js",
+  "validation.js",
+  "store.js",
+  "config.js",
+  "renderers.js",
+  "logger.js",
+  
+  // Managers necessários para funcionamento
+  "MemoryManager.js",
+  "KeepAliveManager.js",
+  "SectionManager.js",
+  "TimelineManager.js",
+  
+  // Parsers e configurações específicas
+  "consultation-parser.js",
+  "field-config.js",
+  "filter-config.js",
+  
+  // Utilitários de segurança
+  "crypto-utils.js",
+  "BrowserAPI.js",
+  
+  // Polyfills para compatibilidade
+  "browser-polyfill.js",
+  
+  // Páginas de ajuda
+  "help.html",
+  "help.js"
 ];
+
+// Diretórios permitidos com filtros específicos
+const ALLOWED_DIRECTORIES = {
+  "icons": (file) => /\.(png|jpg|jpeg|gif|svg|ico)$/i.test(file),
+  "dist": (file) => file === "output.css" || /\.(css|js)$/i.test(file),
+  "ui": (file) => /\.(js|html|css)$/i.test(file)
+};
 
 /**
  * Classe principal para gerenciar o processo de build
@@ -246,50 +261,59 @@ class ExtensionBuilder {
   }
 
   /**
-   * Copia arquivos para o diretório de build
+   * Copia arquivos para o diretório de build usando WHITELIST
    */
   async copyFiles(target) {
     const config = BUILD_CONFIGS[target];
     const outputDir = config.outputDir;
     
-    this.log(`📁 Copiando arquivos para ${target}...`);
+    this.log(`📁 Copiando arquivos para ${target} (WHITELIST)...`);
     
     await fs.ensureDir(outputDir);
     await fs.emptyDir(outputDir);
     
-    const files = await fs.readdir(PROJECT_ROOT);
     let copiedCount = 0;
+    let skippedCount = 0;
     
-    for (const file of files) {
-      if (this.shouldIgnoreFile(file)) {
-        if (this.verbose) {
-          this.log(`   - Ignorando: ${file}`);
-        }
-        continue;
-      }
+    // Copia APENAS arquivos individuais permitidos
+    for (const fileName of EXTENSION_FILES) {
+      const sourcePath = path.join(PROJECT_ROOT, fileName);
       
-      const sourcePath = path.join(PROJECT_ROOT, file);
-      const targetPath = path.join(outputDir, file);
-      
-      try {
+      if (await fs.pathExists(sourcePath)) {
         const stats = await fs.stat(sourcePath);
         
-        if (stats.isDirectory()) {
-          await fs.copy(sourcePath, targetPath, {
-            filter: (src) => !this.shouldIgnoreFile(path.basename(src))
-          });
-          if (this.verbose) {
-            this.log(`   + Diretório: ${file}/`);
-          }
-        } else {
+        if (stats.isFile()) {
+          const targetPath = path.join(outputDir, fileName);
           await fs.copy(sourcePath, targetPath);
+          
           if (this.verbose) {
-            this.log(`   + Arquivo: ${file}`);
+            this.log(`   + ${fileName}`);
           }
           copiedCount++;
         }
-      } catch (error) {
-        this.log(`   ⚠️  Erro ao copiar ${file}: ${error.message}`, 'warn');
+      } else {
+        if (this.verbose) {
+          this.log(`   ⚠️  Arquivo não encontrado: ${fileName}`);
+        }
+        skippedCount++;
+      }
+    }
+    
+    // Copia diretórios permitidos com filtros
+    for (const [dirName, filter] of Object.entries(ALLOWED_DIRECTORIES)) {
+      const sourceDirPath = path.join(PROJECT_ROOT, dirName);
+      const targetDirPath = path.join(outputDir, dirName);
+      
+      if (await fs.pathExists(sourceDirPath)) {
+        await fs.ensureDir(targetDirPath);
+        
+        const result = await this.copyDirectoryWithFilter(sourceDirPath, targetDirPath, dirName, filter);
+        copiedCount += result.fileCount;
+        skippedCount += result.skippedCount;
+      } else {
+        if (this.verbose) {
+          this.log(`   ⚠️  Diretório não encontrado: ${dirName}`);
+        }
       }
     }
     
@@ -298,22 +322,81 @@ class ExtensionBuilder {
     const manifestTarget = path.join(outputDir, 'manifest.json');
     await fs.copy(manifestSource, manifestTarget);
     
-    this.log(`   ✓ ${copiedCount} arquivos copiados + manifest`);
+    if (this.verbose) {
+      this.log(`   + manifest.json (${config.manifestSource})`);
+    }
+    copiedCount++;
+    
+    this.log(`   ✓ ${copiedCount} arquivos copiados, ${skippedCount} filtrados`);
   }
 
   /**
-   * Verifica se um arquivo deve ser ignorado
+   * Copia arquivos de um diretório com filtro
    */
-  shouldIgnoreFile(fileName) {
-    return IGNORE_PATTERNS.some(pattern => {
-      if (pattern.includes('*')) {
-        const regex = new RegExp(pattern.replace(/\*/g, '.*'));
-        return regex.test(fileName);
+  async copyDirectoryWithFilter(sourceDirPath, targetDirPath, dirName, filter) {
+    let fileCount = 0;
+    let skippedCount = 0;
+    
+    const files = await fs.readdir(sourceDirPath);
+    
+    for (const file of files) {
+      const sourceFilePath = path.join(sourceDirPath, file);
+      const targetFilePath = path.join(targetDirPath, file);
+      const stats = await fs.stat(sourceFilePath);
+      
+      if (stats.isFile()) {
+        const isAllowed = filter(file);
+        
+        if (isAllowed) {
+          await fs.copy(sourceFilePath, targetFilePath);
+          
+          if (this.verbose) {
+            this.log(`   + ${dirName}/${file}`);
+          }
+          fileCount++;
+        } else {
+          if (this.verbose) {
+            this.log(`   - Filtrado: ${dirName}/${file}`);
+          }
+          skippedCount++;
+        }
+      } else if (stats.isDirectory()) {
+        // Processa subdiretórios recursivamente
+        const subTargetDir = path.join(targetDirPath, file);
+        await fs.ensureDir(subTargetDir);
+        
+        const subFiles = await fs.readdir(sourceFilePath);
+        
+        for (const subFile of subFiles) {
+          const subSourcePath = path.join(sourceFilePath, subFile);
+          const subTargetPath = path.join(subTargetDir, subFile);
+          const subStats = await fs.stat(subSourcePath);
+          
+          if (subStats.isFile()) {
+            const isAllowed = filter(subFile);
+            
+            if (isAllowed) {
+              await fs.copy(subSourcePath, subTargetPath);
+              
+              if (this.verbose) {
+                this.log(`   + ${dirName}/${file}/${subFile}`);
+              }
+              fileCount++;
+            } else {
+              if (this.verbose) {
+                this.log(`   - Filtrado: ${dirName}/${file}/${subFile}`);
+              }
+              skippedCount++;
+            }
+          }
+        }
       }
-      return fileName === pattern || fileName.toLowerCase() === pattern.toLowerCase();
-    });
+    }
+    
+    return { fileCount, skippedCount };
   }
 
+  
   /**
    * Otimiza assets (minificação, compressão)
    */

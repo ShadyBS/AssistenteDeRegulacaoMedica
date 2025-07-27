@@ -5,7 +5,16 @@ import * as Utils from "./utils.js";
 import * as API from "./api.js"; // Importa a API para buscar prioridades
 import { CONFIG, getTimeout, getCSSClass } from "./config.js";
 import { getBrowserAPIInstance } from "./BrowserAPI.js";
-import { createComponentLogger } from "./logger.js";
+import { 
+  createComponentLogger, 
+  getLogger, 
+  setLogLevel, 
+  exportLogs, 
+  clearLogs, 
+  getLogStats,
+  LOG_LEVELS 
+} from "./logger.js";
+import { testLoggingSystem } from "./test-logger.js";
 
 // Logger especÃ­fico para Options
 const logger = createComponentLogger('Options');
@@ -1220,5 +1229,238 @@ importFileInput.addEventListener("change", handleImport);
 allDropZones.forEach((zone) => {
   zone.addEventListener("dragover", handleDragOver);
   zone.addEventListener("drop", handleDrop);
+});
+
+// --- SISTEMA DE LOGGING ---
+
+/**
+ * Carrega as configurações de logging salvas
+ */
+async function loadLoggingSettings() {
+  try {
+    const loggerInstance = getLogger();
+    const currentConfig = loggerInstance.config;
+    
+    // Carrega configurações salvas do storage
+    const savedSettings = await browserAPI.storage.local.get({
+      logLevel: 'INFO',
+      enableConsoleLogging: true,
+      enableStorageLogging: true
+    });
+    
+    // Aplica as configurações no logger
+    setLogLevel(savedSettings.logLevel);
+    loggerInstance.config.enableConsole = savedSettings.enableConsoleLogging;
+    loggerInstance.config.enableStorage = savedSettings.enableStorageLogging;
+    
+    // Atualiza a interface
+    const logLevelSelect = document.getElementById('logLevel');
+    const enableConsoleCheckbox = document.getElementById('enableConsoleLogging');
+    const enableStorageCheckbox = document.getElementById('enableStorageLogging');
+    
+    if (logLevelSelect) logLevelSelect.value = savedSettings.logLevel;
+    if (enableConsoleCheckbox) enableConsoleCheckbox.checked = savedSettings.enableConsoleLogging;
+    if (enableStorageCheckbox) enableStorageCheckbox.checked = savedSettings.enableStorageLogging;
+    
+    // Carrega estatísticas iniciais
+    await updateLogStats();
+    
+    logger.info('Configurações de logging carregadas', { 
+      level: savedSettings.logLevel,
+      console: savedSettings.enableConsoleLogging,
+      storage: savedSettings.enableStorageLogging
+    });
+    
+  } catch (error) {
+    logger.error('Erro ao carregar configurações de logging:', error);
+  }
+}
+
+/**
+ * Salva as configurações de logging
+ */
+async function saveLoggingSettings() {
+  try {
+    const logLevelSelect = document.getElementById('logLevel');
+    const enableConsoleCheckbox = document.getElementById('enableConsoleLogging');
+    const enableStorageCheckbox = document.getElementById('enableStorageLogging');
+    
+    const settings = {
+      logLevel: logLevelSelect.value,
+      enableConsoleLogging: enableConsoleCheckbox.checked,
+      enableStorageLogging: enableStorageCheckbox.checked
+    };
+    
+    // Salva no storage
+    await browserAPI.storage.local.set(settings);
+    
+    // Aplica as configurações no logger
+    const loggerInstance = getLogger();
+    setLogLevel(settings.logLevel);
+    loggerInstance.config.enableConsole = settings.enableConsoleLogging;
+    loggerInstance.config.enableStorage = settings.enableStorageLogging;
+    
+    logger.info('Configurações de logging salvas', settings);
+    
+    Utils.showMessage('Configurações de logging salvas!', 'success');
+    
+  } catch (error) {
+    logger.error('Erro ao salvar configurações de logging:', error);
+    Utils.showMessage('Erro ao salvar configurações de logging.', 'error');
+  }
+}
+
+/**
+ * Atualiza as estatísticas de logs na interface
+ */
+async function updateLogStats() {
+  try {
+    const stats = await getLogStats();
+    
+    document.getElementById('totalLogs').textContent = stats.total || '0';
+    document.getElementById('errorLogs').textContent = stats.byLevel.ERROR || '0';
+    document.getElementById('warnLogs').textContent = stats.byLevel.WARN || '0';
+    document.getElementById('infoLogs').textContent = stats.byLevel.INFO || '0';
+    document.getElementById('debugLogs').textContent = stats.byLevel.DEBUG || '0';
+    
+  } catch (error) {
+    logger.error('Erro ao atualizar estatísticas de logs:', error);
+    
+    // Valores padrão em caso de erro
+    document.getElementById('totalLogs').textContent = 'Erro';
+    document.getElementById('errorLogs').textContent = '-';
+    document.getElementById('warnLogs').textContent = '-';
+    document.getElementById('infoLogs').textContent = '-';
+    document.getElementById('debugLogs').textContent = '-';
+  }
+}
+
+/**
+ * Exporta logs para arquivo
+ */
+async function handleExportLogs() {
+  try {
+    const logs = await exportLogs('json');
+    
+    if (!logs || logs === '[]') {
+      Utils.showMessage('Nenhum log disponível para exportar.', 'warning');
+      return;
+    }
+    
+    const blob = new Blob([logs], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    a.download = `assistente-regulacao-logs-${timestamp}.json`;
+    
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    logger.info('Logs exportados para arquivo', { timestamp });
+    Utils.showMessage('Logs exportados com sucesso!', 'success');
+    
+  } catch (error) {
+    logger.error('Erro ao exportar logs:', error);
+    Utils.showMessage('Erro ao exportar logs.', 'error');
+  }
+}
+
+/**
+ * Limpa todos os logs
+ */
+async function handleClearLogs() {
+  try {
+    const confirmation = confirm(
+      'Tem certeza que deseja limpar todos os logs? Esta ação não pode ser desfeita.'
+    );
+    
+    if (!confirmation) return;
+    
+    await clearLogs();
+    await updateLogStats();
+    
+    logger.info('Logs limpos pelo usuário');
+    Utils.showMessage('Todos os logs foram limpos.', 'success');
+    
+  } catch (error) {
+    logger.error('Erro ao limpar logs:', error);
+    Utils.showMessage('Erro ao limpar logs.', 'error');
+  }
+}
+
+/**
+ * Executa teste do sistema de logging
+ */
+async function handleTestLogging() {
+  try {
+    Utils.showMessage('Executando teste do sistema de logging...', 'info');
+    
+    // Executa os testes
+    const result = await testLoggingSystem();
+    
+    if (result.success) {
+      Utils.showMessage('Teste do sistema de logging concluído com sucesso!', 'success');
+      logger.info('Teste do sistema de logging executado', result);
+    } else {
+      Utils.showMessage('Teste do sistema de logging falhou.', 'error');
+      logger.error('Falha no teste do sistema de logging', result);
+    }
+    
+    // Atualiza estatísticas após o teste
+    setTimeout(async () => {
+      await updateLogStats();
+    }, 1000);
+    
+  } catch (error) {
+    logger.error('Erro ao executar teste de logging:', error);
+    Utils.showMessage('Erro ao executar teste de logging.', 'error');
+  }
+}
+
+// Event listeners para o sistema de logging
+document.addEventListener('DOMContentLoaded', async () => {
+  // Carrega configurações de logging
+  await loadLoggingSettings();
+  
+  // Event listeners para controles de logging
+  const logLevelSelect = document.getElementById('logLevel');
+  const enableConsoleCheckbox = document.getElementById('enableConsoleLogging');
+  const enableStorageCheckbox = document.getElementById('enableStorageLogging');
+  const refreshLogStatsBtn = document.getElementById('refreshLogStats');
+  const exportLogsBtn = document.getElementById('exportLogsBtn');
+  const clearLogsBtn = document.getElementById('clearLogsBtn');
+  const testLoggingBtn = document.getElementById('testLoggingBtn');
+  
+  if (logLevelSelect) {
+    logLevelSelect.addEventListener('change', saveLoggingSettings);
+  }
+  
+  if (enableConsoleCheckbox) {
+    enableConsoleCheckbox.addEventListener('change', saveLoggingSettings);
+  }
+  
+  if (enableStorageCheckbox) {
+    enableStorageCheckbox.addEventListener('change', saveLoggingSettings);
+  }
+  
+  if (refreshLogStatsBtn) {
+    refreshLogStatsBtn.addEventListener('click', updateLogStats);
+  }
+  
+  if (exportLogsBtn) {
+    exportLogsBtn.addEventListener('click', handleExportLogs);
+  }
+  
+  if (clearLogsBtn) {
+    clearLogsBtn.addEventListener('click', handleClearLogs);
+  }
+  
+  if (testLoggingBtn) {
+    testLoggingBtn.addEventListener('click', handleTestLogging);
+  }
 });
 

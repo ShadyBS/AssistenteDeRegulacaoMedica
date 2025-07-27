@@ -1,15 +1,14 @@
 {
-  "timestamp": "2025-07-27T19:38:30.251Z",
+  "timestamp": "2025-07-27T21:30:13.706Z",
   "summary": {
     "errors": 0,
-    "warnings": 2,
+    "warnings": 1,
     "fixes": 0,
     "status": "PASS"
   },
   "details": {
     "errors": [],
     "warnings": [
-      "Firefox pode não suportar service_worker completamente (manifest.json)",
       "Problemas encontrados no código JavaScript"
     ],
     "fixes": []

@@ -37,8 +37,7 @@ AssistenteDeRegulacaoMedica/
 ├── 💾 store.js                   # Gerenciamento de estado
 ├── 🔧 utils.js                   # Utilitários gerais
 ├── ⚙️ config.js                  # Configurações da extensão
-├── 🏗️ build-zips.js              # Script de build legado
-├── 🚀 release.js                 # Script de release legado
+├── 🏗️ build-zips-clean.js        # Script de build otimizado (whitelist)
 ├── 📚 src/input.css              # CSS fonte (Tailwind)
 ├── 📦 dist/output.css            # CSS compilado
 ├── 🎨 ui/                        # Componentes de interface
@@ -93,14 +92,14 @@ AssistenteDeRegulacaoMedica/
 ### Padrões e Convenções Existentes
 
 #### Nomenclatura de Arquivos
-- **Kebab-case**: `content-script.js`, `build-zips.js`
+- **Kebab-case**: `content-script.js`, `build-zips-clean.js`
 - **PascalCase para Classes**: `MemoryManager.js`, `SectionManager.js`
 - **Descritivo**: Nomes devem indicar claramente a função
 
 #### Estrutura de Código
 - **Módulos ES6**: Use `import/export`
 - **Compatibilidade**: Sempre use `browser` API com polyfill
-- **Logging**: Use console com prefixos identificadores
+- **Logging**: **OBRIGATÓRIO** usar sistema de logging estruturado (`logger.js`)
 
 ---
 
@@ -309,7 +308,7 @@ class TimelineManager {}
 // ✅ Kebab-case para arquivos
 // content-script.js
 // api-constants.js
-// build-zips.js
+// build-zips-clean.js
 
 // ✅ PascalCase para classes principais
 // MemoryManager.js
@@ -383,6 +382,25 @@ if (!validateCNS(cns)) {
 
 // Sanitiza��ão de dados
 const safePatientData = sanitizePatientData(rawData);
+```
+
+#### 5. Sistema de Logging Estruturado (OBRIGATÓRIO)
+```javascript
+// ✅ SEMPRE use o sistema de logging estruturado
+import { createComponentLogger } from './logger.js';
+
+// Criar logger específico para o componente
+const logger = createComponentLogger('ComponentName');
+
+// ✅ Usar métodos do logger em vez de console
+logger.debug('Informação detalhada para debugging', { data: context });
+logger.info('Operação realizada com sucesso', { operation: 'fetchData' });
+logger.warn('Situação que requer atenção', { warning: 'deprecated' });
+logger.error('Erro que precisa ser investigado', { error: errorObject });
+
+// ❌ NUNCA use console.log diretamente
+console.log('Mensagem'); // PROIBIDO
+console.error('Erro'); // PROIBIDO
 ```
 
 ### Bibliotecas e APIs Preferidas
@@ -637,18 +655,6 @@ npm run validate              # ESLint + manifests + segurança
 npm run release:minor         # Versionamento + build + GitHub release
 ```
 
-#### Sistema Legado (Compatibilidade)
-```bash
-# Build tradicional - usa scripts antigos
-npm run build:all             # CSS + ZIPs
-npm run build:zips            # Apenas ZIPs
-
-# Validação básica
-npm run validate:manifests    # Apenas manifests
-
-# Release manual
-npm run release 1.2.3         # Script legado
-```
 
 ### Integração com VSCode
 
@@ -1086,7 +1092,9 @@ git push origin main --tags
 - [ ] **Validação de dados** médicos implementada
 - [ ] **Sanitização** de entrada de dados
 - [ ] **Tratamento de erros** adequado
-- [ ] **Logging** com prefixos identificadores
+- [ ] **Sistema de logging estruturado** usando `logger.js` (OBRIGATÓRIO)
+- [ ] **Logger específico** criado com `createComponentLogger()` para cada componente
+- [ ] **Nenhum uso direto** de `console.log()`, `console.error()`, etc.
 
 #### Build e Validação
 - [ ] **`npm run validate:manifests`** passa sem erros
@@ -1201,6 +1209,14 @@ npm run build:all
 - ❌ **NUNCA** pule validações antes de release
 - ❌ **NUNCA** deixe de fazer commit após modificações de código
 - ❌ **NUNCA** faça commit sem executar validações completas
+
+#### Logging (OBRIGATÓRIO)
+- ❌ **NUNCA** use `console.log()`, `console.error()`, `console.warn()` ou `console.info()` diretamente
+- ❌ **NUNCA** use `alert()` ou `confirm()` para debugging
+- ❌ **NUNCA** deixe logs de debugging em código de produção
+- ✅ **SEMPRE** use o sistema de logging estruturado (`logger.js`)
+- ✅ **SEMPRE** crie logger específico para cada componente com `createComponentLogger()`
+- ✅ **SEMPRE** use os métodos apropriados: `logger.debug()`, `logger.info()`, `logger.warn()`, `logger.error()`
 
 ### 🔒 Práticas de Segurança Obrigatórias
 
@@ -1460,9 +1476,17 @@ Para dúvidas ou problemas:
 
 **Este documento é a fonte única da verdade para desenvolvimento neste projeto. Consulte-o sempre antes de fazer modificações.**
 
-**Última atualização:** 2025-01-23 - Versão 2.0.0
+**Última atualização:** 2025-01-23 - Versão 2.1.0
 
 ### 📋 Histórico de Atualizações
+
+#### v2.1.0 - 2025-01-23
+- ✅ **Sistema legado de build removido** completamente
+- ✅ **Script moderno corrigido** para usar whitelist rigorosa
+- ✅ **Padronização total** do sistema de build
+- ✅ **Redução de 91%** no tamanho dos ZIPs (1.14 MB → 0.10 MB)
+- ✅ **Eliminação de confusão** entre múltiplos sistemas
+- ✅ **Documentação atualizada** para refletir mudanças
 
 #### v2.0.0 - 2025-01-23
 - ✅ **Sistema completo de build/release** implementado

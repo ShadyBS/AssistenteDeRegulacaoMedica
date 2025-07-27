@@ -1,25 +1,138 @@
+# Assistente de Regulação Médica - .gitignore
+# Configurado para extensão de navegador com Node.js/Webpack
+
+# Diretórios específicos do projeto
 /misc/
+temp-zip-analysis/
+
+# Environment files
 .env
-node_modules
+.env.local
+.env.test
+.env.production
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Keep .env.example as template
+!.env.example
+
+# Node.js dependencies
+node_modules/
+jspm_packages/
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
 
 # Build output directories
 .dist/
 dist-zips/
 dist/
+build/
+.next/
+.nuxt/
+.out/
+.storybook-out/
 
-# Development files
+# Development and temporary files
 *.log
 *.tmp
+*.bak
+*.orig
+*.swp
+*.swo
+*~
+.#*
+\#*#
+.*.swp
+.*.swo
+
+# OS specific files
 .DS_Store
 Thumbs.db
+desktop.ini
 
 # IDE files
-.vscode/settings.json
 .idea/
+*.code-workspace
 
-# Environment files
-.env.local
-.env.example
+# VSCode - ignore only settings.json (keep tasks, launch, extensions)
+.vscode/settings.json
 
 # Cache directories
 .qodo/
+.npm/
+.eslintcache
+.cache/
+.parcel-cache/
+.rpt2_cache/
+.rts2_cache_cjs/
+.rts2_cache_es/
+.rts2_cache_umd/
+
+# Test coverage
+coverage/
+.nyc_output/
+*.lcov
+lcov.info
+
+# Reports and documentation artifacts (temporários)
+*REPORT*.md
+*SUMMARY*.md
+*COMPLETION*.md
+*AUDIT*.md
+*MIGRATION*.md
+*FIXES*.md
+*PROBLEM*.md
+validation-report*.json
+
+# PowerShell migration scripts (temporary)
+migrate-*.ps1
+
+# Webpack and build artifacts
+*.map
+*.min.js
+*.min.css
+*.tsbuildinfo
+
+# Runtime data
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# Logs
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Package manager files
+*.tgz
+.yarn-integrity
+.pnpm-debug.log*
+
+# Optional REPL history
+.node_repl_history
+
+# Stores VSCode versions used for testing VSCode extensions
+.vscode-test/
+
+# Build tools intermediate storage
+.grunt/
+bower_components/
+.lock-wscript
+
+# Compiled binary addons
+build/Release/
+
+# Temporary folders
+tmp/
+temp/
+
+# Editor backup files and swap files
+*~
+.#*
+\#*#
+.*.swp
+.*.swo
