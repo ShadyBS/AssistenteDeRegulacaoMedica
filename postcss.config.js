@@ -17,7 +17,11 @@ module.exports = {
         'Edge >= 88'
       ],
       grid: 'autoplace',
-      flexbox: 'no-2009'
+      flexbox: 'no-2009',
+      // Remove propriedades não suportadas pelo Firefox
+      remove: false,
+      // Adiciona prefixos conservadores
+      cascade: false
     }),
     
     // CSSnano para minificação em produção

@@ -1,14 +1,12 @@
 ﻿/**
-};
+ * @file store.js - Gestor de estado centralizado para a aplicaÃ§Ã£o.
+ * Implementa um padrÃ£o simples de "publish-subscribe" para gerir o estado global.
+ */
+
 import { createComponentLogger } from "./logger.js";
 
 // Logger especÃ­fico para Store
 const logger = createComponentLogger('Store');
-
-/**
- * @file store.js - Gestor de estado centralizado para a aplicaÃ§Ã£o.
- * Implementa um padrÃ£o simples de "publish-subscribe" para gerir o estado global.
- */
 
 const state = {
   currentPatient: {
