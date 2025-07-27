@@ -1,16 +1,16 @@
-import "./browser-polyfill.js";
+﻿import "./browser-polyfill.js";
 import { fetchRegulationDetails } from "./api.js";
 import { KeepAliveManager } from "./KeepAliveManager.js";
 import { getBrowserAPIInstance } from "./BrowserAPI.js";
 import { encryptForStorage, decryptFromStorage, cleanupExpiredData, MEDICAL_DATA_CONFIG } from "./crypto-utils.js";
 import { createComponentLogger } from "./logger.js";
 
-// Logger específico para background script
+// Logger especÃ­fico para background script
 const logger = createComponentLogger('Background');
 
 const api = getBrowserAPIInstance();
 
-// Instância global do KeepAliveManager
+// InstÃ¢ncia global do KeepAliveManager
 let keepAliveManager = null;
 
 // Inicializa o KeepAliveManager
@@ -21,18 +21,18 @@ function initializeKeepAlive() {
   }
 }
 
-// ✅ SEGURANÇA: Limpeza automática de dados médicos expirados
+// âœ… SEGURANÃ‡A: Limpeza automÃ¡tica de dados mÃ©dicos expirados
 async function setupDataCleanup() {
-  // Limpa dados expirados na inicialização
+  // Limpa dados expirados na inicializaÃ§Ã£o
   await cleanupExpiredData(api);
   
-  // Configura limpeza periódica (a cada 30 minutos)
+  // Configura limpeza periÃ³dica (a cada 30 minutos)
   api.alarms.create('cleanupExpiredData', { periodInMinutes: 30 });
   
   // Listener para o alarme de limpeza
   api.alarms.onAlarm.addListener(async (alarm) => {
     if (alarm.name === 'cleanupExpiredData') {
-      logger.info('Executando limpeza automática de dados expirados', { 
+      logger.info('Executando limpeza automÃ¡tica de dados expirados', { 
         operation: 'setupDataCleanup',
         alarmName: alarm.name 
       });
@@ -41,10 +41,10 @@ async function setupDataCleanup() {
   });
 }
 
-// ✅ SEGURANÇA: Rate limiting para mensagens
+// âœ… SEGURANÃ‡A: Rate limiting para mensagens
 const messageRateLimit = new Map();
 const RATE_LIMIT_WINDOW = 60000; // 1 minuto
-const MAX_MESSAGES_PER_WINDOW = 100; // máximo 100 mensagens por minuto por origem
+const MAX_MESSAGES_PER_WINDOW = 100; // mÃ¡ximo 100 mensagens por minuto por origem
 
 function checkRateLimit(senderId) {
   const now = Date.now();
@@ -73,7 +73,7 @@ function checkRateLimit(senderId) {
   return true;
 }
 
-// ✅ SEGURANÇA: Validação rigorosa de origem para message passing
+// âœ… SEGURANÃ‡A: ValidaÃ§Ã£o rigorosa de origem para message passing
 api.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
   const timestamp = new Date().toISOString();
   
@@ -90,9 +90,9 @@ api.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
 
   // Validar origem da mensagem
   if (!sender || !sender.tab) {
-    // Mensagens de outras partes da extensão (popup, sidebar, etc.)
+    // Mensagens de outras partes da extensÃ£o (popup, sidebar, etc.)
     if (!sender.id || sender.id !== api.runtime.id) {
-      logger.warn('Mensagem rejeitada - origem não confiável', {
+      logger.warn('Mensagem rejeitada - origem nÃ£o confiÃ¡vel', {
         operation: 'onMessage',
         senderId: sender?.id,
         expectedId: api.runtime.id,
@@ -102,7 +102,7 @@ api.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
       return false;
     }
   } else {
-    // Mensagens de content scripts devem vir de páginas SIGSS autorizadas
+    // Mensagens de content scripts devem vir de pÃ¡ginas SIGSS autorizadas
     const allowedOrigins = [
       'sigss.saude.gov.br',
       'sigss-hom.saude.gov.br', 
@@ -124,11 +124,13 @@ api.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
     });
     
     if (!isAuthorized) {
-      console.warn(`[Assistente Background] ${timestamp} - Mensagem rejeitada - origem não autorizada:`, {
+      logger.warn('Mensagem rejeitada - origem nÃ£o autorizada', {
+        operation: 'onMessage',
         senderUrl,
         senderOrigin,
         allowedOrigins,
-        tabId: sender.tab.id
+        tabId: sender.tab.id,
+        timestamp
       });
       return false;
     }
@@ -136,11 +138,13 @@ api.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
 
   // Validar estrutura da mensagem
   if (!message || typeof message !== 'object' || !message.type) {
-    console.warn(`[Assistente Background] ${timestamp} - Mensagem rejeitada - estrutura inválida:`, {
+    logger.warn('Mensagem rejeitada - estrutura invÃ¡lida', {
+      operation: 'onMessage',
       message,
       messageType: typeof message,
       hasType: message?.type,
-      senderId
+      senderId,
+      timestamp
     });
     return false;
   }
@@ -156,7 +160,7 @@ api.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
   ];
 
   if (!allowedMessageTypes.includes(message.type)) {
-    console.warn(`[Assistente Background] ${timestamp} - Tipo de mensagem não permitido:`, {
+    logger.warn(`[Assistente Background] ${timestamp} - Tipo de mensagem nÃ£o permitido:`, {
       messageType: message.type,
       allowedTypes: allowedMessageTypes,
       senderId
@@ -165,22 +169,22 @@ api.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
   }
 
   // Log de mensagem autorizada
-  console.log(`[Assistente Background] ${timestamp} - Mensagem autorizada:`, {
+  logger.info(`[Assistente Background] ${timestamp} - Mensagem autorizada:`, {
     type: message.type,
     senderId,
     origin: sender?.tab?.url || sender?.url || 'extension'
   });
 
   if (message.type === "SAVE_REGULATION_DATA") {
-    console.log(
-      "[Assistente Background] Recebido pedido para salvar dados da regulação:",
+    logger.info(
+      "[Assistente Background] Recebido pedido para salvar dados da regulaÃ§Ã£o:",
       message.payload
     );
     try {
       const regulationDetails = await fetchRegulationDetails(message.payload);
 
       if (regulationDetails) {
-        // ✅ SEGURANÇA: Criptografar dados médicos sensíveis antes do armazenamento
+        // âœ… SEGURANÃ‡A: Criptografar dados mÃ©dicos sensÃ­veis antes do armazenamento
         const encryptedData = await encryptForStorage(
           regulationDetails, 
           MEDICAL_DATA_CONFIG.SENSITIVE_TTL_MINUTES
@@ -191,18 +195,18 @@ api.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
           pendingRegulationTimestamp: Date.now()
         });
         
-        console.log(
-          "[Assistente Background] Detalhes da regulação salvos criptografados no storage local"
+        logger.info(
+          "[Assistente Background] Detalhes da regulaÃ§Ã£o salvos criptografados no storage local"
         );
       } else {
-        console.warn(
-          "[Assistente Background] Não foram encontrados detalhes para a regulação:",
+        logger.warn(
+          "[Assistente Background] NÃ£o foram encontrados detalhes para a regulaÃ§Ã£o:",
           message.payload
         );
       }
     } catch (e) {
-      console.error(
-        "[Assistente Background] Falha ao buscar ou salvar dados da regulação:",
+      logger.error(
+        "[Assistente Background] Falha ao buscar ou salvar dados da regulaÃ§Ã£o:",
         e
       );
     }
@@ -215,13 +219,13 @@ api.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
       const status = await keepAliveManager.getStatus();
       sendResponse(status);
     } else {
-      sendResponse({ isActive: false, error: "KeepAliveManager não inicializado" });
+      sendResponse({ isActive: false, error: "KeepAliveManager nÃ£o inicializado" });
     }
     return true;
   }
 
-  // Mensagem não reconhecida
-  console.warn("[Assistente Background] Tipo de mensagem não reconhecido:", message.type);
+  // Mensagem nÃ£o reconhecida
+  logger.warn("[Assistente Background] Tipo de mensagem nÃ£o reconhecido:", message.type);
   return false;
 });
 
@@ -235,19 +239,19 @@ async function openSidebar(tab) {
 
 api.action.onClicked.addListener(openSidebar);
 
-// Inicializa o KeepAliveManager e limpeza de dados na inicialização
+// Inicializa o KeepAliveManager e limpeza de dados na inicializaÃ§Ã£o
 initializeKeepAlive();
 setupDataCleanup();
 
-// Reinicializa o KeepAliveManager quando o service worker é reativado
+// Reinicializa o KeepAliveManager quando o service worker Ã© reativado
 api.runtime.onStartup.addListener(() => {
-  console.log("[Assistente Background] Service worker reiniciado - reinicializando KeepAlive");
+  logger.info("[Assistente Background] Service worker reiniciado - reinicializando KeepAlive");
   initializeKeepAlive();
   setupDataCleanup();
 });
 
 api.runtime.onInstalled.addListener((details) => {
-  console.log("[Assistente Background] Extensão instalada/atualizada - inicializando KeepAlive");
+  logger.info("[Assistente Background] ExtensÃ£o instalada/atualizada - inicializando KeepAlive");
   initializeKeepAlive();
   setupDataCleanup();
   
@@ -255,13 +259,13 @@ api.runtime.onInstalled.addListener((details) => {
     api.sidePanel
       .setPanelBehavior({ openPanelOnActionClick: false })
       .catch((e) =>
-        console.error("Falha ao definir o comportamento do sidePanel:", e)
+        logger.error("Falha ao definir o comportamento do sidePanel:", e)
       );
   }
 
   api.contextMenus.create({
     id: "openSidePanel",
-    title: "Alternar Assistente de Regulação",
+    title: "Alternar Assistente de RegulaÃ§Ã£o",
     contexts: ["all"],
   });
 
@@ -275,3 +279,4 @@ api.runtime.onInstalled.addListener((details) => {
     api.tabs.create({ url: api.runtime.getURL("help.html") });
   }
 });
+

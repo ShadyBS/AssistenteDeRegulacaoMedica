@@ -1,4 +1,4 @@
-import "./browser-polyfill.js";
+﻿import "./browser-polyfill.js";
 import { CONFIG, getAPIConfig } from "./config.js";
 import { getBrowserAPIInstance } from "./BrowserAPI.js";
 import {
@@ -17,11 +17,11 @@ import { parseConsultasHTML } from "./consultation-parser.js";
 
 const api = getBrowserAPIInstance();
 
-// ✅ TASK-A-002: Error Boundaries e Circuit Breaker Pattern
+// âœ… TASK-A-002: Error Boundaries e Circuit Breaker Pattern
 class CircuitBreaker {
   constructor(threshold = 5, timeout = 60000, resetTimeout = 30000) {
-    this.threshold = threshold; // Número de falhas antes de abrir o circuito
-    this.timeout = timeout; // Timeout para requisições
+    this.threshold = threshold; // NÃºmero de falhas antes de abrir o circuito
+    this.timeout = timeout; // Timeout para requisiÃ§Ãµes
     this.resetTimeout = resetTimeout; // Tempo para tentar fechar o circuito
     this.failureCount = 0;
     this.lastFailureTime = null;
@@ -32,7 +32,7 @@ class CircuitBreaker {
     if (this.state === 'OPEN') {
       if (Date.now() - this.lastFailureTime > this.resetTimeout) {
         this.state = 'HALF_OPEN';
-        console.log(`[Circuit Breaker] Tentando fechar circuito para ${operationName}`);
+        logger.info(`[Circuit Breaker] Tentando fechar circuito para ${operationName}`);
       } else {
         const error = new Error(`Circuit breaker is OPEN for ${operationName}`);
         error.circuitBreakerOpen = true;
@@ -52,7 +52,7 @@ class CircuitBreaker {
       if (this.state === 'HALF_OPEN') {
         this.state = 'CLOSED';
         this.failureCount = 0;
-        console.log(`[Circuit Breaker] Circuito fechado para ${operationName}`);
+        logger.info(`[Circuit Breaker] Circuito fechado para ${operationName}`);
       }
 
       return result;
@@ -62,7 +62,7 @@ class CircuitBreaker {
 
       if (this.failureCount >= this.threshold) {
         this.state = 'OPEN';
-        console.error(`[Circuit Breaker] Circuito aberto para ${operationName} após ${this.failureCount} falhas`);
+        logger.error(`[Circuit Breaker] Circuito aberto para ${operationName} apÃ³s ${this.failureCount} falhas`);
       }
 
       throw error;
@@ -78,7 +78,7 @@ class CircuitBreaker {
   }
 }
 
-// ✅ TASK-A-002: Retry Logic com Backoff Exponencial
+// âœ… TASK-A-002: Retry Logic com Backoff Exponencial
 class RetryHandler {
   constructor(maxRetries = 3, baseDelay = 1000, maxDelay = 10000) {
     this.maxRetries = maxRetries;
@@ -95,14 +95,14 @@ class RetryHandler {
       } catch (error) {
         lastError = error;
         
-        // Não fazer retry para erros que não são temporários
+        // NÃ£o fazer retry para erros que nÃ£o sÃ£o temporÃ¡rios
         if (this.isNonRetryableError(error)) {
-          console.error(`[Retry Handler] Erro não recuperável em ${operationName}:`, error.message);
+          logger.error(`[Retry Handler] Erro nÃ£o recuperÃ¡vel em ${operationName}:`, error.message);
           throw error;
         }
 
         if (attempt === this.maxRetries) {
-          console.error(`[Retry Handler] Falha final em ${operationName} após ${this.maxRetries + 1} tentativas`);
+          logger.error(`[Retry Handler] Falha final em ${operationName} apÃ³s ${this.maxRetries + 1} tentativas`);
           break;
         }
 
@@ -111,7 +111,7 @@ class RetryHandler {
           this.maxDelay
         );
         
-        console.warn(`[Retry Handler] Tentativa ${attempt + 1}/${this.maxRetries + 1} falhou para ${operationName}, tentando novamente em ${delay}ms:`, error.message);
+        logger.warn(`[Retry Handler] Tentativa ${attempt + 1}/${this.maxRetries + 1} falhou para ${operationName}, tentando novamente em ${delay}ms:`, error.message);
         await new Promise(resolve => setTimeout(resolve, delay));
       }
     }
@@ -120,13 +120,13 @@ class RetryHandler {
   }
 
   isNonRetryableError(error) {
-    // Erros que não devem ser retentados
+    // Erros que nÃ£o devem ser retentados
     if (error.circuitBreakerOpen) return true;
     if (error.message.includes('URL_BASE_NOT_CONFIGURED')) return true;
-    if (error.message.includes('inválido')) return true;
-    if (error.message.includes('necessário')) return true;
+    if (error.message.includes('invÃ¡lido')) return true;
+    if (error.message.includes('necessÃ¡rio')) return true;
     
-    // Códigos HTTP que não devem ser retentados
+    // CÃ³digos HTTP que nÃ£o devem ser retentados
     if (error.status) {
       const nonRetryableStatuses = [400, 401, 403, 404, 422];
       return nonRetryableStatuses.includes(error.status);
@@ -136,7 +136,7 @@ class RetryHandler {
   }
 }
 
-// ✅ TASK-A-002: Logging Estruturado para Erros
+// âœ… TASK-A-002: Logging Estruturado para Erros
 class ErrorLogger {
   static log(error, context = {}) {
     const timestamp = new Date().toISOString();
@@ -151,11 +151,11 @@ class ErrorLogger {
     };
 
     // Log estruturado no console
-    console.error(`[API Error] ${timestamp}:`, errorInfo);
+    logger.error(`[API Error] ${timestamp}:`, errorInfo);
 
-    // Salvar no storage para debugging (últimos 50 erros)
+    // Salvar no storage para debugging (Ãºltimos 50 erros)
     this.saveToStorage(errorInfo).catch(storageError => {
-      console.warn('[Error Logger] Falha ao salvar erro no storage:', storageError);
+      logger.warn('[Error Logger] Falha ao salvar erro no storage:', storageError);
     });
   }
 
@@ -164,7 +164,7 @@ class ErrorLogger {
       const stored = await api.storage.local.get({ apiErrors: [] });
       const errors = stored.apiErrors || [];
       
-      // Manter apenas os últimos 50 erros
+      // Manter apenas os Ãºltimos 50 erros
       errors.unshift(errorInfo);
       if (errors.length > 50) {
         errors.splice(50);
@@ -172,7 +172,7 @@ class ErrorLogger {
       
       await api.storage.local.set({ apiErrors: errors });
     } catch (error) {
-      // Falha silenciosa para não criar loop de erros
+      // Falha silenciosa para nÃ£o criar loop de erros
     }
   }
 
@@ -181,7 +181,7 @@ class ErrorLogger {
       const stored = await api.storage.local.get({ apiErrors: [] });
       return stored.apiErrors || [];
     } catch (error) {
-      console.warn('[Error Logger] Falha ao recuperar erros do storage:', error);
+      logger.warn('[Error Logger] Falha ao recuperar erros do storage:', error);
       return [];
     }
   }
@@ -189,14 +189,14 @@ class ErrorLogger {
   static async clearStoredErrors() {
     try {
       await api.storage.local.remove('apiErrors');
-      console.log('[Error Logger] Erros armazenados limpos');
+      logger.info('[Error Logger] Erros armazenados limpos');
     } catch (error) {
-      console.warn('[Error Logger] Falha ao limpar erros do storage:', error);
+      logger.warn('[Error Logger] Falha ao limpar erros do storage:', error);
     }
   }
 }
 
-// ✅ TASK-A-002: Wrapper para Operações de API com Error Boundaries
+// âœ… TASK-A-002: Wrapper para OperaÃ§Ãµes de API com Error Boundaries
 class APIErrorBoundary {
   constructor() {
     this.circuitBreaker = new CircuitBreaker();
@@ -233,10 +233,10 @@ class APIErrorBoundary {
         circuitBreakerState: this.circuitBreaker.getState()
       });
 
-      // Tentar fallback se disponível
+      // Tentar fallback se disponÃ­vel
       if (fallback && typeof fallback === 'function') {
         try {
-          console.warn(`[API Error Boundary] Usando fallback para ${operationName}`);
+          logger.warn(`[API Error Boundary] Usando fallback para ${operationName}`);
           return await fallback();
         } catch (fallbackError) {
           ErrorLogger.log(fallbackError, {
@@ -247,7 +247,7 @@ class APIErrorBoundary {
         }
       }
 
-      // Re-throw o erro original se não há fallback
+      // Re-throw o erro original se nÃ£o hÃ¡ fallback
       throw error;
     }
   }
@@ -257,10 +257,10 @@ class APIErrorBoundary {
   }
 }
 
-// ✅ TASK-A-006: Rate Limiting System
+// âœ… TASK-A-006: Rate Limiting System
 class TokenBucket {
   constructor(capacity = 10, refillRate = 2, refillInterval = 1000) {
-    this.capacity = capacity; // Máximo de tokens
+    this.capacity = capacity; // MÃ¡ximo de tokens
     this.tokens = capacity; // Tokens atuais
     this.refillRate = refillRate; // Tokens adicionados por intervalo
     this.refillInterval = refillInterval; // Intervalo em ms
@@ -383,7 +383,7 @@ class APICache {
     this.cache = new Map();
     this.defaultTTL = defaultTTL;
     
-    // Limpeza automática a cada 5 minutos
+    // Limpeza automÃ¡tica a cada 5 minutos
     this.cleanupTimer = setInterval(() => {
       this.cleanup();
     }, 300000);
@@ -444,7 +444,7 @@ class APICache {
     }
     
     if (cleaned > 0) {
-      console.log(`[API Cache] Limpeza automática: ${cleaned} itens removidos`);
+      logger.info(`[API Cache] Limpeza automÃ¡tica: ${cleaned} itens removidos`);
     }
   }
 
@@ -522,12 +522,12 @@ class RateLimitMonitor {
       error
     });
     
-    // Manter apenas os últimos registros
+    // Manter apenas os Ãºltimos registros
     if (this.requestTimes.length > this.maxHistorySize) {
       this.requestTimes.splice(0, this.requestTimes.length - this.maxHistorySize);
     }
     
-    // Calcular tempo médio de espera
+    // Calcular tempo mÃ©dio de espera
     const totalWaitTime = this.requestTimes.reduce((sum, req) => sum + req.waitTime, 0);
     this.metrics.averageWaitTime = totalWaitTime / this.requestTimes.length;
   }
@@ -597,32 +597,32 @@ class RateLimiter {
         if (cachedResult) {
           fromCache = true;
           this.monitor.recordRequest(0, true, false);
-          console.log(`[Rate Limiter] Cache hit para ${url}`);
+          logger.info(`[Rate Limiter] Cache hit para ${url}`);
           return cachedResult;
         }
       }
       
-      // Função de requisição
+      // FunÃ§Ã£o de requisiÃ§Ã£o
       const makeRequest = async () => {
-        // Verificar tokens disponíveis
+        // Verificar tokens disponÃ­veis
         if (!this.tokenBucket.consume(1)) {
           waitTime = this.tokenBucket.getWaitTime(1);
           
           if (waitTime > 0) {
-            console.log(`[Rate Limiter] Aguardando ${waitTime}ms para ${url}`);
+            logger.info(`[Rate Limiter] Aguardando ${waitTime}ms para ${url}`);
             await new Promise(resolve => setTimeout(resolve, waitTime));
             
-            // Tentar consumir novamente após espera
+            // Tentar consumir novamente apÃ³s espera
             if (!this.tokenBucket.consume(1)) {
               throw new Error('Rate limit exceeded after waiting');
             }
           }
         }
         
-        // Fazer a requisição
+        // Fazer a requisiÃ§Ã£o
         const response = await fetch(url, options);
         
-        // Verificar se a resposta é JSON para cache
+        // Verificar se a resposta Ã© JSON para cache
         let result;
         const contentType = response.headers.get('content-type');
         
@@ -637,10 +637,10 @@ class RateLimiter {
           const cacheKey = this.cache.generateKey(url, options);
           const ttl = cacheOptions.ttl || this.cache.defaultTTL;
           
-          // Só cachear respostas JSON
+          // SÃ³ cachear respostas JSON
           if (contentType && contentType.includes('application/json')) {
             this.cache.set(cacheKey, result, ttl);
-            console.log(`[Rate Limiter] Resultado cacheado para ${url} (TTL: ${ttl}ms)`);
+            logger.info(`[Rate Limiter] Resultado cacheado para ${url} (TTL: ${ttl}ms)`);
           }
         }
         
@@ -686,13 +686,13 @@ class RateLimiter {
   clearCache() {
     if (this.cache) {
       this.cache.clear();
-      console.log('[Rate Limiter] Cache limpo');
+      logger.info('[Rate Limiter] Cache limpo');
     }
   }
 
   resetMetrics() {
     this.monitor.reset();
-    console.log('[Rate Limiter] Métricas resetadas');
+    logger.info('[Rate Limiter] MÃ©tricas resetadas');
   }
 
   destroy() {
@@ -708,37 +708,37 @@ class RateLimiter {
       this.cache.destroy();
     }
     
-    console.log('[Rate Limiter] Destruído');
+    logger.info('[Rate Limiter] DestruÃ­do');
   }
 }
 
-// Instância global do Rate Limiter
+// InstÃ¢ncia global do Rate Limiter
 const rateLimiter = new RateLimiter({
-  tokensPerSecond: 2, // 2 requisições por segundo
-  burstCapacity: 10, // Até 10 requisições em burst
-  queueMaxSize: 50, // Máximo 50 requisições na fila
+  tokensPerSecond: 2, // 2 requisiÃ§Ãµes por segundo
+  burstCapacity: 10, // AtÃ© 10 requisiÃ§Ãµes em burst
+  queueMaxSize: 50, // MÃ¡ximo 50 requisiÃ§Ãµes na fila
   cacheDefaultTTL: 300000, // Cache de 5 minutos
   enableCache: true,
   enableQueue: true
 });
 
-// Instância global do Error Boundary
+// InstÃ¢ncia global do Error Boundary
 const apiErrorBoundary = new APIErrorBoundary();
 
-// ✅ TASK-A-002: Função helper para criar fallbacks
+// âœ… TASK-A-002: FunÃ§Ã£o helper para criar fallbacks
 function createFallback(defaultValue, operationName) {
   return () => {
-    console.warn(`[Fallback] Retornando valor padrão para ${operationName}`);
+    logger.warn(`[Fallback] Retornando valor padrÃ£o para ${operationName}`);
     return Promise.resolve(defaultValue);
   };
 }
 
-// ✅ TASK-A-006: Wrapper para fetch com rate limiting
+// âœ… TASK-A-006: Wrapper para fetch com rate limiting
 async function rateLimitedFetch(url, options = {}, cacheOptions = {}) {
   try {
     return await rateLimiter.execute(url, options, cacheOptions);
   } catch (error) {
-    console.error(`[Rate Limited Fetch] Erro para ${url}:`, error);
+    logger.error(`[Rate Limited Fetch] Erro para ${url}:`, error);
     throw error;
   }
 }
@@ -772,7 +772,7 @@ async function getBatchConfig() {
       ),
     };
   } catch (error) {
-    console.warn("Failed to load batch configuration, using defaults:", error);
+    logger.warn("Failed to load batch configuration, using defaults:", error);
     return DEFAULT_BATCH_CONFIG;
   }
 }
@@ -809,14 +809,14 @@ async function processBatched(
     
     while (retryCount < maxRetries) {
       try {
-        // ✅ SEGURO: Implementar timeout para cada lote
+        // âœ… SEGURO: Implementar timeout para cada lote
         const batchResults = await Promise.race([
           Promise.all(
             batch.map(async (item, index) => {
               try {
                 return await processor(item, i + index);
               } catch (error) {
-                console.warn(`Batch processing error for item ${i + index}:`, error);
+                logger.warn(`Batch processing error for item ${i + index}:`, error);
                 return null; // Return null for failed items
               }
             })
@@ -831,11 +831,11 @@ async function processBatched(
         
       } catch (error) {
         retryCount++;
-        console.warn(`Lote ${i} falhou (tentativa ${retryCount}/${maxRetries}):`, error.message);
+        logger.warn(`Lote ${i} falhou (tentativa ${retryCount}/${maxRetries}):`, error.message);
         
         if (retryCount === maxRetries) {
-          console.error(`Lote ${i} falhou após ${maxRetries} tentativas, preenchendo com nulls`);
-          // Preenche com nulls para manter índices consistentes
+          logger.error(`Lote ${i} falhou apÃ³s ${maxRetries} tentativas, preenchendo com nulls`);
+          // Preenche com nulls para manter Ã­ndices consistentes
           results.push(...batch.map(() => null));
         } else {
           // Delay exponencial entre tentativas
@@ -855,7 +855,7 @@ async function processBatched(
 }
 
 /**
- * Obtém a URL base do sistema a partir das configurações salvas pelo usuário.
+ * ObtÃ©m a URL base do sistema a partir das configuraÃ§Ãµes salvas pelo usuÃ¡rio.
  * @returns {Promise<string>} A URL base salva.
  */
 export async function getBaseUrl() {
@@ -863,7 +863,7 @@ export async function getBaseUrl() {
   try {
     data = await api.storage.sync.get("baseUrl");
   } catch (e) {
-    console.error("Erro ao obter a URL base do storage:", e);
+    logger.error("Erro ao obter a URL base do storage:", e);
     throw e;
   }
 
@@ -871,7 +871,7 @@ export async function getBaseUrl() {
     return data.baseUrl;
   }
 
-  console.error("URL base não configurada. Vá em 'Opções' para configurá-la.");
+  logger.error("URL base nÃ£o configurada. VÃ¡ em 'OpÃ§Ãµes' para configurÃ¡-la.");
   throw new Error("URL_BASE_NOT_CONFIGURED");
 }
 
@@ -880,16 +880,16 @@ export async function getBaseUrl() {
  * @param {Response} response - O objeto de resposta do fetch.
  */
 function handleFetchError(response) {
-  console.error(
-    `Erro na requisição: ${response.status} ${response.statusText}`
+  logger.error(
+    `Erro na requisiÃ§Ã£o: ${response.status} ${response.statusText}`
   );
-  throw new Error("Falha na comunicação com o servidor.");
+  throw new Error("Falha na comunicaÃ§Ã£o com o servidor.");
 }
 
 /**
  * Extrai o texto de uma string HTML.
  * @param {string} htmlString - A string HTML.
- * @returns {string} O texto extraído.
+ * @returns {string} O texto extraÃ­do.
  */
 function getTextFromHTML(htmlString) {
   if (!htmlString) return "";
@@ -899,7 +899,7 @@ function getTextFromHTML(htmlString) {
 }
 
 /**
- * Busca as configurações de prioridade de regulação do sistema.
+ * Busca as configuraÃ§Ãµes de prioridade de regulaÃ§Ã£o do sistema.
  * @returns {Promise<Array<object>>} Uma lista de objetos de prioridade.
  */
 export async function fetchRegulationPriorities() {
@@ -908,10 +908,10 @@ export async function fetchRegulationPriorities() {
       const baseUrl = await getBaseUrl();
       const url = API_UTILS.buildUrl(baseUrl, API_ENDPOINTS.REGULATION_PRIORITIES);
 
-      // ✅ TASK-A-006: Rate limiting aplicado
+      // âœ… TASK-A-006: Rate limiting aplicado
       const data = await rateLimitedFetch(url, {}, { ttl: 600000 }); // Cache por 10 minutos
       
-      // Filtra apenas as ativas e ordena pela ordem de exibição definida no sistema
+      // Filtra apenas as ativas e ordena pela ordem de exibiÃ§Ã£o definida no sistema
       return data
         .filter((p) => p.coreIsAtivo === "t")
         .sort((a, b) => a.coreOrdemExibicao - b.coreOrdemExibicao);
@@ -925,11 +925,11 @@ export async function fetchRegulationPriorities() {
 }
 
 /**
- * Busca os detalhes completos de uma regulação específica.
+ * Busca os detalhes completos de uma regulaÃ§Ã£o especÃ­fica.
  * @param {object} params
- * @param {string} params.reguIdp - O IDP da regulação.
- * @param {string} params.reguIds - O IDS da regulação.
- * @returns {Promise<object>} O objeto com os dados da regulação.
+ * @param {string} params.reguIdp - O IDP da regulaÃ§Ã£o.
+ * @param {string} params.reguIds - O IDS da regulaÃ§Ã£o.
+ * @returns {Promise<object>} O objeto com os dados da regulaÃ§Ã£o.
  */
 export async function fetchRegulationDetails({ reguIdp, reguIds }) {
   if (!API_VALIDATIONS.isValidRegulationId(reguIdp, reguIds)) {
@@ -958,12 +958,12 @@ export async function fetchRegulationDetails({ reguIdp, reguIds }) {
   }
 
   const data = await response.json();
-  // O objeto de dados está aninhado sob a chave "regulacao"
+  // O objeto de dados estÃ¡ aninhado sob a chave "regulacao"
   return data.regulacao || null;
 }
 
 
-// ✅ SEGURANÇA: Import estático para evitar dynamic imports inseguros
+// âœ… SEGURANÃ‡A: Import estÃ¡tico para evitar dynamic imports inseguros
 import { validateSearchTerm, sanitizeSearchTerm, validateCPF, validateCNS } from "./validation.js";
 
 export async function searchPatients(term) {
@@ -987,7 +987,7 @@ export async function searchPatients(term) {
       const url = new URL(API_UTILS.buildUrl(baseUrl, API_ENDPOINTS.PATIENT_SEARCH));
       url.search = new URLSearchParams({ searchString: sanitizedTerm });
       
-      // ✅ TASK-A-006: Rate limiting aplicado com cache curto para buscas
+      // âœ… TASK-A-006: Rate limiting aplicado com cache curto para buscas
       const data = await rateLimitedFetch(url, {
         headers: API_HEADERS.AJAX,
       }, { ttl: 60000 }); // Cache por 1 minuto para buscas
@@ -1013,7 +1013,7 @@ export async function searchPatients(term) {
 
 export async function fetchVisualizaUsuario({ idp, ids }) {
   if (!API_VALIDATIONS.isValidRegulationId(idp, ids)) {
-    throw new Error(`ID inválido. idp: '${idp}', ids: '${ids}'.`);
+    throw new Error(`ID invÃ¡lido. idp: '${idp}', ids: '${ids}'.`);
   }
   
   const baseUrl = await getBaseUrl();
@@ -1029,7 +1029,7 @@ export async function fetchVisualizaUsuario({ idp, ids }) {
   if (!response.ok) handleFetchError(response);
 
   if (!API_VALIDATIONS.isJsonResponse(response)) {
-    console.error(API_ERROR_MESSAGES.INVALID_RESPONSE);
+    logger.error(API_ERROR_MESSAGES.INVALID_RESPONSE);
     throw new Error(API_ERROR_MESSAGES.SESSION_EXPIRED);
   }
 
@@ -1043,7 +1043,7 @@ export async function fetchProntuarioHash({
   dataFinal,
 }) {
   if (!isenFullPKCrypto) {
-    throw new Error("ID criptografado necessário.");
+    throw new Error("ID criptografado necessÃ¡rio.");
   }
 
   const baseUrl = await getBaseUrl();
@@ -1067,7 +1067,7 @@ export async function fetchProntuarioHash({
 
   const data = await response.json();
   if (data?.string) return data.string;
-  throw new Error(data.mensagem || "Resposta não continha o hash.");
+  throw new Error(data.mensagem || "Resposta nÃ£o continha o hash.");
 }
 
 export async function fetchConsultasEspecializadas({
@@ -1075,7 +1075,7 @@ export async function fetchConsultasEspecializadas({
   dataInicial,
   dataFinal,
 }) {
-  if (!isenFullPKCrypto) throw new Error("ID criptografado necessário.");
+  if (!isenFullPKCrypto) throw new Error("ID criptografado necessÃ¡rio.");
   const baseUrl = await getBaseUrl();
   const url = new URL(
     `${baseUrl}/sigss/prontuarioAmbulatorial2/buscaDadosConsultaEspecializadas_HTML`
@@ -1104,7 +1104,7 @@ export async function fetchConsultasBasicas({
   dataInicial,
   dataFinal,
 }) {
-  if (!isenFullPKCrypto) throw new Error("ID criptografado necessário.");
+  if (!isenFullPKCrypto) throw new Error("ID criptografado necessÃ¡rio.");
   const baseUrl = await getBaseUrl();
   const url = new URL(
     `${baseUrl}/sigss/prontuarioAmbulatorial2/buscaDadosConsulta_HTML`
@@ -1141,7 +1141,7 @@ export async function fetchAllConsultations({
     ...basicasResult.jsonData,
     ...especializadasResult.jsonData,
   ];
-  const combinedHtmlData = `<h3>Consultas Básicas</h3>${basicasResult.htmlData}<h3>Consultas Especializadas</h3>${especializadasResult.htmlData}`;
+  const combinedHtmlData = `<h3>Consultas BÃ¡sicas</h3>${basicasResult.htmlData}<h3>Consultas Especializadas</h3>${especializadasResult.htmlData}`;
   return { jsonData: combinedJsonData, htmlData: combinedHtmlData };
 }
 
@@ -1152,7 +1152,7 @@ export async function fetchExamesSolicitados({
   comResultado,
   semResultado,
 }) {
-  if (!isenPK) throw new Error("ID (isenPK) do paciente é necessário.");
+  if (!isenPK) throw new Error("ID (isenPK) do paciente Ã© necessÃ¡rio.");
   const baseUrl = await getBaseUrl();
   const url = new URL(`${baseUrl}/sigss/exameRequisitado/findAllReex`);
   const params = {
@@ -1197,7 +1197,7 @@ export async function fetchExamesSolicitados({
 
 export async function fetchResultadoExame({ idp, ids }) {
   if (!idp || !ids)
-    throw new Error("IDs do resultado do exame são necessários.");
+    throw new Error("IDs do resultado do exame sÃ£o necessÃ¡rios.");
   const baseUrl = await getBaseUrl();
   const url = new URL(`${baseUrl}/sigss/resultadoExame/visualizaImagem`);
   url.search = new URLSearchParams({
@@ -1222,15 +1222,15 @@ export async function fetchCadsusData({ cpf, cns, skipValidation = false }) {
 
   return await apiErrorBoundary.execute(
     async () => {
-      // Só validar se não for uma busca interna (quando skipValidation for false)
+      // SÃ³ validar se nÃ£o for uma busca interna (quando skipValidation for false)
       if (!skipValidation) {
-        // ✅ SEGURANÇA: Usando imports estáticos já disponíveis no topo do arquivo
+        // âœ… SEGURANÃ‡A: Usando imports estÃ¡ticos jÃ¡ disponÃ­veis no topo do arquivo
 
         // Validate CPF if provided
         if (cpf) {
           const cpfValidation = validateCPF(cpf);
           if (!cpfValidation.valid) {
-            throw new Error(`CPF inválido: ${cpfValidation.message}`);
+            throw new Error(`CPF invÃ¡lido: ${cpfValidation.message}`);
           }
         }
 
@@ -1238,7 +1238,7 @@ export async function fetchCadsusData({ cpf, cns, skipValidation = false }) {
         if (cns) {
           const cnsValidation = validateCNS(cns);
           if (!cnsValidation.valid) {
-            throw new Error(`CNS inválido: ${cnsValidation.message}`);
+            throw new Error(`CNS invÃ¡lido: ${cnsValidation.message}`);
           }
         }
       }
@@ -1276,7 +1276,7 @@ export async function fetchCadsusData({ cpf, cns, skipValidation = false }) {
 }
 
 export async function fetchAppointmentDetails({ idp, ids }) {
-  if (!idp || !ids) throw new Error("ID do agendamento é necessário.");
+  if (!idp || !ids) throw new Error("ID do agendamento Ã© necessÃ¡rio.");
   const baseUrl = await getBaseUrl();
   const url = new URL(`${baseUrl}/sigss/agendamentoConsulta/visualiza`);
   url.search = new URLSearchParams({
@@ -1292,7 +1292,7 @@ export async function fetchAppointmentDetails({ idp, ids }) {
   });
 
   if (!response.ok) {
-    console.error(`Falha ao buscar detalhes do agendamento ${idp}-${ids}`);
+    logger.error(`Falha ao buscar detalhes do agendamento ${idp}-${ids}`);
     return null;
   }
   const data = await response.json();
@@ -1307,7 +1307,7 @@ export async function fetchAppointmentDetails({ idp, ids }) {
  * @returns {Promise<object>} O objeto com os dados do agendamento de exame.
  */
 export async function fetchExamAppointmentDetails({ idp, ids }) {
-  if (!idp || !ids) throw new Error("ID do agendamento de exame é necessário.");
+  if (!idp || !ids) throw new Error("ID do agendamento de exame Ã© necessÃ¡rio.");
   const baseUrl = await getBaseUrl();
   const url = new URL(`${baseUrl}/sigss/agendamentoExame/visualizar`);
   url.search = new URLSearchParams({
@@ -1331,7 +1331,7 @@ export async function fetchExamAppointmentDetails({ idp, ids }) {
 }
 
 export async function fetchAppointments({ isenPK, dataInicial, dataFinal }) {
-  if (!isenPK) throw new Error("ID (isenPK) do paciente é necessário.");
+  if (!isenPK) throw new Error("ID (isenPK) do paciente Ã© necessÃ¡rio.");
   const baseUrl = await getBaseUrl();
   const url = new URL(`${baseUrl}/sigss/resumoCompromisso/lista`);
   const params = {
@@ -1385,21 +1385,21 @@ export async function fetchAppointments({ isenPK, dataInicial, dataFinal }) {
     basicAppointments,
     async (appt) => {
       if (appt.type.toUpperCase().includes("EXAME")) {
-        // CORREÇÃO: O ID de agendamentos de exame vem no formato "EXAM-IDP-IDS".
-        // A lógica posterior (renderizadores) espera "IDP-IDS".
-        // Normalizamos o ID aqui para garantir consistência.
+        // CORREÃ‡ÃƒO: O ID de agendamentos de exame vem no formato "EXAM-IDP-IDS".
+        // A lÃ³gica posterior (renderizadores) espera "IDP-IDS".
+        // Normalizamos o ID aqui para garantir consistÃªncia.
         const parts = (appt.id || "").split("-");
         if (parts.length === 3 && parts[0].toUpperCase() === "EXAM") {
-          // Reconstrói o appt com o ID normalizado.
+          // ReconstrÃ³i o appt com o ID normalizado.
           return {
             ...appt,
             id: `${parts[1]}-${parts[2]}`,
-            specialty: appt.description || "Exame sem descrição",
+            specialty: appt.description || "Exame sem descriÃ§Ã£o",
           };
         }
         return {
           ...appt,
-          specialty: appt.description || "Exame sem descrição",
+          specialty: appt.description || "Exame sem descriÃ§Ã£o",
         };
       }
 
@@ -1426,7 +1426,7 @@ export async function fetchAppointments({ isenPK, dataInicial, dataFinal }) {
           };
         }
       } catch (error) {
-        console.warn(
+        logger.warn(
           `Falha ao buscar detalhes para o agendamento ${appt.id}`,
           error
         );
@@ -1446,7 +1446,7 @@ async function fetchRegulations({
   dataInicial,
   dataFinal,
 }) {
-  if (!isenPK) throw new Error("ID (isenPK) do paciente é necessário.");
+  if (!isenPK) throw new Error("ID (isenPK) do paciente Ã© necessÃ¡rio.");
   const baseUrl = await getBaseUrl();
   const url = new URL(`${baseUrl}/sigss/regulacaoRegulador/lista`);
 
@@ -1563,7 +1563,7 @@ export async function fetchAllRegulations({
     async (regulation) => {
       if (regulation.idp && regulation.ids) {
         try {
-          // CORREÇÃO: Usa o ID da própria regulação como o isenPK para esta chamada específica.
+          // CORREÃ‡ÃƒO: Usa o ID da prÃ³pria regulaÃ§Ã£o como o isenPK para esta chamada especÃ­fica.
           const attachmentIsenPk = `${regulation.idp}-${regulation.ids}`;
           const attachments = await fetchRegulationAttachments({
             reguIdp: regulation.idp,
@@ -1572,8 +1572,8 @@ export async function fetchAllRegulations({
           });
           return { ...regulation, attachments };
         } catch (error) {
-          console.warn(
-            `Falha ao buscar anexos para regulação ${regulation.id}:`,
+          logger.warn(
+            `Falha ao buscar anexos para regulaÃ§Ã£o ${regulation.id}:`,
             error
           );
           return { ...regulation, attachments: [] };
@@ -1601,10 +1601,10 @@ export async function fetchAllRegulations({
  * @returns {Promise<Array<object>>} Uma lista de objetos de documento.
  */
 export async function fetchDocuments({ isenPK }) {
-  if (!isenPK) throw new Error("ID (isenPK) do paciente é necessário.");
+  if (!isenPK) throw new Error("ID (isenPK) do paciente Ã© necessÃ¡rio.");
   const [idp, ids] = isenPK.split("-");
   if (!idp || !ids)
-    throw new Error("ID (isenPK) do paciente em formato inválido.");
+    throw new Error("ID (isenPK) do paciente em formato invÃ¡lido.");
 
   const baseUrl = await getBaseUrl();
   const url = new URL(`${baseUrl}/sigss/isar/buscaGrid`);
@@ -1643,14 +1643,14 @@ export async function fetchDocuments({ isenPK }) {
 }
 
 /**
- * Obtém a URL de visualização para um documento específico.
+ * ObtÃ©m a URL de visualizaÃ§Ã£o para um documento especÃ­fico.
  * @param {object} params
  * @param {string} params.idp - O IDP do documento.
  * @param {string} params.ids - O IDS do documento.
- * @returns {Promise<string|null>} A URL completa para visualização do arquivo.
+ * @returns {Promise<string|null>} A URL completa para visualizaÃ§Ã£o do arquivo.
  */
 export async function fetchDocumentUrl({ idp, ids }) {
-  if (!idp || !ids) throw new Error("IDs do documento são necessários.");
+  if (!idp || !ids) throw new Error("IDs do documento sÃ£o necessÃ¡rios.");
 
   const baseUrl = await getBaseUrl();
   const url = new URL(`${baseUrl}/sigss/isar/getHashArquivo`);
@@ -1678,20 +1678,20 @@ export async function fetchDocumentUrl({ idp, ids }) {
 }
 
 /**
- * Busca a lista de arquivos anexados a uma solicitação de regulação específica.
+ * Busca a lista de arquivos anexados a uma solicitaÃ§Ã£o de regulaÃ§Ã£o especÃ­fica.
  * @param {object} params
- * @param {string} params.reguIdp - O IDP da regulação.
- * @param {string} params.reguIds - O IDS da regulação.
+ * @param {string} params.reguIdp - O IDP da regulaÃ§Ã£o.
+ * @param {string} params.reguIds - O IDS da regulaÃ§Ã£o.
  * @param {string} params.isenPK - O PK do paciente no formato "idp-ids".
  * @returns {Promise<Array<object>>} Uma lista de objetos de anexo.
  */
 export async function fetchRegulationAttachments({ reguIdp, reguIds, isenPK }) {
-  if (!reguIdp || !reguIds) throw new Error("ID da regulação é necessário.");
-  if (!isenPK) throw new Error("ID do paciente (isenPK) é necessário.");
+  if (!reguIdp || !reguIds) throw new Error("ID da regulaÃ§Ã£o Ã© necessÃ¡rio.");
+  if (!isenPK) throw new Error("ID do paciente (isenPK) Ã© necessÃ¡rio.");
 
   const [isenIdp, isenIds] = isenPK.split("-");
   if (!isenIdp || !isenIds)
-    throw new Error("ID do paciente (isenPK) em formato inválido.");
+    throw new Error("ID do paciente (isenPK) em formato invÃ¡lido.");
 
   const baseUrl = await getBaseUrl();
   const url = new URL(`${baseUrl}/sigss/rear/buscaGrid`);
@@ -1704,8 +1704,8 @@ export async function fetchRegulationAttachments({ reguIdp, reguIds, isenPK }) {
     nd: Date.now(),
     rows: String(CONFIG.API.MAX_ROWS_REGULATIONS),
     page: "1",
-    sidx: "", // Corrigido para corresponder à requisição da aplicação
-    sord: "asc", // Corrigido para corresponder à requisição da aplicação
+    sidx: "", // Corrigido para corresponder Ã  requisiÃ§Ã£o da aplicaÃ§Ã£o
+    sord: "asc", // Corrigido para corresponder Ã  requisiÃ§Ã£o da aplicaÃ§Ã£o
   };
   url.search = new URLSearchParams(params).toString();
 
@@ -1732,14 +1732,14 @@ export async function fetchRegulationAttachments({ reguIdp, reguIds, isenPK }) {
 }
 
 /**
- * Obtém a URL de visualização para um anexo de regulação específico.
+ * ObtÃ©m a URL de visualizaÃ§Ã£o para um anexo de regulaÃ§Ã£o especÃ­fico.
  * @param {object} params
  * @param {string} params.idp - O IDP do anexo (rearPK.idp).
  * @param {string} params.ids - O IDS do anexo (rearPK.ids).
- * @returns {Promise<string|null>} A URL completa para visualização do arquivo.
+ * @returns {Promise<string|null>} A URL completa para visualizaÃ§Ã£o do arquivo.
  */
 export async function fetchRegulationAttachmentUrl({ idp, ids }) {
-  if (!idp || !ids) throw new Error("IDs do anexo são necessários.");
+  if (!idp || !ids) throw new Error("IDs do anexo sÃ£o necessÃ¡rios.");
 
   const baseUrl = await getBaseUrl();
   const url = new URL(`${baseUrl}/sigss/rear/getHashArquivo`);
@@ -1777,7 +1777,7 @@ export async function fetchAllTimelineData({
   dataInicial,
   dataFinal,
 }) {
-  // Usando um objeto de promessas para tornar a extração de resultados mais robusta.
+  // Usando um objeto de promessas para tornar a extraÃ§Ã£o de resultados mais robusta.
   const dataPromises = {
     consultations: fetchAllConsultations({
       isenFullPKCrypto,
@@ -1811,7 +1811,7 @@ export async function fetchAllTimelineData({
       }
       return result.value; // For others
     }
-    console.warn("Falha em chamada de API para a timeline:", result.reason);
+    logger.warn("Falha em chamada de API para a timeline:", result.reason);
     return defaultValue;
   };
 
@@ -1824,8 +1824,8 @@ export async function fetchAllTimelineData({
 }
 
 /**
- * Envia uma requisição para manter a sessão ativa no sistema.
- * @returns {Promise<boolean>} True se a requisição foi bem-sucedida, false caso contrário.
+ * Envia uma requisiÃ§Ã£o para manter a sessÃ£o ativa no sistema.
+ * @returns {Promise<boolean>} True se a requisiÃ§Ã£o foi bem-sucedida, false caso contrÃ¡rio.
  */
 export async function keepSessionAlive() {
   return await apiErrorBoundary.execute(
@@ -1840,9 +1840,9 @@ export async function keepSessionAlive() {
       });
 
       if (!response.ok) {
-        // Se for erro 401 ou 403, provavelmente a sessão expirou
+        // Se for erro 401 ou 403, provavelmente a sessÃ£o expirou
         if (response.status === HTTP_STATUS.UNAUTHORIZED || response.status === HTTP_STATUS.FORBIDDEN) {
-          const error = new Error("Sessão expirou - keep-alive não pode manter a sessão ativa");
+          const error = new Error("SessÃ£o expirou - keep-alive nÃ£o pode manter a sessÃ£o ativa");
           error.status = response.status;
           throw error;
         }
@@ -1858,22 +1858,22 @@ export async function keepSessionAlive() {
 
       const data = await response.json();
 
-      // Verifica se a resposta contém dados válidos
+      // Verifica se a resposta contÃ©m dados vÃ¡lidos
       // A resposta pode ser um objeto com propriedades ou uma string direta
       if (data) {
-        // Se for um objeto com propriedades específicas
+        // Se for um objeto com propriedades especÃ­ficas
         if (typeof data === 'object' && (data.dataHora || data.data || data.hora)) {
-          console.log(`Sessão mantida ativa: ${data.dataHora || data.data || "OK"}`);
+          logger.info(`SessÃ£o mantida ativa: ${data.dataHora || data.data || "OK"}`);
           return true;
         }
         // Se for uma string direta com data/hora (formato ISO ou similar)
         else if (typeof data === 'string' && data.trim().length > 0) {
-          console.log(`Sessão mantida ativa: ${data}`);
+          logger.info(`SessÃ£o mantida ativa: ${data}`);
           return true;
         }
-        // Se for qualquer outro valor não-nulo/não-vazio
+        // Se for qualquer outro valor nÃ£o-nulo/nÃ£o-vazio
         else if (data !== null && data !== undefined && data !== '') {
-          console.log(`Sessão mantida ativa: ${JSON.stringify(data)}`);
+          logger.info(`SessÃ£o mantida ativa: ${JSON.stringify(data)}`);
           return true;
         }
       }
@@ -1888,10 +1888,10 @@ export async function keepSessionAlive() {
   );
 }
 
-// ✅ TASK-A-002: Funções de Debugging e Monitoramento
+// âœ… TASK-A-002: FunÃ§Ãµes de Debugging e Monitoramento
 /**
- * Obtém os erros armazenados para debugging.
- * @returns {Promise<Array>} Lista dos últimos erros de API
+ * ObtÃ©m os erros armazenados para debugging.
+ * @returns {Promise<Array>} Lista dos Ãºltimos erros de API
  */
 export async function getAPIErrors() {
   return await ErrorLogger.getStoredErrors();
@@ -1906,7 +1906,7 @@ export async function clearAPIErrors() {
 }
 
 /**
- * Obtém o estado atual do Circuit Breaker.
+ * ObtÃ©m o estado atual do Circuit Breaker.
  * @returns {object} Estado do circuit breaker
  */
 export function getCircuitBreakerState() {
@@ -1914,29 +1914,29 @@ export function getCircuitBreakerState() {
 }
 
 /**
- * Força o reset do Circuit Breaker (para debugging).
+ * ForÃ§a o reset do Circuit Breaker (para debugging).
  * @returns {void}
  */
 export function resetCircuitBreaker() {
   apiErrorBoundary.circuitBreaker.state = 'CLOSED';
   apiErrorBoundary.circuitBreaker.failureCount = 0;
   apiErrorBoundary.circuitBreaker.lastFailureTime = null;
-  console.log('[Circuit Breaker] Reset manual executado');
+  logger.info('[Circuit Breaker] Reset manual executado');
 }
 
-// ✅ TASK-A-006: Funções de Monitoramento de Rate Limiting
+// âœ… TASK-A-006: FunÃ§Ãµes de Monitoramento de Rate Limiting
 /**
- * Obtém as métricas atuais do rate limiter.
- * @returns {object} Métricas detalhadas do rate limiting
+ * ObtÃ©m as mÃ©tricas atuais do rate limiter.
+ * @returns {object} MÃ©tricas detalhadas do rate limiting
  */
 export function getRateLimitMetrics() {
   return rateLimiter.getMetrics();
 }
 
 /**
- * Obtém a atividade recente do rate limiter.
- * @param {number} minutes - Número de minutos para buscar atividade (padrão: 5)
- * @returns {Array} Lista de requisições recentes
+ * ObtÃ©m a atividade recente do rate limiter.
+ * @param {number} minutes - NÃºmero de minutos para buscar atividade (padrÃ£o: 5)
+ * @returns {Array} Lista de requisiÃ§Ãµes recentes
  */
 export function getRateLimitActivity(minutes = 5) {
   return rateLimiter.monitor.getRecentActivity(minutes);
@@ -1951,7 +1951,7 @@ export function clearRateLimitCache() {
 }
 
 /**
- * Reseta as métricas do rate limiter.
+ * Reseta as mÃ©tricas do rate limiter.
  * @returns {void}
  */
 export function resetRateLimitMetrics() {
@@ -1959,7 +1959,7 @@ export function resetRateLimitMetrics() {
 }
 
 /**
- * Obtém o status atual do token bucket.
+ * ObtÃ©m o status atual do token bucket.
  * @returns {object} Status do token bucket
  */
 export function getTokenBucketStatus() {
@@ -1972,7 +1972,7 @@ export function getTokenBucketStatus() {
 }
 
 /**
- * Obtém o status atual da fila de requisições.
+ * ObtÃ©m o status atual da fila de requisiÃ§Ãµes.
  * @returns {object} Status da fila
  */
 export function getRequestQueueStatus() {
@@ -1989,8 +1989,8 @@ export function getRequestQueueStatus() {
 }
 
 /**
- * Obtém estatísticas detalhadas do cache.
- * @returns {object} Estatísticas do cache
+ * ObtÃ©m estatÃ­sticas detalhadas do cache.
+ * @returns {object} EstatÃ­sticas do cache
  */
 export function getCacheStats() {
   if (!rateLimiter.cache) {
@@ -2005,7 +2005,7 @@ export function getCacheStats() {
 }
 
 /**
- * Força a limpeza do cache expirado.
+ * ForÃ§a a limpeza do cache expirado.
  * @returns {void}
  */
 export function cleanupExpiredCache() {
@@ -2015,15 +2015,15 @@ export function cleanupExpiredCache() {
 }
 
 /**
- * Obtém um relatório completo do sistema de rate limiting.
- * @returns {object} Relatório completo
+ * ObtÃ©m um relatÃ³rio completo do sistema de rate limiting.
+ * @returns {object} RelatÃ³rio completo
  */
 export function getRateLimitReport() {
   const metrics = getRateLimitMetrics();
   const tokenBucket = getTokenBucketStatus();
   const queue = getRequestQueueStatus();
   const cache = getCacheStats();
-  const recentActivity = getRateLimitActivity(10); // Últimos 10 minutos
+  const recentActivity = getRateLimitActivity(10); // Ãšltimos 10 minutos
   
   return {
     timestamp: new Date().toISOString(),
@@ -2039,24 +2039,24 @@ export function getRateLimitReport() {
     cache,
     recentActivity: {
       count: recentActivity.length,
-      requests: recentActivity.slice(-10) // Últimas 10 requisições
+      requests: recentActivity.slice(-10) // Ãšltimas 10 requisiÃ§Ãµes
     },
     recommendations: generateRateLimitRecommendations(metrics, tokenBucket, queue, cache)
   };
 }
 
 /**
- * Gera recomendações baseadas nas métricas atuais.
- * @param {object} metrics - Métricas do rate limiter
+ * Gera recomendaÃ§Ãµes baseadas nas mÃ©tricas atuais.
+ * @param {object} metrics - MÃ©tricas do rate limiter
  * @param {object} tokenBucket - Status do token bucket
  * @param {object} queue - Status da fila
  * @param {object} cache - Status do cache
- * @returns {Array} Lista de recomendações
+ * @returns {Array} Lista de recomendaÃ§Ãµes
  */
 function generateRateLimitRecommendations(metrics, tokenBucket, queue, cache) {
   const recommendations = [];
   
-  // Análise de rate limiting
+  // AnÃ¡lise de rate limiting
   if (metrics.rateLimitRate > 0.3) {
     recommendations.push({
       type: 'warning',
@@ -2066,7 +2066,7 @@ function generateRateLimitRecommendations(metrics, tokenBucket, queue, cache) {
     });
   }
   
-  // Análise de cache
+  // AnÃ¡lise de cache
   if (cache.enabled && metrics.cacheHitRate < 0.5) {
     recommendations.push({
       type: 'info',
@@ -2076,32 +2076,32 @@ function generateRateLimitRecommendations(metrics, tokenBucket, queue, cache) {
     });
   }
   
-  // Análise de erros
+  // AnÃ¡lise de erros
   if (metrics.errorRate > 0.1) {
     recommendations.push({
       type: 'error',
       category: 'errors',
-      message: `Taxa de erro alta (${(metrics.errorRate * 100).toFixed(1)}%). Verifique a conectividade e saúde do servidor.`,
+      message: `Taxa de erro alta (${(metrics.errorRate * 100).toFixed(1)}%). Verifique a conectividade e saÃºde do servidor.`,
       action: 'check_server_health'
     });
   }
   
-  // Análise da fila
+  // AnÃ¡lise da fila
   if (queue.enabled && queue.currentSize > queue.maxSize * 0.8) {
     recommendations.push({
       type: 'warning',
       category: 'queue',
-      message: `Fila de requisições quase cheia (${queue.currentSize}/${queue.maxSize}). Considere aumentar o tamanho da fila.`,
+      message: `Fila de requisiÃ§Ãµes quase cheia (${queue.currentSize}/${queue.maxSize}). Considere aumentar o tamanho da fila.`,
       action: 'increase_queue_size'
     });
   }
   
-  // Análise de tokens
+  // AnÃ¡lise de tokens
   if (tokenBucket.availableTokens < tokenBucket.capacity * 0.2) {
     recommendations.push({
       type: 'info',
       category: 'tokens',
-      message: `Poucos tokens disponíveis (${tokenBucket.availableTokens}/${tokenBucket.capacity}). Sistema sob carga.`,
+      message: `Poucos tokens disponÃ­veis (${tokenBucket.availableTokens}/${tokenBucket.capacity}). Sistema sob carga.`,
       action: 'monitor_load'
     });
   }
@@ -2110,8 +2110,8 @@ function generateRateLimitRecommendations(metrics, tokenBucket, queue, cache) {
 }
 
 /**
- * Configura o rate limiter com novos parâmetros.
- * @param {object} config - Nova configuração
+ * Configura o rate limiter com novos parÃ¢metros.
+ * @param {object} config - Nova configuraÃ§Ã£o
  * @returns {void}
  */
 export function configureRateLimiter(config = {}) {
@@ -2122,12 +2122,12 @@ export function configureRateLimiter(config = {}) {
     cacheDefaultTTL
   } = config;
   
-  console.log('[Rate Limiter] Reconfigurando com:', config);
+  logger.info('[Rate Limiter] Reconfigurando com:', config);
   
-  // Destruir instância atual
+  // Destruir instÃ¢ncia atual
   rateLimiter.destroy();
   
-  // Criar nova instância com configuração atualizada
+  // Criar nova instÃ¢ncia com configuraÃ§Ã£o atualizada
   const newConfig = {
     tokensPerSecond: tokensPerSecond || 2,
     burstCapacity: burstCapacity || 10,
@@ -2137,14 +2137,14 @@ export function configureRateLimiter(config = {}) {
     enableQueue: true
   };
   
-  // Substituir instância global
+  // Substituir instÃ¢ncia global
   Object.assign(rateLimiter, new RateLimiter(newConfig));
   
-  console.log('[Rate Limiter] Reconfiguração concluída');
+  logger.info('[Rate Limiter] ReconfiguraÃ§Ã£o concluÃ­da');
 }
 
 /**
- * Salva as métricas atuais no storage para análise posterior.
+ * Salva as mÃ©tricas atuais no storage para anÃ¡lise posterior.
  * @returns {Promise<void>}
  */
 export async function saveRateLimitMetrics() {
@@ -2153,42 +2153,43 @@ export async function saveRateLimitMetrics() {
     const stored = await api.storage.local.get({ rateLimitHistory: [] });
     const history = stored.rateLimitHistory || [];
     
-    // Manter apenas os últimos 100 relatórios
+    // Manter apenas os Ãºltimos 100 relatÃ³rios
     history.unshift(report);
     if (history.length > 100) {
       history.splice(100);
     }
     
     await api.storage.local.set({ rateLimitHistory: history });
-    console.log('[Rate Limiter] Métricas salvas no storage');
+    logger.info('[Rate Limiter] MÃ©tricas salvas no storage');
   } catch (error) {
-    console.warn('[Rate Limiter] Falha ao salvar métricas:', error);
+    logger.warn('[Rate Limiter] Falha ao salvar mÃ©tricas:', error);
   }
 }
 
 /**
- * Obtém o histórico de métricas salvas.
- * @returns {Promise<Array>} Histórico de métricas
+ * ObtÃ©m o histÃ³rico de mÃ©tricas salvas.
+ * @returns {Promise<Array>} HistÃ³rico de mÃ©tricas
  */
 export async function getRateLimitHistory() {
   try {
     const stored = await api.storage.local.get({ rateLimitHistory: [] });
     return stored.rateLimitHistory || [];
   } catch (error) {
-    console.warn('[Rate Limiter] Falha ao recuperar histórico:', error);
+    logger.warn('[Rate Limiter] Falha ao recuperar histÃ³rico:', error);
     return [];
   }
 }
 
 /**
- * Limpa o histórico de métricas.
+ * Limpa o histÃ³rico de mÃ©tricas.
  * @returns {Promise<void>}
  */
 export async function clearRateLimitHistory() {
   try {
     await api.storage.local.remove('rateLimitHistory');
-    console.log('[Rate Limiter] Histórico de métricas limpo');
+    logger.info('[Rate Limiter] HistÃ³rico de mÃ©tricas limpo');
   } catch (error) {
-    console.warn('[Rate Limiter] Falha ao limpar histórico:', error);
+    logger.warn('[Rate Limiter] Falha ao limpar histÃ³rico:', error);
   }
 }
+

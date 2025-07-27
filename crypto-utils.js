@@ -1,16 +1,16 @@
-/**
+﻿/**
 };
 import { createComponentLogger } from "./logger.js";
 
-// Logger específico para Cryptoutils
+// Logger especÃ­fico para Cryptoutils
 const logger = createComponentLogger('Cryptoutils');
 
 /**
- * @file Utilitários de criptografia para dados médicos sensíveis
- * ✅ SEGURANÇA: Implementa criptografia AES-GCM para proteger dados médicos no storage
+ * @file UtilitÃ¡rios de criptografia para dados mÃ©dicos sensÃ­veis
+ * âœ… SEGURANÃ‡A: Implementa criptografia AES-GCM para proteger dados mÃ©dicos no storage
  */
 
-// ✅ SEGURANÇA: Configurações de criptografia seguras
+// âœ… SEGURANÃ‡A: ConfiguraÃ§Ãµes de criptografia seguras
 const CRYPTO_CONFIG = {
   ALGORITHM: 'AES-GCM',
   KEY_LENGTH: 256,
@@ -22,8 +22,8 @@ const CRYPTO_CONFIG = {
 
 /**
  * Gera uma chave de criptografia derivada de uma senha
- * @param {string} password - Senha base (pode ser ID da extensão + timestamp)
- * @param {Uint8Array} salt - Salt para derivação da chave
+ * @param {string} password - Senha base (pode ser ID da extensÃ£o + timestamp)
+ * @param {Uint8Array} salt - Salt para derivaÃ§Ã£o da chave
  * @returns {Promise<CryptoKey>} Chave de criptografia
  */
 async function deriveKey(password, salt) {
@@ -51,11 +51,11 @@ async function deriveKey(password, salt) {
 }
 
 /**
- * Gera uma senha base para a sessão atual
- * @returns {string} Senha base única para a sessão
+ * Gera uma senha base para a sessÃ£o atual
+ * @returns {string} Senha base Ãºnica para a sessÃ£o
  */
 function generateSessionPassword() {
-  // Combina ID da extensão com timestamp para criar senha única por sessão
+  // Combina ID da extensÃ£o com timestamp para criar senha Ãºnica por sessÃ£o
   const extensionId = globalThis.chrome?.runtime?.id || 'assistente-regulacao';
   const timestamp = Date.now();
   const random = crypto.getRandomValues(new Uint8Array(16));
@@ -65,7 +65,7 @@ function generateSessionPassword() {
 }
 
 /**
- * Criptografa dados médicos sensíveis
+ * Criptografa dados mÃ©dicos sensÃ­veis
  * @param {any} data - Dados a serem criptografados
  * @param {string} [customPassword] - Senha customizada (opcional)
  * @returns {Promise<string>} Dados criptografados em base64
@@ -77,7 +77,7 @@ export async function encryptMedicalData(data, customPassword = null) {
     const encoder = new TextEncoder();
     const dataBuffer = encoder.encode(jsonString);
 
-    // Gera salt e IV aleatórios
+    // Gera salt e IV aleatÃ³rios
     const salt = crypto.getRandomValues(new Uint8Array(CRYPTO_CONFIG.SALT_LENGTH));
     const iv = crypto.getRandomValues(new Uint8Array(CRYPTO_CONFIG.IV_LENGTH));
 
@@ -105,13 +105,13 @@ export async function encryptMedicalData(data, customPassword = null) {
     // Converte para base64
     return btoa(String.fromCharCode(...combined));
   } catch (error) {
-    console.error('[Crypto] Erro ao criptografar dados médicos:', error);
-    throw new Error('Falha na criptografia de dados médicos');
+    logger.error('[Crypto] Erro ao criptografar dados mÃ©dicos:', error);
+    throw new Error('Falha na criptografia de dados mÃ©dicos');
   }
 }
 
 /**
- * Descriptografa dados médicos sensíveis
+ * Descriptografa dados mÃ©dicos sensÃ­veis
  * @param {string} encryptedData - Dados criptografados em base64
  * @param {string} [customPassword] - Senha customizada (opcional)
  * @returns {Promise<any>} Dados descriptografados
@@ -149,13 +149,13 @@ export async function decryptMedicalData(encryptedData, customPassword = null) {
     const jsonString = decoder.decode(decryptedBuffer);
     return JSON.parse(jsonString);
   } catch (error) {
-    console.error('[Crypto] Erro ao descriptografar dados médicos:', error);
-    throw new Error('Falha na descriptografia de dados médicos');
+    logger.error('[Crypto] Erro ao descriptografar dados mÃ©dicos:', error);
+    throw new Error('Falha na descriptografia de dados mÃ©dicos');
   }
 }
 
 /**
- * Verifica se os dados estão criptografados
+ * Verifica se os dados estÃ£o criptografados
  * @param {any} data - Dados a serem verificados
  * @returns {boolean} True se os dados parecem estar criptografados
  */
@@ -165,7 +165,7 @@ export function isEncrypted(data) {
   try {
     // Tenta decodificar base64
     const decoded = atob(data);
-    // Verifica se tem o tamanho mínimo esperado (salt + iv + dados)
+    // Verifica se tem o tamanho mÃ­nimo esperado (salt + iv + dados)
     return decoded.length >= (CRYPTO_CONFIG.SALT_LENGTH + CRYPTO_CONFIG.IV_LENGTH + 16);
   } catch {
     return false;
@@ -175,7 +175,7 @@ export function isEncrypted(data) {
 /**
  * Criptografa dados para storage com TTL
  * @param {any} data - Dados a serem armazenados
- * @param {number} [ttlMinutes=60] - TTL em minutos (padrão: 1 hora)
+ * @param {number} [ttlMinutes=60] - TTL em minutos (padrÃ£o: 1 hora)
  * @returns {Promise<string>} Dados criptografados com metadados
  */
 export async function encryptForStorage(data, ttlMinutes = 60) {
@@ -201,20 +201,20 @@ export async function decryptFromStorage(encryptedData) {
     
     // Verifica se os dados expiraram
     if (dataWithTTL.expiresAt && Date.now() > dataWithTTL.expiresAt) {
-      console.log('[Crypto] Dados médicos expiraram, removendo do cache');
+      logger.info('[Crypto] Dados mÃ©dicos expiraram, removendo do cache');
       return null;
     }
 
     return dataWithTTL.data;
   } catch (error) {
-    console.error('[Crypto] Erro ao descriptografar dados do storage:', error);
+    logger.error('[Crypto] Erro ao descriptografar dados do storage:', error);
     return null;
   }
 }
 
 /**
  * Limpa dados expirados do storage
- * @param {object} api - Instância da API do browser
+ * @param {object} api - InstÃ¢ncia da API do browser
  * @param {string[]} keys - Chaves para verificar
  */
 export async function cleanupExpiredData(api, keys = []) {
@@ -230,7 +230,7 @@ export async function cleanupExpiredData(api, keys = []) {
             keysToRemove.push(key);
           }
         } catch {
-          // Se não conseguir descriptografar, remove também
+          // Se nÃ£o conseguir descriptografar, remove tambÃ©m
           keysToRemove.push(key);
         }
       }
@@ -238,15 +238,15 @@ export async function cleanupExpiredData(api, keys = []) {
 
     if (keysToRemove.length > 0) {
       await api.storage.local.remove(keysToRemove);
-      console.log(`[Crypto] Removidos ${keysToRemove.length} itens expirados do storage`);
+      logger.info(`[Crypto] Removidos ${keysToRemove.length} itens expirados do storage`);
     }
   } catch (error) {
-    console.error('[Crypto] Erro ao limpar dados expirados:', error);
+    logger.error('[Crypto] Erro ao limpar dados expirados:', error);
   }
 }
 
 /**
- * Utilitário para hash de dados (para verificação de integridade)
+ * UtilitÃ¡rio para hash de dados (para verificaÃ§Ã£o de integridade)
  * @param {any} data - Dados para gerar hash
  * @returns {Promise<string>} Hash SHA-256 em hexadecimal
  */
@@ -258,9 +258,10 @@ export async function hashData(data) {
   return Array.from(hashArray, byte => byte.toString(16).padStart(2, '0')).join('');
 }
 
-// ✅ SEGURANÇA: Configurações exportadas para uso em outros módulos
+// âœ… SEGURANÃ‡A: ConfiguraÃ§Ãµes exportadas para uso em outros mÃ³dulos
 export const MEDICAL_DATA_CONFIG = {
   DEFAULT_TTL_MINUTES: 60, // 1 hora
-  SENSITIVE_TTL_MINUTES: 30, // 30 minutos para dados mais sensíveis
-  MAX_TTL_MINUTES: 240, // 4 horas máximo
+  SENSITIVE_TTL_MINUTES: 30, // 30 minutos para dados mais sensÃ­veis
+  MAX_TTL_MINUTES: 240, // 4 horas mÃ¡ximo
 };
+

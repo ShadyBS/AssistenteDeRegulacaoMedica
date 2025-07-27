@@ -1,4 +1,4 @@
-import "./browser-polyfill.js";
+﻿import "./browser-polyfill.js";
 import { defaultFieldConfig } from "./field-config.js";
 import { filterConfig } from "./filter-config.js";
 import * as Utils from "./utils.js";
@@ -7,19 +7,19 @@ import { CONFIG, getTimeout, getCSSClass } from "./config.js";
 import { getBrowserAPIInstance } from "./BrowserAPI.js";
 import { createComponentLogger } from "./logger.js";
 
-// Logger específico para Options
+// Logger especÃ­fico para Options
 const logger = createComponentLogger('Options');
 
 
 // --- Constantes ---
-const CONFIG_VERSION = "1.3"; // Versão da estrutura de configuração
+const CONFIG_VERSION = "1.3"; // VersÃ£o da estrutura de configuraÃ§Ã£o
 
-// --- Variáveis de Estado ---
+// --- VariÃ¡veis de Estado ---
 let automationRules = [];
 let currentlyEditingRuleId = null;
-let draggedTab = null; // Variável para a aba arrastada
+let draggedTab = null; // VariÃ¡vel para a aba arrastada
 
-// Instância global da API do browser
+// InstÃ¢ncia global da API do browser
 const browserAPI = getBrowserAPIInstance();
 
 // --- Elementos do DOM ---
@@ -38,7 +38,7 @@ const moreFieldsZone = document.getElementById("more-fields-zone");
 const filterTabsContainer = document.getElementById("filter-tabs-container");
 const allDropZones = document.querySelectorAll(".drop-zone");
 
-// --- Elementos do DOM para o Gerenciador de Automação ---
+// --- Elementos do DOM para o Gerenciador de AutomaÃ§Ã£o ---
 const automationRulesList = document.getElementById("automation-rules-list");
 const createNewRuleBtn = document.getElementById("create-new-rule-btn");
 const ruleEditorModal = document.getElementById("rule-editor-modal");
@@ -50,8 +50,8 @@ const saveRuleBtn = document.getElementById("save-rule-btn");
 const ruleEditorFilterTabs = document.getElementById("rule-editor-filter-tabs");
 
 /**
- * Cria um elemento de campo arrastável para a Ficha do Paciente.
- * @param {object} field - O objeto de configuração do campo.
+ * Cria um elemento de campo arrastÃ¡vel para a Ficha do Paciente.
+ * @param {object} field - O objeto de configuraÃ§Ã£o do campo.
  * @returns {HTMLElement} O elemento <div> do campo.
  */
 function createDraggableField(field) {
@@ -61,7 +61,7 @@ function createDraggableField(field) {
   div.draggable = true;
 
   div.innerHTML = `
-    <span class="drag-handle">⠿</span>
+    <span class="drag-handle">â ¿</span>
     <input type="checkbox" class="field-enabled-checkbox" ${
       field.enabled ? "checked" : ""
     }>
@@ -75,9 +75,9 @@ function createDraggableField(field) {
 }
 
 /**
- * Cria um elemento de filtro arrastável com controlos para valor padrão.
- * @param {object} filter - O objeto de configuração do filtro.
- * @param {Array<object>} priorities - A lista de prioridades dinâmicas para a regulação.
+ * Cria um elemento de filtro arrastÃ¡vel com controlos para valor padrÃ£o.
+ * @param {object} filter - O objeto de configuraÃ§Ã£o do filtro.
+ * @param {Array<object>} priorities - A lista de prioridades dinÃ¢micas para a regulaÃ§Ã£o.
  * @returns {HTMLElement} O elemento <div> do filtro.
  */
 function createDraggableFilter(filter, priorities = []) {
@@ -92,13 +92,13 @@ function createDraggableFilter(filter, priorities = []) {
   if (filter.type !== "component") {
     switch (filter.type) {
       case "text":
-        defaultValueControl = `<input type="text" class="filter-default-value-input w-full" placeholder="Valor padrão...">`;
+        defaultValueControl = `<input type="text" class="filter-default-value-input w-full" placeholder="Valor padrÃ£o...">`;
         break;
       case "select":
       case "selectGroup":
         let optionsHtml = "";
         if (filter.id === "regulation-filter-priority") {
-          // Constrói o dropdown de prioridades dinamicamente
+          // ConstrÃ³i o dropdown de prioridades dinamicamente
           optionsHtml = filter.options
             .map((opt) => `<option value="${opt.value}">${opt.text}</option>`)
             .join(""); // Adiciona "Todas"
@@ -106,7 +106,7 @@ function createDraggableFilter(filter, priorities = []) {
             optionsHtml += `<option value="${prio.coreDescricao}">${prio.coreDescricao}</option>`;
           });
         } else {
-          // Lógica original para outros selects
+          // LÃ³gica original para outros selects
           optionsHtml = (filter.options || [])
             .map((opt) => `<option value="${opt.value}">${opt.text}</option>`)
             .join("");
@@ -120,7 +120,7 @@ function createDraggableFilter(filter, priorities = []) {
   }
 
   div.innerHTML = `
-    <span class="drag-handle">⠿</span>
+    <span class="drag-handle">â ¿</span>
     <div class="flex-grow flex flex-col gap-2">
         <div class="flex justify-between items-center">
             <span class="font-medium text-sm">${filter.label}</span>
@@ -130,7 +130,7 @@ function createDraggableFilter(filter, priorities = []) {
           defaultValueControl
             ? `
         <div class="flex items-center gap-2 text-xs text-slate-500">
-            <label for="default-${filter.id}">Padrão:</label>
+            <label for="default-${filter.id}">PadrÃ£o:</label>
             ${defaultValueControl.replace(
               'class="',
               `id="default-${filter.id}" class="`
@@ -153,7 +153,7 @@ function createDraggableFilter(filter, priorities = []) {
 
 /**
  * Renderiza os campos da Ficha do Paciente nas zonas corretas.
- * @param {Array<object>} config - A configuração de campos.
+ * @param {Array<object>} config - A configuraÃ§Ã£o de campos.
  */
 function renderPatientFields(config) {
   mainFieldsZone.innerHTML = "";
@@ -172,8 +172,8 @@ function renderPatientFields(config) {
 }
 
 /**
- * Renderiza os filtros de seção nas zonas corretas e define seus valores padrão.
- * @param {object} layout - A configuração de layout dos filtros.
+ * Renderiza os filtros de seÃ§Ã£o nas zonas corretas e define seus valores padrÃ£o.
+ * @param {object} layout - A configuraÃ§Ã£o de layout dos filtros.
  */
 async function renderFilterLayout(layout) {
   let priorities = [];
@@ -184,7 +184,7 @@ async function renderFilterLayout(layout) {
       priorities = await API.fetchRegulationPriorities();
     }
   } catch (error) {
-    console.error("Não foi possível carregar prioridades:", error);
+    logger.error("NÃ£o foi possÃ­vel carregar prioridades:", error);
   }
 
   Object.keys(filterConfig).forEach((section) => {
@@ -238,7 +238,7 @@ async function renderFilterLayout(layout) {
 }
 
 /**
- * Reordena os botões das abas na página de opções com base na ordem salva.
+ * Reordena os botÃµes das abas na pÃ¡gina de opÃ§Ãµes com base na ordem salva.
  * @param {string[]} order - Array de IDs de abas na ordem correta.
  */
 function applyTabOrder(order) {
@@ -250,7 +250,7 @@ function applyTabOrder(order) {
     tabMap.set(tab.dataset.tab, tab);
   });
 
-  // Anexa as abas na ordem salva. As não encontradas na ordem (novas) permanecem.
+  // Anexa as abas na ordem salva. As nÃ£o encontradas na ordem (novas) permanecem.
   order.forEach((tabId) => {
     const tabElement = tabMap.get(tabId);
     if (tabElement) {
@@ -260,7 +260,7 @@ function applyTabOrder(order) {
 }
 
 /**
- * Carrega a configuração salva e renderiza a página.
+ * Carrega a configuraÃ§Ã£o salva e renderiza a pÃ¡gina.
  */
 async function restoreOptions() {
   const syncItems = await browserAPI.storage.sync.get({
@@ -314,7 +314,7 @@ async function restoreOptions() {
   try {
     await renderFilterLayout(syncItems.filterLayout);
   } catch (error) {
-    console.error("Erro ao renderizar filtros:", error);
+    logger.error("Erro ao renderizar filtros:", error);
   }
 
   const sections = [
@@ -335,7 +335,7 @@ async function restoreOptions() {
     timeline: { start: -12, end: 0 },
   };
 
-  // CORREÇÃO 2: Define os estilos padrão aqui.
+  // CORREÃ‡ÃƒO 2: Define os estilos padrÃ£o aqui.
   const defaultStyles = {
     backgroundColor: "#ffffff",
     color: "#1e293b",
@@ -353,7 +353,7 @@ async function restoreOptions() {
       if (endOffsetEl) endOffsetEl.value = range.end;
     }
 
-    // Restaura estilos, usando os padrões como base.
+    // Restaura estilos, usando os padrÃµes como base.
     const savedStyle = syncItems.sectionHeaderStyles[section] || {};
     const style = { ...defaultStyles, ...savedStyle };
 
@@ -373,7 +373,7 @@ async function restoreOptions() {
 }
 
 /**
- * Salva as configurações GERAIS (não as regras de automação).
+ * Salva as configuraÃ§Ãµes GERAIS (nÃ£o as regras de automaÃ§Ã£o).
  */
 async function saveOptions() {
   const baseUrl = document.getElementById("baseUrlInput").value;
@@ -521,7 +521,7 @@ async function saveOptions() {
   });
 
   Utils.showMessage(
-    "Configurações salvas! As alterações serão aplicadas ao recarregar o assistente.",
+    "ConfiguraÃ§Ãµes salvas! As alteraÃ§Ãµes serÃ£o aplicadas ao recarregar o assistente.",
     "success"
   );
 
@@ -534,7 +534,7 @@ async function saveOptions() {
   }, 4000);
 }
 
-// --- Lógica de Arrastar e Soltar (Drag and Drop) ---
+// --- LÃ³gica de Arrastar e Soltar (Drag and Drop) ---
 let draggedElement = null;
 
 function handleDragStart(e) {
@@ -594,7 +594,7 @@ function getDragAfterElement(container, y) {
   ).element;
 }
 
-// --- Lógica de Arrastar e Soltar para Abas ---
+// --- LÃ³gica de Arrastar e Soltar para Abas ---
 function getDragAfterTab(container, x) {
   const draggableElements = [
     ...container.querySelectorAll(".tab-button:not(.dragging)"),
@@ -650,10 +650,10 @@ function setupTabDnD(container) {
   });
 }
 
-// --- Lógica para Restaurar Padrões ---
+// --- LÃ³gica para Restaurar PadrÃµes ---
 async function handleRestoreDefaults() {
   const confirmation = window.confirm(
-    "Tem certeza de que deseja restaurar todas as configurações de layout e valores padrão? Isto também restaurará a ordem das seções e os estilos dos cabeçalhos. Esta ação não pode ser desfeita."
+    "Tem certeza de que deseja restaurar todas as configuraÃ§Ãµes de layout e valores padrÃ£o? Isto tambÃ©m restaurarÃ¡ a ordem das seÃ§Ãµes e os estilos dos cabeÃ§alhos. Esta aÃ§Ã£o nÃ£o pode ser desfeita."
   );
   if (confirmation) {
     await browserAPI.storage.sync.remove([
@@ -670,7 +670,7 @@ async function handleRestoreDefaults() {
   }
 }
 
-// --- Lógica de Exportação e Importação ---
+// --- LÃ³gica de ExportaÃ§Ã£o e ImportaÃ§Ã£o ---
 async function handleExport() {
   try {
     const settingsToExport = await browserAPI.storage.sync.get(null);
@@ -686,10 +686,10 @@ async function handleExport() {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-    Utils.showMessage("Configurações exportadas com sucesso!", "success");
+    Utils.showMessage("ConfiguraÃ§Ãµes exportadas com sucesso!", "success");
   } catch (error) {
-    console.error("Erro ao exportar configurações:", error);
-    Utils.showMessage("Erro ao exportar configurações.", "error");
+    logger.error("Erro ao exportar configuraÃ§Ãµes:", error);
+    Utils.showMessage("Erro ao exportar configuraÃ§Ãµes.", "error");
   } finally {
     setTimeout(() => {
       statusMessage.textContent = "";
@@ -705,14 +705,14 @@ function handleImport(event) {
     try {
       const importedSettings = JSON.parse(e.target.result);
       if (!importedSettings.configVersion || !importedSettings.filterLayout) {
-        throw new Error("Ficheiro de configuração inválido ou corrompido.");
+        throw new Error("Ficheiro de configuraÃ§Ã£o invÃ¡lido ou corrompido.");
       }
       if (
         importedSettings.configVersion.split(".")[0] !==
         CONFIG_VERSION.split(".")[0]
       ) {
         const goOn = window.confirm(
-          "A versão do ficheiro de configuração é muito diferente da versão da extensão. A importação pode causar erros. Deseja continuar mesmo assim?"
+          "A versÃ£o do ficheiro de configuraÃ§Ã£o Ã© muito diferente da versÃ£o da extensÃ£o. A importaÃ§Ã£o pode causar erros. Deseja continuar mesmo assim?"
         );
         if (!goOn) return;
       }
@@ -720,11 +720,11 @@ function handleImport(event) {
       await browserAPI.storage.sync.set(importedSettings);
       restoreOptions();
       Utils.showMessage(
-        "Configurações importadas e aplicadas com sucesso!",
+        "ConfiguraÃ§Ãµes importadas e aplicadas com sucesso!",
         "success"
       );
     } catch (error) {
-      console.error("Erro ao importar configurações:", error);
+      logger.error("Erro ao importar configuraÃ§Ãµes:", error);
       Utils.showMessage(`Erro ao importar: ${error.message}`, "error");
     } finally {
       importFileInput.value = "";
@@ -736,10 +736,10 @@ function handleImport(event) {
   reader.readAsText(file);
 }
 
-// --- LÓGICA PARA O GERENCIADOR DE AUTOMAÇÃO ---
+// --- LÃ“GICA PARA O GERENCIADOR DE AUTOMAÃ‡ÃƒO ---
 
 /**
- * Renderiza a lista de regras de automação na UI.
+ * Renderiza a lista de regras de automaÃ§Ã£o na UI.
  */
 function renderAutomationRules() {
   automationRulesList.innerHTML = "";
@@ -755,7 +755,7 @@ function renderAutomationRules() {
     ruleElement.innerHTML = `
             <div class="flex items-center justify-between">
               <div class="flex items-center gap-3">
-                <span class="drag-handle cursor-grab text-slate-400">⠿</span>
+                <span class="drag-handle cursor-grab text-slate-400">â ¿</span>
                 <div>
                   <p class="font-semibold text-slate-800">${rule.name}</p>
                   <p class="text-xs text-slate-500" title="${keywords}">Gatilhos: ${
@@ -799,11 +799,11 @@ function renderAutomationRules() {
 }
 
 /**
- * Salva o array de regras de automação no storage local.
+ * Salva o array de regras de automaÃ§Ã£o no storage local.
  */
 async function saveAutomationRules() {
   await browserAPI.storage.local.set({ automationRules });
-  Utils.showMessage("Regras de automação salvas.", "success");
+  Utils.showMessage("Regras de automaÃ§Ã£o salvas.", "success");
   setTimeout(() => {
     statusMessage.textContent = "";
   }, 2000);
@@ -820,12 +820,12 @@ async function openRuleEditor(ruleId = null) {
   if (ruleId) {
     const rule = automationRules.find((r) => r.id === ruleId);
     if (!rule) return;
-    ruleEditorTitle.textContent = "Editar Regra de Automação";
+    ruleEditorTitle.textContent = "Editar Regra de AutomaÃ§Ã£o";
     ruleNameInput.value = rule.name;
     ruleTriggersInput.value = rule.triggerKeywords.join(", ");
 
     Object.entries(rule.filterSettings).forEach(([sectionKey, filters]) => {
-      // --- INÍCIO DA CORREÇÃO ---
+      // --- INÃCIO DA CORREÃ‡ÃƒO ---
       // Preenche os filtros de data
       if (filters && filters.dateRange) {
         const { start, end } = filters.dateRange;
@@ -846,7 +846,7 @@ async function openRuleEditor(ruleId = null) {
           endOffsetEl.value = "";
         }
       }
-      // --- FIM DA CORREÇÃO ---
+      // --- FIM DA CORREÃ‡ÃƒO ---
 
       // Preenche outros filtros
       Object.entries(filters).forEach(([filterId, value]) => {
@@ -864,7 +864,7 @@ async function openRuleEditor(ruleId = null) {
       });
     });
   } else {
-    ruleEditorTitle.textContent = "Criar Nova Regra de Automação";
+    ruleEditorTitle.textContent = "Criar Nova Regra de AutomaÃ§Ã£o";
     ruleNameInput.value = "";
     ruleTriggersInput.value = "";
 
@@ -917,7 +917,7 @@ function closeRuleEditor() {
 function handleSaveRule() {
   const name = ruleNameInput.value.trim();
   if (!name) {
-    alert("O nome da regra é obrigatório.");
+    alert("O nome da regra Ã© obrigatÃ³rio.");
     return;
   }
 
@@ -937,8 +937,8 @@ function handleSaveRule() {
   sections.forEach((sectionKey) => {
     filterSettings[sectionKey] = {};
 
-    // --- INÍCIO DA CORREÇÃO ---
-    // Salva as configurações de data
+    // --- INÃCIO DA CORREÃ‡ÃƒO ---
+    // Salva as configuraÃ§Ãµes de data
     const startOffsetEl = document.getElementById(
       `rule-${sectionKey}-start-offset`
     );
@@ -957,9 +957,9 @@ function handleSaveRule() {
         end: !isNaN(endNum) ? endNum : null,
       };
     }
-    // --- FIM DA CORREÇÃO ---
+    // --- FIM DA CORREÃ‡ÃƒO ---
 
-    // Salva as configurações dos outros filtros
+    // Salva as configuraÃ§Ãµes dos outros filtros
     const sectionFilters = filterConfig[sectionKey] || [];
     sectionFilters.forEach((filter) => {
       if (filter.type === "component") return;
@@ -1017,7 +1017,7 @@ function handleDuplicateRule(ruleId) {
 
   const newRule = JSON.parse(JSON.stringify(originalRule));
   newRule.id = Date.now().toString();
-  newRule.name = `${originalRule.name} (Cópia)`;
+  newRule.name = `${originalRule.name} (CÃ³pia)`;
   newRule.isActive = false;
 
   const originalIndex = automationRules.findIndex((r) => r.id === ruleId);
@@ -1057,7 +1057,7 @@ async function populateRuleEditorFilters() {
       priorities = await API.fetchRegulationPriorities();
     }
   } catch (error) {
-    console.error("Não foi possível carregar prioridades:", error);
+    logger.error("NÃ£o foi possÃ­vel carregar prioridades:", error);
   }
 
   const sections = [
@@ -1071,7 +1071,7 @@ async function populateRuleEditorFilters() {
   sections.forEach((sectionKey) => {
     const container = document.getElementById(`${sectionKey}-rule-editor-tab`);
     if (!container) return;
-    container.innerHTML = ""; // Limpa o conteúdo anterior
+    container.innerHTML = ""; // Limpa o conteÃºdo anterior
 
     // Adiciona o componente de data
     const dateRangeElement = createDateRangeElementForRuleEditor(sectionKey);
@@ -1099,10 +1099,10 @@ async function populateRuleEditorFilters() {
 }
 
 /**
- * Cria um único elemento de filtro para o modal do editor de regras.
- * @param {object} filter - O objeto de configuração do filtro.
- * @param {string} sectionKey - A chave da seção.
- * @param {Array<object>} priorities - A lista de prioridades dinâmicas.
+ * Cria um Ãºnico elemento de filtro para o modal do editor de regras.
+ * @param {object} filter - O objeto de configuraÃ§Ã£o do filtro.
+ * @param {string} sectionKey - A chave da seÃ§Ã£o.
+ * @param {Array<object>} priorities - A lista de prioridades dinÃ¢micas.
  * @returns {HTMLElement} O elemento HTML do filtro.
  */
 function createFilterElementForRuleEditor(filter, sectionKey, priorities) {
@@ -1148,30 +1148,30 @@ function createFilterElementForRuleEditor(filter, sectionKey, priorities) {
 
 /**
  * Cria o componente de intervalo de datas para o editor de regras.
- * @param {string} sectionKey - A chave da seção.
+ * @param {string} sectionKey - A chave da seÃ§Ã£o.
  * @returns {HTMLElement} O elemento HTML do componente.
  */
 function createDateRangeElementForRuleEditor(sectionKey) {
   const container = document.createElement("div");
   container.className = "p-2 bg-slate-50 rounded-md border mb-4";
   container.innerHTML = `
-    <h5 class="font-medium text-xs text-slate-500 mb-2">Período de Busca Automático</h5>
+    <h5 class="font-medium text-xs text-slate-500 mb-2">PerÃ­odo de Busca AutomÃ¡tico</h5>
     <div class="flex items-center gap-4 text-sm">
         <div>
-            <label for="rule-${sectionKey}-start-offset" class="text-xs">Início (meses antes):</label>
-            <input type="number" id="rule-${sectionKey}-start-offset" class="w-20 p-1 border rounded-md rule-date-range-input" placeholder="Padrão" min="0">
+            <label for="rule-${sectionKey}-start-offset" class="text-xs">InÃ­cio (meses antes):</label>
+            <input type="number" id="rule-${sectionKey}-start-offset" class="w-20 p-1 border rounded-md rule-date-range-input" placeholder="PadrÃ£o" min="0">
         </div>
         <div>
             <label for="rule-${sectionKey}-end-offset" class="text-xs">Fim (meses depois):</label>
-            <input type="number" id="rule-${sectionKey}-end-offset" class="w-20 p-1 border rounded-md rule-date-range-input" placeholder="Padrão" min="0">
+            <input type="number" id="rule-${sectionKey}-end-offset" class="w-20 p-1 border rounded-md rule-date-range-input" placeholder="PadrÃ£o" min="0">
         </div>
     </div>
-    <p class="text-xs text-slate-400 mt-2">Deixe em branco para usar o padrão global da seção.</p>
+    <p class="text-xs text-slate-400 mt-2">Deixe em branco para usar o padrÃ£o global da seÃ§Ã£o.</p>
   `;
   return container;
 }
 
-// --- Inicialização ---
+// --- InicializaÃ§Ã£o ---
 document.addEventListener("DOMContentLoaded", async () => {
   await restoreOptions();
 
@@ -1221,3 +1221,4 @@ allDropZones.forEach((zone) => {
   zone.addEventListener("dragover", handleDragOver);
   zone.addEventListener("drop", handleDrop);
 });
+

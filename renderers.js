@@ -1,5 +1,5 @@
-/**
- * @file Contém todas as funções responsáveis por gerar o HTML dos resultados.
+﻿/**
+ * @file ContÃ©m todas as funÃ§Ãµes responsÃ¡veis por gerar o HTML dos resultados.
  */
 
 import { getSortIndicator } from "./SectionManager.js";
@@ -10,7 +10,7 @@ export function renderConsultations(consultations, sortState) {
   const contentDiv = document.getElementById("consultations-content");
   if (!contentDiv) return;
 
-  // Limpar conteúdo anterior
+  // Limpar conteÃºdo anterior
   contentDiv.innerHTML = '';
 
   if (consultations.length === 0) {
@@ -21,7 +21,7 @@ export function renderConsultations(consultations, sortState) {
     return;
   }
 
-  // Criar cabeçalho
+  // Criar cabeÃ§alho
   const headerDiv = document.createElement('div');
   headerDiv.className = `flex justify-between text-xs font-bold ${getCSSClass('TEXT_MUTED')} mb-2 px-3`;
   
@@ -99,7 +99,7 @@ export function renderConsultations(consultations, sortState) {
         copySpan.className = 'copy-icon';
         copySpan.title = 'Copiar';
         copySpan.setAttribute('data-copy-text', d.value);
-        copySpan.textContent = '📄';
+        copySpan.textContent = 'ðŸ“„';
         
         valueP.appendChild(document.createTextNode(' '));
         valueP.appendChild(copySpan);
@@ -121,7 +121,7 @@ export function renderExams(exams, sortState) {
   const contentDiv = document.getElementById("exams-content");
   if (!contentDiv) return;
 
-  // Limpar conteúdo anterior
+  // Limpar conteÃºdo anterior
   contentDiv.innerHTML = '';
 
   if (exams.length === 0) {
@@ -132,7 +132,7 @@ export function renderExams(exams, sortState) {
     return;
   }
 
-  // Criar cabeçalho
+  // Criar cabeÃ§alho
   const headerDiv = document.createElement('div');
   headerDiv.className = 'flex justify-between text-xs font-bold text-slate-500 mb-2 px-3';
   
@@ -171,13 +171,13 @@ export function renderExams(exams, sortState) {
     // Nome do exame
     const examNameP = document.createElement('p');
     examNameP.className = 'font-semibold text-indigo-700';
-    examNameP.textContent = exam.examName || "Nome do exame não informado";
+    examNameP.textContent = exam.examName || "Nome do exame nÃ£o informado";
     
     const copySpan = document.createElement('span');
     copySpan.className = 'copy-icon';
     copySpan.title = 'Copiar';
     copySpan.setAttribute('data-copy-text', exam.examName);
-    copySpan.textContent = '📄';
+    copySpan.textContent = 'ðŸ“„';
     
     examNameP.appendChild(document.createTextNode(' '));
     examNameP.appendChild(copySpan);
@@ -187,10 +187,10 @@ export function renderExams(exams, sortState) {
     detailsDiv.className = 'text-sm text-slate-500 mt-1';
     
     const professionalP = document.createElement('p');
-    professionalP.textContent = `Solicitado por: ${exam.professional || "Não informado"} (${exam.specialty || "N/A"})`;
+    professionalP.textContent = `Solicitado por: ${exam.professional || "NÃ£o informado"} (${exam.specialty || "N/A"})`;
     
     const dateP = document.createElement('p');
-    dateP.textContent = `Data: ${exam.date || "Não informada"}`;
+    dateP.textContent = `Data: ${exam.date || "NÃ£o informada"}`;
     
     detailsDiv.appendChild(professionalP);
     detailsDiv.appendChild(dateP);
@@ -198,7 +198,7 @@ export function renderExams(exams, sortState) {
     examDiv.appendChild(examNameP);
     examDiv.appendChild(detailsDiv);
     
-    // Botão de visualizar resultado (se disponível)
+    // BotÃ£o de visualizar resultado (se disponÃ­vel)
     if (showBtn) {
       const resultBtn = document.createElement('button');
       resultBtn.className = 'view-exam-result-btn mt-2 w-full text-sm bg-green-100 text-green-800 py-1 rounded hover:bg-green-200';
@@ -224,7 +224,7 @@ export function renderAppointments(appointments, sortState) {
     ATENDIDO: "bg-purple-100 text-purple-800",
   };
 
-  // Limpar conteúdo anterior
+  // Limpar conteÃºdo anterior
   contentDiv.innerHTML = '';
 
   if (appointments.length === 0) {
@@ -235,7 +235,7 @@ export function renderAppointments(appointments, sortState) {
     return;
   }
 
-  // Criar cabeçalho
+  // Criar cabeÃ§alho
   const headerDiv = document.createElement('div');
   headerDiv.className = 'flex justify-between text-xs font-bold text-slate-500 mb-2 px-3';
   
@@ -275,17 +275,17 @@ export function renderAppointments(appointments, sortState) {
     let idp, ids;
     const parts = item.id.split("-");
     
-    // Verificar se o primeiro part não é numérico (indica prefixo)
+    // Verificar se o primeiro part nÃ£o Ã© numÃ©rico (indica prefixo)
     if (parts.length >= 2 && isNaN(parts[0])) {
-      // Se o primeiro part não é numérico, é um prefixo (ex: "exam-525411")
+      // Se o primeiro part nÃ£o Ã© numÃ©rico, Ã© um prefixo (ex: "exam-525411")
       // Usar o segundo part como ids e tentar obter idp de outras fontes
       ids = parts[1];
       
       // Para exames, tentar obter o idp correto do objeto original
-      // Se não disponível, usar o mesmo valor como fallback
+      // Se nÃ£o disponÃ­vel, usar o mesmo valor como fallback
       idp = item.examIdp || item.originalIdp || parts[1];
       
-      console.warn(`ID com prefixo detectado: ${item.id}, usando idp=${idp}, ids=${ids}`);
+      logger.warn(`ID com prefixo detectado: ${item.id}, usando idp=${idp}, ids=${ids}`);
     } else {
       // Formato normal: "idp-ids"
       [idp, ids] = parts;
@@ -323,7 +323,7 @@ export function renderAppointments(appointments, sortState) {
     detailsDiv.className = 'text-sm text-slate-500 mt-2 border-t pt-2';
     
     const dateP = document.createElement('p');
-    dateP.innerHTML = `<strong>Data:</strong> ${item.date} às ${item.time}`;
+    dateP.innerHTML = `<strong>Data:</strong> ${item.date} Ã s ${item.time}`;
     
     const locationP = document.createElement('p');
     locationP.innerHTML = `<strong>Local:</strong> ${item.location}`;
@@ -335,7 +335,7 @@ export function renderAppointments(appointments, sortState) {
     detailsDiv.appendChild(locationP);
     detailsDiv.appendChild(professionalP);
     
-    // Botão de detalhes
+    // BotÃ£o de detalhes
     const buttonDiv = document.createElement('div');
     buttonDiv.className = 'flex items-center justify-between mt-2 pt-2 border-t';
     
@@ -374,10 +374,10 @@ export function renderRegulations(regulations, sortState, globalSettings) {
     NEGADO: "bg-red-100 text-red-800",
     DEVOLVIDO: "bg-orange-100 text-orange-800",
     CANCELADA: "bg-gray-100 text-gray-800",
-    "EM ANÁLISE": "bg-blue-100 text-blue-800",
+    "EM ANÃLISE": "bg-blue-100 text-blue-800",
   };
 
-  // Limpar conteúdo anterior
+  // Limpar conteÃºdo anterior
   contentDiv.innerHTML = '';
 
   if (regulations.length === 0) {
@@ -388,7 +388,7 @@ export function renderRegulations(regulations, sortState, globalSettings) {
     return;
   }
 
-  // Criar cabeçalho
+  // Criar cabeÃ§alho
   const headerDiv = document.createElement('div');
   headerDiv.className = 'flex justify-between text-xs font-bold text-slate-500 mb-2 px-3';
   
@@ -412,7 +412,7 @@ export function renderRegulations(regulations, sortState, globalSettings) {
   headerDiv.appendChild(dateHeader);
   contentDiv.appendChild(headerDiv);
 
-  // Criar itens de regulação
+  // Criar itens de regulaÃ§Ã£o
   regulations.forEach(item => {
     const statusKey = (item.status || "").toUpperCase();
     const style = statusStyles[statusKey] || "bg-gray-100 text-gray-800";
@@ -429,7 +429,7 @@ export function renderRegulations(regulations, sortState, globalSettings) {
     const regulationDiv = document.createElement('div');
     regulationDiv.className = 'p-3 mb-3 border rounded-lg bg-white';
     
-    // Header da regulação
+    // Header da regulaÃ§Ã£o
     const headerDiv = document.createElement('div');
     headerDiv.className = 'flex justify-between items-start';
     
@@ -458,7 +458,7 @@ export function renderRegulations(regulations, sortState, globalSettings) {
     procedureCopySpan.className = 'copy-icon';
     procedureCopySpan.title = 'Copiar';
     procedureCopySpan.setAttribute('data-copy-text', item.procedure);
-    procedureCopySpan.textContent = '📄';
+    procedureCopySpan.textContent = 'ðŸ“„';
     
     procedureP.appendChild(document.createTextNode(' '));
     procedureP.appendChild(procedureCopySpan);
@@ -471,7 +471,7 @@ export function renderRegulations(regulations, sortState, globalSettings) {
     cidCopySpan.className = 'copy-icon';
     cidCopySpan.title = 'Copiar';
     cidCopySpan.setAttribute('data-copy-text', item.cid);
-    cidCopySpan.textContent = '📄';
+    cidCopySpan.textContent = 'ðŸ“„';
     
     cidP.appendChild(document.createTextNode(' '));
     cidP.appendChild(cidCopySpan);
@@ -487,7 +487,7 @@ export function renderRegulations(regulations, sortState, globalSettings) {
     headerDiv.appendChild(leftDiv);
     headerDiv.appendChild(statusSpan);
     
-    // Detalhes da regulação
+    // Detalhes da regulaÃ§Ã£o
     const detailsDiv = document.createElement('div');
     detailsDiv.className = 'text-sm text-slate-500 mt-2 border-t pt-2 space-y-1';
     
@@ -498,13 +498,13 @@ export function renderRegulations(regulations, sortState, globalSettings) {
     requesterP.innerHTML = `<strong>Solicitante:</strong> ${item.requester}`;
     
     const providerP = document.createElement('p');
-    providerP.innerHTML = `<strong>Executante:</strong> ${item.provider || "Não definido"}`;
+    providerP.innerHTML = `<strong>Executante:</strong> ${item.provider || "NÃ£o definido"}`;
     
     detailsDiv.appendChild(dateP);
     detailsDiv.appendChild(requesterP);
     detailsDiv.appendChild(providerP);
     
-    // Botão de detalhes
+    // BotÃ£o de detalhes
     const buttonDiv = document.createElement('div');
     buttonDiv.className = 'mt-2 pt-2 border-t';
     
@@ -581,7 +581,7 @@ export function renderDocuments(documents, sortState) {
   const contentDiv = document.getElementById("documents-content");
   if (!contentDiv) return;
 
-  // Limpar conteúdo anterior
+  // Limpar conteÃºdo anterior
   contentDiv.innerHTML = '';
 
   if (!documents || documents.length === 0) {
@@ -592,14 +592,14 @@ export function renderDocuments(documents, sortState) {
     return;
   }
 
-  // Criar cabeçalho
+  // Criar cabeÃ§alho
   const headerDiv = document.createElement('div');
   headerDiv.className = 'flex justify-between text-xs font-bold text-slate-500 mb-2 px-3';
   
   const descriptionHeader = document.createElement('span');
   descriptionHeader.className = 'sort-header w-2/3';
   descriptionHeader.setAttribute('data-sort-key', 'description');
-  descriptionHeader.innerHTML = `Descrição <span class="sort-indicator">${getSortIndicator("description", sortState)}</span>`;
+  descriptionHeader.innerHTML = `DescriÃ§Ã£o <span class="sort-indicator">${getSortIndicator("description", sortState)}</span>`;
   
   const dateHeader = document.createElement('span');
   dateHeader.className = 'sort-header w-1/3 text-right';
@@ -615,7 +615,7 @@ export function renderDocuments(documents, sortState) {
     const documentDiv = document.createElement('div');
     documentDiv.className = 'p-3 mb-2 border rounded-lg bg-white';
     
-    // Descrição do documento
+    // DescriÃ§Ã£o do documento
     const descriptionP = document.createElement('p');
     descriptionP.className = 'font-semibold text-gray-800';
     descriptionP.textContent = doc.description;
@@ -638,7 +638,7 @@ export function renderDocuments(documents, sortState) {
     detailsDiv.appendChild(separatorSpan);
     detailsDiv.appendChild(typeSpan);
     
-    // Botão de visualizar documento
+    // BotÃ£o de visualizar documento
     const viewBtn = document.createElement('button');
     viewBtn.className = 'view-document-btn mt-2 w-full text-sm bg-gray-100 text-gray-800 py-1 rounded hover:bg-gray-200';
     viewBtn.setAttribute('data-idp', doc.idp);
@@ -684,13 +684,13 @@ export function renderTimeline(events, status) {
       icon: "M8 2v4M16 2v4M3 10h18M3 4h18v16H3zM9 16l2 2 4-4",
     },
     regulation: {
-      label: "Regulação",
+      label: "RegulaÃ§Ã£o",
       color: "red",
       bgColorClass: "bg-red-100",
       iconColorClass: "text-red-600",
       icon: "M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1zM9 12l2 2 4-4",
     },
-    // --- INÍCIO DA MODIFICAÇÃO ---
+    // --- INÃCIO DA MODIFICAÃ‡ÃƒO ---
     document: {
       label: "Documento",
       color: "gray",
@@ -698,7 +698,7 @@ export function renderTimeline(events, status) {
       iconColorClass: "text-gray-600",
       icon: "M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z M14 2v6h6",
     },
-    // --- FIM DA MODIFICAÇÃO ---
+    // --- FIM DA MODIFICAÃ‡ÃƒO ---
   };
 
   let contentHtml = "";
@@ -736,7 +736,7 @@ export function renderTimeline(events, status) {
           const dateString =
             event.date instanceof Date && !isNaN(event.date)
               ? event.date.toLocaleDateString("pt-BR")
-              : "Data Inválida";
+              : "Data InvÃ¡lida";
 
           let topRightDetailsHtml = "";
           let extraInfoHtml = "";
@@ -748,17 +748,17 @@ export function renderTimeline(events, status) {
             let idp, ids;
             const parts = a.id.split("-");
             
-            // Verificar se o primeiro part não é numérico (indica prefixo)
+            // Verificar se o primeiro part nÃ£o Ã© numÃ©rico (indica prefixo)
             if (parts.length >= 2 && isNaN(parts[0])) {
-              // Se o primeiro part não é numérico, é um prefixo (ex: "exam-525411")
+              // Se o primeiro part nÃ£o Ã© numÃ©rico, Ã© um prefixo (ex: "exam-525411")
               // Usar o segundo part como ids e tentar obter idp de outras fontes
               ids = parts[1];
               
               // Para exames, tentar obter o idp correto do objeto original
-              // Se não disponível, usar o mesmo valor como fallback
+              // Se nÃ£o disponÃ­vel, usar o mesmo valor como fallback
               idp = a.examIdp || a.originalIdp || parts[1];
               
-              console.warn(`ID com prefixo detectado: ${a.id}, usando idp=${idp}, ids=${ids}`);
+              logger.warn(`ID com prefixo detectado: ${a.id}, usando idp=${idp}, ids=${ids}`);
             } else {
               // Formato normal: "idp-ids"
               [idp, ids] = parts;
@@ -773,7 +773,7 @@ export function renderTimeline(events, status) {
             };
             const statusClass =
               statusStyles[a.status] || "text-slate-600";
-            const timeHtml = `<div class="text-xs text-slate-500">às ${a.time}</div>`;
+            const timeHtml = `<div class="text-xs text-slate-500">Ã s ${a.time}</div>`;
             const statusHtml = `<div class="mt-1 text-xs font-semibold ${statusClass}">${a.status}</div>`;
 
             const icon = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-search-2"><path d="M14 2v6h6"/><path d="M4 22h14a2 2 0 0 0 2-2V7.5L14.5 2H6a2 2 0 0 0-2 2v4"/><path d="M5 17a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/><path d="m9 21-1.5-1.5"/></svg>`;
@@ -822,7 +822,7 @@ export function renderTimeline(events, status) {
                           "<br>"
                         )} <span class="copy-icon" title="Copiar" data-copy-text="${
                           d.value
-                        }">📄</span></p>
+                        }">ðŸ“„</span></p>
                     `
                       )
                       .join("")}
@@ -868,12 +868,12 @@ export function renderTimeline(events, status) {
                     <p class="mb-1"><strong>Prioridade:</strong> ${r.priority}</p>
                     <p class="mb-1"><strong>CID:</strong> ${r.cid}</p>
                     <p class="mb-2"><strong>Executante:</strong> ${
-                      r.provider || "Não definido"
+                      r.provider || "NÃ£o definido"
                     }</p>
                     ${attachmentsHtml}
                 </div>
             `;
-            // --- INÍCIO DA MODIFICAÇÃO ---
+            // --- INÃCIO DA MODIFICAÃ‡ÃƒO ---
           } else if (event.type === "document") {
             const doc = event.details;
             extraInfoHtml = `
@@ -884,7 +884,7 @@ export function renderTimeline(events, status) {
                 </div>
             `;
           }
-          // --- FIM DA MODIFICAÇÃO ---
+          // --- FIM DA MODIFICAÃ‡ÃƒO ---
 
           return `
                     <div class="relative pl-10 timeline-item" data-event-type="${event.type}">
@@ -917,3 +917,4 @@ export function renderTimeline(events, status) {
   }
   contentDiv.innerHTML = contentHtml;
 }
+

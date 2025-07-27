@@ -1,19 +1,19 @@
-/**
- * @file Gerenciador de Keep-Alive para manter a sessão ativa
+﻿/**
+ * @file Gerenciador de Keep-Alive para manter a sessÃ£o ativa
  * Usa a API de alarmes para garantir funcionamento em Manifest V3
  */
 import * as API from "./api.js";
 import { getBrowserAPIInstance } from "./BrowserAPI.js";
 import { createComponentLogger } from "./logger.js";
 
-// Logger específico para KeepAliveManager
+// Logger especÃ­fico para KeepAliveManager
 const logger = createComponentLogger('KeepAliveManager');
 
 
 export class KeepAliveManager {
   constructor() {
     this.isActive = false;
-    this.intervalMinutes = 10; // Padrão: 10 minutos
+    this.intervalMinutes = 10; // PadrÃ£o: 10 minutos
     this.alarmName = "keepSessionAlive";
     this.api = getBrowserAPIInstance();
     
@@ -21,13 +21,13 @@ export class KeepAliveManager {
   }
 
   async init() {
-    // Carrega as configurações salvas
+    // Carrega as configuraÃ§Ãµes salvas
     await this.loadSettings();
     
     // Configura listener para alarmes
     this.setupAlarmListener();
     
-    // Escuta mudanças nas configurações
+    // Escuta mudanÃ§as nas configuraÃ§Ãµes
     this.api.storage.onChanged.addListener((changes, areaName) => {
       if (areaName === "sync" && changes.keepSessionAliveInterval) {
         this.updateInterval(changes.keepSessionAliveInterval.newValue);
@@ -42,12 +42,12 @@ export class KeepAliveManager {
           try {
             const success = await API.keepSessionAlive();
             if (success) {
-              console.log(`[KeepAlive] Executado com sucesso (${new Date().toLocaleTimeString()})`);
+              logger.info(`[KeepAlive] Executado com sucesso (${new Date().toLocaleTimeString()})`);
             } else {
-              console.warn(`[KeepAlive] Falhou (${new Date().toLocaleTimeString()})`);
+              logger.warn(`[KeepAlive] Falhou (${new Date().toLocaleTimeString()})`);
             }
           } catch (error) {
-            console.error("[KeepAlive] Erro durante execução:", error);
+            logger.error("[KeepAlive] Erro durante execuÃ§Ã£o:", error);
           }
         }
       });
@@ -62,7 +62,7 @@ export class KeepAliveManager {
       
       this.updateInterval(result.keepSessionAliveInterval);
     } catch (error) {
-      console.error("[KeepAlive] Erro ao carregar configurações:", error);
+      logger.error("[KeepAlive] Erro ao carregar configuraÃ§Ãµes:", error);
     }
   }
 
@@ -82,44 +82,44 @@ export class KeepAliveManager {
 
   async start() {
     if (this.intervalMinutes <= 0) {
-      console.log("[KeepAlive] Desativado (intervalo = 0)");
+      logger.info("[KeepAlive] Desativado (intervalo = 0)");
       return;
     }
 
     if (this.isActive) {
-      console.log("[KeepAlive] Já está ativo");
+      logger.info("[KeepAlive] JÃ¡ estÃ¡ ativo");
       return;
     }
     
     if (!this.api.alarms) {
-      console.error("[KeepAlive] API de alarmes não disponível - keep-alive não funcionará");
+      logger.error("[KeepAlive] API de alarmes nÃ£o disponÃ­vel - keep-alive nÃ£o funcionarÃ¡");
       return;
     }
 
     try {
-      // Cria um alarme periódico
+      // Cria um alarme periÃ³dico
       await this.api.alarms.create(this.alarmName, {
         delayInMinutes: this.intervalMinutes,
         periodInMinutes: this.intervalMinutes
       });
 
       this.isActive = true;
-      console.log(`[KeepAlive] Iniciado: ${this.intervalMinutes} minutos usando alarmes`);
+      logger.info(`[KeepAlive] Iniciado: ${this.intervalMinutes} minutos usando alarmes`);
       
       // Executa imediatamente uma vez para testar
       try {
         const success = await API.keepSessionAlive();
         if (success) {
-          console.log(`[KeepAlive] Execução inicial bem-sucedida (${new Date().toLocaleTimeString()})`);
+          logger.info(`[KeepAlive] ExecuÃ§Ã£o inicial bem-sucedida (${new Date().toLocaleTimeString()})`);
         } else {
-          console.warn(`[KeepAlive] Execução inicial falhou (${new Date().toLocaleTimeString()})`);
+          logger.warn(`[KeepAlive] ExecuÃ§Ã£o inicial falhou (${new Date().toLocaleTimeString()})`);
         }
       } catch (error) {
-        console.error("[KeepAlive] Erro na execução inicial:", error);
+        logger.error("[KeepAlive] Erro na execuÃ§Ã£o inicial:", error);
       }
       
     } catch (error) {
-      console.error("[KeepAlive] Erro ao criar alarme:", error);
+      logger.error("[KeepAlive] Erro ao criar alarme:", error);
     }
   }
 
@@ -128,12 +128,12 @@ export class KeepAliveManager {
       try {
         await this.api.alarms.clear(this.alarmName);
       } catch (error) {
-        console.error("[KeepAlive] Erro ao limpar alarme:", error);
+        logger.error("[KeepAlive] Erro ao limpar alarme:", error);
       }
     }
     
     this.isActive = false;
-    console.log("[KeepAlive] Parado");
+    logger.info("[KeepAlive] Parado");
   }
 
   async getStatus() {
@@ -146,7 +146,7 @@ export class KeepAliveManager {
           nextExecution = new Date(alarm.scheduledTime);
         }
       } catch (error) {
-        console.error("[KeepAlive] Erro ao obter status do alarme:", error);
+        logger.error("[KeepAlive] Erro ao obter status do alarme:", error);
       }
     }
     
@@ -157,3 +157,4 @@ export class KeepAliveManager {
     };
   }
 }
+

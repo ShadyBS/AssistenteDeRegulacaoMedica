@@ -1,13 +1,13 @@
-/**
+﻿/**
 };
 import { createComponentLogger } from "./logger.js";
 
-// Logger específico para Store
+// Logger especÃ­fico para Store
 const logger = createComponentLogger('Store');
 
 /**
- * @file store.js - Gestor de estado centralizado para a aplicação.
- * Implementa um padrão simples de "publish-subscribe" para gerir o estado global.
+ * @file store.js - Gestor de estado centralizado para a aplicaÃ§Ã£o.
+ * Implementa um padrÃ£o simples de "publish-subscribe" para gerir o estado global.
  */
 
 const state = {
@@ -28,18 +28,18 @@ const MAX_ERRORS = 5;
 
 export const store = {
   /**
-   * Adiciona uma função de callback à lista de listeners.
-   * @param {Function} listener A função a ser adicionada.
-   * @returns {Function} Uma função para remover o listener (unsubscribe).
+   * Adiciona uma funÃ§Ã£o de callback Ã  lista de listeners.
+   * @param {Function} listener A funÃ§Ã£o a ser adicionada.
+   * @returns {Function} Uma funÃ§Ã£o para remover o listener (unsubscribe).
    */
   subscribe(listener) {
     if (typeof listener !== 'function') {
-      console.error('Store listener deve ser uma função');
+      logger.error('Store listener deve ser uma funÃ§Ã£o');
       return () => {};
     }
     
     listeners.push(listener);
-    // PASSO 3.3: Retorna uma função de unsubscribe para melhor gestão de memória.
+    // PASSO 3.3: Retorna uma funÃ§Ã£o de unsubscribe para melhor gestÃ£o de memÃ³ria.
     return () => {
       const index = listeners.indexOf(listener);
       if (index > -1) {
@@ -49,19 +49,19 @@ export const store = {
   },
 
   _notify() {
-    // Prevenir notificações recursivas
+    // Prevenir notificaÃ§Ãµes recursivas
     if (notificationInProgress) {
-      console.warn("Tentativa de notificação recursiva detectada, ignorando...");
+      logger.warn("Tentativa de notificaÃ§Ã£o recursiva detectada, ignorando...");
       return;
     }
 
-    // Verificar se há muitos erros consecutivos
+    // Verificar se hÃ¡ muitos erros consecutivos
     if (errorCount >= MAX_ERRORS) {
-      console.error(`Muitos erros consecutivos em listeners (${errorCount}), pausando notificações temporariamente`);
-      // Reset contador após 5 segundos
+      logger.error(`Muitos erros consecutivos em listeners (${errorCount}), pausando notificaÃ§Ãµes temporariamente`);
+      // Reset contador apÃ³s 5 segundos
       setTimeout(() => {
         errorCount = 0;
-        console.log("Contador de erros resetado, notificações reativadas");
+        logger.info("Contador de erros resetado, notificaÃ§Ãµes reativadas");
       }, 5000);
       return;
     }
@@ -76,11 +76,11 @@ export const store = {
         successCount++;
       } catch (error) {
         currentErrorCount++;
-        console.error("Erro num listener do store:", error);
+        logger.error("Erro num listener do store:", error);
         
-        // Se o erro for crítico, remove o listener problemático
+        // Se o erro for crÃ­tico, remove o listener problemÃ¡tico
         if (error.name === 'TypeError' || error.name === 'ReferenceError') {
-          console.warn("Removendo listener problemático que causou erro crítico");
+          logger.warn("Removendo listener problemÃ¡tico que causou erro crÃ­tico");
           const index = listeners.indexOf(listener);
           if (index > -1) {
             listeners.splice(index, 1);
@@ -93,11 +93,11 @@ export const store = {
     if (currentErrorCount > 0) {
       errorCount += currentErrorCount;
     } else {
-      // Reset contador se todas as notificações foram bem-sucedidas
+      // Reset contador se todas as notificaÃ§Ãµes foram bem-sucedidas
       errorCount = 0;
     }
 
-    console.log(`Notificações do store: ${successCount} sucesso(s), ${currentErrorCount} erro(s)`);
+    logger.info(`NotificaÃ§Ãµes do store: ${successCount} sucesso(s), ${currentErrorCount} erro(s)`);
     
     notificationInProgress = false;
   },
@@ -153,3 +153,4 @@ export const store = {
     };
   },
 };
+

@@ -1,5 +1,5 @@
-/**
- * @file Módulo SectionManager, responsável por gerir uma secção inteira da sidebar.
+﻿/**
+ * @file MÃ³dulo SectionManager, responsÃ¡vel por gerir uma secÃ§Ã£o inteira da sidebar.
  */
 
 import { filterConfig } from "./filter-config.js";
@@ -9,12 +9,12 @@ import { store } from "./store.js";
 import { CONFIG, getSectionName, getTimeout } from "./config.js";
 import { createComponentLogger } from "./logger.js";
 
-// Logger específico para SectionManager
+// Logger especÃ­fico para SectionManager
 const logger = createComponentLogger('SectionManager');
 
 
 /**
- * Tipos de erro para classificação e tratamento específico
+ * Tipos de erro para classificaÃ§Ã£o e tratamento especÃ­fico
  */
 const ERROR_TYPES = {
   NETWORK: 'network',
@@ -26,7 +26,7 @@ const ERROR_TYPES = {
 };
 
 /**
- * Configurações para retry automático
+ * ConfiguraÃ§Ãµes para retry automÃ¡tico
  */
 const RETRY_CONFIG = {
   MAX_ATTEMPTS: 3,
@@ -51,14 +51,14 @@ function classifyError(error) {
   }
   
   if (message.includes('network') || message.includes('connection') || 
-      message.includes('conectividade') || message.includes('conexão')) {
+      message.includes('conectividade') || message.includes('conexÃ£o')) {
     return ERROR_TYPES.NETWORK;
   }
   
-  // Erros de autenticação
+  // Erros de autenticaÃ§Ã£o
   if (message.includes('401') || message.includes('403') || 
       message.includes('unauthorized') || message.includes('forbidden') ||
-      message.includes('sessão') || message.includes('login')) {
+      message.includes('sessÃ£o') || message.includes('login')) {
     return ERROR_TYPES.AUTHENTICATION;
   }
   
@@ -74,9 +74,9 @@ function classifyError(error) {
     return ERROR_TYPES.SERVER;
   }
   
-  // Erros de validação
-  if (message.includes('validation') || message.includes('validação') ||
-      message.includes('invalid') || message.includes('inválido')) {
+  // Erros de validaÃ§Ã£o
+  if (message.includes('validation') || message.includes('validaÃ§Ã£o') ||
+      message.includes('invalid') || message.includes('invÃ¡lido')) {
     return ERROR_TYPES.VALIDATION;
   }
   
@@ -84,31 +84,31 @@ function classifyError(error) {
 }
 
 /**
- * Gera mensagem de erro amigável baseada no tipo
+ * Gera mensagem de erro amigÃ¡vel baseada no tipo
  * @param {string} errorType - Tipo do erro
- * @param {string} sectionName - Nome da seção
+ * @param {string} sectionName - Nome da seÃ§Ã£o
  * @param {Error} originalError - Erro original
- * @returns {object} Objeto com mensagem e sugestões
+ * @returns {object} Objeto com mensagem e sugestÃµes
  */
 function generateUserFriendlyMessage(errorType, sectionName, originalError) {
   const messages = {
     [ERROR_TYPES.NETWORK]: {
-      title: 'Problema de Conexão',
-      message: `Não foi possível conectar ao servidor para carregar ${sectionName}.`,
+      title: 'Problema de ConexÃ£o',
+      message: `NÃ£o foi possÃ­vel conectar ao servidor para carregar ${sectionName}.`,
       suggestions: [
-        'Verifique sua conexão com a internet',
+        'Verifique sua conexÃ£o com a internet',
         'Tente novamente em alguns segundos',
-        'Verifique se o SIGSS está acessível'
+        'Verifique se o SIGSS estÃ¡ acessÃ­vel'
       ],
       canRetry: true,
       severity: 'warning'
     },
     [ERROR_TYPES.AUTHENTICATION]: {
-      title: 'Sessão Expirada',
-      message: `Sua sessão no SIGSS expirou. É necessário fazer login novamente.`,
+      title: 'SessÃ£o Expirada',
+      message: `Sua sessÃ£o no SIGSS expirou. Ã‰ necessÃ¡rio fazer login novamente.`,
       suggestions: [
-        'Faça login no SIGSS em uma nova aba',
-        'Recarregue esta página após o login',
+        'FaÃ§a login no SIGSS em uma nova aba',
+        'Recarregue esta pÃ¡gina apÃ³s o login',
         'Verifique suas credenciais'
       ],
       canRetry: false,
@@ -116,10 +116,10 @@ function generateUserFriendlyMessage(errorType, sectionName, originalError) {
     },
     [ERROR_TYPES.SERVER]: {
       title: 'Erro do Servidor',
-      message: `O servidor do SIGSS está temporariamente indisponível para ${sectionName}.`,
+      message: `O servidor do SIGSS estÃ¡ temporariamente indisponÃ­vel para ${sectionName}.`,
       suggestions: [
         'Tente novamente em alguns minutos',
-        'O problema pode ser temporário',
+        'O problema pode ser temporÃ¡rio',
         'Contate o suporte se persistir'
       ],
       canRetry: true,
@@ -127,18 +127,18 @@ function generateUserFriendlyMessage(errorType, sectionName, originalError) {
     },
     [ERROR_TYPES.TIMEOUT]: {
       title: 'Tempo Limite Excedido',
-      message: `A requisição para ${sectionName} demorou mais que o esperado.`,
+      message: `A requisiÃ§Ã£o para ${sectionName} demorou mais que o esperado.`,
       suggestions: [
-        'Tente novamente com um período menor',
-        'Verifique a estabilidade da conexão',
+        'Tente novamente com um perÃ­odo menor',
+        'Verifique a estabilidade da conexÃ£o',
         'O servidor pode estar sobrecarregado'
       ],
       canRetry: true,
       severity: 'warning'
     },
     [ERROR_TYPES.VALIDATION]: {
-      title: 'Dados Inválidos',
-      message: `Os dados fornecidos para ${sectionName} são inválidos.`,
+      title: 'Dados InvÃ¡lidos',
+      message: `Os dados fornecidos para ${sectionName} sÃ£o invÃ¡lidos.`,
       suggestions: [
         'Verifique os filtros aplicados',
         'Confirme as datas selecionadas',
@@ -151,9 +151,9 @@ function generateUserFriendlyMessage(errorType, sectionName, originalError) {
       title: 'Erro Inesperado',
       message: `Ocorreu um erro inesperado ao carregar ${sectionName}.`,
       suggestions: [
-        'Tente recarregar a página',
-        'Verifique a configuração da URL base',
-        'Contate o suporte técnico se persistir'
+        'Tente recarregar a pÃ¡gina',
+        'Verifique a configuraÃ§Ã£o da URL base',
+        'Contate o suporte tÃ©cnico se persistir'
       ],
       canRetry: true,
       severity: 'error'
@@ -165,7 +165,7 @@ function generateUserFriendlyMessage(errorType, sectionName, originalError) {
 
 /**
  * Calcula delay para retry com backoff exponencial
- * @param {number} attempt - Número da tentativa (começando em 1)
+ * @param {number} attempt - NÃºmero da tentativa (comeÃ§ando em 1)
  * @returns {number} Delay em milissegundos
  */
 function calculateRetryDelay(attempt) {
@@ -174,24 +174,24 @@ function calculateRetryDelay(attempt) {
 }
 
 /**
- * Gera o HTML para o indicador de ordenação (seta para cima/baixo).
+ * Gera o HTML para o indicador de ordenaÃ§Ã£o (seta para cima/baixo).
  * @param {string} key - A chave da coluna atual.
- * @param {object} state - O objeto de estado de ordenação da secção.
+ * @param {object} state - O objeto de estado de ordenaÃ§Ã£o da secÃ§Ã£o.
  * @returns {string} O caractere da seta ou uma string vazia.
  */
 export function getSortIndicator(key, state) {
   if (state.key !== key) return "";
-  return state.order === "asc" ? "▲" : "▼";
+  return state.order === "asc" ? "â–²" : "â–¼";
 }
 
 export class SectionManager {
   /**
-   * @param {string} sectionKey - A chave da secção (ex: "consultations").
-   * @param {object} config - Configurações específicas da secção.
-   * @param {Function} config.fetchFunction - A função da API para buscar dados.
-   * @param {Function} config.renderFunction - A função para renderizar os dados.
-   * @param {object} config.initialSortState - O estado inicial de ordenação.
-   * @param {object} globalSettings - Configurações globais da aplicação.
+   * @param {string} sectionKey - A chave da secÃ§Ã£o (ex: "consultations").
+   * @param {object} config - ConfiguraÃ§Ãµes especÃ­ficas da secÃ§Ã£o.
+   * @param {Function} config.fetchFunction - A funÃ§Ã£o da API para buscar dados.
+   * @param {Function} config.renderFunction - A funÃ§Ã£o para renderizar os dados.
+   * @param {object} config.initialSortState - O estado inicial de ordenaÃ§Ã£o.
+   * @param {object} globalSettings - ConfiguraÃ§Ãµes globais da aplicaÃ§Ã£o.
    */
   constructor(sectionKey, config, globalSettings) {
     this.sectionKey = sectionKey;
@@ -309,7 +309,7 @@ export class SectionManager {
   setPatient(patient) {
     this.currentPatient = patient;
     this.allData = [];
-    this.clearFilters(false); // Reseta os filtros para o padrão ao trocar de paciente.
+    this.clearFilters(false); // Reseta os filtros para o padrÃ£o ao trocar de paciente.
     this.clearAutomationFeedbackAndFilters(false);
     this.applyFiltersAndRender();
 
@@ -378,7 +378,7 @@ export class SectionManager {
       const result = await this.config.fetchFunction(params);
       this.allData = Array.isArray(result) ? result : result.jsonData || [];
     } catch (error) {
-      console.error(`Erro ao buscar dados para ${this.sectionKey}:`, error);
+      logger.error(`Erro ao buscar dados para ${this.sectionKey}:`, error);
       this.handleFetchError(error);
     } finally {
       this.isLoading = false;
@@ -387,28 +387,28 @@ export class SectionManager {
   }
 
   /**
-   * Trata erros de fetch com retry automático e feedback amigável
+   * Trata erros de fetch com retry automÃ¡tico e feedback amigÃ¡vel
    * @param {Error} error - Erro ocorrido durante o fetch
-   * @param {number} attempt - Número da tentativa atual (padrão: 1)
+   * @param {number} attempt - NÃºmero da tentativa atual (padrÃ£o: 1)
    */
   async handleFetchError(error, attempt = 1) {
     const friendlyName = getSectionName(this.sectionKey) || this.sectionKey;
     const errorType = classifyError(error);
     const errorInfo = generateUserFriendlyMessage(errorType, friendlyName, error);
     
-    console.error(`[${this.sectionKey}] Erro (tentativa ${attempt}):`, error);
+    logger.error(`[${this.sectionKey}] Erro (tentativa ${attempt}):`, error);
     
     // Verifica se deve tentar novamente
     if (errorInfo.canRetry && attempt < RETRY_CONFIG.MAX_ATTEMPTS) {
       const delay = calculateRetryDelay(attempt);
       
-      // Mostra feedback de retry para o usuário
+      // Mostra feedback de retry para o usuÃ¡rio
       this.showRetryFeedback(attempt, delay, errorInfo);
       
       // Aguarda o delay e tenta novamente
       setTimeout(async () => {
         try {
-          console.log(`[${this.sectionKey}] Tentativa ${attempt + 1} de ${RETRY_CONFIG.MAX_ATTEMPTS}`);
+          logger.info(`[${this.sectionKey}] Tentativa ${attempt + 1} de ${RETRY_CONFIG.MAX_ATTEMPTS}`);
           await this.fetchData();
         } catch (retryError) {
           // Recursivamente tenta novamente ou falha definitivamente
@@ -424,7 +424,7 @@ export class SectionManager {
     
     // Define estado dos dados baseado no tipo de erro
     if (errorType === ERROR_TYPES.AUTHENTICATION || errorType === ERROR_TYPES.VALIDATION) {
-      // Mantém dados anteriores para erros que não invalidam os dados
+      // MantÃ©m dados anteriores para erros que nÃ£o invalidam os dados
       if (!this.allData || this.allData.length === 0) {
         this.allData = [];
       }
@@ -439,9 +439,9 @@ export class SectionManager {
 
   /**
    * Mostra feedback durante tentativas de retry
-   * @param {number} attempt - Número da tentativa atual
-   * @param {number} delay - Delay até a próxima tentativa
-   * @param {object} errorInfo - Informações do erro
+   * @param {number} attempt - NÃºmero da tentativa atual
+   * @param {number} delay - Delay atÃ© a prÃ³xima tentativa
+   * @param {object} errorInfo - InformaÃ§Ãµes do erro
    */
   showRetryFeedback(attempt, delay, errorInfo) {
     const delaySeconds = Math.ceil(delay / 1000);
@@ -477,7 +477,7 @@ export class SectionManager {
 
   /**
    * Mostra erro final quando todas as tentativas falharam
-   * @param {object} errorInfo - Informações do erro
+   * @param {object} errorInfo - InformaÃ§Ãµes do erro
    * @param {number} totalAttempts - Total de tentativas realizadas
    */
   showFinalError(errorInfo, totalAttempts) {
@@ -490,7 +490,7 @@ export class SectionManager {
     let attemptsText = '';
     if (totalAttempts > 1) {
       attemptsText = `<p class="${textSecondaryClass} text-sm mb-3">
-        Falhou após ${totalAttempts} tentativa${totalAttempts !== 1 ? 's' : ''}
+        Falhou apÃ³s ${totalAttempts} tentativa${totalAttempts !== 1 ? 's' : ''}
       </p>`;
     }
     
@@ -511,7 +511,7 @@ export class SectionManager {
           ${attemptsText}
           
           <div class="mb-4">
-            <h4 class="${textClass} text-sm font-medium mb-2">Sugestões:</h4>
+            <h4 class="${textClass} text-sm font-medium mb-2">SugestÃµes:</h4>
             <ul class="list-disc list-inside space-y-1">
               ${suggestionsHtml}
             </ul>
@@ -530,7 +530,7 @@ export class SectionManager {
         </div>
       </div>`;
     
-    // Adiciona listeners para ações
+    // Adiciona listeners para aÃ§Ãµes
     const retryBtn = this.elements.content.querySelector(`#${this.prefix}-retry-manual-btn`);
     const clearBtn = this.elements.content.querySelector(`#${this.prefix}-clear-filters-btn`);
     
@@ -615,8 +615,8 @@ export class SectionManager {
       this.globalSettings.filterLayout[this.sectionKey] || [];
     const layoutMap = new Map(sectionLayout.map((f) => [f.id, f]));
 
-    // --- INÍCIO DA CORREÇÃO ---
-    // Reseta o período de busca para o padrão global da seção
+    // --- INÃCIO DA CORREÃ‡ÃƒO ---
+    // Reseta o perÃ­odo de busca para o padrÃ£o global da seÃ§Ã£o
     const dateRangeDefaults =
       this.globalSettings.userPreferences.dateRangeDefaults;
     const defaultRanges = {
@@ -636,7 +636,7 @@ export class SectionManager {
       this.elements.dateFinal.valueAsDate = Utils.calculateRelativeDate(
         range.end
       );
-    // --- FIM DA CORREÇÃO ---
+    // --- FIM DA CORREÃ‡ÃƒO ---
 
     (filterConfig[this.sectionKey] || []).forEach((filter) => {
       if (filter.type === "component") return;
@@ -720,7 +720,7 @@ export class SectionManager {
   saveFilterSet() {
     const name = window.prompt("Digite um nome para o conjunto de filtros:");
     if (!name || name.trim() === "") {
-      Utils.showMessage("Nome inválido. O filtro não foi salvo.");
+      Utils.showMessage("Nome invÃ¡lido. O filtro nÃ£o foi salvo.");
       return;
     }
 
@@ -845,7 +845,7 @@ export class SectionManager {
         }
       });
     } catch (e) {
-      console.error(`Erro ao renderizar filtros para ${this.sectionKey}:`, e);
+      logger.error(`Erro ao renderizar filtros para ${this.sectionKey}:`, e);
     }
   }
 
@@ -949,8 +949,8 @@ export class SectionManager {
   applyAutomationFilters(filterSettings, ruleName) {
     if (!filterSettings) return;
 
-    // --- INÍCIO DA CORREÇÃO ---
-    // Aplica o período de busca da regra, se definido
+    // --- INÃCIO DA CORREÃ‡ÃƒO ---
+    // Aplica o perÃ­odo de busca da regra, se definido
     if (filterSettings.dateRange) {
       const { start, end } = filterSettings.dateRange;
       if (this.elements.dateInitial && start !== null && !isNaN(start)) {
@@ -961,10 +961,10 @@ export class SectionManager {
         this.elements.dateFinal.valueAsDate = Utils.calculateRelativeDate(end);
       }
     }
-    // --- FIM DA CORREÇÃO ---
+    // --- FIM DA CORREÃ‡ÃƒO ---
 
     Object.entries(filterSettings).forEach(([filterId, value]) => {
-      // Pula a propriedade dateRange que já foi tratada
+      // Pula a propriedade dateRange que jÃ¡ foi tratada
       if (filterId === "dateRange") return;
 
       const el = document.getElementById(filterId);
@@ -982,8 +982,8 @@ export class SectionManager {
     if (this.elements.automationFeedback) {
       this.elements.automationFeedback.innerHTML = `
             <div class="flex justify-between items-center">
-                <span>Filtro automático aplicado: <strong>${ruleName}</strong></span>
-                <button class="clear-automation-btn text-blue-800 hover:text-blue-900 font-bold" title="Limpar filtro automático">&times;</button>
+                <span>Filtro automÃ¡tico aplicado: <strong>${ruleName}</strong></span>
+                <button class="clear-automation-btn text-blue-800 hover:text-blue-900 font-bold" title="Limpar filtro automÃ¡tico">&times;</button>
             </div>
         `;
       this.elements.automationFeedback.classList.remove("hidden");
@@ -1004,3 +1004,4 @@ export class SectionManager {
     }
   }
 }
+

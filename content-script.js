@@ -1,26 +1,26 @@
-/**
- * @file Content Script para a extensão Assistente de Regulação (v18 - Performance Otimizada).
- * Este script observa a abertura da aba de manutenção e envia os IDs para o background script,
- * com proteções contra DoS, throttling de mutações e otimizações de performance.
+﻿/**
+ * @file Content Script para a extensÃ£o Assistente de RegulaÃ§Ã£o (v18 - Performance Otimizada).
+ * Este script observa a abertura da aba de manutenÃ§Ã£o e envia os IDs para o background script,
+ * com proteÃ§Ãµes contra DoS, throttling de mutaÃ§Ãµes e otimizaÃ§Ãµes de performance.
  * 
- * ✅ TASK-A-001 Implementado:
+ * âœ… TASK-A-001 Implementado:
  * - Debouncing mais agressivo (500ms)
- * - IntersectionObserver para elementos visíveis
- * - Lazy loading para verificações
+ * - IntersectionObserver para elementos visÃ­veis
+ * - Lazy loading para verificaÃ§Ãµes
  * - Seletores DOM otimizados com cache
- * - Métricas de performance
+ * - MÃ©tricas de performance
  */
 
 (function () {
-  console.log(
-    "[Assistente de Regulação] Script de controle v18 (Performance Otimizada) ativo."
+  logger.info(
+    "[Assistente de RegulaÃ§Ã£o] Script de controle v18 (Performance Otimizada) ativo."
   );
 
-  // ✅ SEGURO: Compatibilidade cross-browser com fallback
+  // âœ… SEGURO: Compatibilidade cross-browser com fallback
   const api = globalThis.browser || globalThis.chrome;
   
   if (!api) {
-    console.error('[Assistente] API de extensão não disponível');
+    logger.error('[Assistente] API de extensÃ£o nÃ£o disponÃ­vel');
     return;
   }
   
@@ -29,12 +29,12 @@
   let intersectionObserver = null;
   let debounceTimeout = null;
   
-  // ✅ SEGURANÇA: Controle de throttling para prevenir DoS
+  // âœ… SEGURANÃ‡A: Controle de throttling para prevenir DoS
   let mutationCount = 0;
   const MAX_MUTATIONS_PER_SECOND = 100;
   let mutationResetInterval = null;
   
-  // ✅ TASK-A-001: Métricas de performance
+  // âœ… TASK-A-001: MÃ©tricas de performance
   let performanceMetrics = {
     checkCount: 0,
     totalTime: 0,
@@ -42,11 +42,11 @@
     lastCheckTime: 0
   };
   
-  // ✅ TASK-A-001: Cache de seletores DOM otimizados
+  // âœ… TASK-A-001: Cache de seletores DOM otimizados
   const domCache = new Map();
   const CACHE_TTL = 5000; // 5 segundos
   
-  // ✅ TASK-A-001: Função para verificar visibilidade de elementos
+  // âœ… TASK-A-001: FunÃ§Ã£o para verificar visibilidade de elementos
   const isElementVisible = (element) => {
     if (!element) return false;
     
@@ -63,7 +63,7 @@
     );
   };
   
-  // ✅ TASK-A-001: Seletor DOM otimizado com cache
+  // âœ… TASK-A-001: Seletor DOM otimizado com cache
   const getCachedElement = (selector) => {
     const now = Date.now();
     const cached = domCache.get(selector);
@@ -81,7 +81,7 @@
     return element;
   };
   
-  // ✅ TASK-A-001: Função para medir performance
+  // âœ… TASK-A-001: FunÃ§Ã£o para medir performance
   const measurePerformance = (fn, name) => {
     const start = performance.now();
     const result = fn();
@@ -94,23 +94,23 @@
     performanceMetrics.lastCheckTime = duration;
     
     if (duration > 50) { // Log se demorar mais que 50ms
-      console.warn(`[Assistente Performance] ${name} demorou ${duration.toFixed(2)}ms`);
+      logger.warn(`[Assistente Performance] ${name} demorou ${duration.toFixed(2)}ms`);
     }
     
     return result;
   };
 
-  // ✅ TASK-A-001: Função otimizada com cache e métricas de performance
+  // âœ… TASK-A-001: FunÃ§Ã£o otimizada com cache e mÃ©tricas de performance
   const checkMaintenanceTab = () => {
     return measurePerformance(() => {
-      // ✅ TASK-A-001: Usar cache para elemento principal
+      // âœ… TASK-A-001: Usar cache para elemento principal
       const maintenanceTabPanel = getCachedElement("#tabs-manutencao");
       const isActive =
         maintenanceTabPanel &&
         maintenanceTabPanel.getAttribute("aria-expanded") === "true";
 
       if (isActive) {
-        // ✅ TASK-A-001: Seletores DOM otimizados com cache
+        // âœ… TASK-A-001: Seletores DOM otimizados com cache
         const idpElement = getCachedElement("#regu\\.reguPK\\.idp");
         const idsElement = getCachedElement("#regu\\.reguPK\\.ids");
 
@@ -123,8 +123,8 @@
             lastProcessedReguId = currentReguId;
             const payload = { reguIdp, reguIds };
 
-            console.log(
-              "[Assistente] Aba Manutenção aberta. Enviando IDs para o background script:",
+            logger.info(
+              "[Assistente] Aba ManutenÃ§Ã£o aberta. Enviando IDs para o background script:",
               payload
             );
 
@@ -132,7 +132,7 @@
             try {
               api.runtime.sendMessage({ type: "SAVE_REGULATION_DATA", payload });
             } catch (e) {
-              console.error(
+              logger.error(
                 "[Assistente] Falha ao enviar mensagem para o background script:",
                 e
               );
@@ -145,11 +145,11 @@
     }, 'checkMaintenanceTab');
   };
 
-  // ✅ PERFORMANCE: Função com debouncing mais agressivo e lazy loading
+  // âœ… PERFORMANCE: FunÃ§Ã£o com debouncing mais agressivo e lazy loading
   const throttledCheckMaintenanceTab = () => {
-    // Verifica se não excedeu o limite de mutações por segundo
+    // Verifica se nÃ£o excedeu o limite de mutaÃ§Ãµes por segundo
     if (mutationCount >= MAX_MUTATIONS_PER_SECOND) {
-      console.warn('[Assistente] Limite de mutações atingido, ignorando verificação');
+      logger.warn('[Assistente] Limite de mutaÃ§Ãµes atingido, ignorando verificaÃ§Ã£o');
       return;
     }
     
@@ -159,9 +159,9 @@
       clearTimeout(debounceTimeout);
     }
     
-    // ✅ TASK-A-001: Debouncing mais agressivo (500ms)
+    // âœ… TASK-A-001: Debouncing mais agressivo (500ms)
     debounceTimeout = setTimeout(() => {
-      // ✅ TASK-A-001: Lazy loading - só verifica se elementos estão visíveis
+      // âœ… TASK-A-001: Lazy loading - sÃ³ verifica se elementos estÃ£o visÃ­veis
       const maintenanceTabPanel = document.getElementById("tabs-manutencao");
       if (maintenanceTabPanel && isElementVisible(maintenanceTabPanel)) {
         checkMaintenanceTab();
@@ -169,7 +169,7 @@
     }, 500);
   };
 
-  // ✅ TASK-A-001: IntersectionObserver para elementos visíveis
+  // âœ… TASK-A-001: IntersectionObserver para elementos visÃ­veis
   const initIntersectionObserver = () => {
     if (intersectionObserver) {
       intersectionObserver.disconnect();
@@ -178,14 +178,14 @@
     intersectionObserver = new IntersectionObserver((entries) => {
       entries.forEach(entry => {
         if (entry.isIntersecting && entry.target.id === "tabs-manutencao") {
-          // Elemento está visível, pode verificar
+          // Elemento estÃ¡ visÃ­vel, pode verificar
           measurePerformance(() => {
             checkMaintenanceTab();
           }, 'intersectionCheck');
         }
       });
     }, {
-      threshold: 0.1, // Trigger quando 10% do elemento estiver visível
+      threshold: 0.1, // Trigger quando 10% do elemento estiver visÃ­vel
       rootMargin: '50px' // Margem adicional para trigger antecipado
     });
     
@@ -196,7 +196,7 @@
     }
   };
   
-  // ✅ TASK-A-001: Função para limpar cache DOM expirado
+  // âœ… TASK-A-001: FunÃ§Ã£o para limpar cache DOM expirado
   const cleanupDomCache = () => {
     const now = Date.now();
     for (const [selector, cached] of domCache.entries()) {
@@ -206,10 +206,10 @@
     }
   };
   
-  // ✅ TASK-A-001: Função para reportar métricas de performance
+  // âœ… TASK-A-001: FunÃ§Ã£o para reportar mÃ©tricas de performance
   const reportPerformanceMetrics = () => {
     if (performanceMetrics.checkCount > 0) {
-      console.log('[Assistente Performance]', {
+      logger.info('[Assistente Performance]', {
         totalChecks: performanceMetrics.checkCount,
         averageTime: performanceMetrics.averageTime.toFixed(2) + 'ms',
         lastCheckTime: performanceMetrics.lastCheckTime.toFixed(2) + 'ms',
@@ -218,7 +218,7 @@
     }
   };
 
-  // ✅ TASK-A-001: Função para limpar recursos e desconectar observers
+  // âœ… TASK-A-001: FunÃ§Ã£o para limpar recursos e desconectar observers
   const cleanup = () => {
     if (observer) {
       observer.disconnect();
@@ -237,13 +237,13 @@
       mutationResetInterval = null;
     }
     
-    // ✅ TASK-A-001: Limpar cache e reportar métricas
+    // âœ… TASK-A-001: Limpar cache e reportar mÃ©tricas
     domCache.clear();
     reportPerformanceMetrics();
     
     lastProcessedReguId = null;
     mutationCount = 0;
-    console.log("[Assistente] Recursos limpos e observers desconectados.");
+    logger.info("[Assistente] Recursos limpos e observers desconectados.");
   };
 
   // Inicializa o MutationObserver
@@ -252,7 +252,7 @@
       cleanup();
     }
 
-    // ✅ SEGURANÇA: Inicializar contador de mutações
+    // âœ… SEGURANÃ‡A: Inicializar contador de mutaÃ§Ãµes
     mutationCount = 0;
     
     // Reset do contador a cada segundo
@@ -269,50 +269,50 @@
       childList: true,
       subtree: true,
       attributes: true,
-      attributeFilter: ["aria-expanded"], // Apenas o atributo necessário para detectar abertura da aba
+      attributeFilter: ["aria-expanded"], // Apenas o atributo necessÃ¡rio para detectar abertura da aba
     });
   };
 
-  // Listener para limpeza quando a extensão é desabilitada ou a página é recarregada
+  // Listener para limpeza quando a extensÃ£o Ã© desabilitada ou a pÃ¡gina Ã© recarregada
   window.addEventListener("beforeunload", cleanup);
   
-  // Listener para detectar desconexão da extensão
+  // Listener para detectar desconexÃ£o da extensÃ£o
   api.runtime.onMessage.addListener((message) => {
     if (message.type === "EXTENSION_DISABLED" || message.type === "CLEANUP") {
       cleanup();
     }
   });
 
-  // Detecta quando a extensão é desabilitada
+  // Detecta quando a extensÃ£o Ã© desabilitada
   api.runtime.onConnect.addListener((port) => {
     port.onDisconnect.addListener(() => {
       cleanup();
     });
   });
 
-  // ✅ TASK-A-001: Inicializa observers
+  // âœ… TASK-A-001: Inicializa observers
   initObserver();
   initIntersectionObserver();
 
-  // ✅ TASK-A-001: Limpeza periódica do cache DOM
+  // âœ… TASK-A-001: Limpeza periÃ³dica do cache DOM
   setInterval(cleanupDomCache, CACHE_TTL);
 
-  // ✅ TASK-A-001: Relatório de métricas a cada 5 minutos
+  // âœ… TASK-A-001: RelatÃ³rio de mÃ©tricas a cada 5 minutos
   setInterval(reportPerformanceMetrics, 5 * 60 * 1000);
 
-  // Cleanup automático após 30 minutos de inatividade para prevenir vazamentos de memória
+  // Cleanup automÃ¡tico apÃ³s 30 minutos de inatividade para prevenir vazamentos de memÃ³ria
   let inactivityTimer = null;
   const resetInactivityTimer = () => {
     if (inactivityTimer) {
       clearTimeout(inactivityTimer);
     }
     inactivityTimer = setTimeout(() => {
-      console.log("[Assistente] Limpeza automática por inatividade.");
+      logger.info("[Assistente] Limpeza automÃ¡tica por inatividade.");
       cleanup();
     }, 30 * 60 * 1000); // 30 minutos
   };
 
-  // Reseta o timer de inatividade a cada verificação
+  // Reseta o timer de inatividade a cada verificaÃ§Ã£o
   const originalCheck = checkMaintenanceTab;
   checkMaintenanceTab = () => {
     originalCheck();
@@ -322,3 +322,4 @@
   // Inicia o timer de inatividade
   resetInactivityTimer();
 })();
+

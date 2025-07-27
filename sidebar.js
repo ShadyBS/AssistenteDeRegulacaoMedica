@@ -1,4 +1,4 @@
-import "./browser-polyfill.js";
+﻿import "./browser-polyfill.js";
 import * as API from "./api.js";
 import { defaultFieldConfig } from "./field-config.js";
 import { filterConfig } from "./filter-config.js";
@@ -15,11 +15,11 @@ import { getBrowserAPIInstance } from "./BrowserAPI.js";
 import { encryptForStorage, decryptFromStorage, cleanupExpiredData, MEDICAL_DATA_CONFIG } from "./crypto-utils.js";
 import { createComponentLogger } from "./logger.js";
 
-// Logger específico para Sidebar
+// Logger especÃ­fico para Sidebar
 const logger = createComponentLogger('Sidebar');
 
 
-// --- ÍCONES ---
+// --- ÃCONES ---
 const sectionIcons = {
   "patient-details": `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-user-round-check-icon lucide-user-round-check"><path d="M2 21a8 8 0 0 1 13.292-6"/><circle cx="10" cy="8" r="5"/><path d="m16 19 2 2 4-4"/></svg>`,
   timeline: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-gantt-chart"><path d="M8 6h10"/><path d="M6 12h9"/><path d="M11 18h7"/></svg>`,
@@ -31,36 +31,36 @@ const sectionIcons = {
 };
 
 let currentRegulationData = null;
-let sectionManagers = {}; // Objeto para armazenar instâncias de SectionManager
+let sectionManagers = {}; // Objeto para armazenar instÃ¢ncias de SectionManager
 
-// Instância global do gerenciador de memória
+// InstÃ¢ncia global do gerenciador de memÃ³ria
 const memoryManager = getMemoryManager();
 
-// Instância global da API do browser
+// InstÃ¢ncia global da API do browser
 const browserAPI = getBrowserAPIInstance();
 
-// Controle de race condition para seleção de pacientes
+// Controle de race condition para seleÃ§Ã£o de pacientes
 let patientSelectionInProgress = false;
 let pendingPatientSelection = null;
 let patientSelectionTimeout = null;
 
 /**
- * Sistema de limpeza de recursos para mudança de paciente
+ * Sistema de limpeza de recursos para mudanÃ§a de paciente
  */
 function cleanupPatientResources() {
-  console.log('[Sidebar] Limpando recursos do paciente anterior');
+  logger.info('[Sidebar] Limpando recursos do paciente anterior');
   
-  // Limpa timeout de seleção de paciente se existir
+  // Limpa timeout de seleÃ§Ã£o de paciente se existir
   if (patientSelectionTimeout) {
     memoryManager.clearTimeout(patientSelectionTimeout);
     patientSelectionTimeout = null;
   }
   
-  // Reseta variáveis de controle
+  // Reseta variÃ¡veis de controle
   patientSelectionInProgress = false;
   pendingPatientSelection = null;
   
-  // Limpa dados de regulação atual
+  // Limpa dados de regulaÃ§Ã£o atual
   currentRegulationData = null;
   
   // Limpa dados dos section managers
@@ -75,10 +75,10 @@ function cleanupPatientResources() {
     }
   });
   
-  // Força limpeza de memória
+  // ForÃ§a limpeza de memÃ³ria
   memoryManager.performMemoryCleanup();
   
-  console.log('[Sidebar] Limpeza de recursos concluída');
+  logger.info('[Sidebar] Limpeza de recursos concluÃ­da');
 }
 
 /**
@@ -87,13 +87,13 @@ function cleanupPatientResources() {
 function registerCleanupCallbacks() {
   // Callback para limpeza de section managers
   memoryManager.addCleanupCallback(() => {
-    console.log('[Sidebar] Executando limpeza de section managers');
+    logger.info('[Sidebar] Executando limpeza de section managers');
     Object.values(sectionManagers).forEach((manager) => {
       if (typeof manager.cleanup === "function") {
         try {
           manager.cleanup();
         } catch (error) {
-          console.error('[Sidebar] Erro ao limpar section manager:', error);
+          logger.error('[Sidebar] Erro ao limpar section manager:', error);
         }
       }
     });
@@ -102,28 +102,28 @@ function registerCleanupCallbacks() {
   
   // Callback para limpeza de timeouts globais
   memoryManager.addCleanupCallback(() => {
-    console.log('[Sidebar] Limpando timeouts globais');
+    logger.info('[Sidebar] Limpando timeouts globais');
     if (patientSelectionTimeout) {
       clearTimeout(patientSelectionTimeout);
       patientSelectionTimeout = null;
     }
   });
   
-  // Callback para limpeza de variáveis globais
+  // Callback para limpeza de variÃ¡veis globais
   memoryManager.addCleanupCallback(() => {
-    console.log('[Sidebar] Limpando variáveis globais');
+    logger.info('[Sidebar] Limpando variÃ¡veis globais');
     currentRegulationData = null;
     patientSelectionInProgress = false;
     pendingPatientSelection = null;
   });
 }
 
-// --- FUNÇÃO AUXILIAR DE FILTRAGEM ---
+// --- FUNÃ‡ÃƒO AUXILIAR DE FILTRAGEM ---
 /**
  * Aplica um filtro de texto normalizado a um array de dados.
  * @param {Array} items - O array de itens a ser filtrado.
- * @param {string} text - O texto de busca (pode conter múltiplos termos separados por vírgula).
- * @param {Function} getFieldContent - Uma função que recebe um item e retorna a string a ser pesquisada.
+ * @param {string} text - O texto de busca (pode conter mÃºltiplos termos separados por vÃ­rgula).
+ * @param {Function} getFieldContent - Uma funÃ§Ã£o que recebe um item e retorna a string a ser pesquisada.
  * @returns {Array} O array de itens filtrado.
  */
 const applyNormalizedTextFilter = (items, text, getFieldContent) => {
@@ -138,7 +138,7 @@ const applyNormalizedTextFilter = (items, text, getFieldContent) => {
   });
 };
 
-// --- LÓGICA DE FILTRAGEM ---
+// --- LÃ“GICA DE FILTRAGEM ---
 const consultationFilterLogic = (data, filters) => {
   let filteredData = [...data];
   if (filters["hide-no-show-checkbox"]) {
@@ -309,8 +309,8 @@ const documentFilterLogic = (data, filters) => {
 };
 
 const sectionConfigurations = {
-  "patient-details": {}, // Seção especial sem fetch
-  timeline: {}, // Configuração da Timeline será tratada pelo seu próprio gestor
+  "patient-details": {}, // SeÃ§Ã£o especial sem fetch
+  timeline: {}, // ConfiguraÃ§Ã£o da Timeline serÃ¡ tratada pelo seu prÃ³prio gestor
   consultations: {
     fetchFunction: API.fetchAllConsultations,
     renderFunction: Renderers.renderConsultations,
@@ -343,10 +343,10 @@ const sectionConfigurations = {
   },
 };
 
-// --- FUNÇÕES DE ESTILO E ÍCONES ---
+// --- FUNÃ‡Ã•ES DE ESTILO E ÃCONES ---
 
 /**
- * Injeta os ícones SVG nos cabeçalhos das seções.
+ * Injeta os Ã­cones SVG nos cabeÃ§alhos das seÃ§Ãµes.
  */
 function applySectionIcons() {
   for (const sectionKey in sectionIcons) {
@@ -358,13 +358,13 @@ function applySectionIcons() {
 }
 
 /**
- * Lê os estilos customizados do storage e os aplica aos cabeçalhos
- * usando Variáveis CSS (CSS Custom Properties) para melhor performance e manutenibilidade.
+ * LÃª os estilos customizados do storage e os aplica aos cabeÃ§alhos
+ * usando VariÃ¡veis CSS (CSS Custom Properties) para melhor performance e manutenibilidade.
  * @param {object} styles - O objeto de estilos vindo do storage.
  */
 function applyCustomHeaderStyles(styles) {
-  // O CSS base com as variáveis e fallbacks já está definido em sidebar.html.
-  // Esta função apenas define os valores das variáveis para cada seção.
+  // O CSS base com as variÃ¡veis e fallbacks jÃ¡ estÃ¡ definido em sidebar.html.
+  // Esta funÃ§Ã£o apenas define os valores das variÃ¡veis para cada seÃ§Ã£o.
 
   const defaultStyles = {
     backgroundColor: "#ffffff",
@@ -382,12 +382,12 @@ function applyCustomHeaderStyles(styles) {
     const sectionElement = document.getElementById(sectionId);
     if (!sectionElement) continue;
 
-    // Pega o estilo salvo para a seção ou usa um objeto vazio.
+    // Pega o estilo salvo para a seÃ§Ã£o ou usa um objeto vazio.
     const savedStyle = styles[sectionKey] || {};
-    // Combina com os padrões para garantir que todas as propriedades existam.
+    // Combina com os padrÃµes para garantir que todas as propriedades existam.
     const finalStyle = { ...defaultStyles, ...savedStyle };
 
-    // Define as variáveis CSS no elemento da seção.
+    // Define as variÃ¡veis CSS no elemento da seÃ§Ã£o.
     sectionElement.style.setProperty(
       "--section-bg-color",
       finalStyle.backgroundColor
@@ -414,9 +414,9 @@ async function selectPatient(patientInfo, forceRefresh = false) {
     return;
   }
 
-  // Implementar debouncing para evitar múltiplas chamadas simultâneas
+  // Implementar debouncing para evitar mÃºltiplas chamadas simultÃ¢neas
   if (patientSelectionInProgress) {
-    // Armazena a última requisição para ser processada após a atual
+    // Armazena a Ãºltima requisiÃ§Ã£o para ser processada apÃ³s a atual
     pendingPatientSelection = { patientInfo, forceRefresh };
     return;
   }
@@ -427,14 +427,14 @@ async function selectPatient(patientInfo, forceRefresh = false) {
     patientSelectionTimeout = null;
   }
 
-  // Implementar debounce de 300ms para evitar múltiplas chamadas rápidas
+  // Implementar debounce de 300ms para evitar mÃºltiplas chamadas rÃ¡pidas
   patientSelectionTimeout = memoryManager.setTimeout(async () => {
     // Limpa recursos do paciente anterior antes de carregar novo
     cleanupPatientResources();
     
     await executePatientSelection(patientInfo, forceRefresh);
     
-    // Processar requisição pendente se existir
+    // Processar requisiÃ§Ã£o pendente se existir
     if (pendingPatientSelection) {
       const pending = pendingPatientSelection;
       pendingPatientSelection = null;
@@ -447,7 +447,7 @@ async function selectPatient(patientInfo, forceRefresh = false) {
 
 async function executePatientSelection(patientInfo, forceRefresh = false) {
   if (patientSelectionInProgress) {
-    console.warn("Tentativa de seleção de paciente já em progresso, ignorando...");
+    logger.warn("Tentativa de seleÃ§Ã£o de paciente jÃ¡ em progresso, ignorando...");
     return;
   }
 
@@ -462,7 +462,7 @@ async function executePatientSelection(patientInfo, forceRefresh = false) {
     const cadsus = await API.fetchCadsusData({
       cpf: Utils.getNestedValue(ficha, "entidadeFisica.entfCPF"),
       cns: ficha.isenNumCadSus,
-      skipValidation: true // Pular validação quando carregando dados do paciente selecionado
+      skipValidation: true // Pular validaÃ§Ã£o quando carregando dados do paciente selecionado
     });
     
     Object.values(sectionManagers).forEach((manager) => {
@@ -476,10 +476,10 @@ async function executePatientSelection(patientInfo, forceRefresh = false) {
     store.setPatient(ficha, cadsus);
     await updateRecentPatients(store.getPatient());
     
-    console.log("Seleção de paciente concluída com sucesso:", patientInfo.idp);
+    logger.info("SeleÃ§Ã£o de paciente concluÃ­da com sucesso:", patientInfo.idp);
   } catch (error) {
     Utils.showMessage(error.message, "error");
-    console.error("Erro na seleção de paciente:", error);
+    logger.error("Erro na seleÃ§Ã£o de paciente:", error);
     store.clearPatient();
   } finally {
     Utils.toggleLoader(false);
@@ -488,20 +488,20 @@ async function executePatientSelection(patientInfo, forceRefresh = false) {
 }
 
 async function init() {
-  console.log('[Sidebar] Iniciando aplicação');
+  logger.info('[Sidebar] Iniciando aplicaÃ§Ã£o');
   
-  // ✅ SEGURANÇA: Limpeza automática de dados médicos expirados na inicialização
+  // âœ… SEGURANÃ‡A: Limpeza automÃ¡tica de dados mÃ©dicos expirados na inicializaÃ§Ã£o
   try {
     await cleanupExpiredData(browserAPI);
-    console.log('[Sidebar] Limpeza de dados expirados concluída');
+    logger.info('[Sidebar] Limpeza de dados expirados concluÃ­da');
   } catch (error) {
-    console.error('[Sidebar] Erro na limpeza de dados expirados:', error);
+    logger.error('[Sidebar] Erro na limpeza de dados expirados:', error);
   }
   
   // Registra callbacks de limpeza no MemoryManager
   registerCleanupCallbacks();
   
-  // Registra referências globais importantes
+  // Registra referÃªncias globais importantes
   memoryManager.setGlobalRef('sectionManagers', sectionManagers);
   memoryManager.setGlobalRef('currentRegulationData', currentRegulationData);
   
@@ -532,14 +532,14 @@ async function init() {
         reloadSidebar.addEventListener("click", () => window.location.reload());
       }
 
-      // **não retornamos mais aqui**, apenas marcamos que deu “fallback”
+      // **nÃ£o retornamos mais aqui**, apenas marcamos que deu â€œfallbackâ€
     } else {
-      console.error("Initialization failed:", error);
+      logger.error("Initialization failed:", error);
       Utils.showMessage(
-        "Ocorreu um erro inesperado ao iniciar a extensão.",
+        "Ocorreu um erro inesperado ao iniciar a extensÃ£o.",
         "error"
       );
-      // nesse caso você pode querer return ou throw de verdade
+      // nesse caso vocÃª pode querer return ou throw de verdade
       return;
     }
   }
@@ -549,9 +549,9 @@ async function init() {
   Utils.setupTabs(document.getElementById("patterns-tabs-container"));
   // (adicione aqui quaisquer outros containers de aba que tenha)
 
-  // === só o resto do fluxo principal depende de baseUrlConfigured ===
+  // === sÃ³ o resto do fluxo principal depende de baseUrlConfigured ===
   if (!baseUrlConfigured) {
-    // já mostramos o formulário de URL, não temos mais nada a fazer
+    // jÃ¡ mostramos o formulÃ¡rio de URL, nÃ£o temos mais nada a fazer
     return;
   }
 
@@ -578,14 +578,14 @@ async function init() {
 
   await checkForPendingRegulation();
   
-  // Log estatísticas iniciais do MemoryManager
+  // Log estatÃ­sticas iniciais do MemoryManager
   memoryManager.logStats();
   
-  console.log('[Sidebar] Aplicação inicializada com sucesso');
+  logger.info('[Sidebar] AplicaÃ§Ã£o inicializada com sucesso');
 }
 
 /**
- * ✅ SEGURANÇA: Carrega configurações e dados com descriptografia segura
+ * âœ… SEGURANÃ‡A: Carrega configuraÃ§Ãµes e dados com descriptografia segura
  */
 async function loadConfigAndData() {
   const syncData = await browserAPI.storage.sync.get({
@@ -599,7 +599,7 @@ async function loadConfigAndData() {
     enableAutomaticDetection: true,
     dateRangeDefaults: {},
     sidebarSectionOrder: [],
-    sectionHeaderStyles: {}, // Carrega a nova configuração de estilos
+    sectionHeaderStyles: {}, // Carrega a nova configuraÃ§Ã£o de estilos
   });
   
   const localData = await browserAPI.storage.local.get({
@@ -608,26 +608,26 @@ async function loadConfigAndData() {
     automationRules: [],
   });
   
-  // ✅ SEGURANÇA: Descriptografar dados de pacientes recentes se estiverem criptografados
+  // âœ… SEGURANÃ‡A: Descriptografar dados de pacientes recentes se estiverem criptografados
   let recentPatients = [];
   if (localData.recentPatients) {
     try {
-      // Verifica se os dados estão criptografados (string) ou não (array)
+      // Verifica se os dados estÃ£o criptografados (string) ou nÃ£o (array)
       if (typeof localData.recentPatients === 'string') {
         // Dados criptografados - descriptografar
         const decryptedPatients = await decryptFromStorage(localData.recentPatients);
         if (decryptedPatients !== null) {
           recentPatients = decryptedPatients;
-          console.log('[Sidebar] Pacientes recentes descriptografados com sucesso');
+          logger.info('[Sidebar] Pacientes recentes descriptografados com sucesso');
         } else {
-          console.warn('[Sidebar] Dados de pacientes recentes expiraram ou são inválidos');
-          // Remove dados expirados/inválidos
+          logger.warn('[Sidebar] Dados de pacientes recentes expiraram ou sÃ£o invÃ¡lidos');
+          // Remove dados expirados/invÃ¡lidos
           await browserAPI.storage.local.remove(['recentPatients', 'recentPatientsTimestamp']);
         }
       } else if (Array.isArray(localData.recentPatients)) {
-        // Dados não criptografados (formato antigo) - migrar para formato criptografado
+        // Dados nÃ£o criptografados (formato antigo) - migrar para formato criptografado
         recentPatients = localData.recentPatients;
-        console.log('[Sidebar] Migrando pacientes recentes para formato criptografado');
+        logger.info('[Sidebar] Migrando pacientes recentes para formato criptografado');
         
         // Criptografar e salvar no novo formato
         if (recentPatients.length > 0) {
@@ -642,14 +642,14 @@ async function loadConfigAndData() {
               recentPatientsTimestamp: Date.now()
             });
             
-            console.log('[Sidebar] Migração para formato criptografado concluída');
+            logger.info('[Sidebar] MigraÃ§Ã£o para formato criptografado concluÃ­da');
           } catch (error) {
-            console.error('[Sidebar] Erro na migração para formato criptografado:', error);
+            logger.error('[Sidebar] Erro na migraÃ§Ã£o para formato criptografado:', error);
           }
         }
       }
     } catch (error) {
-      console.error('[Sidebar] Erro ao descriptografar pacientes recentes:', error);
+      logger.error('[Sidebar] Erro ao descriptografar pacientes recentes:', error);
       // Em caso de erro, remove dados corrompidos
       await browserAPI.storage.local.remove(['recentPatients', 'recentPatientsTimestamp']);
     }
@@ -696,17 +696,17 @@ function applySectionOrder(order) {
 
   const patientCardId = "patient-details";
 
-  // Pega a ordem salva ou a ordem padrão do DOM
+  // Pega a ordem salva ou a ordem padrÃ£o do DOM
   const savedOrder =
     order && order.length > 0 ? order : Object.keys(sectionMap);
 
   // Garante que a ficha do paciente esteja sempre no topo
-  // 1. Remove a ficha da ordem atual, não importa onde esteja.
+  // 1. Remove a ficha da ordem atual, nÃ£o importa onde esteja.
   let finalOrder = savedOrder.filter((id) => id !== patientCardId);
-  // 2. Adiciona a ficha no início da lista.
+  // 2. Adiciona a ficha no inÃ­cio da lista.
   finalOrder.unshift(patientCardId);
 
-  // Adiciona quaisquer novas seções (não presentes na ordem salva) ao final
+  // Adiciona quaisquer novas seÃ§Ãµes (nÃ£o presentes na ordem salva) ao final
   const knownIds = new Set(finalOrder);
   Object.keys(sectionMap).forEach((id) => {
     if (!knownIds.has(id)) {
@@ -836,17 +836,17 @@ async function handleRegulationLoaded(regulationData) {
     } else {
       currentRegulationData = null;
       Utils.showMessage(
-        "Não foi possível extrair os dados do paciente da regulação.",
+        "NÃ£o foi possÃ­vel extrair os dados do paciente da regulaÃ§Ã£o.",
         "error"
       );
     }
   } catch (error) {
     currentRegulationData = null;
     Utils.showMessage(
-      `Erro ao processar a regulação: ${error.message}`,
+      `Erro ao processar a regulaÃ§Ã£o: ${error.message}`,
       "error"
     );
-    console.error("Erro ao processar a regulação:", error);
+    logger.error("Erro ao processar a regulaÃ§Ã£o:", error);
   } finally {
     Utils.toggleLoader(false);
   }
@@ -874,7 +874,7 @@ async function applyAutomationRules(regulationData) {
       );
 
       if (hasMatch) {
-        // Aplicar filtros nas seções existentes E na nova timeline
+        // Aplicar filtros nas seÃ§Ãµes existentes E na nova timeline
         Object.entries(sectionManagers).forEach(([key, manager]) => {
           if (
             rule.filterSettings[key] &&
@@ -891,14 +891,14 @@ async function applyAutomationRules(regulationData) {
 
 function handleShowRegulationInfo() {
   if (!currentRegulationData) {
-    Utils.showMessage("Nenhuma informação de regulação carregada.", "info");
+    Utils.showMessage("Nenhuma informaÃ§Ã£o de regulaÃ§Ã£o carregada.", "info");
     return;
   }
   const modalTitle = document.getElementById("modal-title");
   const modalContent = document.getElementById("modal-content");
   const infoModal = document.getElementById("info-modal");
 
-  modalTitle.textContent = "Dados da Regulação (JSON)";
+  modalTitle.textContent = "Dados da RegulaÃ§Ã£o (JSON)";
   const formattedJson = JSON.stringify(currentRegulationData, null, 2);
 
   // Criar elemento pre de forma segura para evitar XSS
@@ -906,7 +906,7 @@ function handleShowRegulationInfo() {
   preElement.className = `${getCSSClass('BG_SLATE_100')} p-2 rounded-md text-xs whitespace-pre-wrap break-all`;
   preElement.textContent = formattedJson;
   
-  // Limpar conteúdo anterior e adicionar o elemento de forma segura
+  // Limpar conteÃºdo anterior e adicionar o elemento de forma segura
   modalContent.innerHTML = "";
   modalContent.appendChild(preElement);
 
@@ -914,7 +914,7 @@ function handleShowRegulationInfo() {
 }
 
 function addGlobalEventListeners() {
-  console.log('[Sidebar] Adicionando event listeners globais');
+  logger.info('[Sidebar] Adicionando event listeners globais');
   
   const mainContent = document.getElementById("main-content");
   const infoModal = document.getElementById("info-modal");
@@ -922,12 +922,12 @@ function addGlobalEventListeners() {
   const infoBtn = document.getElementById("context-info-btn");
   const reloadBtn = document.getElementById("reload-sidebar-btn");
 
-  // Handler para botão de reload com confirmação
+  // Handler para botÃ£o de reload com confirmaÃ§Ã£o
   const reloadHandler = () => {
     const patient = store.getPatient();
     if (patient && patient.ficha) {
       const confirmation = window.confirm(
-        "Um paciente está selecionado e o estado atual será perdido. Deseja realmente recarregar o assistente?"
+        "Um paciente estÃ¡ selecionado e o estado atual serÃ¡ perdido. Deseja realmente recarregar o assistente?"
       );
       if (confirmation) {
         // Limpa recursos antes de recarregar
@@ -970,18 +970,18 @@ function addGlobalEventListeners() {
     memoryManager.addEventListener(infoBtn, "click", handleShowRegulationInfo);
   }
 
-  // Handler para mudanças no storage
+  // Handler para mudanÃ§as no storage
   const storageChangeHandler = (changes, areaName) => {
     if (areaName === "local" && changes.pendingRegulation) {
-      // Apenas processa se a detecção automática estiver LIGADA
+      // Apenas processa se a detecÃ§Ã£o automÃ¡tica estiver LIGADA
       browserAPI.storage.sync
         .get({ enableAutomaticDetection: true })
         .then((settings) => {
           if (settings.enableAutomaticDetection) {
             const { newValue } = changes.pendingRegulation;
             if (newValue && newValue.isenPKIdp) {
-              console.log(
-                "[Assistente Sidebar] Nova regulação detectada via storage.onChanged:",
+              logger.info(
+                "[Assistente Sidebar] Nova regulaÃ§Ã£o detectada via storage.onChanged:",
                 newValue
               );
               handleRegulationLoaded(newValue);
@@ -998,25 +998,25 @@ function addGlobalEventListeners() {
     }
 
     if (areaName === "sync" && changes.enableAutomaticDetection) {
-      // Mantém o botão da sidebar sincronizado com a configuração
+      // MantÃ©m o botÃ£o da sidebar sincronizado com a configuraÃ§Ã£o
       setupAutoModeToggle();
     }
   };
 
-  // Adiciona listener para mudanças no storage
+  // Adiciona listener para mudanÃ§as no storage
   browserAPI.storage.onChanged.addListener(storageChangeHandler);
   
   // Registra callback para remover listener do storage na limpeza
   memoryManager.addCleanupCallback(() => {
-    console.log('[Sidebar] Removendo listener de storage');
+    logger.info('[Sidebar] Removendo listener de storage');
     try {
       browserAPI.storage.onChanged.removeListener(storageChangeHandler);
     } catch (error) {
-      console.error('[Sidebar] Erro ao remover listener de storage:', error);
+      logger.error('[Sidebar] Erro ao remover listener de storage:', error);
     }
   });
   
-  console.log('[Sidebar] Event listeners globais adicionados');
+  logger.info('[Sidebar] Event listeners globais adicionados');
 }
 
 async function handleGlobalActions(event) {
@@ -1071,21 +1071,21 @@ async function copyToClipboard(button) {
   button.dataset.inProgress = "true";
   try {
     await navigator.clipboard.writeText(textToCopy);
-    button.textContent = "✅";
+    button.textContent = "âœ…";
   } catch (err) {
-    console.error("Falha ao copiar texto: ", err);
-    button.textContent = "❌";
+    logger.error("Falha ao copiar texto: ", err);
+    button.textContent = "âŒ";
   } finally {
     setTimeout(() => {
-      button.textContent = "📄";
+      button.textContent = "ðŸ“„";
       button.dataset.inProgress = "false";
     }, getTimeout("AUTO_REFRESH"));
   }
 }
 
 /**
- * ✅ SEGURANÇA: Atualiza lista de pacientes recentes com criptografia
- * Dados médicos sensíveis são criptografados antes do armazenamento
+ * âœ… SEGURANÃ‡A: Atualiza lista de pacientes recentes com criptografia
+ * Dados mÃ©dicos sensÃ­veis sÃ£o criptografados antes do armazenamento
  */
 async function updateRecentPatients(patientData) {
   if (!patientData || !patientData.ficha) return;
@@ -1098,8 +1098,8 @@ async function updateRecentPatients(patientData) {
     );
     const updatedRecents = [newRecent, ...filtered].slice(0, 5);
     
-    // ✅ SEGURANÇA: Criptografar dados de pacientes recentes antes do armazenamento
-    // TTL de 24 horas para dados de pacientes recentes (menos sensível que dados de regulação)
+    // âœ… SEGURANÃ‡A: Criptografar dados de pacientes recentes antes do armazenamento
+    // TTL de 24 horas para dados de pacientes recentes (menos sensÃ­vel que dados de regulaÃ§Ã£o)
     const encryptedRecentPatients = await encryptForStorage(
       updatedRecents, 
       MEDICAL_DATA_CONFIG.DEFAULT_TTL_MINUTES * 24 // 24 horas
@@ -1112,9 +1112,9 @@ async function updateRecentPatients(patientData) {
     
     store.setRecentPatients(updatedRecents);
     
-    console.log('[Sidebar] Pacientes recentes atualizados e criptografados no storage');
+    logger.info('[Sidebar] Pacientes recentes atualizados e criptografados no storage');
   } catch (error) {
-    console.error('[Sidebar] Erro ao atualizar pacientes recentes:', error);
+    logger.error('[Sidebar] Erro ao atualizar pacientes recentes:', error);
     // Fallback: manter apenas no store sem persistir se a criptografia falhar
     const currentRecents = store.getRecentPatients();
     const filtered = (currentRecents || []).filter(
@@ -1145,7 +1145,7 @@ async function handleViewExamResult(button) {
     } else {
       // Criar elemento de forma segura para evitar XSS
       const messageElement = document.createElement("p");
-      messageElement.textContent = "Resultado não encontrado.";
+      messageElement.textContent = "Resultado nÃ£o encontrado.";
       newTab.document.body.innerHTML = "";
       newTab.document.body.appendChild(messageElement);
     }
@@ -1174,7 +1174,7 @@ async function handleViewDocument(button) {
     } else {
       // Criar elemento de forma segura para evitar XSS
       const messageElement = document.createElement("p");
-      messageElement.textContent = "URL do documento não encontrada.";
+      messageElement.textContent = "URL do documento nÃ£o encontrada.";
       newTab.document.body.innerHTML = "";
       newTab.document.body.appendChild(messageElement);
     }
@@ -1184,7 +1184,7 @@ async function handleViewDocument(button) {
     errorElement.textContent = `Erro ao carregar documento: ${error.message}`;
     newTab.document.body.innerHTML = "";
     newTab.document.body.appendChild(errorElement);
-    console.error("Falha ao visualizar documento:", error);
+    logger.error("Falha ao visualizar documento:", error);
   }
 }
 
@@ -1194,7 +1194,7 @@ async function handleViewRegulationAttachment(button) {
   
   // Criar elemento de loading de forma segura
   const loadingElement = document.createElement("p");
-  loadingElement.textContent = "Carregando anexo da regulação...";
+  loadingElement.textContent = "Carregando anexo da regulaÃ§Ã£o...";
   newTab.document.body.appendChild(loadingElement);
 
   try {
@@ -1204,7 +1204,7 @@ async function handleViewRegulationAttachment(button) {
     } else {
       // Criar elemento de forma segura para evitar XSS
       const messageElement = document.createElement("p");
-      messageElement.textContent = "URL do anexo não encontrada.";
+      messageElement.textContent = "URL do anexo nÃ£o encontrada.";
       newTab.document.body.innerHTML = "";
       newTab.document.body.appendChild(messageElement);
     }
@@ -1214,7 +1214,7 @@ async function handleViewRegulationAttachment(button) {
     errorElement.textContent = `Erro ao carregar anexo: ${error.message}`;
     newTab.document.body.innerHTML = "";
     newTab.document.body.appendChild(errorElement);
-    console.error("Falha ao visualizar anexo da regulação:", error);
+    logger.error("Falha ao visualizar anexo da regulaÃ§Ã£o:", error);
   }
 }
 
@@ -1223,14 +1223,14 @@ function showModal(title, content) {
   const modalTitle = document.getElementById("modal-title");
   const modalContent = document.getElementById("modal-content");
 
-  // ✅ SEGURO: Sempre usar textContent para título
+  // âœ… SEGURO: Sempre usar textContent para tÃ­tulo
   modalTitle.textContent = title;
   
-  // ✅ SEGURO: Sanitização rigorosa de conteúdo
+  // âœ… SEGURO: SanitizaÃ§Ã£o rigorosa de conteÃºdo
   if (typeof content === 'string') {
     modalContent.textContent = content;
   } else if (content instanceof HTMLElement) {
-    // Limpa conteúdo anterior de forma segura
+    // Limpa conteÃºdo anterior de forma segura
     modalContent.textContent = '';
     modalContent.appendChild(content);
   } else {
@@ -1264,7 +1264,7 @@ function createDetailRowElement(label, value) {
 function createRegulationDetailsElement(data) {
   if (!data) {
     const p = document.createElement('p');
-    p.textContent = 'Dados da regulação não encontrados.';
+    p.textContent = 'Dados da regulaÃ§Ã£o nÃ£o encontrados.';
     return p;
   }
   
@@ -1273,7 +1273,7 @@ function createRegulationDetailsElement(data) {
   const details = [
     { label: 'Status', value: data.reguStatus },
     { label: 'Tipo', value: data.reguTipo === "ENC" ? "Consulta" : "Exame" },
-    { label: 'Data Solicitação', value: data.reguDataStr },
+    { label: 'Data SolicitaÃ§Ã£o', value: data.reguDataStr },
     { label: 'Procedimento', value: data.prciNome },
     { label: 'CID', value: `${data.tcidCod} - ${data.tcidDescricao}` },
     { label: 'Profissional Sol.', value: data.prsaEntiNome },
@@ -1311,7 +1311,7 @@ function createRegulationDetailsElement(data) {
 function createAppointmentDetailsElement(data) {
   if (!data) {
     const p = document.createElement('p');
-    p.textContent = 'Dados do agendamento não encontrados.';
+    p.textContent = 'Dados do agendamento nÃ£o encontrados.';
     return p;
   }
   
@@ -1324,12 +1324,12 @@ function createAppointmentDetailsElement(data) {
   
   const details = [
     { label: 'Status', value: status },
-    { label: 'Data', value: `${data.agcoData} às ${data.agcoHoraPrevista}` },
+    { label: 'Data', value: `${data.agcoData} Ã s ${data.agcoHoraPrevista}` },
     { label: 'Local', value: data.unidadeSaudeDestino?.entidade?.entiNome },
     { label: 'Profissional', value: data.profissionalDestino?.entidadeFisica?.entidade?.entiNome },
     { label: 'Especialidade', value: data.atividadeProfissionalCnes?.apcnNome },
     { label: 'Procedimento', value: data.procedimento?.prciNome },
-    { label: 'Convênio', value: data.convenio?.entidade?.entiNome }
+    { label: 'ConvÃªnio', value: data.convenio?.entidade?.entiNome }
   ];
   
   details.forEach(detail => {
@@ -1337,14 +1337,14 @@ function createAppointmentDetailsElement(data) {
     if (row) container.appendChild(row);
   });
   
-  // Adicionar observação se existir
+  // Adicionar observaÃ§Ã£o se existir
   if (data.agcoObs) {
     const obsDiv = document.createElement('div');
     obsDiv.className = 'py-2';
     
     const obsLabel = document.createElement('span');
     obsLabel.className = `font-semibold ${getCSSClass('TEXT_SECONDARY')}`;
-    obsLabel.textContent = 'Observação:';
+    obsLabel.textContent = 'ObservaÃ§Ã£o:';
     
     const obsText = document.createElement('p');
     obsText.className = `${getCSSClass('TEXT_PRIMARY')} whitespace-pre-wrap mt-1 p-2 ${getCSSClass('BG_SLATE_50')} rounded`;
@@ -1361,7 +1361,7 @@ function createAppointmentDetailsElement(data) {
 function createExamAppointmentDetailsElement(data) {
   if (!data) {
     const p = document.createElement('p');
-    p.textContent = 'Dados do agendamento de exame não encontrados.';
+    p.textContent = 'Dados do agendamento de exame nÃ£o encontrados.';
     return p;
   }
   
@@ -1372,8 +1372,8 @@ function createExamAppointmentDetailsElement(data) {
     { label: 'Unidade Origem', value: data.ligacaoModularOrigem?.limoNome },
     { label: 'Unidade Destino', value: data.ligacaoModularDestino?.limoNome },
     { label: 'Profissional Sol.', value: data.profissional?.entidadeFisica?.entidade?.entiNome },
-    { label: 'Caráter', value: data.CaraterAtendimento?.caraDescri },
-    { label: 'Critério', value: data.criterioExame?.critNome }
+    { label: 'CarÃ¡ter', value: data.CaraterAtendimento?.caraDescri },
+    { label: 'CritÃ©rio', value: data.criterioExame?.critNome }
   ];
   
   details.forEach(detail => {
@@ -1384,7 +1384,7 @@ function createExamAppointmentDetailsElement(data) {
   return container;
 }
 
-// Manter as funções antigas para compatibilidade (agora não são mais usadas)
+// Manter as funÃ§Ãµes antigas para compatibilidade (agora nÃ£o sÃ£o mais usadas)
 function createDetailRow(label, value) {
   if (!value || String(value).trim() === "") return "";
   return `<div class="py-2 border-b border-slate-100 flex justify-between items-start gap-4">
@@ -1394,14 +1394,14 @@ function createDetailRow(label, value) {
 }
 
 function formatRegulationDetailsForModal(data) {
-  if (!data) return "<p>Dados da regulação não encontrados.</p>";
+  if (!data) return "<p>Dados da regulaÃ§Ã£o nÃ£o encontrados.</p>";
   let content = "";
   content += createDetailRow("Status", data.reguStatus);
   content += createDetailRow(
     "Tipo",
     data.reguTipo === "ENC" ? "Consulta" : "Exame"
   );
-  content += createDetailRow("Data Solicitação", data.reguDataStr);
+  content += createDetailRow("Data SolicitaÃ§Ã£o", data.reguDataStr);
   content += createDetailRow("Procedimento", data.prciNome);
   content += createDetailRow("CID", `${data.tcidCod} - ${data.tcidDescricao}`);
   content += createDetailRow("Profissional Sol.", data.prsaEntiNome);
@@ -1421,7 +1421,7 @@ function formatRegulationDetailsForModal(data) {
 }
 
 function formatAppointmentDetailsForModal(data) {
-  if (!data) return "<p>Dados do agendamento não encontrados.</p>";
+  if (!data) return "<p>Dados do agendamento nÃ£o encontrados.</p>";
 
   let status = "Agendado";
   if (data.agcoIsCancelado === "t") status = "Cancelado";
@@ -1432,7 +1432,7 @@ function formatAppointmentDetailsForModal(data) {
   content += createDetailRow("Status", status);
   content += createDetailRow(
     "Data",
-    `${data.agcoData} às ${data.agcoHoraPrevista}`
+    `${data.agcoData} Ã s ${data.agcoHoraPrevista}`
   );
   content += createDetailRow(
     "Local",
@@ -1447,10 +1447,10 @@ function formatAppointmentDetailsForModal(data) {
     data.atividadeProfissionalCnes?.apcnNome
   );
   content += createDetailRow("Procedimento", data.procedimento?.prciNome);
-  content += createDetailRow("Convênio", data.convenio?.entidade?.entiNome);
+  content += createDetailRow("ConvÃªnio", data.convenio?.entidade?.entiNome);
   if (data.agcoObs) {
     content += `<div class="py-2">
-                        <span class="font-semibold ${getCSSClass('TEXT_SECONDARY')}">Observação:</span>
+                        <span class="font-semibold ${getCSSClass('TEXT_SECONDARY')}">ObservaÃ§Ã£o:</span>
                         <p class="${getCSSClass('TEXT_PRIMARY')} whitespace-pre-wrap mt-1 p-2 ${getCSSClass('BG_SLATE_50')} rounded">${data.agcoObs}</p>
                     </div>`;
   }
@@ -1458,7 +1458,7 @@ function formatAppointmentDetailsForModal(data) {
 }
 
 function formatExamAppointmentDetailsForModal(data) {
-  if (!data) return "<p>Dados do agendamento de exame não encontrados.</p>";
+  if (!data) return "<p>Dados do agendamento de exame nÃ£o encontrados.</p>";
 
   let content = "";
   content += createDetailRow("Data Agendamento", data.examDataCad);
@@ -1474,26 +1474,26 @@ function formatExamAppointmentDetailsForModal(data) {
     "Profissional Sol.",
     data.profissional?.entidadeFisica?.entidade?.entiNome
   );
-  content += createDetailRow("Caráter", data.CaraterAtendimento?.caraDescri);
-  content += createDetailRow("Critério", data.criterioExame?.critNome);
+  content += createDetailRow("CarÃ¡ter", data.CaraterAtendimento?.caraDescri);
+  content += createDetailRow("CritÃ©rio", data.criterioExame?.critNome);
 
   return content;
 }
 
 async function handleShowRegulationDetailsModal(button) {
   const { idp, ids } = button.dataset;
-  showModal("Detalhes da Regulação", "Carregando...");
+  showModal("Detalhes da RegulaÃ§Ã£o", "Carregando...");
   try {
     const data = await API.fetchRegulationDetails({
       reguIdp: idp,
       reguIds: ids,
     });
     const contentElement = createRegulationDetailsElement(data);
-    showModal("Detalhes da Regulação", contentElement);
+    showModal("Detalhes da RegulaÃ§Ã£o", contentElement);
   } catch (error) {
     showModal(
       "Erro",
-      `Não foi possível carregar os detalhes: ${error.message}`
+      `NÃ£o foi possÃ­vel carregar os detalhes: ${error.message}`
     );
   }
 }
@@ -1521,7 +1521,7 @@ async function handleShowAppointmentDetailsModal(button) {
   } catch (error) {
     showModal(
       "Erro",
-      `Não foi possível carregar os detalhes: ${error.message}`
+      `NÃ£o foi possÃ­vel carregar os detalhes: ${error.message}`
     );
   }
 }
@@ -1534,17 +1534,17 @@ function handleShowAppointmentInfo(button) {
   
   modalTitle.textContent = "Detalhes do Agendamento";
   
-  // Criar conteúdo de forma segura usando DOM
+  // Criar conteÃºdo de forma segura usando DOM
   modalContent.innerHTML = '';
   
   const appointmentDetails = [
     { label: 'ID', value: data.id },
     { 
       label: 'Tipo', 
-      value: data.isSpecialized ? "Especializada" : data.isOdonto ? "Odontológica" : data.type 
+      value: data.isSpecialized ? "Especializada" : data.isOdonto ? "OdontolÃ³gica" : data.type 
     },
     { label: 'Status', value: data.status },
-    { label: 'Data', value: `${data.date} às ${data.time}` },
+    { label: 'Data', value: `${data.date} Ã s ${data.time}` },
     { label: 'Local', value: data.location },
     { label: 'Profissional', value: data.professional },
     { label: 'Especialidade', value: data.specialty || "N/A" },
@@ -1573,8 +1573,9 @@ async function checkForPendingRegulation() {
       await browserAPI.storage.local.remove("pendingRegulation");
     }
   } catch (e) {
-    console.error("Erro ao verificar regulação pendente:", e);
+    logger.error("Erro ao verificar regulaÃ§Ã£o pendente:", e);
   }
 }
 
 document.addEventListener("DOMContentLoaded", init);
+

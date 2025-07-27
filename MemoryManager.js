@@ -1,43 +1,43 @@
-/**
- * @file MemoryManager - Sistema robusto de gerenciamento de memória e limpeza de recursos
- * Responsável por rastrear e limpar event listeners, timeouts, intervalos e referências globais
+﻿/**
+ * @file MemoryManager - Sistema robusto de gerenciamento de memÃ³ria e limpeza de recursos
+ * ResponsÃ¡vel por rastrear e limpar event listeners, timeouts, intervalos e referÃªncias globais
  * 
- * TASK-A-003: Implementa correções para memory leaks em event listeners:
+ * TASK-A-003: Implementa correÃ§Ãµes para memory leaks em event listeners:
  * - WeakMap para rastreamento de listeners
- * - Cleanup automático em window.beforeunload
- * - Timeout para cleanup forçado
- * - Verificação de vazamentos de memória
+ * - Cleanup automÃ¡tico em window.beforeunload
+ * - Timeout para cleanup forÃ§ado
+ * - VerificaÃ§Ã£o de vazamentos de memÃ³ria
  * - Cleanup em caso de erros
  */
 
 import { CONFIG } from "./config.js";
 import { createComponentLogger } from "./logger.js";
 
-// Logger específico para MemoryManager
+// Logger especÃ­fico para MemoryManager
 const logger = createComponentLogger('MemoryManager');
 
 
 /**
- * Classe para gerenciamento centralizado de memória e recursos
+ * Classe para gerenciamento centralizado de memÃ³ria e recursos
  */
 export class MemoryManager {
   constructor() {
     // TASK-A-003: Usar WeakMap para rastreamento de listeners (evita vazamentos)
     this.eventListenersWeakMap = new WeakMap(); // Rastreia listeners por elemento (WeakMap)
-    this.eventListeners = new Map(); // Backup para elementos sem referência forte
+    this.eventListeners = new Map(); // Backup para elementos sem referÃªncia forte
     this.timeouts = new Map(); // Rastreia timeouts ativos com timestamps
     this.intervals = new Map(); // Rastreia intervalos ativos com timestamps
-    this.globalRefs = new Map(); // Rastreia referências globais
+    this.globalRefs = new Map(); // Rastreia referÃªncias globais
     this.cleanupCallbacks = new Set(); // Callbacks de limpeza customizados
     this.isDestroyed = false;
     
-    // TASK-A-003: Controle de cleanup forçado
+    // TASK-A-003: Controle de cleanup forÃ§ado
     this.forceCleanupTimeout = null;
     this.lastCleanupTime = Date.now();
-    this.memoryLeakThreshold = 100; // Limite de listeners antes de cleanup forçado
+    this.memoryLeakThreshold = 100; // Limite de listeners antes de cleanup forÃ§ado
     this.cleanupInterval = 5 * 60 * 1000; // 5 minutos
     
-    // TASK-A-003: Métricas de vazamento de memória
+    // TASK-A-003: MÃ©tricas de vazamento de memÃ³ria
     this.memoryStats = {
       listenersCreated: 0,
       listenersRemoved: 0,
@@ -57,23 +57,23 @@ export class MemoryManager {
     this.forceCleanup = this.forceCleanup.bind(this);
     this.checkMemoryLeaks = this.checkMemoryLeaks.bind(this);
     
-    // Registra listeners globais para limpeza automática
+    // Registra listeners globais para limpeza automÃ¡tica
     this.registerGlobalCleanupListeners();
     
-    // TASK-A-003: Iniciar verificação periódica de vazamentos
+    // TASK-A-003: Iniciar verificaÃ§Ã£o periÃ³dica de vazamentos
     this.startMemoryLeakDetection();
     
-    console.log('[MemoryManager] Inicializado com proteção contra memory leaks');
+    logger.info('[MemoryManager] Inicializado com proteÃ§Ã£o contra memory leaks');
   }
 
   /**
-   * Registra event listeners globais para limpeza automática
+   * Registra event listeners globais para limpeza automÃ¡tica
    */
   registerGlobalCleanupListeners() {
-    // TASK-A-003: Limpeza automática em window.beforeunload
+    // TASK-A-003: Limpeza automÃ¡tica em window.beforeunload
     window.addEventListener('beforeunload', this.handleBeforeUnload, { passive: true });
     
-    // Limpeza quando a página fica oculta (mudança de aba, minimizar, etc.)
+    // Limpeza quando a pÃ¡gina fica oculta (mudanÃ§a de aba, minimizar, etc.)
     document.addEventListener('visibilitychange', this.handleVisibilityChange, { passive: true });
     
     // TASK-A-003: Cleanup em caso de erros (melhorado)
@@ -85,50 +85,50 @@ export class MemoryManager {
       this.scheduleForceCleanup();
     }, { passive: true });
     
-    // TASK-A-003: Cancelar cleanup forçado quando a janela volta ao foco
+    // TASK-A-003: Cancelar cleanup forÃ§ado quando a janela volta ao foco
     window.addEventListener('focus', () => {
       this.cancelForceCleanup();
     }, { passive: true });
   }
 
   /**
-   * TASK-A-003: Inicia verificação periódica de vazamentos de memória
+   * TASK-A-003: Inicia verificaÃ§Ã£o periÃ³dica de vazamentos de memÃ³ria
    */
   startMemoryLeakDetection() {
-    // Verificação a cada 2 minutos
+    // VerificaÃ§Ã£o a cada 2 minutos
     this.memoryCheckInterval = setInterval(() => {
       this.checkMemoryLeaks();
     }, 2 * 60 * 1000);
     
-    console.log('[MemoryManager] Detecção de vazamentos de memória iniciada');
+    logger.info('[MemoryManager] DetecÃ§Ã£o de vazamentos de memÃ³ria iniciada');
   }
 
   /**
-   * TASK-A-003: Verifica vazamentos de memória e executa limpeza se necessário
+   * TASK-A-003: Verifica vazamentos de memÃ³ria e executa limpeza se necessÃ¡rio
    */
   checkMemoryLeaks() {
     const now = Date.now();
     const stats = this.getStats();
     
-    // Atualiza estatísticas
+    // Atualiza estatÃ­sticas
     this.memoryStats.lastMemoryCheck = now;
     
-    // Verifica se há muitos listeners ativos
+    // Verifica se hÃ¡ muitos listeners ativos
     if (stats.eventListeners > this.memoryLeakThreshold) {
-      console.warn(`[MemoryManager] Possível vazamento detectado: ${stats.eventListeners} listeners ativos`);
+      logger.warn(`[MemoryManager] PossÃ­vel vazamento detectado: ${stats.eventListeners} listeners ativos`);
       this.performMemoryCleanup();
     }
     
-    // Verifica se há timeouts/intervals antigos
+    // Verifica se hÃ¡ timeouts/intervals antigos
     const oldTimeouts = this.getOldTimeouts();
     const oldIntervals = this.getOldIntervals();
     
     if (oldTimeouts.length > 10 || oldIntervals.length > 10) {
-      console.warn(`[MemoryManager] Timeouts/intervals antigos detectados: ${oldTimeouts.length}/${oldIntervals.length}`);
+      logger.warn(`[MemoryManager] Timeouts/intervals antigos detectados: ${oldTimeouts.length}/${oldIntervals.length}`);
       this.cleanupOldTimers();
     }
     
-    // Log estatísticas periodicamente (a cada 10 minutos)
+    // Log estatÃ­sticas periodicamente (a cada 10 minutos)
     if (now - this.lastCleanupTime > 10 * 60 * 1000) {
       this.logMemoryStats();
       this.lastCleanupTime = now;
@@ -136,7 +136,7 @@ export class MemoryManager {
   }
 
   /**
-   * TASK-A-003: Obtém timeouts antigos (mais de 5 minutos)
+   * TASK-A-003: ObtÃ©m timeouts antigos (mais de 5 minutos)
    */
   getOldTimeouts() {
     const now = Date.now();
@@ -153,7 +153,7 @@ export class MemoryManager {
   }
 
   /**
-   * TASK-A-003: Obtém intervals antigos (mais de 5 minutos)
+   * TASK-A-003: ObtÃ©m intervals antigos (mais de 5 minutos)
    */
   getOldIntervals() {
     const now = Date.now();
@@ -187,12 +187,12 @@ export class MemoryManager {
     });
     
     if (oldTimeouts.length > 0 || oldIntervals.length > 0) {
-      console.log(`[MemoryManager] Limpeza de timers antigos: ${oldTimeouts.length} timeouts, ${oldIntervals.length} intervals`);
+      logger.info(`[MemoryManager] Limpeza de timers antigos: ${oldTimeouts.length} timeouts, ${oldIntervals.length} intervals`);
     }
   }
 
   /**
-   * TASK-A-003: Agenda cleanup forçado
+   * TASK-A-003: Agenda cleanup forÃ§ado
    */
   scheduleForceCleanup() {
     // Cancela cleanup anterior se existir
@@ -200,40 +200,40 @@ export class MemoryManager {
     
     // Agenda novo cleanup em 30 segundos
     this.forceCleanupTimeout = setTimeout(() => {
-      console.log('[MemoryManager] Executando cleanup forçado por inatividade');
+      logger.info('[MemoryManager] Executando cleanup forÃ§ado por inatividade');
       this.forceCleanup();
     }, 30 * 1000);
     
-    console.debug('[MemoryManager] Cleanup forçado agendado para 30 segundos');
+    logger.debug('[MemoryManager] Cleanup forÃ§ado agendado para 30 segundos');
   }
 
   /**
-   * TASK-A-003: Cancela cleanup forçado
+   * TASK-A-003: Cancela cleanup forÃ§ado
    */
   cancelForceCleanup() {
     if (this.forceCleanupTimeout) {
       clearTimeout(this.forceCleanupTimeout);
       this.forceCleanupTimeout = null;
-      console.debug('[MemoryManager] Cleanup forçado cancelado');
+      logger.debug('[MemoryManager] Cleanup forÃ§ado cancelado');
     }
   }
 
   /**
-   * TASK-A-003: Executa cleanup forçado
+   * TASK-A-003: Executa cleanup forÃ§ado
    */
   forceCleanup() {
-    console.log('[MemoryManager] Executando cleanup forçado');
+    logger.info('[MemoryManager] Executando cleanup forÃ§ado');
     
     // Limpa timers antigos
     this.cleanupOldTimers();
     
-    // Executa limpeza de memória
+    // Executa limpeza de memÃ³ria
     this.performMemoryCleanup();
     
-    // Atualiza estatísticas
+    // Atualiza estatÃ­sticas
     this.memoryStats.cleanupCount++;
     
-    // Cancela timeout de cleanup forçado
+    // Cancela timeout de cleanup forÃ§ado
     this.cancelForceCleanup();
   }
 
@@ -241,23 +241,23 @@ export class MemoryManager {
    * TASK-A-003: Handler melhorado para erros
    */
   handleError(event) {
-    console.warn('[MemoryManager] Erro detectado, executando limpeza preventiva:', event.error || event.reason);
+    logger.warn('[MemoryManager] Erro detectado, executando limpeza preventiva:', event.error || event.reason);
     
     // Executa limpeza preventiva
     this.performMemoryCleanup();
     
-    // Agenda cleanup forçado se muitos erros
+    // Agenda cleanup forÃ§ado se muitos erros
     this.scheduleForceCleanup();
   }
 
   /**
-   * TASK-A-003: Log de estatísticas de memória
+   * TASK-A-003: Log de estatÃ­sticas de memÃ³ria
    */
   logMemoryStats() {
     const stats = this.getStats();
     const memoryStats = this.getMemoryStats();
     
-    console.log('[MemoryManager] Estatísticas de memória:', {
+    logger.info('[MemoryManager] EstatÃ­sticas de memÃ³ria:', {
       ...stats,
       ...memoryStats,
       memoryUsage: this.getMemoryUsage()
@@ -265,7 +265,7 @@ export class MemoryManager {
   }
 
   /**
-   * TASK-A-003: Obtém estatísticas de memória
+   * TASK-A-003: ObtÃ©m estatÃ­sticas de memÃ³ria
    */
   getMemoryStats() {
     return {
@@ -277,7 +277,7 @@ export class MemoryManager {
   }
 
   /**
-   * TASK-A-003: Obtém uso de memória (se disponível)
+   * TASK-A-003: ObtÃ©m uso de memÃ³ria (se disponÃ­vel)
    */
   getMemoryUsage() {
     if (performance.memory) {
@@ -294,17 +294,17 @@ export class MemoryManager {
    * Adiciona um event listener rastreado
    * @param {Element} element - Elemento DOM
    * @param {string} event - Nome do evento
-   * @param {Function} handler - Função handler
-   * @param {object} options - Opções do addEventListener
+   * @param {Function} handler - FunÃ§Ã£o handler
+   * @param {object} options - OpÃ§Ãµes do addEventListener
    */
   addEventListener(element, event, handler, options = {}) {
     if (this.isDestroyed) {
-      console.warn('[MemoryManager] Tentativa de adicionar listener após destruição');
+      logger.warn('[MemoryManager] Tentativa de adicionar listener apÃ³s destruiÃ§Ã£o');
       return;
     }
 
     if (!element || typeof handler !== 'function') {
-      console.warn('[MemoryManager] Parâmetros inválidos para addEventListener');
+      logger.warn('[MemoryManager] ParÃ¢metros invÃ¡lidos para addEventListener');
       return;
     }
 
@@ -327,7 +327,7 @@ export class MemoryManager {
       }
       this.eventListenersWeakMap.get(element).push(listenerInfo);
     } catch (error) {
-      console.debug('[MemoryManager] WeakMap não disponível, usando Map backup');
+      logger.debug('[MemoryManager] WeakMap nÃ£o disponÃ­vel, usando Map backup');
     }
     
     // Backup usando Map tradicional
@@ -337,24 +337,24 @@ export class MemoryManager {
     }
     this.eventListeners.get(elementKey).push(listenerInfo);
 
-    // TASK-A-003: Atualiza estatísticas
+    // TASK-A-003: Atualiza estatÃ­sticas
     this.memoryStats.listenersCreated++;
 
-    console.debug(`[MemoryManager] Listener adicionado: ${event} em ${elementKey}`);
+    logger.debug(`[MemoryManager] Listener adicionado: ${event} em ${elementKey}`);
   }
 
   /**
-   * Remove um event listener específico
+   * Remove um event listener especÃ­fico
    * @param {Element} element - Elemento DOM
    * @param {string} event - Nome do evento
-   * @param {Function} handler - Função handler
+   * @param {Function} handler - FunÃ§Ã£o handler
    */
   removeEventListener(element, event, handler) {
     if (!element) return;
 
     element.removeEventListener(event, handler);
     
-    // TASK-A-003: Remove do WeakMap se disponível
+    // TASK-A-003: Remove do WeakMap se disponÃ­vel
     try {
       const weakMapListeners = this.eventListenersWeakMap.get(element);
       if (weakMapListeners) {
@@ -369,7 +369,7 @@ export class MemoryManager {
         }
       }
     } catch (error) {
-      console.debug('[MemoryManager] Erro ao remover do WeakMap:', error);
+      logger.debug('[MemoryManager] Erro ao remover do WeakMap:', error);
     }
     
     // Remove do Map backup
@@ -383,12 +383,12 @@ export class MemoryManager {
       
       if (index !== -1) {
         listeners.splice(index, 1);
-        console.debug(`[MemoryManager] Listener removido: ${event} de ${elementKey}`);
+        logger.debug(`[MemoryManager] Listener removido: ${event} de ${elementKey}`);
         
-        // TASK-A-003: Atualiza estatísticas
+        // TASK-A-003: Atualiza estatÃ­sticas
         this.memoryStats.listenersRemoved++;
         
-        // Remove a entrada se não há mais listeners
+        // Remove a entrada se nÃ£o hÃ¡ mais listeners
         if (listeners.length === 0) {
           this.eventListeners.delete(elementKey);
         }
@@ -398,13 +398,13 @@ export class MemoryManager {
 
   /**
    * Cria um timeout rastreado
-   * @param {Function} callback - Função a ser executada
+   * @param {Function} callback - FunÃ§Ã£o a ser executada
    * @param {number} delay - Delay em milissegundos
    * @returns {number} ID do timeout
    */
   setTimeout(callback, delay) {
     if (this.isDestroyed) {
-      console.warn('[MemoryManager] Tentativa de criar timeout após destruição');
+      logger.warn('[MemoryManager] Tentativa de criar timeout apÃ³s destruiÃ§Ã£o');
       return null;
     }
 
@@ -415,21 +415,21 @@ export class MemoryManager {
       try {
         callback();
       } catch (error) {
-        console.error('[MemoryManager] Erro em timeout callback:', error);
+        logger.error('[MemoryManager] Erro em timeout callback:', error);
       }
     }, delay);
     
-    // TASK-A-003: Rastreia com timestamp para detecção de vazamentos
+    // TASK-A-003: Rastreia com timestamp para detecÃ§Ã£o de vazamentos
     this.timeouts.set(timeoutId, Date.now());
     this.memoryStats.timeoutsCreated++;
     
-    console.debug(`[MemoryManager] Timeout criado: ${timeoutId} (${delay}ms)`);
+    logger.debug(`[MemoryManager] Timeout criado: ${timeoutId} (${delay}ms)`);
     
     return timeoutId;
   }
 
   /**
-   * Limpa um timeout específico
+   * Limpa um timeout especÃ­fico
    * @param {number} timeoutId - ID do timeout
    */
   clearTimeout(timeoutId) {
@@ -437,22 +437,22 @@ export class MemoryManager {
       clearTimeout(timeoutId);
       this.timeouts.delete(timeoutId);
       
-      // TASK-A-003: Atualiza estatísticas
+      // TASK-A-003: Atualiza estatÃ­sticas
       this.memoryStats.timeoutsCleared++;
       
-      console.debug(`[MemoryManager] Timeout limpo: ${timeoutId}`);
+      logger.debug(`[MemoryManager] Timeout limpo: ${timeoutId}`);
     }
   }
 
   /**
    * Cria um interval rastreado
-   * @param {Function} callback - Função a ser executada
+   * @param {Function} callback - FunÃ§Ã£o a ser executada
    * @param {number} delay - Intervalo em milissegundos
    * @returns {number} ID do interval
    */
   setInterval(callback, delay) {
     if (this.isDestroyed) {
-      console.warn('[MemoryManager] Tentativa de criar interval após destruição');
+      logger.warn('[MemoryManager] Tentativa de criar interval apÃ³s destruiÃ§Ã£o');
       return null;
     }
 
@@ -460,23 +460,23 @@ export class MemoryManager {
       try {
         callback();
       } catch (error) {
-        console.error('[MemoryManager] Erro em interval callback:', error);
-        // Remove interval problemático
+        logger.error('[MemoryManager] Erro em interval callback:', error);
+        // Remove interval problemÃ¡tico
         this.clearInterval(intervalId);
       }
     }, delay);
     
-    // TASK-A-003: Rastreia com timestamp para detecção de vazamentos
+    // TASK-A-003: Rastreia com timestamp para detecÃ§Ã£o de vazamentos
     this.intervals.set(intervalId, Date.now());
     this.memoryStats.intervalsCreated++;
     
-    console.debug(`[MemoryManager] Interval criado: ${intervalId} (${delay}ms)`);
+    logger.debug(`[MemoryManager] Interval criado: ${intervalId} (${delay}ms)`);
     
     return intervalId;
   }
 
   /**
-   * Limpa um interval específico
+   * Limpa um interval especÃ­fico
    * @param {number} intervalId - ID do interval
    */
   clearInterval(intervalId) {
@@ -484,74 +484,74 @@ export class MemoryManager {
       clearInterval(intervalId);
       this.intervals.delete(intervalId);
       
-      // TASK-A-003: Atualiza estatísticas
+      // TASK-A-003: Atualiza estatÃ­sticas
       this.memoryStats.intervalsCleared++;
       
-      console.debug(`[MemoryManager] Interval limpo: ${intervalId}`);
+      logger.debug(`[MemoryManager] Interval limpo: ${intervalId}`);
     }
   }
 
   /**
-   * Registra uma referência global para limpeza
-   * @param {string} key - Chave da referência
-   * @param {*} value - Valor da referência
+   * Registra uma referÃªncia global para limpeza
+   * @param {string} key - Chave da referÃªncia
+   * @param {*} value - Valor da referÃªncia
    */
   setGlobalRef(key, value) {
     this.globalRefs.set(key, value);
-    console.debug(`[MemoryManager] Referência global registrada: ${key}`);
+    logger.debug(`[MemoryManager] ReferÃªncia global registrada: ${key}`);
   }
 
   /**
-   * Obtém uma referência global
-   * @param {string} key - Chave da referência
-   * @returns {*} Valor da referência
+   * ObtÃ©m uma referÃªncia global
+   * @param {string} key - Chave da referÃªncia
+   * @returns {*} Valor da referÃªncia
    */
   getGlobalRef(key) {
     return this.globalRefs.get(key);
   }
 
   /**
-   * Remove uma referência global
-   * @param {string} key - Chave da referência
+   * Remove uma referÃªncia global
+   * @param {string} key - Chave da referÃªncia
    */
   clearGlobalRef(key) {
     if (this.globalRefs.has(key)) {
       this.globalRefs.delete(key);
-      console.debug(`[MemoryManager] Referência global removida: ${key}`);
+      logger.debug(`[MemoryManager] ReferÃªncia global removida: ${key}`);
     }
   }
 
   /**
    * Registra um callback de limpeza customizado
-   * @param {Function} callback - Função de limpeza
+   * @param {Function} callback - FunÃ§Ã£o de limpeza
    */
   addCleanupCallback(callback) {
     if (typeof callback === 'function') {
       this.cleanupCallbacks.add(callback);
-      console.debug('[MemoryManager] Callback de limpeza registrado');
+      logger.debug('[MemoryManager] Callback de limpeza registrado');
     }
   }
 
   /**
    * Remove um callback de limpeza
-   * @param {Function} callback - Função de limpeza
+   * @param {Function} callback - FunÃ§Ã£o de limpeza
    */
   removeCleanupCallback(callback) {
     this.cleanupCallbacks.delete(callback);
   }
 
   /**
-   * Gera uma chave única para um elemento DOM
+   * Gera uma chave Ãºnica para um elemento DOM
    * @param {Element} element - Elemento DOM
-   * @returns {string} Chave única
+   * @returns {string} Chave Ãºnica
    */
   getElementKey(element) {
     if (!element) return 'unknown';
     
-    // Usa ID se disponível
+    // Usa ID se disponÃ­vel
     if (element.id) return `#${element.id}`;
     
-    // Usa classe se disponível
+    // Usa classe se disponÃ­vel
     if (element.className) {
       const classes = element.className.split(' ').filter(Boolean);
       if (classes.length > 0) return `.${classes[0]}`;
@@ -565,31 +565,31 @@ export class MemoryManager {
    * Handler para beforeunload
    */
   handleBeforeUnload() {
-    console.log('[MemoryManager] Página sendo descarregada, executando limpeza');
+    logger.info('[MemoryManager] PÃ¡gina sendo descarregada, executando limpeza');
     this.cleanup();
   }
 
   /**
-   * Handler para mudança de visibilidade
+   * Handler para mudanÃ§a de visibilidade
    */
   handleVisibilityChange() {
     if (document.hidden) {
-      console.log('[MemoryManager] Página oculta, executando limpeza preventiva');
+      logger.info('[MemoryManager] PÃ¡gina oculta, executando limpeza preventiva');
       this.performMemoryCleanup();
     }
   }
 
   /**
-   * Executa limpeza de memória sem destruir o manager
+   * Executa limpeza de memÃ³ria sem destruir o manager
    */
   performMemoryCleanup() {
-    // Força garbage collection se disponível
+    // ForÃ§a garbage collection se disponÃ­vel
     if (typeof window.gc === 'function') {
       try {
         window.gc();
-        console.log('[MemoryManager] Garbage collection executado');
+        logger.info('[MemoryManager] Garbage collection executado');
       } catch (error) {
-        console.debug('[MemoryManager] Garbage collection não disponível');
+        logger.debug('[MemoryManager] Garbage collection nÃ£o disponÃ­vel');
       }
     }
 
@@ -597,9 +597,9 @@ export class MemoryManager {
     const now = Date.now();
     const oldThreshold = 5 * 60 * 1000; // 5 minutos
 
-    // Nota: Para uma implementação mais robusta, seria necessário rastrear
-    // timestamps de criação dos timeouts/intervals
-    console.log('[MemoryManager] Limpeza de memória executada');
+    // Nota: Para uma implementaÃ§Ã£o mais robusta, seria necessÃ¡rio rastrear
+    // timestamps de criaÃ§Ã£o dos timeouts/intervals
+    logger.info('[MemoryManager] Limpeza de memÃ³ria executada');
   }
 
   /**
@@ -607,16 +607,16 @@ export class MemoryManager {
    */
   cleanup() {
     if (this.isDestroyed) {
-      console.warn('[MemoryManager] Cleanup já executado');
+      logger.warn('[MemoryManager] Cleanup jÃ¡ executado');
       return;
     }
 
-    console.log('[MemoryManager] Iniciando limpeza completa de recursos');
+    logger.info('[MemoryManager] Iniciando limpeza completa de recursos');
 
-    // TASK-A-003: Cancela cleanup forçado se estiver agendado
+    // TASK-A-003: Cancela cleanup forÃ§ado se estiver agendado
     this.cancelForceCleanup();
 
-    // TASK-A-003: Para verificação de vazamentos de memória
+    // TASK-A-003: Para verificaÃ§Ã£o de vazamentos de memÃ³ria
     if (this.memoryCheckInterval) {
       clearInterval(this.memoryCheckInterval);
       this.memoryCheckInterval = null;
@@ -627,7 +627,7 @@ export class MemoryManager {
       try {
         callback();
       } catch (error) {
-        console.error('[MemoryManager] Erro em callback de limpeza:', error);
+        logger.error('[MemoryManager] Erro em callback de limpeza:', error);
       }
     });
 
@@ -643,7 +643,7 @@ export class MemoryManager {
             listenersRemoved++;
           }
         } catch (error) {
-          console.error(`[MemoryManager] Erro ao remover listener ${event} de ${elementKey}:`, error);
+          logger.error(`[MemoryManager] Erro ao remover listener ${event} de ${elementKey}:`, error);
         }
       });
     });
@@ -655,7 +655,7 @@ export class MemoryManager {
         clearTimeout(timeoutId);
         timeoutsCleared++;
       } catch (error) {
-        console.error(`[MemoryManager] Erro ao limpar timeout ${timeoutId}:`, error);
+        logger.error(`[MemoryManager] Erro ao limpar timeout ${timeoutId}:`, error);
       }
     });
 
@@ -666,20 +666,20 @@ export class MemoryManager {
         clearInterval(intervalId);
         intervalsCleared++;
       } catch (error) {
-        console.error(`[MemoryManager] Erro ao limpar interval ${intervalId}:`, error);
+        logger.error(`[MemoryManager] Erro ao limpar interval ${intervalId}:`, error);
       }
     });
 
-    // Limpa referências globais
+    // Limpa referÃªncias globais
     this.globalRefs.clear();
 
-    // TASK-A-003: Limpa coleções e WeakMap
+    // TASK-A-003: Limpa coleÃ§Ãµes e WeakMap
     this.eventListeners.clear();
     this.timeouts.clear();
     this.intervals.clear();
     this.cleanupCallbacks.clear();
     
-    // Limpa WeakMap (não há método clear, mas as referências serão coletadas pelo GC)
+    // Limpa WeakMap (nÃ£o hÃ¡ mÃ©todo clear, mas as referÃªncias serÃ£o coletadas pelo GC)
     this.eventListenersWeakMap = new WeakMap();
 
     // TASK-A-003: Remove listeners globais melhorados
@@ -691,20 +691,20 @@ export class MemoryManager {
       window.removeEventListener('blur', this.scheduleForceCleanup);
       window.removeEventListener('focus', this.cancelForceCleanup);
     } catch (error) {
-      console.error('[MemoryManager] Erro ao remover listeners globais:', error);
+      logger.error('[MemoryManager] Erro ao remover listeners globais:', error);
     }
 
-    // TASK-A-003: Atualiza estatísticas finais
+    // TASK-A-003: Atualiza estatÃ­sticas finais
     this.memoryStats.listenersRemoved += listenersRemoved;
     this.memoryStats.timeoutsCleared += timeoutsCleared;
     this.memoryStats.intervalsCleared += intervalsCleared;
     this.memoryStats.cleanupCount++;
 
-    // Executa garbage collection final se disponível
+    // Executa garbage collection final se disponÃ­vel
     this.performMemoryCleanup();
 
-    // TASK-A-003: Log estatísticas finais
-    console.log('[MemoryManager] Estatísticas finais de limpeza:', {
+    // TASK-A-003: Log estatÃ­sticas finais
+    logger.info('[MemoryManager] EstatÃ­sticas finais de limpeza:', {
       listenersRemoved,
       timeoutsCleared,
       intervalsCleared,
@@ -712,12 +712,12 @@ export class MemoryManager {
     });
 
     this.isDestroyed = true;
-    console.log('[MemoryManager] Limpeza completa finalizada');
+    logger.info('[MemoryManager] Limpeza completa finalizada');
   }
 
   /**
-   * Obtém estatísticas de uso de recursos
-   * @returns {object} Estatísticas
+   * ObtÃ©m estatÃ­sticas de uso de recursos
+   * @returns {object} EstatÃ­sticas
    */
   getStats() {
     return {
@@ -731,20 +731,20 @@ export class MemoryManager {
   }
 
   /**
-   * Log das estatísticas atuais
+   * Log das estatÃ­sticas atuais
    */
   logStats() {
     const stats = this.getStats();
-    console.log('[MemoryManager] Estatísticas:', stats);
+    logger.info('[MemoryManager] EstatÃ­sticas:', stats);
   }
 }
 
-// Instância singleton global
+// InstÃ¢ncia singleton global
 let globalMemoryManager = null;
 
 /**
- * Obtém a instância global do MemoryManager
- * @returns {MemoryManager} Instância do MemoryManager
+ * ObtÃ©m a instÃ¢ncia global do MemoryManager
+ * @returns {MemoryManager} InstÃ¢ncia do MemoryManager
  */
 export function getMemoryManager() {
   if (!globalMemoryManager) {
@@ -754,7 +754,7 @@ export function getMemoryManager() {
 }
 
 /**
- * Destrói a instância global do MemoryManager
+ * DestrÃ³i a instÃ¢ncia global do MemoryManager
  */
 export function destroyMemoryManager() {
   if (globalMemoryManager) {
@@ -762,3 +762,4 @@ export function destroyMemoryManager() {
     globalMemoryManager = null;
   }
 }
+
