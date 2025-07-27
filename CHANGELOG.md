@@ -44,6 +44,7 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 - **TASK-A-006**: Configuração dinâmica de parâmetros de rate limiting
 - **TASK-A-006**: Limpeza automática de cache expirado a cada 5 minutos
 - **TASK-A-006**: Funções de debugging para análise de comportamento da API
+- **TASK-A-007**: Configuração otimizada da sidebar_action para Firefox com open_at_install: false
 
 ### Changed
 - **TASK-A-001**: Debouncing do MutationObserver aumentado de 250ms para 500ms para melhor performance
