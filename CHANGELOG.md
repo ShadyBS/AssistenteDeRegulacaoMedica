@@ -12,17 +12,38 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 - **TASK-A-001**: Lazy loading que só executa verificações em elementos visíveis
 - **TASK-A-001**: Relatórios automáticos de performance a cada 5 minutos
 - **TASK-A-001**: Limpeza automática de cache DOM expirado
+- **TASK-A-003**: Sistema WeakMap para rastreamento eficiente de event listeners
+- **TASK-A-003**: Verificação automática de vazamentos de memória a cada 2 minutos
+- **TASK-A-003**: Sistema de cleanup forçado em caso de inatividade (30 segundos)
+- **TASK-A-003**: Métricas detalhadas de vazamento de memória com ratio de leak
+- **TASK-A-003**: Detecção e limpeza automática de timeouts/intervals antigos (>5 minutos)
+- **TASK-A-003**: Cleanup automático em eventos de erro e unhandledrejection
+- **TASK-A-003**: Sistema de rastreamento com timestamps para todos os recursos
 
 ### Changed
 - **TASK-A-001**: Debouncing do MutationObserver aumentado de 250ms para 500ms para melhor performance
 - **TASK-A-001**: Content script otimizado com cache de seletores DOM
 - **TASK-A-001**: Função checkMaintenanceTab otimizada com métricas de performance
 - **TASK-A-001**: Sistema de cleanup melhorado para incluir novos observers
+- **TASK-A-003**: MemoryManager refatorado com sistema duplo WeakMap + Map para máxima eficiência
+- **TASK-A-003**: Event listeners agora rastreados com timestamps para detecção de vazamentos
+- **TASK-A-003**: Timeouts e intervals rastreados com Map em vez de Set para incluir timestamps
+- **TASK-A-003**: Cleanup melhorado com contagem detalhada de recursos removidos
+
+### Fixed
+- **TASK-A-003**: Corrigidos memory leaks em event listeners através de WeakMap
+- **TASK-A-003**: Implementado cleanup automático em cenários de erro
+- **TASK-A-003**: Corrigida remoção inadequada de listeners em casos edge
+- **TASK-A-003**: Implementada verificação de vazamentos com threshold configurável (100 listeners)
+- **TASK-A-003**: Corrigido cleanup de listeners globais em todos os cenários
 
 ### Performance
 - **TASK-A-001**: Tempo de resposta do content script otimizado para < 100ms
 - **TASK-A-001**: Redução significativa de lag em páginas SIGSS com muitas mutações DOM
 - **TASK-A-001**: Melhoria de 30%+ na performance através de otimizações implementadas
+- **TASK-A-003**: Memory usage estável durante uso prolongado através de cleanup automático
+- **TASK-A-003**: Eliminação de vazamentos de memória em event listeners
+- **TASK-A-003**: Otimização de garbage collection com WeakMap para elementos DOM
 
 ### Security
 - **CRÍTICO**: Eliminados imports dinâmicos inseguros em api.js e ui/search.js, substituídos por imports estáticos
