@@ -12,7 +12,7 @@
   ],
   "host_permissions": ["*://*/sigss/*"],
   "content_security_policy": {
-    "extension_pages": "script-src 'self'; object-src 'self'; connect-src http://* https://*;"
+    "extension_pages": "script-src 'self'; object-src 'none'; connect-src 'self' https://*.gov.br https://*.mv.com.br https://*.cloudmv.com.br http://localhost:* http://127.0.0.1:*; base-uri 'self'; frame-ancestors 'none';"
   },
   "options_ui": {
     "page": "options.html",

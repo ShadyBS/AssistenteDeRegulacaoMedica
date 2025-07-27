@@ -4,6 +4,8 @@
 import * as API from "../api.js";
 import * as Utils from "../utils.js";
 import { store } from "../store.js";
+// ✅ SEGURANÇA: Import estático para evitar dynamic imports inseguros
+import { validateCPF, validateCNS, validateBrazilianDate, validateSearchTerm } from '../validation.js';
 
 let searchInput;
 let searchResultsList;
@@ -128,8 +130,7 @@ const handleSearchInput = Utils.debounce(async () => {
     return;
   }
   
-  // Import validation utilities
-  const { validateCPF, validateCNS, validateBrazilianDate, validateSearchTerm } = await import('../validation.js');
+  // ✅ SEGURANÇA: Usando imports estáticos já disponíveis no topo do arquivo
   
   // Detect input type and apply specific validation
   const inputType = detectInputType(searchTerm);

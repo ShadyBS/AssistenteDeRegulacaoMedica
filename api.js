@@ -236,12 +236,10 @@ export async function fetchRegulationDetails({ reguIdp, reguIds }) {
 }
 
 
-export async function searchPatients(term) {
-  // Import validation utilities
-  const { validateSearchTerm, sanitizeSearchTerm } = await import(
-    "./validation.js"
-  );
+// ✅ SEGURANÇA: Import estático para evitar dynamic imports inseguros
+import { validateSearchTerm, sanitizeSearchTerm, validateCPF, validateCNS } from "./validation.js";
 
+export async function searchPatients(term) {
   // Early exit for empty terms
   if (!term || term.length < 1) return [];
 
@@ -490,8 +488,7 @@ export async function fetchCadsusData({ cpf, cns, skipValidation = false }) {
 
   // Só validar se não for uma busca interna (quando skipValidation for false)
   if (!skipValidation) {
-    // Import validation utilities
-    const { validateCPF, validateCNS } = await import("./validation.js");
+    // ✅ SEGURANÇA: Usando imports estáticos já disponíveis no topo do arquivo
 
     // Validate CPF if provided
     if (cpf) {

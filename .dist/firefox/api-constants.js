@@ -369,7 +369,9 @@ export const API_UTILS = {
 // Configuração de segurança para validação de domínios
 export const SECURITY_CONFIG = {
   ALLOWED_DOMAINS: [
-    'sigss.saude.gov.br',
+    'gov.br',
+    'mv.com.br',
+    'cloudmv.com.br',
     'localhost',
     '127.0.0.1'
   ],

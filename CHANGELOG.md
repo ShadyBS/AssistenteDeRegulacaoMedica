@@ -6,9 +6,19 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 ## [Unreleased]
 
 ### Security
-- Corrigido uso de innerHTML sem sanitização em sidebar.js para prevenir vulnerabilidades XSS
-- Implementado fallback seguro para API browser em content-script.js para compatibilidade cross-browser
-- Adicionado timeout e retry logic em processamento em lote da API para prevenir falhas em sistemas com muitos dados
+- **CRÍTICO**: Eliminados imports dinâmicos inseguros em api.js e ui/search.js, substituídos por imports estáticos
+- **CRÍTICO**: Implementada validação de origem em message passing no background.js para prevenir mensagens maliciosas
+- **CRÍTICO**: Implementada criptografia AES-GCM para dados médicos sensíveis no storage local
+- **CRÍTICO**: Implementada CSP restritiva nos manifests, limitando connect-src apenas a domínios SIGSS autorizados
+- Implementado sistema de TTL automático para dados médicos com limpeza periódica
+- Adicionado sistema de validação de estrutura de mensagens no background script
+- Implementada whitelist de origens autorizadas para content scripts
+
+### Added
+- Módulo crypto-utils.js com criptografia segura para dados médicos
+- Sistema de limpeza automática de dados expirados a cada 30 minutos
+- Validação rigorosa de origem para todas as mensagens entre componentes
+- Logging de segurança para tentativas de acesso não autorizado
 
 ### Fixed
 - Corrigido problema crítico de compatibilidade com API browser em content-script.js
@@ -16,8 +26,10 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 - Implementada sanitização rigorosa de conteúdo em modais para segurança
 
 ### Changed
+- CSP atualizada para permitir apenas domínios gov.br, mv.com.br, cloudmv.com.br e localhost
+- Dados médicos agora são criptografados antes do armazenamento com TTL de 30 minutos
+- Imports dinâmicos substituídos por imports estáticos para melhor segurança
 - Otimizado sistema de processamento em lote com delay exponencial entre tentativas
-- Melhorada robustez do sistema de API com tratamento de timeout
 
 ## [3.3.15] - 2025-01-17
 
