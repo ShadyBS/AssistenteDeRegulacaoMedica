@@ -6,6 +6,16 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 ## [Unreleased]
 
 ### Added
+- **TASK-M-001**: Sistema de logging estruturado centralizado com níveis (debug, info, warn, error)
+- **TASK-M-001**: Rotação automática de logs com TTL configurável e limpeza periódica
+- **TASK-M-001**: Export de logs para debugging em formatos JSON, CSV e texto
+- **TASK-M-001**: Timestamps e contexto estruturado para todos os logs
+- **TASK-M-001**: Compatibilidade cross-browser para storage de logs
+- **TASK-M-001**: Loggers específicos por componente com contexto automático
+- **TASK-M-001**: Configuração dinâmica de níveis de log e parâmetros
+- **TASK-M-001**: Estatísticas de logs com contadores por nível e componente
+- **TASK-M-001**: Sistema de flush automático e manual para persistência
+- **TASK-M-001**: Integração com sistema de utils para logging de timeline
 - **TASK-A-001**: Sistema de métricas de performance para content script
 - **TASK-A-001**: Cache DOM otimizado com TTL de 5 segundos para melhor performance
 - **TASK-A-001**: IntersectionObserver para detectar elementos visíveis

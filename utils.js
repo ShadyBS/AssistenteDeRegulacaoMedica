@@ -3,6 +3,10 @@
  */
 
 import { CONFIG, getTimeout, getCSSClass, getUIConfig } from "./config.js";
+import { createComponentLogger } from "./logger.js";
+
+// Logger específico para utilitários
+const logger = createComponentLogger('Utils');
 
 /**
  * Atraso na execução de uma função após o utilizador parar de digitar.
@@ -410,8 +414,16 @@ export function normalizeTimelineData(apiData, options = {}) {
   // Final sort to ensure correct order
   eventHeap.sort((a, b) => b.sortableDate - a.sortableDate);
 
-  // Log processing statistics
-  console.log(`Timeline processing completed: ${processedCount} events processed, ${rejectedCount} rejected, ${eventHeap.length} in final timeline`);
+  // Log processing statistics usando sistema estruturado
+  logger.info('Timeline processing completed', {
+    operation: 'normalizeTimelineData',
+    processedCount,
+    rejectedCount,
+    finalTimelineLength: eventHeap.length,
+    maxEvents,
+    batchSize,
+    enableGC
+  });
 
   // Final cleanup and memory optimization
   if (enableGC) {

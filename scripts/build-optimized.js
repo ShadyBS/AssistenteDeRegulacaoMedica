@@ -52,6 +52,7 @@ const EXTENSION_FILES = {
     'store.js',
     'config.js',
     'renderers.js',
+    'logger.js',
     
     // Managers necessários para funcionamento
     'MemoryManager.js',
