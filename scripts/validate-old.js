@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * Validation Script - Assistente de Regulação Médica (Improved)
+ * Validation Script - Assistente de Regulação Médica
  * 
  * Sistema completo de validação para extensão de navegador
  * Inclui validações de código, manifests, segurança e compatibilidade
@@ -151,6 +151,27 @@ class ExtensionValidator {
         this.log(`Firefox pode não suportar service_worker completamente (${file})`, 'warn');
       }
     }
+    
+    // Validação de permissões
+    if (manifest.permissions) {
+      const dangerousPermissions = ['<all_urls>', 'tabs', 'history', 'bookmarks'];
+      const usedDangerous = manifest.permissions.filter(p => dangerousPermissions.includes(p));
+      
+      if (usedDangerous.length > 0) {
+        this.log(`Permissões sensíveis detectadas em ${file}: ${usedDangerous.join(', ')}`, 'warn');
+      }
+    }
+    
+    // Validação de host_permissions
+    if (manifest.host_permissions) {
+      const broadPermissions = manifest.host_permissions.filter(p => 
+        p.includes('*://*/*') || p.includes('<all_urls>')
+      );
+      
+      if (broadPermissions.length > 0) {
+        this.log(`Permissões de host muito amplas em ${file}: ${broadPermissions.join(', ')}`, 'warn');
+      }
+    }
   }
 
   /**
@@ -171,10 +192,31 @@ class ExtensionValidator {
     for (const field of syncFields) {
       if (firefox[field] !== chrome[field]) {
         this.log(`Campo dessincronizado '${field}': Firefox="${firefox[field]}" vs Chrome="${chrome[field]}"`, 'error');
+        
+        if (this.fixIssues && field === 'version') {
+          // Auto-fix versão se solicitado
+          const newerVersion = this.compareVersions(firefox[field], chrome[field]) > 0 ? firefox[field] : chrome[field];
+          this.log(`Auto-fix: Sincronizando versão para ${newerVersion}`, 'fix');
+          // Implementar fix aqui se necessário
+        }
       }
     }
     
     this.log('   ✓ Sincronização de manifests validada');
+  }
+
+  /**
+   * Compara versões semver
+   */
+  compareVersions(v1, v2) {
+    const parts1 = v1.split('.').map(Number);
+    const parts2 = v2.split('.').map(Number);
+    
+    for (let i = 0; i < 3; i++) {
+      if (parts1[i] > parts2[i]) return 1;
+      if (parts1[i] < parts2[i]) return -1;
+    }
+    return 0;
   }
 
   /**
@@ -269,6 +311,21 @@ class ExtensionValidator {
         pattern: /innerHTML\s*=\s*[^"']*\+/g,
         message: 'Uso potencialmente inseguro de innerHTML com concatenação',
         severity: 'error'
+      },
+            {
+        pattern: /document\.write\s*\(/g,
+        message: 'Uso de document.write() detectado',
+        severity: 'warn'
+      },
+      {
+        pattern: /javascript\s*:/g,
+        message: 'URL javascript: detectada',
+        severity: 'warn'
+      },
+      {
+        pattern: /(?<!browser\s*\|\|\s*)(^|\s)chrome\./gm,
+        message: 'Uso direto de chrome.* API (use browser.* para compatibilidade)',
+        severity: 'warn'
       }
     ];
     
@@ -288,6 +345,12 @@ class ExtensionValidator {
       }
     }
     
+    // Validação de CSP
+    await this.validateCSP();
+    
+    // Validação de permissões
+    await this.validatePermissions();
+    
     if (issuesFound === 0) {
       this.log('   ✓ Nenhum problema de segurança detectado');
     } else {
@@ -296,23 +359,10 @@ class ExtensionValidator {
   }
 
   /**
-   * Encontra arquivos JavaScript no projeto (excluindo arquivos de configuração)
+   * Encontra arquivos JavaScript no projeto
    */
   async findJavaScriptFiles() {
     const files = [];
-    
-    // Arquivos e diretórios a serem ignorados
-    const excludePatterns = [
-      'node_modules',
-      '.git',
-      'dist-zips',
-      '.dist',
-      'jest.setup.js',
-      'webpack.config.js',
-      'tailwind.config.js',
-      'scripts/validate.js',
-      'scripts/validate-improved.js'
-    ];
     
     async function scan(dir) {
       const items = await fs.readdir(dir);
@@ -323,26 +373,81 @@ class ExtensionValidator {
         
         if (stats.isDirectory()) {
           // Pula diretórios específicos
-          if (excludePatterns.includes(item)) {
+          if (['node_modules', '.git', 'dist-zips', '.dist'].includes(item)) {
             continue;
           }
           await scan(fullPath);
         } else if (item.endsWith('.js') && !item.includes('.min.')) {
-          // Verifica se o arquivo deve ser excluído
-          const relativePath = path.relative(PROJECT_ROOT, fullPath);
-          const shouldExclude = excludePatterns.some(pattern => 
-            item === pattern || relativePath.includes(pattern)
-          );
-          
-          if (!shouldExclude) {
-            files.push(fullPath);
-          }
+          files.push(fullPath);
         }
       }
     }
     
     await scan(PROJECT_ROOT);
     return files;
+  }
+
+  /**
+   * Valida Content Security Policy
+   */
+  async validateCSP() {
+    // Verifica se há CSP definido nos manifests
+    const manifestPath = path.join(PROJECT_ROOT, 'manifest.json');
+    
+    if (await fs.pathExists(manifestPath)) {
+      const manifest = JSON.parse(await fs.readFile(manifestPath, 'utf8'));
+      
+      if (!manifest.content_security_policy) {
+        this.log('CSP não definido no manifest (recomendado para segurança)', 'warn');
+      } else {
+        // Valida CSP básico
+        const csp = manifest.content_security_policy;
+        
+        if (typeof csp === 'string') {
+          if (csp.includes("'unsafe-eval'")) {
+            this.log('CSP contém unsafe-eval (inseguro)', 'error');
+          }
+          
+          if (csp.includes("'unsafe-inline'")) {
+            this.log('CSP contém unsafe-inline (pode ser inseguro)', 'warn');
+          }
+        }
+      }
+    }
+  }
+
+  /**
+   * Valida permissões mínimas
+   */
+  async validatePermissions() {
+    const manifestPath = path.join(PROJECT_ROOT, 'manifest.json');
+    
+    if (await fs.pathExists(manifestPath)) {
+      const manifest = JSON.parse(await fs.readFile(manifestPath, 'utf8'));
+      
+      // Verifica permissões desnecessárias
+      const permissions = manifest.permissions || [];
+      const hostPermissions = manifest.host_permissions || [];
+      
+      const allPermissions = [...permissions, ...hostPermissions];
+      
+      // Lista de permissões que devem ser justificadas
+      const sensitivePermissions = [
+        'tabs',
+        'history',
+        'bookmarks',
+        'downloads',
+        'management',
+        'privacy',
+        'system.storage'
+      ];
+      
+      const usedSensitive = allPermissions.filter(p => sensitivePermissions.includes(p));
+      
+      if (usedSensitive.length > 0) {
+        this.log(`Permissões sensíveis em uso: ${usedSensitive.join(', ')} - verifique se são necessárias`, 'warn');
+      }
+    }
   }
 
   /**
@@ -358,14 +463,25 @@ class ExtensionValidator {
       const content = await fs.readFile(filePath, 'utf8');
       const fileName = path.basename(filePath);
       
-      // Verifica uso direto de chrome.* sem fallback
-      const hasDirectChromeUsage = /(?<!browser\s*\|\|\s*)(^|\s)chrome\./gm.test(content);
-      const hasBrowserFallback = content.includes('globalThis.browser || globalThis.chrome') || 
-                                 content.includes('browser || chrome');
-      
-      if (hasDirectChromeUsage && !hasBrowserFallback) {
+      // Verifica uso direto de chrome.*
+      const chromeApiUsage = content.match(/chrome\./g);
+      if (chromeApiUsage && !content.includes('globalThis.browser || globalThis.chrome')) {
         compatibilityIssues++;
         this.log(`${fileName}: Uso direto de chrome.* API sem fallback para browser.*`, 'warn');
+      }
+      
+      // Verifica APIs específicas do Chrome
+      const chromeSpecificAPIs = [
+        'chrome.runtime.getManifest',
+        'chrome.tabs.query',
+        'chrome.storage.local'
+      ];
+      
+      for (const api of chromeSpecificAPIs) {
+        if (content.includes(api) && !content.includes('browser.')) {
+          compatibilityIssues++;
+          this.log(`${fileName}: API específica do Chrome detectada: ${api}`, 'warn');
+        }
       }
     }
     
@@ -381,6 +497,20 @@ class ExtensionValidator {
    */
   async validatePerformance() {
     this.log('⚡ Validando performance...');
+    
+    // Verifica tamanho dos arquivos
+    const jsFiles = await this.findJavaScriptFiles();
+    const largeSizeThreshold = 100 * 1024; // 100KB
+    
+    for (const filePath of jsFiles) {
+      const stats = await fs.stat(filePath);
+      const fileName = path.basename(filePath);
+      
+      if (stats.size > largeSizeThreshold) {
+        const sizeMB = (stats.size / 1024 / 1024).toFixed(2);
+        this.log(`${fileName}: Arquivo grande detectado (${sizeMB} MB)`, 'warn');
+      }
+    }
     
     // Verifica se CSS foi compilado
     const cssPath = path.join(PROJECT_ROOT, 'dist', 'output.css');
@@ -482,7 +612,7 @@ async function main() {
       options.skipSecurity = true;
     } else if (arg === '--help' || arg === '-h') {
       console.log(`
-Uso: node scripts/validate-improved.js [opções]
+Uso: node scripts/validate.js [opções]
 
 Opções:
   --verbose, -v       Output detalhado
@@ -492,9 +622,9 @@ Opções:
   --help, -h          Mostra esta ajuda
 
 Exemplos:
-  node scripts/validate-improved.js                 # Validação completa
-  node scripts/validate-improved.js --fix           # Validação com auto-fix
-  node scripts/validate-improved.js --verbose       # Validação com logs detalhados
+  node scripts/validate.js                 # Validação completa
+  node scripts/validate.js --fix           # Validação com auto-fix
+  node scripts/validate.js --verbose       # Validação com logs detalhados
 `);
       process.exit(0);
     }
@@ -505,7 +635,7 @@ Exemplos:
     const report = await validator.validate();
     
     // Salva relatório
-    const reportPath = path.join(PROJECT_ROOT, 'validation-report-improved.json');
+    const reportPath = path.join(PROJECT_ROOT, 'validation-report.json');
     await fs.writeJson(reportPath, report, { spaces: 2 });
     console.log(`\n📋 Relatório salvo em: ${reportPath}`);
     

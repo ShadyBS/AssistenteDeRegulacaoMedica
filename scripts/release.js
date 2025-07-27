@@ -531,24 +531,24 @@ class ReleaseManager {
     
     // Chrome Web Store
     try {
-      if (process.env.CHROME_EXTENSION_ID) {
-        this.log('   🔵 Fazendo upload para Chrome Web Store...');
-        
-        const chromeUploader = new StoreUploader({
-          target: 'chrome',
-          autoPublish: this.autoPublish,
-          verbose: this.verbose
-        });
-        
-        results.chrome = await chromeUploader.upload();
-        this.log(`   ✓ Chrome Web Store: ${results.chrome.success ? 'Sucesso' : 'Falha'}`, 'success');
-        
-      } else {
-        this.log('   ⚠️  Chrome Web Store: Variáveis de ambiente não configuradas', 'warn');
-      }
+    if (process.env.CHROME_EXTENSION_ID) {
+    this.log('   🔵 Fazendo upload para Chrome Web Store...');
+    
+    const chromeUploader = new StoreUploader({
+    target: 'chrome',
+    autoPublish: this.autoPublish,
+    verbose: this.verbose
+    });
+    
+    results.chrome = await chromeUploader.upload();
+    this.log(`   ✓ Chrome Web Store: ${results.chrome.success ? 'Sucesso' : 'Falha'}`, 'success');
+    
+    } else {
+    this.log('   ⚠️  Chrome Web Store: Variáveis de ambiente não configuradas', 'warn');
+    }
     } catch (error) {
-      this.log(`   ❌ Chrome Web Store: ${error.message}`, 'error');
-      results.chrome = { success: false, error: error.message };
+    this.log(`   ❌ Chrome Web Store: ${error.message}`, 'error');
+    results.chrome = { success: false, error: error.message };
     }
     
     // Firefox Add-ons

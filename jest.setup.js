@@ -6,8 +6,8 @@
 
 // === BROWSER EXTENSION MOCKS ===
 
-// Mock chrome/browser APIs
-global.chrome = {
+// Mock browser APIs (compatível com Firefox e Chrome)
+const mockBrowserAPI = {
   runtime: {
     sendMessage: jest.fn(),
     onMessage: {
@@ -50,13 +50,16 @@ global.chrome = {
   }
 };
 
-// Browser API (Firefox)
-global.browser = global.chrome;
+// Browser API (Firefox) - API principal
+global.browser = mockBrowserAPI;
 
-// GlobalThis polyfill
+// Chrome API (Chrome/Edge) - fallback para compatibilidade
+global.chrome = mockBrowserAPI;
+
+// GlobalThis polyfill com API compatível
 global.globalThis = global.globalThis || global;
-global.globalThis.chrome = global.chrome;
 global.globalThis.browser = global.browser;
+global.globalThis.chrome = global.chrome;
 
 // === DOM MOCKS ===
 
@@ -231,7 +234,9 @@ global.mockFetch = (response, options = {}) => {
 
 // Helper para mock de storage
 global.mockStorage = (data = {}) => {
-  global.chrome.storage.local.get.mockImplementation((keys) => {
+  const api = global.browser || global.chrome;
+  
+  api.storage.local.get.mockImplementation((keys) => {
     if (typeof keys === 'string') {
       return Promise.resolve({ [keys]: data[keys] });
     }
@@ -249,7 +254,7 @@ global.mockStorage = (data = {}) => {
     return Promise.resolve(data);
   });
   
-  global.chrome.storage.local.set.mockImplementation((newData) => {
+  api.storage.local.set.mockImplementation((newData) => {
     Object.assign(data, newData);
     return Promise.resolve();
   });

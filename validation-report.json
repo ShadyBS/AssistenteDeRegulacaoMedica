@@ -1,8 +1,8 @@
 {
-  "timestamp": "2025-07-26T23:21:30.961Z",
+  "timestamp": "2025-07-26T23:57:17.073Z",
   "summary": {
     "errors": 0,
-    "warnings": 11,
+    "warnings": 10,
     "fixes": 0,
     "status": "PASS"
   },
@@ -14,9 +14,8 @@
       "jest.setup.js: Uso direto de chrome.* API (use browser.* para compatibilidade) (2 ocorrência(s))",
       "release.js: Uso direto de chrome.* API (use browser.* para compatibilidade) (1 ocorrência(s))",
       "validate.js: Uso de document.write() detectado (1 ocorrência(s))",
-      "validate.js: URL javascript: detectada (2 ocorrência(s))",
+      "validate.js: URL javascript: detectada (1 ocorrência(s))",
       "validate.js: Uso direto de chrome.* API (use browser.* para compatibilidade) (6 ocorrência(s))",
-      "sidebar.js: Uso de document.write() detectado (3 ocorrência(s))",
       "jest.setup.js: Uso direto de chrome.* API sem fallback para browser.*",
       "jest.setup.js: API específica do Chrome detectada: chrome.storage.local",
       "release.js: Uso direto de chrome.* API sem fallback para browser.*"

@@ -1032,7 +1032,12 @@ async function updateRecentPatients(patientData) {
 async function handleViewExamResult(button) {
   const { idp, ids } = button.dataset;
   const newTab = window.open("", "_blank");
-  newTab.document.write("Carregando resultado do exame...");
+  
+  // Criar elemento de loading de forma segura
+  const loadingElement = document.createElement("p");
+  loadingElement.textContent = "Carregando resultado do exame...";
+  newTab.document.body.appendChild(loadingElement);
+  
   try {
     const filePath = await API.fetchResultadoExame({ idp, ids });
     const baseUrl = await API.getBaseUrl();
@@ -1060,7 +1065,11 @@ async function handleViewExamResult(button) {
 async function handleViewDocument(button) {
   const { idp, ids } = button.dataset;
   const newTab = window.open("", "_blank");
-  newTab.document.write("Carregando documento...");
+  
+  // Criar elemento de loading de forma segura
+  const loadingElement = document.createElement("p");
+  loadingElement.textContent = "Carregando documento...";
+  newTab.document.body.appendChild(loadingElement);
 
   try {
     const docUrl = await API.fetchDocumentUrl({ idp, ids });
@@ -1086,7 +1095,11 @@ async function handleViewDocument(button) {
 async function handleViewRegulationAttachment(button) {
   const { idp, ids } = button.dataset;
   const newTab = window.open("", "_blank");
-  newTab.document.write("Carregando anexo da regulação...");
+  
+  // Criar elemento de loading de forma segura
+  const loadingElement = document.createElement("p");
+  loadingElement.textContent = "Carregando anexo da regulação...";
+  newTab.document.body.appendChild(loadingElement);
 
   try {
     const fileUrl = await API.fetchRegulationAttachmentUrl({ idp, ids });
