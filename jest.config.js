@@ -84,7 +84,7 @@ module.exports = {
   },
   
   // Module name mapping
-  moduleNameMapping: {
+  moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/$1',
     '^@ui/(.*)$': '<rootDir>/ui/$1'
   },

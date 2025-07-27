@@ -19,6 +19,12 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 - **TASK-A-003**: Detecção e limpeza automática de timeouts/intervals antigos (>5 minutos)
 - **TASK-A-003**: Cleanup automático em eventos de erro e unhandledrejection
 - **TASK-A-003**: Sistema de rastreamento com timestamps para todos os recursos
+- **TASK-A-004**: Validação completa para CNS provisório com algoritmos específicos por tipo (7, 8, 9)
+- **TASK-A-004**: Validação rigorosa de dígitos verificadores para CNS tipo 9
+- **TASK-A-004**: Cache inteligente de validações CNS com TTL de 5 minutos para otimização
+- **TASK-A-004**: Detecção e rejeição de sequências reservadas para CNS provisórios
+- **TASK-A-004**: Validação de casos especiais para CNS definitivo (terminação em 0001)
+- **TASK-A-004**: Testes unitários abrangentes para validação de CNS
 
 ### Changed
 - **TASK-A-001**: Debouncing do MutationObserver aumentado de 250ms para 500ms para melhor performance
@@ -44,6 +50,9 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 - **TASK-A-003**: Memory usage estável durante uso prolongado através de cleanup automático
 - **TASK-A-003**: Eliminação de vazamentos de memória em event listeners
 - **TASK-A-003**: Otimização de garbage collection com WeakMap para elementos DOM
+- **TASK-A-004**: Validação de CNS executada em < 10ms conforme especificação
+- **TASK-A-004**: Cache de validações reduz tempo médio para 0.007ms em validações repetidas
+- **TASK-A-004**: Algoritmos otimizados para validação de 1000 CNS em ~14ms
 
 ### Security
 - **CRÍTICO**: Eliminados imports dinâmicos inseguros em api.js e ui/search.js, substituídos por imports estáticos

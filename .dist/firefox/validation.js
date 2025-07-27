@@ -74,9 +74,176 @@ export function validateCPF(cpf) {
 }
 
 /**
- * Valida CNS (Cartão Nacional de Saúde)
- * @param {string} cns - CNS a ser validado
+ * Cache de validações CNS para otimização de performance
+ * Armazena últimas 100 validações por 5 minutos
+ */
+const CNS_VALIDATION_CACHE = new Map();
+const CNS_CACHE_TTL = 5 * 60 * 1000; // 5 minutos
+const CNS_CACHE_MAX_SIZE = 100;
+
+/**
+ * Limpa cache de validações CNS expiradas
+ */
+function cleanCNSCache() {
+  const now = Date.now();
+  for (const [key, value] of CNS_VALIDATION_CACHE.entries()) {
+    if (now - value.timestamp > CNS_CACHE_TTL) {
+      CNS_VALIDATION_CACHE.delete(key);
+    }
+  }
+  
+  // Limita tamanho do cache
+  if (CNS_VALIDATION_CACHE.size > CNS_CACHE_MAX_SIZE) {
+    const entries = Array.from(CNS_VALIDATION_CACHE.entries());
+    entries.sort((a, b) => a[1].timestamp - b[1].timestamp);
+    const toDelete = entries.slice(0, entries.length - CNS_CACHE_MAX_SIZE);
+    toDelete.forEach(([key]) => CNS_VALIDATION_CACHE.delete(key));
+  }
+}
+
+/**
+ * Valida CNS definitivo (inicia com 1 ou 2) com algoritmo completo
+ * @param {string} cleanCNS - CNS limpo (apenas dígitos)
  * @returns {object} { valid: boolean, message?: string }
+ */
+function validateDefinitiveCNS(cleanCNS) {
+  // Verifica sequências inválidas (todos os dígitos iguais)
+  if (/^(\d)\1{14}$/.test(cleanCNS)) {
+    return { valid: false, message: 'CNS com todos os dígitos iguais é inválido' };
+  }
+
+  // Algoritmo oficial do CNS definitivo
+  let sum = 0;
+  for (let i = 0; i < 11; i++) {
+    sum += parseInt(cleanCNS[i]) * (15 - i);
+  }
+  
+  const remainder = sum % 11;
+  let dv = 11 - remainder;
+  
+  if (dv === 11) {
+    dv = 0;
+  }
+  
+  if (dv === 10) {
+    // Caso especial: quando DV seria 10, soma-se 2 e recalcula
+    sum += 2;
+    const newRemainder = sum % 11;
+    dv = 11 - newRemainder;
+    if (dv === 11) dv = 0;
+    
+    // Verifica se os últimos 4 dígitos são 0001
+    const lastFourDigits = cleanCNS.substring(11);
+    if (lastFourDigits !== '0001') {
+      return { valid: false, message: 'CNS inválido (dígitos verificadores incorretos para caso especial)' };
+    }
+  } else {
+    // Caso normal: verifica os dois primeiros dígitos verificadores
+    const expectedDV = cleanCNS.substring(11, 13);
+    const calculatedDV = dv.toString().padStart(2, '0');
+    
+    if (expectedDV !== calculatedDV) {
+      return { valid: false, message: 'CNS inválido (dígitos verificadores incorretos)' };
+    }
+    
+    // Os dois últimos dígitos devem ser 00 para CNS definitivo normal
+    const lastTwoDigits = cleanCNS.substring(13);
+    if (lastTwoDigits !== '00') {
+      return { valid: false, message: 'CNS definitivo deve terminar com 00' };
+    }
+  }
+
+  return { valid: true };
+}
+
+/**
+ * Valida CNS provisório (inicia com 7, 8 ou 9) com validações específicas
+ * @param {string} cleanCNS - CNS limpo (apenas dígitos)
+ * @returns {object} { valid: boolean, message?: string }
+ */
+function validateProvisionalCNS(cleanCNS) {
+  const firstDigit = cleanCNS[0];
+  
+  // Verifica sequências inválidas (todos os dígitos iguais)
+  if (/^(\d)\1{14}$/.test(cleanCNS)) {
+    return { valid: false, message: 'CNS com todos os dígitos iguais é inválido' };
+  }
+
+  // Validações específicas por tipo de CNS provisório
+  switch (firstDigit) {
+    case '7':
+      // CNS provisório tipo 7: validação de formato específico
+      // Segundo dígito deve estar entre 0-9
+      const secondDigit7 = parseInt(cleanCNS[1]);
+      if (isNaN(secondDigit7)) {
+        return { valid: false, message: 'CNS provisório tipo 7 com formato inválido' };
+      }
+      
+      // Validação adicional: não pode ter padrões específicos inválidos
+      if (cleanCNS.startsWith('70000000000') || cleanCNS.startsWith('79999999999')) {
+        return { valid: false, message: 'CNS provisório tipo 7 com sequência reservada' };
+      }
+      break;
+      
+    case '8':
+      // CNS provisório tipo 8: validação de formato específico
+      const secondDigit8 = parseInt(cleanCNS[1]);
+      if (isNaN(secondDigit8)) {
+        return { valid: false, message: 'CNS provisório tipo 8 com formato inválido' };
+      }
+      
+      // Validação adicional: não pode ter padrões específicos inválidos
+      if (cleanCNS.startsWith('80000000000') || cleanCNS.startsWith('89999999999')) {
+        return { valid: false, message: 'CNS provisório tipo 8 com sequência reservada' };
+      }
+      break;
+      
+    case '9':
+      // CNS provisório tipo 9: validação de formato específico
+      const secondDigit9 = parseInt(cleanCNS[1]);
+      if (isNaN(secondDigit9)) {
+        return { valid: false, message: 'CNS provisório tipo 9 com formato inválido' };
+      }
+      
+      // Validação adicional: não pode ter padrões específicos inválidos
+      if (cleanCNS.startsWith('90000000000') || cleanCNS.startsWith('99999999999')) {
+        return { valid: false, message: 'CNS provisório tipo 9 com sequência reservada' };
+      }
+      
+      // CNS tipo 9 tem validação de dígito verificador simplificada
+      let sum9 = 0;
+      for (let i = 0; i < 14; i++) {
+        sum9 += parseInt(cleanCNS[i]) * (15 - i);
+      }
+      
+      const remainder9 = sum9 % 11;
+      const expectedLastDigit = remainder9 < 2 ? 0 : 11 - remainder9;
+      const actualLastDigit = parseInt(cleanCNS[14]);
+      
+      if (actualLastDigit !== expectedLastDigit) {
+        return { valid: false, message: 'CNS provisório tipo 9 com dígito verificador incorreto' };
+      }
+      break;
+  }
+
+  // Validação adicional: verifica se não é uma sequência óbvia inválida
+  const hasValidPattern = /^[789]\d{14}$/.test(cleanCNS) && 
+                         !/^([789])\1{14}$/.test(cleanCNS) &&
+                         !/^[789]0{14}$/.test(cleanCNS) &&
+                         !/^[789]1{14}$/.test(cleanCNS);
+  
+  if (!hasValidPattern) {
+    return { valid: false, message: 'CNS provisório com padrão inválido' };
+  }
+
+  return { valid: true };
+}
+
+/**
+ * Valida CNS (Cartão Nacional de Saúde) com algoritmo completo
+ * Suporta CNS definitivo (1, 2) e provisório (7, 8, 9) com validações específicas
+ * @param {string} cns - CNS a ser validado
+ * @returns {object} { valid: boolean, message?: string, type?: string }
  */
 export function validateCNS(cns) {
   if (!cns || typeof cns !== 'string') {
@@ -85,44 +252,47 @@ export function validateCNS(cns) {
 
   const cleanCNS = cns.replace(/[^\d]/g, '');
   
+  // Verifica formato básico
   if (!PATTERNS.CNS.test(cleanCNS)) {
     return { valid: false, message: 'CNS deve ter exatamente 15 dígitos' };
   }
 
-  // Algoritmo de validação do CNS
-  const firstDigit = cleanCNS[0];
-  
-  // CNS definitivo (inicia com 1 ou 2)
-  if (firstDigit === '1' || firstDigit === '2') {
-    let sum = 0;
-    for (let i = 0; i < 11; i++) {
-      sum += parseInt(cleanCNS[i]) * (15 - i);
-    }
-    
-    const remainder = sum % 11;
-    let dv = 11 - remainder;
-    
-    if (dv === 11) dv = 0;
-    if (dv === 10) {
-      sum += 2;
-      const newRemainder = sum % 11;
-      dv = 11 - newRemainder;
-      if (dv === 11) dv = 0;
-    }
-    
-    const expectedDV = cleanCNS.substring(11);
-    const calculatedDV = dv.toString().padStart(2, '0') + cleanCNS.substring(13);
-    
-    if (expectedDV !== calculatedDV.substring(0, 4)) {
-      return { valid: false, message: 'CNS inválido (dígito verificador incorreto)' };
-    }
-  }
-  // CNS provisório (inicia com 7, 8 ou 9) - apenas verifica formato
-  else if (!['7', '8', '9'].includes(firstDigit)) {
-    return { valid: false, message: 'CNS deve iniciar com 1, 2, 7, 8 ou 9' };
+  // Verifica cache primeiro para otimização
+  cleanCNSCache();
+  const cached = CNS_VALIDATION_CACHE.get(cleanCNS);
+  if (cached && (Date.now() - cached.timestamp) < CNS_CACHE_TTL) {
+    return cached.result;
   }
 
-  return { valid: true };
+  const firstDigit = cleanCNS[0];
+  let result;
+
+  // CNS definitivo (inicia com 1 ou 2)
+  if (firstDigit === '1' || firstDigit === '2') {
+    result = validateDefinitiveCNS(cleanCNS);
+    if (result.valid) {
+      result.type = 'definitivo';
+    }
+  }
+  // CNS provisório (inicia com 7, 8 ou 9)
+  else if (['7', '8', '9'].includes(firstDigit)) {
+    result = validateProvisionalCNS(cleanCNS);
+    if (result.valid) {
+      result.type = 'provisorio';
+    }
+  }
+  // Primeiro dígito inválido
+  else {
+    result = { valid: false, message: 'CNS deve iniciar com 1, 2, 7, 8 ou 9' };
+  }
+
+  // Armazena no cache
+  CNS_VALIDATION_CACHE.set(cleanCNS, {
+    result: { ...result },
+    timestamp: Date.now()
+  });
+
+  return result;
 }
 
 /**
