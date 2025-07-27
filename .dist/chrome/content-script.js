@@ -1,12 +1,12 @@
 /**
- * @file Content Script para a extensão Assistente de Regulação (v16 - Detecção com Broker).
+ * @file Content Script para a extensão Assistente de Regulação (v17 - Segurança Aprimorada).
  * Este script observa a abertura da aba de manutenção e envia os IDs para o background script,
- * que atua como um intermediário para salvar os dados no storage.session.
+ * com proteções contra DoS e throttling de mutações.
  */
 
 (function () {
   console.log(
-    "[Assistente de Regulação] Script de controle v16 (Detecção com Broker) ativo."
+    "[Assistente de Regulação] Script de controle v17 (Segurança Aprimorada) ativo."
   );
 
   // ✅ SEGURO: Compatibilidade cross-browser com fallback
@@ -16,9 +16,15 @@
     console.error('[Assistente] API de extensão não disponível');
     return;
   }
+  
   let lastProcessedReguId = null;
   let observer = null;
   let debounceTimeout = null;
+  
+  // ✅ SEGURANÇA: Controle de throttling para prevenir DoS
+  let mutationCount = 0;
+  const MAX_MUTATIONS_PER_SECOND = 100;
+  let mutationResetInterval = null;
 
   const checkMaintenanceTab = () => {
     const maintenanceTabPanel = document.getElementById("tabs-manutencao");
@@ -60,6 +66,22 @@
     }
   };
 
+  // ✅ SEGURANÇA: Função throttled para prevenir sobrecarga
+  const throttledCheckMaintenanceTab = () => {
+    // Verifica se não excedeu o limite de mutações por segundo
+    if (mutationCount >= MAX_MUTATIONS_PER_SECOND) {
+      console.warn('[Assistente] Limite de mutações atingido, ignorando verificação');
+      return;
+    }
+    
+    mutationCount++;
+    
+    if (debounceTimeout) {
+      clearTimeout(debounceTimeout);
+    }
+    debounceTimeout = setTimeout(checkMaintenanceTab, 250);
+  };
+
   // Função para limpar recursos e desconectar o observer
   const cleanup = () => {
     if (observer) {
@@ -70,7 +92,12 @@
       clearTimeout(debounceTimeout);
       debounceTimeout = null;
     }
+    if (mutationResetInterval) {
+      clearInterval(mutationResetInterval);
+      mutationResetInterval = null;
+    }
     lastProcessedReguId = null;
+    mutationCount = 0;
     console.log("[Assistente] Recursos limpos e observer desconectado.");
   };
 
@@ -80,12 +107,18 @@
       cleanup();
     }
 
-    observer = new MutationObserver(() => {
-      if (debounceTimeout) {
-        clearTimeout(debounceTimeout);
-      }
-      debounceTimeout = setTimeout(checkMaintenanceTab, 250);
-    });
+    // ✅ SEGURANÇA: Inicializar contador de mutações
+    mutationCount = 0;
+    
+    // Reset do contador a cada segundo
+    if (mutationResetInterval) {
+      clearInterval(mutationResetInterval);
+    }
+    mutationResetInterval = setInterval(() => {
+      mutationCount = 0;
+    }, 1000);
+
+    observer = new MutationObserver(throttledCheckMaintenanceTab);
 
     observer.observe(document.body, {
       childList: true,

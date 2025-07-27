@@ -266,10 +266,18 @@ export const API_UTILS = {
    * @param {string} baseUrl - URL base do sistema
    * @param {string} endpoint - Endpoint da API
    * @returns {string} URL completa
+   * @throws {Error} Se a URL não estiver em domínio autorizado
    */
   buildUrl: (baseUrl, endpoint) => {
     const cleanBaseUrl = baseUrl.endsWith("/") ? baseUrl.slice(0, -1) : baseUrl;
-    return `${cleanBaseUrl}${endpoint}`;
+    const fullUrl = `${cleanBaseUrl}${endpoint}`;
+    
+    // ✅ SEGURANÇA: Validar domínio antes de retornar URL
+    if (!SECURITY_CONFIG.validateURL(fullUrl)) {
+      throw new Error(`URL não autorizada para requisições: ${fullUrl}`);
+    }
+    
+    return fullUrl;
   },
 
   /**
@@ -356,6 +364,31 @@ export const API_UTILS = {
       .join("&");
     return encodeURIComponent(paramString);
   },
+};
+
+// Configuração de segurança para validação de domínios
+export const SECURITY_CONFIG = {
+  ALLOWED_DOMAINS: [
+    'sigss.saude.gov.br',
+    'localhost',
+    '127.0.0.1'
+  ],
+  
+  /**
+   * Valida se uma URL está em domínio autorizado
+   * @param {string} url - URL a ser validada
+   * @returns {boolean} True se autorizada
+   */
+  validateURL: (url) => {
+    try {
+      const urlObj = new URL(url);
+      return SECURITY_CONFIG.ALLOWED_DOMAINS.some(domain => 
+        urlObj.hostname === domain || urlObj.hostname.endsWith('.' + domain)
+      );
+    } catch {
+      return false;
+    }
+  }
 };
 
 // Validações específicas da API

@@ -9,18 +9,39 @@
  * @returns {object} API do browser (browser ou chrome)
  */
 function getBrowserAPI() {
-  // Verifica se a API 'browser' está disponível (Firefox/WebExtensions padrão)
-  if (typeof browser !== "undefined") {
+  // ✅ SEGURANÇA: Verificação mais robusta de APIs
+  
+  // Verifica globalThis primeiro (mais moderno e seguro)
+  if (typeof globalThis !== 'undefined') {
+    if (globalThis.browser && globalThis.browser.runtime) {
+      return globalThis.browser;
+    }
+    if (globalThis.chrome && globalThis.chrome.runtime) {
+      return globalThis.chrome;
+    }
+  }
+  
+  // Fallback para verificação direta (compatibilidade)
+  if (typeof browser !== "undefined" && browser.runtime) {
     return browser;
   }
   
-  // Fallback para 'chrome' (Chromium-based browsers)
-  if (typeof chrome !== "undefined") {
+  if (typeof chrome !== "undefined" && chrome.runtime) {
     return chrome;
   }
   
-  // Se nenhuma API estiver disponível, lança erro
-  throw new Error("Nenhuma API de browser extension disponível (browser ou chrome)");
+  // Fallback para window (contextos específicos)
+  if (typeof window !== 'undefined') {
+    if (window.browser && window.browser.runtime) {
+      return window.browser;
+    }
+    if (window.chrome && window.chrome.runtime) {
+      return window.chrome;
+    }
+  }
+  
+  // Se nenhuma API estiver disponível, lança erro detalhado
+  throw new Error("Nenhuma API de browser extension disponível. Verifique se está executando em contexto de extensão.");
 }
 
 /**
