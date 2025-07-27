@@ -29,6 +29,7 @@ const EXTENSION_FILES = [
   "config.js",
   "renderers.js",
   "logger.js",
+  "test-logger.js",
   
   // Managers necessários para funcionamento
   "MemoryManager.js",
