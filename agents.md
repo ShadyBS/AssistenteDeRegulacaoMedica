@@ -1480,3 +1480,62 @@ Para dúvidas ou problemas:
 - ✅ Documentação completa da arquitetura existente
 - ✅ Padrões de código e convenções estabelecidos
 - ✅ Fluxos de trabalho e validações definidos
+---
+
+## 🚨 SISTEMA DE WHITELIST CRÍTICO - LEIA OBRIGATORIAMENTE
+
+### ⚠️ EXTREMA IMPORTÂNCIA PARA NOVOS ARQUIVOS
+
+O projeto utiliza um **sistema de WHITELIST** para builds de release que inclui **APENAS arquivos essenciais** na extensão final. Este sistema é **CRÍTICO** para:
+
+- **Segurança**: Evita exposição de arquivos de desenvolvimento
+- **Conformidade**: Atende requisitos das stores (Chrome/Firefox)
+- **Performance**: Reduz tamanho em 94% (1.98 MB → 0.12 MB)
+- **Qualidade**: Garante que apenas código necessário seja distribuído
+
+### 🚨 REGRA OBRIGATÓRIA PARA NOVOS ARQUIVOS
+
+**SE VOCÊ CRIAR NOVOS ARQUIVOS QUE DEVEM ESTAR NA EXTENSÃO FINAL:**
+
+1. **ADICIONE** o arquivo na whitelist em `build-zips-clean.js`
+2. **ADICIONE** o arquivo na whitelist em `scripts/build-optimized.js`
+3. **TESTE** o build para verificar se o arquivo está incluído
+4. **DOCUMENTE** a adição no commit
+
+### 📋 Scripts de Build Otimizados
+
+#### Scripts Recomendados (USAR SEMPRE)
+```powershell
+# Build LIMPO com whitelist (RECOMENDADO)
+node build-zips-clean.js
+
+# Build moderno otimizado
+node scripts/build-optimized.js
+
+# Verificar tamanho dos ZIPs
+Get-ChildItem -Path ".\dist-zips\*.zip" | Select-Object Name, Length
+```
+
+#### Scripts Legados (Compatibilidade)
+```powershell
+npm run build:all             # CSS + ZIPs (legado - NÃO recomendado)
+npm run build:zips            # Gerar ZIPs (legado - NÃO recomendado)
+```
+
+### ⚠️ Avisos Críticos
+
+#### NUNCA FAÇA:
+- ❌ **NUNCA** use `npm run build:zips` para releases (usa sistema antigo)
+- ❌ **NUNCA** adicione arquivos sem atualizar a whitelist
+- ❌ **NUNCA** ignore validações de tamanho dos ZIPs
+- ❌ **NUNCA** inclua arquivos de desenvolvimento nos builds
+
+#### SEMPRE FAÇA:
+- ✅ **SEMPRE** use `node build-zips-clean.js` para releases
+- ✅ **SEMPRE** adicione novos arquivos à whitelist
+- ✅ **SEMPRE** teste builds após adicionar arquivos
+- ✅ **SEMPRE** documente mudanças na whitelist
+
+---
+
+**LEMBRE-SE: O sistema de whitelist é CRÍTICO para a segurança e conformidade da extensão. Qualquer arquivo não incluído na whitelist NÃO estará disponível na extensão final.**
