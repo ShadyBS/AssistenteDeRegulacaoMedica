@@ -57,6 +57,7 @@ const IGNORE_PATTERNS = [
   'scripts',
   'node_modules',
   '.git',
+  '.github',
   '.vscode',
   '.qodo',
   'build-zips.js',

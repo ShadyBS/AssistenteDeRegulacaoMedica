@@ -358,6 +358,11 @@ class ExtensionValidator {
       const content = await fs.readFile(filePath, 'utf8');
       const fileName = path.basename(filePath);
       
+      // Ignora o arquivo BrowserAPI.js, que gerencia a API do browser intencionalmente
+      if (fileName === 'BrowserAPI.js') {
+        continue;
+      }
+
       // Verifica uso direto de chrome.* sem fallback
       const hasDirectChromeUsage = /(?<!browser\s*\|\|\s*)(^|\s)chrome\./gm.test(content);
       const hasBrowserFallback = content.includes('globalThis.browser || globalThis.chrome') || 

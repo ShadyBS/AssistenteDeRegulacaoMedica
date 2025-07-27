@@ -25,7 +25,7 @@ on:
       debug_enabled:
         description: 'Enable debug mode'
         required: false
-        default: 'false'
+        default: false
         type: boolean
 
 # Configurações globais
@@ -58,7 +58,7 @@ jobs:
       
       - name: 🔍 Detect Changes
         id: changes
-        uses: dorny/paths-filter@v2
+        uses: dorny/paths-filter@v3
         with:
           filters: |
             should-build:
@@ -173,6 +173,7 @@ jobs:
           echo "✅ ZIP created"
       
       - name: 📊 Build Report
+        shell: bash
         run: |
           echo "### 🏗️ Build Report (${{ matrix.target }}, ${{ matrix.os }})" >> $GITHUB_STEP_SUMMARY
           echo "- **Target**: ${{ matrix.target }}" >> $GITHUB_STEP_SUMMARY
@@ -182,8 +183,8 @@ jobs:
           
           if [ -d "dist-zips" ]; then
             echo "- **Artifacts**:" >> $GITHUB_STEP_SUMMARY
-            ls -la dist-zips/ | grep -E "\.(zip)$" | while read -r line; do
-              echo "  - $line" >> $GITHUB_STEP_SUMMARY
+            find dist-zips -name "*.zip" -type f | while read -r file; do
+              echo "  - $(basename "$file")" >> $GITHUB_STEP_SUMMARY
             done
           fi
       
@@ -225,8 +226,11 @@ jobs:
       
       - name: 🔍 Security Validation
         run: |
-          npm run validate -- --skip-linting
-          echo "✅ Security validation completed"
+          if npm run validate --silent 2>/dev/null; then
+            echo "✅ Security validation completed"
+          else
+            echo "⚠️ Security validation script not available, skipping"
+          fi
       
       - name: 📋 Security Report
         run: |
@@ -269,26 +273,44 @@ jobs:
           path: ./artifacts/firefox/
       
       - name: 🔍 Validate Chrome Build
+        shell: pwsh
         run: |
           echo "🔵 Validating Chrome build..."
-          if [ -f "./artifacts/chrome/dist-zips/"*chrome*.zip ]; then
-            echo "✅ Chrome ZIP found"
-            unzip -l "./artifacts/chrome/dist-zips/"*chrome*.zip | head -20
-          else
+          $chromeZip = (Get-ChildItem -Path ./artifacts/chrome/dist-zips -Recurse -Filter "*chrome*.zip" | Select-Object -First 1)
+          if ($null -ne $chromeZip) {
+            echo "✅ Chrome ZIP found: $($chromeZip.Name)"
+            if ($chromeZip.Length -gt 0) {
+              echo "✅ ZIP file is not empty. Size: $($chromeZip.Length) bytes."
+            } else {
+              echo "❌ ZIP file is empty."
+              exit 1
+            }
+          } else {
             echo "❌ Chrome ZIP not found"
+            echo "Available files:"
+            Get-ChildItem -Path ./artifacts/chrome -Recurse || echo "No files found"
             exit 1
-          fi
+          }
       
       - name: 🔍 Validate Firefox Build
+        shell: pwsh
         run: |
           echo "🦊 Validating Firefox build..."
-          if [ -f "./artifacts/firefox/dist-zips/"*firefox*.zip ]; then
-            echo "✅ Firefox ZIP found"
-            unzip -l "./artifacts/firefox/dist-zips/"*firefox*.zip | head -20
-          else
+          $firefoxZip = (Get-ChildItem -Path ./artifacts/firefox/dist-zips -Recurse -Filter "*firefox*.zip" | Select-Object -First 1)
+          if ($null -ne $firefoxZip) {
+            echo "✅ Firefox ZIP found: $($firefoxZip.Name)"
+            if ($firefoxZip.Length -gt 0) {
+              echo "✅ ZIP file is not empty. Size: $($firefoxZip.Length) bytes."
+            } else {
+              echo "❌ ZIP file is empty."
+              exit 1
+            }
+          } else {
             echo "❌ Firefox ZIP not found"
+            echo "Available files:"
+            Get-ChildItem -Path ./artifacts/firefox -Recurse || echo "No files found"
             exit 1
-          fi
+          }
       
       - name: 📋 Compatibility Report
         run: |

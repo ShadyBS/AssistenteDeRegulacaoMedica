@@ -4,9 +4,8 @@
  */
 
 /**
- * Seleciona a API apropriada do browser baseada no ambiente
- * Firefox usa 'browser', Chromium usa 'chrome'
- * @returns {object} API do browser (browser ou chrome)
+ * Seleciona a API apropriada do browser baseada no ambiente e retorna o objeto e o nome.
+ * @returns {{api: object, name: string}} Objeto contendo a API do browser e seu nome
  */
 function getBrowserAPI() {
   // ✅ SEGURANÇA: Verificação mais robusta de APIs
@@ -14,29 +13,29 @@ function getBrowserAPI() {
   // Verifica globalThis primeiro (mais moderno e seguro)
   if (typeof globalThis !== 'undefined') {
     if (globalThis.browser && globalThis.browser.runtime) {
-      return globalThis.browser;
+      return { api: globalThis.browser, name: 'Firefox' };
     }
     if (globalThis.chrome && globalThis.chrome.runtime) {
-      return globalThis.chrome;
+      return { api: globalThis.chrome, name: 'Chromium' };
     }
   }
   
   // Fallback para verificação direta (compatibilidade)
   if (typeof browser !== "undefined" && browser.runtime) {
-    return browser;
+    return { api: browser, name: 'Firefox' };
   }
   
   if (typeof chrome !== "undefined" && chrome.runtime) {
-    return chrome;
+    return { api: chrome, name: 'Chromium' };
   }
   
   // Fallback para window (contextos específicos)
   if (typeof window !== 'undefined') {
     if (window.browser && window.browser.runtime) {
-      return window.browser;
+      return { api: window.browser, name: 'Firefox' };
     }
     if (window.chrome && window.chrome.runtime) {
-      return window.chrome;
+      return { api: window.chrome, name: 'Chromium' };
     }
   }
   
@@ -45,21 +44,29 @@ function getBrowserAPI() {
 }
 
 /**
- * Instância singleton da API do browser
- * Evita múltiplas verificações desnecessárias
+ * Instância singleton com informações da API do browser
+ * @type {{api: object, name: string} | null}
  */
-let browserAPIInstance = null;
+let browserAPIInfo = null;
+
+/**
+ * Inicializa e obtém as informações da API do browser
+ * @returns {{api: object, name: string}}
+ */
+function getBrowserAPIInfoInternal() {
+  if (!browserAPIInfo) {
+    browserAPIInfo = getBrowserAPI();
+    console.log(`[BrowserAPI] API inicializada: ${browserAPIInfo.name}`);
+  }
+  return browserAPIInfo;
+}
 
 /**
  * Obtém a instância singleton da API do browser
  * @returns {object} API do browser
  */
 export function getBrowserAPIInstance() {
-  if (!browserAPIInstance) {
-    browserAPIInstance = getBrowserAPI();
-    console.log('[BrowserAPI] API inicializada:', browserAPIInstance === browser ? 'Firefox (browser)' : 'Chromium (chrome)');
-  }
-  return browserAPIInstance;
+  return getBrowserAPIInfoInternal().api;
 }
 
 /**
@@ -67,7 +74,7 @@ export function getBrowserAPIInstance() {
  * @returns {boolean} true se for Firefox
  */
 export function isFirefox() {
-  return typeof browser !== "undefined";
+  return getBrowserAPIInfoInternal().name === 'Firefox';
 }
 
 /**
@@ -75,7 +82,7 @@ export function isFirefox() {
  * @returns {boolean} true se for Chromium
  */
 export function isChromium() {
-  return typeof chrome !== "undefined" && typeof browser === "undefined";
+  return getBrowserAPIInfoInternal().name === 'Chromium';
 }
 
 /**
@@ -84,12 +91,13 @@ export function isChromium() {
  */
 export function getBrowserInfo() {
   const api = getBrowserAPIInstance();
+  const ff = isFirefox();
   return {
-    isFirefox: isFirefox(),
-    isChromium: isChromium(),
+    isFirefox: ff,
+    isChromium: !ff,
     hasManifestV3: api.runtime?.getManifest?.()?.manifest_version === 3,
-    browserName: isFirefox() ? 'Firefox' : 'Chromium',
-    apiObject: isFirefox() ? 'browser' : 'chrome'
+    browserName: ff ? 'Firefox' : 'Chromium',
+    apiObject: ff ? 'browser' : 'chrome'
   };
 }
 

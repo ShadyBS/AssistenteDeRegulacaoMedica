@@ -1,8 +1,8 @@
 {
-  "timestamp": "2025-07-27T00:41:10.788Z",
+  "timestamp": "2025-07-27T02:29:07.650Z",
   "summary": {
     "errors": 0,
-    "warnings": 3,
+    "warnings": 2,
     "fixes": 0,
     "status": "PASS"
   },
@@ -10,8 +10,7 @@
     "errors": [],
     "warnings": [
       "Firefox pode não suportar service_worker completamente (manifest.json)",
-      "Problemas encontrados no código JavaScript",
-      "BrowserAPI.js: Uso direto de chrome.* API sem fallback para browser.*"
+      "Problemas encontrados no código JavaScript"
     ],
     "fixes": []
   }
