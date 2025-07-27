@@ -9,7 +9,13 @@
     "[Assistente de Regulação] Script de controle v16 (Detecção com Broker) ativo."
   );
 
-  const api = browser;
+  // ✅ SEGURO: Compatibilidade cross-browser com fallback
+  const api = globalThis.browser || globalThis.chrome;
+  
+  if (!api) {
+    console.error('[Assistente] API de extensão não disponível');
+    return;
+  }
   let lastProcessedReguId = null;
   let observer = null;
   let debounceTimeout = null;

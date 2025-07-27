@@ -57,6 +57,7 @@ async function getBatchConfig() {
  * - Processing items in configurable batch sizes
  * - Adding delays between batches to reduce server load
  * - Handling individual item failures gracefully
+ * - Implementing timeout and retry logic for robustness
  *
  * Used to replace Promise.all() calls that could create too many concurrent requests.
  *
@@ -73,23 +74,50 @@ async function processBatched(
   delayMs = CONFIG.API.BATCH_DELAY_MS
 ) {
   const results = [];
+  const maxRetries = 3;
+  const batchTimeout = 30000; // 30 segundos timeout por lote
 
   for (let i = 0; i < items.length; i += batchSize) {
     const batch = items.slice(i, i + batchSize);
-
-    // Process current batch in parallel
-    const batchResults = await Promise.all(
-      batch.map(async (item, index) => {
-        try {
-          return await processor(item, i + index);
-        } catch (error) {
-          console.warn(`Batch processing error for item ${i + index}:`, error);
-          return null; // Return null for failed items
+    let retryCount = 0;
+    
+    while (retryCount < maxRetries) {
+      try {
+        // ✅ SEGURO: Implementar timeout para cada lote
+        const batchResults = await Promise.race([
+          Promise.all(
+            batch.map(async (item, index) => {
+              try {
+                return await processor(item, i + index);
+              } catch (error) {
+                console.warn(`Batch processing error for item ${i + index}:`, error);
+                return null; // Return null for failed items
+              }
+            })
+          ),
+          new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Batch timeout')), batchTimeout)
+          )
+        ]);
+        
+        results.push(...batchResults);
+        break; // Sucesso, sair do loop de retry
+        
+      } catch (error) {
+        retryCount++;
+        console.warn(`Lote ${i} falhou (tentativa ${retryCount}/${maxRetries}):`, error.message);
+        
+        if (retryCount === maxRetries) {
+          console.error(`Lote ${i} falhou após ${maxRetries} tentativas, preenchendo com nulls`);
+          // Preenche com nulls para manter índices consistentes
+          results.push(...batch.map(() => null));
+        } else {
+          // Delay exponencial entre tentativas
+          const retryDelay = delayMs * Math.pow(2, retryCount - 1);
+          await new Promise(resolve => setTimeout(resolve, retryDelay));
         }
-      })
-    );
-
-    results.push(...batchResults);
+      }
+    }
 
     // Add delay between batches (except for the last batch)
     if (i + batchSize < items.length && delayMs > 0) {

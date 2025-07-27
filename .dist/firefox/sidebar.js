@@ -1127,16 +1127,18 @@ function showModal(title, content) {
   const modalTitle = document.getElementById("modal-title");
   const modalContent = document.getElementById("modal-content");
 
+  // ✅ SEGURO: Sempre usar textContent para título
   modalTitle.textContent = title;
   
-  // Sempre usar textContent para segurança contra XSS
+  // ✅ SEGURO: Sanitização rigorosa de conteúdo
   if (typeof content === 'string') {
     modalContent.textContent = content;
   } else if (content instanceof HTMLElement) {
-    modalContent.innerHTML = '';
+    // Limpa conteúdo anterior de forma segura
+    modalContent.textContent = '';
     modalContent.appendChild(content);
   } else {
-    // Fallback para outros tipos - converter para string segura
+    // Fallback seguro para outros tipos
     modalContent.textContent = String(content);
   }
   
