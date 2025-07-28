@@ -1,0 +1,256 @@
+{
+  "timestamp": "2025-07-28T00:03:29.684Z",
+  "duration": "0.18s",
+  "summary": {
+    "totalFiles": 129,
+    "filesWithIssues": 18,
+    "totalIssues": 18,
+    "errors": 18,
+    "warnings": 0
+  },
+  "issuesByType": [
+    {
+      "type": "REPLACEMENT_CHARACTERS",
+      "count": 18,
+      "severity": "error",
+      "files": [
+        "CLEANUP_SYSTEM_REPORT.md",
+        "ENCODING_GUIDELINES.md",
+        "EXTENSION_AUDIT_TASKS.md",
+        "LEGACY_SYSTEM_REMOVAL_REPORT.md",
+        "LOGGING_GUIDELINES_REPORT.md",
+        "LOGGING_SYSTEM_REPORT.md",
+        "TASK-A-005-COMPLETION-REPORT.md",
+        "TASK-A-006-COMPLETION-REPORT.md",
+        "agents.md",
+        "babel.config.js",
+        "build-zips-clean.js",
+        "encoding-validation-report.json",
+        "scripts\\build-optimized.js",
+        "scripts\\build.js",
+        "scripts\\fix-encoding.js",
+        "scripts\\validate-encoding.js",
+        "temp-zip-analysis\\build-zips-clean.js",
+        "temp-zip-analysis\\build-zips-optimized.js"
+      ]
+    }
+  ],
+  "filesWithIssues": [
+    {
+      "file": "CLEANUP_SYSTEM_REPORT.md",
+      "issueCount": 1,
+      "issues": [
+        {
+          "type": "REPLACEMENT_CHARACTERS",
+          "severity": "error",
+          "message": "Arquivo contém caracteres de replacement (�)",
+          "fix": "Corrigir encoding ou dados corrompidos"
+        }
+      ]
+    },
+    {
+      "file": "ENCODING_GUIDELINES.md",
+      "issueCount": 1,
+      "issues": [
+        {
+          "type": "REPLACEMENT_CHARACTERS",
+          "severity": "error",
+          "message": "Arquivo contém caracteres de replacement (�)",
+          "fix": "Corrigir encoding ou dados corrompidos"
+        }
+      ]
+    },
+    {
+      "file": "EXTENSION_AUDIT_TASKS.md",
+      "issueCount": 1,
+      "issues": [
+        {
+          "type": "REPLACEMENT_CHARACTERS",
+          "severity": "error",
+          "message": "Arquivo contém caracteres de replacement (�)",
+          "fix": "Corrigir encoding ou dados corrompidos"
+        }
+      ]
+    },
+    {
+      "file": "LEGACY_SYSTEM_REMOVAL_REPORT.md",
+      "issueCount": 1,
+      "issues": [
+        {
+          "type": "REPLACEMENT_CHARACTERS",
+          "severity": "error",
+          "message": "Arquivo contém caracteres de replacement (�)",
+          "fix": "Corrigir encoding ou dados corrompidos"
+        }
+      ]
+    },
+    {
+      "file": "LOGGING_GUIDELINES_REPORT.md",
+      "issueCount": 1,
+      "issues": [
+        {
+          "type": "REPLACEMENT_CHARACTERS",
+          "severity": "error",
+          "message": "Arquivo contém caracteres de replacement (�)",
+          "fix": "Corrigir encoding ou dados corrompidos"
+        }
+      ]
+    },
+    {
+      "file": "LOGGING_SYSTEM_REPORT.md",
+      "issueCount": 1,
+      "issues": [
+        {
+          "type": "REPLACEMENT_CHARACTERS",
+          "severity": "error",
+          "message": "Arquivo contém caracteres de replacement (�)",
+          "fix": "Corrigir encoding ou dados corrompidos"
+        }
+      ]
+    },
+    {
+      "file": "TASK-A-005-COMPLETION-REPORT.md",
+      "issueCount": 1,
+      "issues": [
+        {
+          "type": "REPLACEMENT_CHARACTERS",
+          "severity": "error",
+          "message": "Arquivo contém caracteres de replacement (�)",
+          "fix": "Corrigir encoding ou dados corrompidos"
+        }
+      ]
+    },
+    {
+      "file": "TASK-A-006-COMPLETION-REPORT.md",
+      "issueCount": 1,
+      "issues": [
+        {
+          "type": "REPLACEMENT_CHARACTERS",
+          "severity": "error",
+          "message": "Arquivo contém caracteres de replacement (�)",
+          "fix": "Corrigir encoding ou dados corrompidos"
+        }
+      ]
+    },
+    {
+      "file": "agents.md",
+      "issueCount": 1,
+      "issues": [
+        {
+          "type": "REPLACEMENT_CHARACTERS",
+          "severity": "error",
+          "message": "Arquivo contém caracteres de replacement (�)",
+          "fix": "Corrigir encoding ou dados corrompidos"
+        }
+      ]
+    },
+    {
+      "file": "babel.config.js",
+      "issueCount": 1,
+      "issues": [
+        {
+          "type": "REPLACEMENT_CHARACTERS",
+          "severity": "error",
+          "message": "Arquivo contém caracteres de replacement (�)",
+          "fix": "Corrigir encoding ou dados corrompidos"
+        }
+      ]
+    },
+    {
+      "file": "build-zips-clean.js",
+      "issueCount": 1,
+      "issues": [
+        {
+          "type": "REPLACEMENT_CHARACTERS",
+          "severity": "error",
+          "message": "Arquivo contém caracteres de replacement (�)",
+          "fix": "Corrigir encoding ou dados corrompidos"
+        }
+      ]
+    },
+    {
+      "file": "encoding-validation-report.json",
+      "issueCount": 1,
+      "issues": [
+        {
+          "type": "REPLACEMENT_CHARACTERS",
+          "severity": "error",
+          "message": "Arquivo contém caracteres de replacement (�)",
+          "fix": "Corrigir encoding ou dados corrompidos"
+        }
+      ]
+    },
+    {
+      "file": "scripts\\build-optimized.js",
+      "issueCount": 1,
+      "issues": [
+        {
+          "type": "REPLACEMENT_CHARACTERS",
+          "severity": "error",
+          "message": "Arquivo contém caracteres de replacement (�)",
+          "fix": "Corrigir encoding ou dados corrompidos"
+        }
+      ]
+    },
+    {
+      "file": "scripts\\build.js",
+      "issueCount": 1,
+      "issues": [
+        {
+          "type": "REPLACEMENT_CHARACTERS",
+          "severity": "error",
+          "message": "Arquivo contém caracteres de replacement (�)",
+          "fix": "Corrigir encoding ou dados corrompidos"
+        }
+      ]
+    },
+    {
+      "file": "scripts\\fix-encoding.js",
+      "issueCount": 1,
+      "issues": [
+        {
+          "type": "REPLACEMENT_CHARACTERS",
+          "severity": "error",
+          "message": "Arquivo contém caracteres de replacement (�)",
+          "fix": "Corrigir encoding ou dados corrompidos"
+        }
+      ]
+    },
+    {
+      "file": "scripts\\validate-encoding.js",
+      "issueCount": 1,
+      "issues": [
+        {
+          "type": "REPLACEMENT_CHARACTERS",
+          "severity": "error",
+          "message": "Arquivo contém caracteres de replacement (�)",
+          "fix": "Corrigir encoding ou dados corrompidos"
+        }
+      ]
+    },
+    {
+      "file": "temp-zip-analysis\\build-zips-clean.js",
+      "issueCount": 1,
+      "issues": [
+        {
+          "type": "REPLACEMENT_CHARACTERS",
+          "severity": "error",
+          "message": "Arquivo contém caracteres de replacement (�)",
+          "fix": "Corrigir encoding ou dados corrompidos"
+        }
+      ]
+    },
+    {
+      "file": "temp-zip-analysis\\build-zips-optimized.js",
+      "issueCount": 1,
+      "issues": [
+        {
+          "type": "REPLACEMENT_CHARACTERS",
+          "severity": "error",
+          "message": "Arquivo contém caracteres de replacement (�)",
+          "fix": "Corrigir encoding ou dados corrompidos"
+        }
+      ]
+    }
+  ]
+}

@@ -1,34 +1,33 @@
-﻿import "./browser-polyfill.js";
+import * as API from "./api.js"; // Importa a API para buscar prioridades
+import "./browser-polyfill.js";
+import { getBrowserAPIInstance } from "./BrowserAPI.js";
+import { getCSSClass, getTimeout } from "./config.js";
 import { defaultFieldConfig } from "./field-config.js";
 import { filterConfig } from "./filter-config.js";
-import * as Utils from "./utils.js";
-import * as API from "./api.js"; // Importa a API para buscar prioridades
-import { CONFIG, getTimeout, getCSSClass } from "./config.js";
-import { getBrowserAPIInstance } from "./BrowserAPI.js";
-import { 
-  createComponentLogger, 
-  getLogger, 
-  setLogLevel, 
-  exportLogs, 
-  clearLogs, 
+import {
+  clearLogs,
+  createComponentLogger,
+  exportLogs,
+  getLogger,
   getLogStats,
-  LOG_LEVELS 
+  setLogLevel
 } from "./logger.js";
 import { testLoggingSystem } from "./test-logger.js";
+import * as Utils from "./utils.js";
 
-// Logger especÃ­fico para Options
+// Logger específico para Options
 const logger = createComponentLogger('Options');
 
 
 // --- Constantes ---
-const CONFIG_VERSION = "1.3"; // VersÃ£o da estrutura de configuraÃ§Ã£o
+const CONFIG_VERSION = "1.3"; // Versão da estrutura de configuração
 
-// --- VariÃ¡veis de Estado ---
+// --- Variáveis de Estado ---
 let automationRules = [];
 let currentlyEditingRuleId = null;
-let draggedTab = null; // VariÃ¡vel para a aba arrastada
+let draggedTab = null; // Variável para a aba arrastada
 
-// InstÃ¢ncia global da API do browser
+// Instância global da API do browser
 const browserAPI = getBrowserAPIInstance();
 
 // --- Elementos do DOM ---
@@ -47,7 +46,7 @@ const moreFieldsZone = document.getElementById("more-fields-zone");
 const filterTabsContainer = document.getElementById("filter-tabs-container");
 const allDropZones = document.querySelectorAll(".drop-zone");
 
-// --- Elementos do DOM para o Gerenciador de AutomaÃ§Ã£o ---
+// --- Elementos do DOM para o Gerenciador de Automação ---
 const automationRulesList = document.getElementById("automation-rules-list");
 const createNewRuleBtn = document.getElementById("create-new-rule-btn");
 const ruleEditorModal = document.getElementById("rule-editor-modal");
@@ -59,8 +58,8 @@ const saveRuleBtn = document.getElementById("save-rule-btn");
 const ruleEditorFilterTabs = document.getElementById("rule-editor-filter-tabs");
 
 /**
- * Cria um elemento de campo arrastÃ¡vel para a Ficha do Paciente.
- * @param {object} field - O objeto de configuraÃ§Ã£o do campo.
+ * Cria um elemento de campo arrastável para a Ficha do Paciente.
+ * @param {object} field - O objeto de configuração do campo.
  * @returns {HTMLElement} O elemento <div> do campo.
  */
 function createDraggableField(field) {
@@ -70,9 +69,8 @@ function createDraggableField(field) {
   div.draggable = true;
 
   div.innerHTML = `
-    <span class="drag-handle">â ¿</span>
-    <input type="checkbox" class="field-enabled-checkbox" ${
-      field.enabled ? "checked" : ""
+    <span class="drag-handle">⣿</span>
+    <input type="checkbox" class="field-enabled-checkbox" ${field.enabled ? "checked" : ""
     }>
     <input type="text" class="field-label-input" value="${field.label}">
   `;
@@ -84,9 +82,9 @@ function createDraggableField(field) {
 }
 
 /**
- * Cria um elemento de filtro arrastÃ¡vel com controlos para valor padrÃ£o.
- * @param {object} filter - O objeto de configuraÃ§Ã£o do filtro.
- * @param {Array<object>} priorities - A lista de prioridades dinÃ¢micas para a regulaÃ§Ã£o.
+ * Cria um elemento de filtro arrastável com controlos para valor padrão.
+ * @param {object} filter - O objeto de configuração do filtro.
+ * @param {Array<object>} priorities - A lista de prioridades dinâmicas para a regulação.
  * @returns {HTMLElement} O elemento <div> do filtro.
  */
 function createDraggableFilter(filter, priorities = []) {
@@ -101,13 +99,13 @@ function createDraggableFilter(filter, priorities = []) {
   if (filter.type !== "component") {
     switch (filter.type) {
       case "text":
-        defaultValueControl = `<input type="text" class="filter-default-value-input w-full" placeholder="Valor padrÃ£o...">`;
+        defaultValueControl = `<input type="text" class="filter-default-value-input w-full" placeholder="Valor padrão...">`;
         break;
       case "select":
       case "selectGroup":
         let optionsHtml = "";
         if (filter.id === "regulation-filter-priority") {
-          // ConstrÃ³i o dropdown de prioridades dinamicamente
+          // Constrói o dropdown de prioridades dinamicamente
           optionsHtml = filter.options
             .map((opt) => `<option value="${opt.value}">${opt.text}</option>`)
             .join(""); // Adiciona "Todas"
@@ -115,7 +113,7 @@ function createDraggableFilter(filter, priorities = []) {
             optionsHtml += `<option value="${prio.coreDescricao}">${prio.coreDescricao}</option>`;
           });
         } else {
-          // LÃ³gica original para outros selects
+          // Lógica original para outros selects
           optionsHtml = (filter.options || [])
             .map((opt) => `<option value="${opt.value}">${opt.text}</option>`)
             .join("");
@@ -129,24 +127,23 @@ function createDraggableFilter(filter, priorities = []) {
   }
 
   div.innerHTML = `
-    <span class="drag-handle">â ¿</span>
+    <span class="drag-handle">⣿</span>
     <div class="flex-grow flex flex-col gap-2">
         <div class="flex justify-between items-center">
             <span class="font-medium text-sm">${filter.label}</span>
             <span class="text-xs text-slate-400 p-1 bg-slate-100 rounded">${displayType}</span>
         </div>
-        ${
-          defaultValueControl
-            ? `
+        ${defaultValueControl
+      ? `
         <div class="flex items-center gap-2 text-xs text-slate-500">
-            <label for="default-${filter.id}">PadrÃ£o:</label>
+            <label for="default-${filter.id}">Padrão:</label>
             ${defaultValueControl.replace(
-              'class="',
-              `id="default-${filter.id}" class="`
-            )}
+        'class="',
+        `id="default-${filter.id}" class="`
+      )}
         </div>`
-            : ""
-        }
+      : ""
+    }
     </div>
   `;
 
@@ -162,7 +159,7 @@ function createDraggableFilter(filter, priorities = []) {
 
 /**
  * Renderiza os campos da Ficha do Paciente nas zonas corretas.
- * @param {Array<object>} config - A configuraÃ§Ã£o de campos.
+ * @param {Array<object>} config - A configuração de campos.
  */
 function renderPatientFields(config) {
   mainFieldsZone.innerHTML = "";
@@ -181,19 +178,26 @@ function renderPatientFields(config) {
 }
 
 /**
- * Renderiza os filtros de seÃ§Ã£o nas zonas corretas e define seus valores padrÃ£o.
- * @param {object} layout - A configuraÃ§Ã£o de layout dos filtros.
+ * Renderiza os filtros de seção nas zonas corretas e define seus valores padrão.
+ * @param {object} layout - A configuração de layout dos filtros.
  */
 async function renderFilterLayout(layout) {
   let priorities = [];
 
   try {
-    const baseUrl = await API.getBaseUrl();
-    if (baseUrl) {
-      priorities = await API.fetchRegulationPriorities();
-    }
+    // A funÃ§Ã£o getBaseUrl jÃ¡ trata o erro de URL nÃ£o configurada,
+    // entÃ£o podemos chamar fetchRegulationPriorities diretamente.
+    priorities = await API.fetchRegulationPriorities();
   } catch (error) {
-    logger.error("NÃ£o foi possÃ­vel carregar prioridades:", error);
+    logger.error("NÃ£o foi possÃ­vel carregar prioridades de regulaÃ§Ã£o:", error);
+    // Se o erro for a falta da URL base, exibe uma mensagem para o usuÃ¡rio.
+    if (error.message === 'URL_BASE_NOT_CONFIGURED') {
+      Utils.showMessage(
+        "A URL base do SIGSS nÃ£o estÃ¡ configurada. As prioridades de regulaÃ§Ã£o nÃ£o puderam ser carregadas. Por favor, configure a URL na seÃ§Ã£o 'Geral'.",
+        "warning",
+        10000 // Mostra a mensagem por 10 segundos
+      );
+    }
   }
 
   Object.keys(filterConfig).forEach((section) => {
@@ -247,7 +251,7 @@ async function renderFilterLayout(layout) {
 }
 
 /**
- * Reordena os botÃµes das abas na pÃ¡gina de opÃ§Ãµes com base na ordem salva.
+ * Reordena os botões das abas na página de opções com base na ordem salva.
  * @param {string[]} order - Array de IDs de abas na ordem correta.
  */
 function applyTabOrder(order) {
@@ -259,7 +263,7 @@ function applyTabOrder(order) {
     tabMap.set(tab.dataset.tab, tab);
   });
 
-  // Anexa as abas na ordem salva. As nÃ£o encontradas na ordem (novas) permanecem.
+  // Anexa as abas na ordem salva. As não encontradas na ordem (novas) permanecem.
   order.forEach((tabId) => {
     const tabElement = tabMap.get(tabId);
     if (tabElement) {
@@ -269,7 +273,7 @@ function applyTabOrder(order) {
 }
 
 /**
- * Carrega a configuraÃ§Ã£o salva e renderiza a pÃ¡gina.
+ * Carrega a configuração salva e renderiza a página.
  */
 async function restoreOptions() {
   const syncItems = await browserAPI.storage.sync.get({
@@ -344,7 +348,7 @@ async function restoreOptions() {
     timeline: { start: -12, end: 0 },
   };
 
-  // CORREÃ‡ÃƒO 2: Define os estilos padrÃ£o aqui.
+  // CORREÇÃO 2: Define os estilos padrão aqui.
   const defaultStyles = {
     backgroundColor: "#ffffff",
     color: "#1e293b",
@@ -362,7 +366,7 @@ async function restoreOptions() {
       if (endOffsetEl) endOffsetEl.value = range.end;
     }
 
-    // Restaura estilos, usando os padrÃµes como base.
+    // Restaura estilos, usando os padrões como base.
     const savedStyle = syncItems.sectionHeaderStyles[section] || {};
     const style = { ...defaultStyles, ...savedStyle };
 
@@ -382,7 +386,7 @@ async function restoreOptions() {
 }
 
 /**
- * Salva as configuraÃ§Ãµes GERAIS (nÃ£o as regras de automaÃ§Ã£o).
+ * Salva as configurações GERAIS (não as regras de automação).
  */
 async function saveOptions() {
   const baseUrl = document.getElementById("baseUrlInput").value;
@@ -530,7 +534,7 @@ async function saveOptions() {
   });
 
   Utils.showMessage(
-    "ConfiguraÃ§Ãµes salvas! As alteraÃ§Ãµes serÃ£o aplicadas ao recarregar o assistente.",
+    "Configurações salvas! As alterações serão aplicadas ao recarregar o assistente.",
     "success"
   );
 
@@ -543,7 +547,7 @@ async function saveOptions() {
   }, 4000);
 }
 
-// --- LÃ³gica de Arrastar e Soltar (Drag and Drop) ---
+// --- Lógica de Arrastar e Soltar (Drag and Drop) ---
 let draggedElement = null;
 
 function handleDragStart(e) {
@@ -603,7 +607,7 @@ function getDragAfterElement(container, y) {
   ).element;
 }
 
-// --- LÃ³gica de Arrastar e Soltar para Abas ---
+// --- Lógica de Arrastar e Soltar para Abas ---
 function getDragAfterTab(container, x) {
   const draggableElements = [
     ...container.querySelectorAll(".tab-button:not(.dragging)"),
@@ -659,10 +663,10 @@ function setupTabDnD(container) {
   });
 }
 
-// --- LÃ³gica para Restaurar PadrÃµes ---
+// --- Lógica para Restaurar Padrões ---
 async function handleRestoreDefaults() {
   const confirmation = window.confirm(
-    "Tem certeza de que deseja restaurar todas as configuraÃ§Ãµes de layout e valores padrÃ£o? Isto tambÃ©m restaurarÃ¡ a ordem das seÃ§Ãµes e os estilos dos cabeÃ§alhos. Esta aÃ§Ã£o nÃ£o pode ser desfeita."
+    "Tem certeza de que deseja restaurar todas as configurações de layout e valores padrão? Isto também restaurará a ordem das seções e os estilos dos cabeçalhos. Esta ação não pode ser desfeita."
   );
   if (confirmation) {
     await browserAPI.storage.sync.remove([
@@ -679,7 +683,7 @@ async function handleRestoreDefaults() {
   }
 }
 
-// --- LÃ³gica de ExportaÃ§Ã£o e ImportaÃ§Ã£o ---
+// --- Lógica de Exportação e Importação ---
 async function handleExport() {
   try {
     const settingsToExport = await browserAPI.storage.sync.get(null);
@@ -695,10 +699,10 @@ async function handleExport() {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-    Utils.showMessage("ConfiguraÃ§Ãµes exportadas com sucesso!", "success");
+    Utils.showMessage("Configurações exportadas com sucesso!", "success");
   } catch (error) {
-    logger.error("Erro ao exportar configuraÃ§Ãµes:", error);
-    Utils.showMessage("Erro ao exportar configuraÃ§Ãµes.", "error");
+    logger.error("Erro ao exportar configurações:", error);
+    Utils.showMessage("Erro ao exportar configurações.", "error");
   } finally {
     setTimeout(() => {
       statusMessage.textContent = "";
@@ -714,14 +718,14 @@ function handleImport(event) {
     try {
       const importedSettings = JSON.parse(e.target.result);
       if (!importedSettings.configVersion || !importedSettings.filterLayout) {
-        throw new Error("Ficheiro de configuraÃ§Ã£o invÃ¡lido ou corrompido.");
+        throw new Error("Ficheiro de configuração inválido ou corrompido.");
       }
       if (
         importedSettings.configVersion.split(".")[0] !==
         CONFIG_VERSION.split(".")[0]
       ) {
         const goOn = window.confirm(
-          "A versÃ£o do ficheiro de configuraÃ§Ã£o Ã© muito diferente da versÃ£o da extensÃ£o. A importaÃ§Ã£o pode causar erros. Deseja continuar mesmo assim?"
+          "A versão do ficheiro de configuração é muito diferente da versão da extensão. A importação pode causar erros. Deseja continuar mesmo assim?"
         );
         if (!goOn) return;
       }
@@ -729,11 +733,11 @@ function handleImport(event) {
       await browserAPI.storage.sync.set(importedSettings);
       restoreOptions();
       Utils.showMessage(
-        "ConfiguraÃ§Ãµes importadas e aplicadas com sucesso!",
+        "Configurações importadas e aplicadas com sucesso!",
         "success"
       );
     } catch (error) {
-      logger.error("Erro ao importar configuraÃ§Ãµes:", error);
+      logger.error("Erro ao importar configurações:", error);
       Utils.showMessage(`Erro ao importar: ${error.message}`, "error");
     } finally {
       importFileInput.value = "";
@@ -745,10 +749,10 @@ function handleImport(event) {
   reader.readAsText(file);
 }
 
-// --- LÃ“GICA PARA O GERENCIADOR DE AUTOMAÃ‡ÃƒO ---
+// --- LÓGICA PARA O GERENCIADOR DE AUTOMAÇÃO ---
 
 /**
- * Renderiza a lista de regras de automaÃ§Ã£o na UI.
+ * Renderiza a lista de regras de automação na UI.
  */
 function renderAutomationRules() {
   automationRulesList.innerHTML = "";
@@ -764,18 +768,16 @@ function renderAutomationRules() {
     ruleElement.innerHTML = `
             <div class="flex items-center justify-between">
               <div class="flex items-center gap-3">
-                <span class="drag-handle cursor-grab text-slate-400">â ¿</span>
+                <span class="drag-handle cursor-grab text-slate-400">⣿</span>
                 <div>
                   <p class="font-semibold text-slate-800">${rule.name}</p>
-                  <p class="text-xs text-slate-500" title="${keywords}">Gatilhos: ${
-      keywords.length > 50 ? keywords.substring(0, 50) + "..." : keywords
-    }</p>
+                  <p class="text-xs text-slate-500" title="${keywords}">Gatilhos: ${keywords.length > 50 ? keywords.substring(0, 50) + "..." : keywords
+      }</p>
                 </div>
               </div>
               <div class="flex items-center gap-4">
-                <label class="relative inline-flex items-center cursor-pointer" title="${
-                  rule.isActive ? "Regra Ativa" : "Regra Inativa"
-                }">
+                <label class="relative inline-flex items-center cursor-pointer" title="${rule.isActive ? "Regra Ativa" : "Regra Inativa"
+      }">
                   <input type="checkbox" class="sr-only peer rule-toggle-active" ${checked}>
                   <div class="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
                 </label>
@@ -808,11 +810,11 @@ function renderAutomationRules() {
 }
 
 /**
- * Salva o array de regras de automaÃ§Ã£o no storage local.
+ * Salva o array de regras de automação no storage local.
  */
 async function saveAutomationRules() {
   await browserAPI.storage.local.set({ automationRules });
-  Utils.showMessage("Regras de automaÃ§Ã£o salvas.", "success");
+  Utils.showMessage("Regras de automação salvas.", "success");
   setTimeout(() => {
     statusMessage.textContent = "";
   }, 2000);
@@ -829,12 +831,12 @@ async function openRuleEditor(ruleId = null) {
   if (ruleId) {
     const rule = automationRules.find((r) => r.id === ruleId);
     if (!rule) return;
-    ruleEditorTitle.textContent = "Editar Regra de AutomaÃ§Ã£o";
+    ruleEditorTitle.textContent = "Editar Regra de Automação";
     ruleNameInput.value = rule.name;
     ruleTriggersInput.value = rule.triggerKeywords.join(", ");
 
     Object.entries(rule.filterSettings).forEach(([sectionKey, filters]) => {
-      // --- INÃCIO DA CORREÃ‡ÃƒO ---
+      // --- INÍCIO DA CORREÇÃO ---
       // Preenche os filtros de data
       if (filters && filters.dateRange) {
         const { start, end } = filters.dateRange;
@@ -855,7 +857,7 @@ async function openRuleEditor(ruleId = null) {
           endOffsetEl.value = "";
         }
       }
-      // --- FIM DA CORREÃ‡ÃƒO ---
+      // --- FIM DA CORREÇÃO ---
 
       // Preenche outros filtros
       Object.entries(filters).forEach(([filterId, value]) => {
@@ -873,7 +875,7 @@ async function openRuleEditor(ruleId = null) {
       });
     });
   } else {
-    ruleEditorTitle.textContent = "Criar Nova Regra de AutomaÃ§Ã£o";
+    ruleEditorTitle.textContent = "Criar Nova Regra de Automação";
     ruleNameInput.value = "";
     ruleTriggersInput.value = "";
 
@@ -926,7 +928,7 @@ function closeRuleEditor() {
 function handleSaveRule() {
   const name = ruleNameInput.value.trim();
   if (!name) {
-    alert("O nome da regra Ã© obrigatÃ³rio.");
+    alert("O nome da regra é obrigatório.");
     return;
   }
 
@@ -946,8 +948,8 @@ function handleSaveRule() {
   sections.forEach((sectionKey) => {
     filterSettings[sectionKey] = {};
 
-    // --- INÃCIO DA CORREÃ‡ÃƒO ---
-    // Salva as configuraÃ§Ãµes de data
+    // --- INÍCIO DA CORREÇÃO ---
+    // Salva as configurações de data
     const startOffsetEl = document.getElementById(
       `rule-${sectionKey}-start-offset`
     );
@@ -966,9 +968,9 @@ function handleSaveRule() {
         end: !isNaN(endNum) ? endNum : null,
       };
     }
-    // --- FIM DA CORREÃ‡ÃƒO ---
+    // --- FIM DA CORREÇÃO ---
 
-    // Salva as configuraÃ§Ãµes dos outros filtros
+    // Salva as configurações dos outros filtros
     const sectionFilters = filterConfig[sectionKey] || [];
     sectionFilters.forEach((filter) => {
       if (filter.type === "component") return;
@@ -1026,7 +1028,7 @@ function handleDuplicateRule(ruleId) {
 
   const newRule = JSON.parse(JSON.stringify(originalRule));
   newRule.id = Date.now().toString();
-  newRule.name = `${originalRule.name} (CÃ³pia)`;
+  newRule.name = `${originalRule.name} (Cópia)`;
   newRule.isActive = false;
 
   const originalIndex = automationRules.findIndex((r) => r.id === ruleId);
@@ -1066,7 +1068,7 @@ async function populateRuleEditorFilters() {
       priorities = await API.fetchRegulationPriorities();
     }
   } catch (error) {
-    logger.error("NÃ£o foi possÃ­vel carregar prioridades:", error);
+    logger.error("Não foi possível carregar prioridades:", error);
   }
 
   const sections = [
@@ -1080,7 +1082,7 @@ async function populateRuleEditorFilters() {
   sections.forEach((sectionKey) => {
     const container = document.getElementById(`${sectionKey}-rule-editor-tab`);
     if (!container) return;
-    container.innerHTML = ""; // Limpa o conteÃºdo anterior
+    container.innerHTML = ""; // Limpa o conteúdo anterior
 
     // Adiciona o componente de data
     const dateRangeElement = createDateRangeElementForRuleEditor(sectionKey);
@@ -1108,10 +1110,10 @@ async function populateRuleEditorFilters() {
 }
 
 /**
- * Cria um Ãºnico elemento de filtro para o modal do editor de regras.
- * @param {object} filter - O objeto de configuraÃ§Ã£o do filtro.
- * @param {string} sectionKey - A chave da seÃ§Ã£o.
- * @param {Array<object>} priorities - A lista de prioridades dinÃ¢micas.
+ * Cria um único elemento de filtro para o modal do editor de regras.
+ * @param {object} filter - O objeto de configuração do filtro.
+ * @param {string} sectionKey - A chave da seção.
+ * @param {Array<object>} priorities - A lista de prioridades dinâmicas.
  * @returns {HTMLElement} O elemento HTML do filtro.
  */
 function createFilterElementForRuleEditor(filter, sectionKey, priorities) {
@@ -1126,9 +1128,8 @@ function createFilterElementForRuleEditor(filter, sectionKey, priorities) {
 
   switch (filter.type) {
     case "text":
-      elementHtml += `<input type="text" id="${elementId}" placeholder="${
-        filter.placeholder || ""
-      }" class="w-full px-2 py-1 border border-slate-300 rounded-md">`;
+      elementHtml += `<input type="text" id="${elementId}" placeholder="${filter.placeholder || ""
+        }" class="w-full px-2 py-1 border border-slate-300 rounded-md">`;
       break;
     case "select":
     case "selectGroup":
@@ -1157,30 +1158,30 @@ function createFilterElementForRuleEditor(filter, sectionKey, priorities) {
 
 /**
  * Cria o componente de intervalo de datas para o editor de regras.
- * @param {string} sectionKey - A chave da seÃ§Ã£o.
+ * @param {string} sectionKey - A chave da seção.
  * @returns {HTMLElement} O elemento HTML do componente.
  */
 function createDateRangeElementForRuleEditor(sectionKey) {
   const container = document.createElement("div");
   container.className = "p-2 bg-slate-50 rounded-md border mb-4";
   container.innerHTML = `
-    <h5 class="font-medium text-xs text-slate-500 mb-2">PerÃ­odo de Busca AutomÃ¡tico</h5>
+    <h5 class="font-medium text-xs text-slate-500 mb-2">Período de Busca Automático</h5>
     <div class="flex items-center gap-4 text-sm">
         <div>
-            <label for="rule-${sectionKey}-start-offset" class="text-xs">InÃ­cio (meses antes):</label>
-            <input type="number" id="rule-${sectionKey}-start-offset" class="w-20 p-1 border rounded-md rule-date-range-input" placeholder="PadrÃ£o" min="0">
+            <label for="rule-${sectionKey}-start-offset" class="text-xs">Início (meses antes):</label>
+            <input type="number" id="rule-${sectionKey}-start-offset" class="w-20 p-1 border rounded-md rule-date-range-input" placeholder="Padrão" min="0">
         </div>
         <div>
             <label for="rule-${sectionKey}-end-offset" class="text-xs">Fim (meses depois):</label>
-            <input type="number" id="rule-${sectionKey}-end-offset" class="w-20 p-1 border rounded-md rule-date-range-input" placeholder="PadrÃ£o" min="0">
+            <input type="number" id="rule-${sectionKey}-end-offset" class="w-20 p-1 border rounded-md rule-date-range-input" placeholder="Padrão" min="0">
         </div>
     </div>
-    <p class="text-xs text-slate-400 mt-2">Deixe em branco para usar o padrÃ£o global da seÃ§Ã£o.</p>
+    <p class="text-xs text-slate-400 mt-2">Deixe em branco para usar o padrão global da seção.</p>
   `;
   return container;
 }
 
-// --- InicializaÃ§Ã£o ---
+// --- Inicialização ---
 document.addEventListener("DOMContentLoaded", async () => {
   await restoreOptions();
 
@@ -1240,37 +1241,37 @@ async function loadLoggingSettings() {
   try {
     const loggerInstance = getLogger();
     const currentConfig = loggerInstance.config;
-    
+
     // Carrega configurações salvas do storage
     const savedSettings = await browserAPI.storage.local.get({
       logLevel: 'INFO',
       enableConsoleLogging: true,
       enableStorageLogging: true
     });
-    
+
     // Aplica as configurações no logger
     setLogLevel(savedSettings.logLevel);
     loggerInstance.config.enableConsole = savedSettings.enableConsoleLogging;
     loggerInstance.config.enableStorage = savedSettings.enableStorageLogging;
-    
+
     // Atualiza a interface
     const logLevelSelect = document.getElementById('logLevel');
     const enableConsoleCheckbox = document.getElementById('enableConsoleLogging');
     const enableStorageCheckbox = document.getElementById('enableStorageLogging');
-    
+
     if (logLevelSelect) logLevelSelect.value = savedSettings.logLevel;
     if (enableConsoleCheckbox) enableConsoleCheckbox.checked = savedSettings.enableConsoleLogging;
     if (enableStorageCheckbox) enableStorageCheckbox.checked = savedSettings.enableStorageLogging;
-    
+
     // Carrega estatísticas iniciais
     await updateLogStats();
-    
-    logger.info('Configurações de logging carregadas', { 
+
+    logger.info('Configurações de logging carregadas', {
       level: savedSettings.logLevel,
       console: savedSettings.enableConsoleLogging,
       storage: savedSettings.enableStorageLogging
     });
-    
+
   } catch (error) {
     logger.error('Erro ao carregar configurações de logging:', error);
   }
@@ -1284,26 +1285,26 @@ async function saveLoggingSettings() {
     const logLevelSelect = document.getElementById('logLevel');
     const enableConsoleCheckbox = document.getElementById('enableConsoleLogging');
     const enableStorageCheckbox = document.getElementById('enableStorageLogging');
-    
+
     const settings = {
       logLevel: logLevelSelect.value,
       enableConsoleLogging: enableConsoleCheckbox.checked,
       enableStorageLogging: enableStorageCheckbox.checked
     };
-    
+
     // Salva no storage
     await browserAPI.storage.local.set(settings);
-    
+
     // Aplica as configurações no logger
     const loggerInstance = getLogger();
     setLogLevel(settings.logLevel);
     loggerInstance.config.enableConsole = settings.enableConsoleLogging;
     loggerInstance.config.enableStorage = settings.enableStorageLogging;
-    
+
     logger.info('Configurações de logging salvas', settings);
-    
+
     Utils.showMessage('Configurações de logging salvas!', 'success');
-    
+
   } catch (error) {
     logger.error('Erro ao salvar configurações de logging:', error);
     Utils.showMessage('Erro ao salvar configurações de logging.', 'error');
@@ -1316,16 +1317,16 @@ async function saveLoggingSettings() {
 async function updateLogStats() {
   try {
     const stats = await getLogStats();
-    
+
     document.getElementById('totalLogs').textContent = stats.total || '0';
     document.getElementById('errorLogs').textContent = stats.byLevel.ERROR || '0';
     document.getElementById('warnLogs').textContent = stats.byLevel.WARN || '0';
     document.getElementById('infoLogs').textContent = stats.byLevel.INFO || '0';
     document.getElementById('debugLogs').textContent = stats.byLevel.DEBUG || '0';
-    
+
   } catch (error) {
     logger.error('Erro ao atualizar estatísticas de logs:', error);
-    
+
     // Valores padrão em caso de erro
     document.getElementById('totalLogs').textContent = 'Erro';
     document.getElementById('errorLogs').textContent = '-';
@@ -1341,28 +1342,28 @@ async function updateLogStats() {
 async function handleExportLogs() {
   try {
     const logs = await exportLogs('json');
-    
+
     if (!logs || logs === '[]') {
       Utils.showMessage('Nenhum log disponível para exportar.', 'warning');
       return;
     }
-    
+
     const blob = new Blob([logs], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    
+
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
     a.download = `assistente-regulacao-logs-${timestamp}.json`;
-    
+
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-    
+
     logger.info('Logs exportados para arquivo', { timestamp });
     Utils.showMessage('Logs exportados com sucesso!', 'success');
-    
+
   } catch (error) {
     logger.error('Erro ao exportar logs:', error);
     Utils.showMessage('Erro ao exportar logs.', 'error');
@@ -1377,15 +1378,15 @@ async function handleClearLogs() {
     const confirmation = confirm(
       'Tem certeza que deseja limpar todos os logs? Esta ação não pode ser desfeita.'
     );
-    
+
     if (!confirmation) return;
-    
+
     await clearLogs();
     await updateLogStats();
-    
+
     logger.info('Logs limpos pelo usuário');
     Utils.showMessage('Todos os logs foram limpos.', 'success');
-    
+
   } catch (error) {
     logger.error('Erro ao limpar logs:', error);
     Utils.showMessage('Erro ao limpar logs.', 'error');
@@ -1398,10 +1399,10 @@ async function handleClearLogs() {
 async function handleTestLogging() {
   try {
     Utils.showMessage('Executando teste do sistema de logging...', 'info');
-    
+
     // Executa os testes
     const result = await testLoggingSystem();
-    
+
     if (result.success) {
       Utils.showMessage('Teste do sistema de logging concluído com sucesso!', 'success');
       logger.info('Teste do sistema de logging executado', result);
@@ -1409,12 +1410,12 @@ async function handleTestLogging() {
       Utils.showMessage('Teste do sistema de logging falhou.', 'error');
       logger.error('Falha no teste do sistema de logging', result);
     }
-    
+
     // Atualiza estatísticas após o teste
     setTimeout(async () => {
       await updateLogStats();
     }, 1000);
-    
+
   } catch (error) {
     logger.error('Erro ao executar teste de logging:', error);
     Utils.showMessage('Erro ao executar teste de logging.', 'error');
@@ -1425,7 +1426,7 @@ async function handleTestLogging() {
 document.addEventListener('DOMContentLoaded', async () => {
   // Carrega configurações de logging
   await loadLoggingSettings();
-  
+
   // Event listeners para controles de logging
   const logLevelSelect = document.getElementById('logLevel');
   const enableConsoleCheckbox = document.getElementById('enableConsoleLogging');
@@ -1434,33 +1435,32 @@ document.addEventListener('DOMContentLoaded', async () => {
   const exportLogsBtn = document.getElementById('exportLogsBtn');
   const clearLogsBtn = document.getElementById('clearLogsBtn');
   const testLoggingBtn = document.getElementById('testLoggingBtn');
-  
+
   if (logLevelSelect) {
     logLevelSelect.addEventListener('change', saveLoggingSettings);
   }
-  
+
   if (enableConsoleCheckbox) {
     enableConsoleCheckbox.addEventListener('change', saveLoggingSettings);
   }
-  
+
   if (enableStorageCheckbox) {
     enableStorageCheckbox.addEventListener('change', saveLoggingSettings);
   }
-  
+
   if (refreshLogStatsBtn) {
     refreshLogStatsBtn.addEventListener('click', updateLogStats);
   }
-  
+
   if (exportLogsBtn) {
     exportLogsBtn.addEventListener('click', handleExportLogs);
   }
-  
+
   if (clearLogsBtn) {
     clearLogsBtn.addEventListener('click', handleClearLogs);
   }
-  
+
   if (testLoggingBtn) {
     testLoggingBtn.addEventListener('click', handleTestLogging);
   }
 });
-

@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @file MÃ³dulo SectionManager, responsÃ¡vel por gerir uma secÃ§Ã£o inteira da sidebar.
  */
 
@@ -18,7 +18,7 @@ const logger = createComponentLogger('SectionManager');
  */
 const ERROR_TYPES = {
   NETWORK: 'network',
-  AUTHENTICATION: 'authentication', 
+  AUTHENTICATION: 'authentication',
   SERVER: 'server',
   TIMEOUT: 'timeout',
   VALIDATION: 'validation',
@@ -42,44 +42,44 @@ const RETRY_CONFIG = {
  */
 function classifyError(error) {
   if (!error) return ERROR_TYPES.UNKNOWN;
-  
+
   const message = error.message?.toLowerCase() || '';
-  
+
   // Erros de rede/conectividade
   if (error.name === 'TypeError' && message.includes('fetch')) {
     return ERROR_TYPES.NETWORK;
   }
-  
-  if (message.includes('network') || message.includes('connection') || 
+
+  if (message.includes('network') || message.includes('connection') ||
       message.includes('conectividade') || message.includes('conexÃ£o')) {
     return ERROR_TYPES.NETWORK;
   }
-  
+
   // Erros de autenticaÃ§Ã£o
-  if (message.includes('401') || message.includes('403') || 
+  if (message.includes('401') || message.includes('403') ||
       message.includes('unauthorized') || message.includes('forbidden') ||
       message.includes('sessÃ£o') || message.includes('login')) {
     return ERROR_TYPES.AUTHENTICATION;
   }
-  
+
   // Erros de timeout
   if (message.includes('timeout') || message.includes('tempo limite')) {
     return ERROR_TYPES.TIMEOUT;
   }
-  
+
   // Erros do servidor
-  if (message.includes('500') || message.includes('502') || 
+  if (message.includes('500') || message.includes('502') ||
       message.includes('503') || message.includes('504') ||
       message.includes('server') || message.includes('servidor')) {
     return ERROR_TYPES.SERVER;
   }
-  
+
   // Erros de validaÃ§Ã£o
   if (message.includes('validation') || message.includes('validaÃ§Ã£o') ||
       message.includes('invalid') || message.includes('invÃ¡lido')) {
     return ERROR_TYPES.VALIDATION;
   }
-  
+
   return ERROR_TYPES.UNKNOWN;
 }
 
@@ -159,7 +159,7 @@ function generateUserFriendlyMessage(errorType, sectionName, originalError) {
       severity: 'error'
     }
   };
-  
+
   return messages[errorType] || messages[ERROR_TYPES.UNKNOWN];
 }
 
@@ -395,16 +395,16 @@ export class SectionManager {
     const friendlyName = getSectionName(this.sectionKey) || this.sectionKey;
     const errorType = classifyError(error);
     const errorInfo = generateUserFriendlyMessage(errorType, friendlyName, error);
-    
+
     logger.error(`[${this.sectionKey}] Erro (tentativa ${attempt}):`, error);
-    
+
     // Verifica se deve tentar novamente
     if (errorInfo.canRetry && attempt < RETRY_CONFIG.MAX_ATTEMPTS) {
       const delay = calculateRetryDelay(attempt);
-      
+
       // Mostra feedback de retry para o usuÃ¡rio
       this.showRetryFeedback(attempt, delay, errorInfo);
-      
+
       // Aguarda o delay e tenta novamente
       setTimeout(async () => {
         try {
@@ -415,13 +415,13 @@ export class SectionManager {
           await this.handleFetchError(retryError, attempt + 1);
         }
       }, delay);
-      
+
       return;
     }
-    
+
     // Falha definitiva - mostra erro final
     this.showFinalError(errorInfo, attempt);
-    
+
     // Define estado dos dados baseado no tipo de erro
     if (errorType === ERROR_TYPES.AUTHENTICATION || errorType === ERROR_TYPES.VALIDATION) {
       // MantÃ©m dados anteriores para erros que nÃ£o invalidam os dados
@@ -432,7 +432,7 @@ export class SectionManager {
       // Limpa dados para outros tipos de erro
       this.allData = [];
     }
-    
+
     // Mostra mensagem global
     Utils.showMessage(errorInfo.message, errorInfo.severity === 'error' ? 'error' : 'warning');
   }
@@ -446,7 +446,7 @@ export class SectionManager {
   showRetryFeedback(attempt, delay, errorInfo) {
     const delaySeconds = Math.ceil(delay / 1000);
     const remainingAttempts = RETRY_CONFIG.MAX_ATTEMPTS - attempt;
-    
+
     this.elements.content.innerHTML = `
       <div class="p-4 text-center">
         <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
@@ -456,16 +456,16 @@ export class SectionManager {
           </div>
           <p class="text-yellow-700 mb-3">${errorInfo.message}</p>
           <p class="text-yellow-600 text-sm mb-3">
-            Tentando novamente em ${delaySeconds} segundos... 
+            Tentando novamente em ${delaySeconds} segundos...
             (${remainingAttempts} tentativa${remainingAttempts !== 1 ? 's' : ''} restante${remainingAttempts !== 1 ? 's' : ''})
           </p>
-          <button id="${this.prefix}-cancel-retry-btn" 
+          <button id="${this.prefix}-cancel-retry-btn"
                   class="px-3 py-1 text-sm bg-yellow-600 text-white rounded hover:bg-yellow-700 transition">
             Cancelar Retry
           </button>
         </div>
       </div>`;
-    
+
     // Adiciona listener para cancelar retry
     const cancelBtn = this.elements.content.querySelector(`#${this.prefix}-cancel-retry-btn`);
     if (cancelBtn) {
@@ -486,18 +486,18 @@ export class SectionManager {
     const borderClass = `border-${severityClass}-200`;
     const textClass = `text-${severityClass}-800`;
     const textSecondaryClass = `text-${severityClass}-600`;
-    
+
     let attemptsText = '';
     if (totalAttempts > 1) {
       attemptsText = `<p class="${textSecondaryClass} text-sm mb-3">
         Falhou apÃ³s ${totalAttempts} tentativa${totalAttempts !== 1 ? 's' : ''}
       </p>`;
     }
-    
-    const suggestionsHtml = errorInfo.suggestions.map(suggestion => 
+
+    const suggestionsHtml = errorInfo.suggestions.map(suggestion =>
       `<li class="${textSecondaryClass} text-sm">${suggestion}</li>`
     ).join('');
-    
+
     this.elements.content.innerHTML = `
       <div class="p-4">
         <div class="${bgClass} ${borderClass} border rounded-lg p-4">
@@ -509,37 +509,37 @@ export class SectionManager {
           </div>
           <p class="${textClass} mb-3">${errorInfo.message}</p>
           ${attemptsText}
-          
+
           <div class="mb-4">
             <h4 class="${textClass} text-sm font-medium mb-2">SugestÃµes:</h4>
             <ul class="list-disc list-inside space-y-1">
               ${suggestionsHtml}
             </ul>
           </div>
-          
+
           <div class="flex gap-2">
-            <button id="${this.prefix}-retry-manual-btn" 
+            <button id="${this.prefix}-retry-manual-btn"
                     class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition text-sm">
               Tentar Novamente
             </button>
-            <button id="${this.prefix}-clear-filters-btn" 
+            <button id="${this.prefix}-clear-filters-btn"
                     class="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition text-sm">
               Limpar Filtros
             </button>
           </div>
         </div>
       </div>`;
-    
+
     // Adiciona listeners para aÃ§Ãµes
     const retryBtn = this.elements.content.querySelector(`#${this.prefix}-retry-manual-btn`);
     const clearBtn = this.elements.content.querySelector(`#${this.prefix}-clear-filters-btn`);
-    
+
     if (retryBtn) {
       retryBtn.addEventListener('click', () => {
         this.fetchData();
       });
     }
-    
+
     if (clearBtn) {
       clearBtn.addEventListener('click', () => {
         this.clearFilters();
@@ -548,7 +548,7 @@ export class SectionManager {
     }
   }
 
-  
+
   applyFiltersAndRender() {
     let filteredData = [...this.allData];
     if (this.config.filterLogic) {

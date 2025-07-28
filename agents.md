@@ -255,7 +255,7 @@ npm run safe:commit          # Validação + build + commit + push
 
 # Fluxo manual obrigatório:
 npm run validate             # 1. Validação completa
-npm run build               # 2. Build para ambos navegadores  
+npm run build               # 2. Build para ambos navegadores
 npm run test                # 3. Testes (se configurados)
 git add .                   # 4. Adicionar arquivos
 git commit -m "tipo(escopo): descrição"  # 5. Commit obrigatório
@@ -320,11 +320,11 @@ class TimelineManager {}
 #### 1. Sistema de Constantes Centralizadas
 ```javascript
 // ✅ SEMPRE use api-constants.js
-import { 
-  API_ENDPOINTS, 
-  API_PARAMS, 
+import {
+  API_ENDPOINTS,
+  API_PARAMS,
   API_HEADERS,
-  API_ERROR_MESSAGES 
+  API_ERROR_MESSAGES
 } from './api-constants.js';
 
 // ✅ Construção de URLs
@@ -490,7 +490,7 @@ async function searchPatient(cpf) {
 async function searchPatient(cpf) {
   // ❌ URL hardcoded
   const url = 'http://sigss.com/buscarPaciente?cpf=' + cpf;
-  
+
   // ❌ Sem validação
   // ❌ Sem tratamento de erro
   // ❌ Headers incorretos
@@ -526,7 +526,7 @@ async function getCachedData(key) {
   if (cache.has(key)) {
     return cache.get(key);
   }
-  
+
   const data = await fetchData(key);
   cache.set(key, data);
   return data;
@@ -609,7 +609,7 @@ npm run validate:manifests
 ```bash
 # Release automático
 npm run release:patch    # 1.0.0 → 1.0.1
-npm run release:minor    # 1.0.0 → 1.1.0  
+npm run release:minor    # 1.0.0 → 1.1.0
 npm run release:major    # 1.0.0 → 2.0.0
 
 # Release manual
@@ -645,7 +645,7 @@ npm run release 1.2.3
 ```bash
 # Build principal - usa Webpack e scripts modernos
 npm run build                  # Chrome + Firefox
-npm run build:chrome          # Apenas Chrome/Edge  
+npm run build:chrome          # Apenas Chrome/Edge
 npm run build:firefox         # Apenas Firefox
 
 # Validação completa
@@ -865,7 +865,7 @@ console.log('Storage atual:', data);
 function logOperation(operation, data, status = 'info') {
   const timestamp = new Date().toISOString();
   const prefix = '[Assistente]';
-  
+
   console[status](`${prefix} ${timestamp} - ${operation}:`, data);
 }
 
@@ -879,7 +879,7 @@ logOperation('API Error', { error: 'Timeout' }, 'error');
 // ✅ Medir performance de operações críticas
 function measurePerformance(operation, fn) {
   const start = performance.now();
-  
+
   return Promise.resolve(fn()).finally(() => {
     const duration = performance.now() - start;
     console.log(`[Performance] ${operation}: ${duration.toFixed(2)}ms`);
@@ -952,7 +952,7 @@ MAJOR.MINOR.PATCH
 
 Exemplo: 3.3.15
 - MAJOR (3): Mudanças incompatíveis
-- MINOR (3): Novas funcionalidades compatíveis  
+- MINOR (3): Novas funcionalidades compatíveis
 - PATCH (15): Correções de bugs
 ```
 
@@ -1242,11 +1242,11 @@ function processPatientData(data) {
   if (data.cns && !validateCNS(data.cns)) {
     throw new Error('CNS inválido');
   }
-  
+
   if (data.cpf && !validateCPF(data.cpf)) {
     throw new Error('CPF inválido');
   }
-  
+
   return data;
 }
 ```
@@ -1260,13 +1260,13 @@ window.addEventListener("message", (event) => {
     console.warn("Mensagem rejeitada - origem não confiável");
     return;
   }
-  
+
   // Validar estrutura
   if (!event.data || typeof event.data !== 'object') {
     console.warn("Mensagem rejeitada - formato inválido");
     return;
   }
-  
+
   // Processar mensagem segura
   processMessage(event.data);
 });
@@ -1283,12 +1283,12 @@ class ComponentManager {
   constructor() {
     this.memoryManager = new MemoryManager();
   }
-  
+
   addEventListeners() {
     // Registra automaticamente para cleanup
     this.memoryManager.addEventListener(element, 'click', this.handleClick);
   }
-  
+
   destroy() {
     // Cleanup automático de todos os recursos
     this.memoryManager.cleanup();
@@ -1302,20 +1302,20 @@ class ComponentManager {
 async function fetchPatientData(id) {
   try {
     const response = await fetch(url);
-    
+
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}: ${response.statusText}`);
     }
-    
+
     const data = await response.json();
     return processPatientData(data);
-    
+
   } catch (error) {
     console.error('[API Error]', error);
-    
+
     // Notificar usuário de forma amigável
     showUserFriendlyError('Erro ao buscar dados do paciente');
-    
+
     // Re-throw para permitir tratamento upstream
     throw error;
   }
@@ -1328,7 +1328,7 @@ async function fetchPatientData(id) {
 function logOperation(component, operation, data, level = 'info') {
   const timestamp = new Date().toISOString();
   const prefix = `[Assistente ${component}]`;
-  
+
   console[level](`${prefix} ${timestamp} - ${operation}:`, data);
 }
 

@@ -33,7 +33,7 @@ export function validateCPF(cpf) {
 
   // Remove formatação
   const cleanCPF = cpf.replace(/[^\d]/g, '');
-  
+
   // Verifica formato básico
   if (!PATTERNS.CPF.test(cpf)) {
     return { valid: false, message: 'Formato de CPF inválido (xxx.xxx.xxx-xx)' };
@@ -54,7 +54,7 @@ export function validateCPF(cpf) {
     sum += parseInt(cleanCPF[i]) * CPF_WEIGHTS_1[i];
   }
   let firstDigit = ((sum * 10) % 11) % 10;
-  
+
   if (firstDigit !== parseInt(cleanCPF[9])) {
     return { valid: false, message: 'CPF inválido (primeiro dígito verificador)' };
   }
@@ -65,7 +65,7 @@ export function validateCPF(cpf) {
     sum += parseInt(cleanCPF[i]) * CPF_WEIGHTS_2[i];
   }
   let secondDigit = ((sum * 10) % 11) % 10;
-  
+
   if (secondDigit !== parseInt(cleanCPF[10])) {
     return { valid: false, message: 'CPF inválido (segundo dígito verificador)' };
   }
@@ -91,7 +91,7 @@ function cleanCNSCache() {
       CNS_VALIDATION_CACHE.delete(key);
     }
   }
-  
+
   // Limita tamanho do cache
   if (CNS_VALIDATION_CACHE.size > CNS_CACHE_MAX_SIZE) {
     const entries = Array.from(CNS_VALIDATION_CACHE.entries());
@@ -117,21 +117,21 @@ function validateDefinitiveCNS(cleanCNS) {
   for (let i = 0; i < 11; i++) {
     sum += parseInt(cleanCNS[i]) * (15 - i);
   }
-  
+
   const remainder = sum % 11;
   let dv = 11 - remainder;
-  
+
   if (dv === 11) {
     dv = 0;
   }
-  
+
   if (dv === 10) {
     // Caso especial: quando DV seria 10, soma-se 2 e recalcula
     sum += 2;
     const newRemainder = sum % 11;
     dv = 11 - newRemainder;
     if (dv === 11) dv = 0;
-    
+
     // Verifica se os últimos 4 dígitos são 0001
     const lastFourDigits = cleanCNS.substring(11);
     if (lastFourDigits !== '0001') {
@@ -141,11 +141,11 @@ function validateDefinitiveCNS(cleanCNS) {
     // Caso normal: verifica os dois primeiros dígitos verificadores
     const expectedDV = cleanCNS.substring(11, 13);
     const calculatedDV = dv.toString().padStart(2, '0');
-    
+
     if (expectedDV !== calculatedDV) {
       return { valid: false, message: 'CNS inválido (dígitos verificadores incorretos)' };
     }
-    
+
     // Os dois últimos dígitos devem ser 00 para CNS definitivo normal
     const lastTwoDigits = cleanCNS.substring(13);
     if (lastTwoDigits !== '00') {
@@ -163,7 +163,7 @@ function validateDefinitiveCNS(cleanCNS) {
  */
 function validateProvisionalCNS(cleanCNS) {
   const firstDigit = cleanCNS[0];
-  
+
   // Verifica sequências inválidas (todos os dígitos iguais)
   if (/^(\d)\1{14}$/.test(cleanCNS)) {
     return { valid: false, message: 'CNS com todos os dígitos iguais é inválido' };
@@ -178,48 +178,48 @@ function validateProvisionalCNS(cleanCNS) {
       if (isNaN(secondDigit7)) {
         return { valid: false, message: 'CNS provisório tipo 7 com formato inválido' };
       }
-      
+
       // Validação adicional: não pode ter padrões específicos inválidos
       if (cleanCNS.startsWith('70000000000') || cleanCNS.startsWith('79999999999')) {
         return { valid: false, message: 'CNS provisório tipo 7 com sequência reservada' };
       }
       break;
-      
+
     case '8':
       // CNS provisório tipo 8: validação de formato específico
       const secondDigit8 = parseInt(cleanCNS[1]);
       if (isNaN(secondDigit8)) {
         return { valid: false, message: 'CNS provisório tipo 8 com formato inválido' };
       }
-      
+
       // Validação adicional: não pode ter padrões específicos inválidos
       if (cleanCNS.startsWith('80000000000') || cleanCNS.startsWith('89999999999')) {
         return { valid: false, message: 'CNS provisório tipo 8 com sequência reservada' };
       }
       break;
-      
+
     case '9':
       // CNS provisório tipo 9: validação de formato específico
       const secondDigit9 = parseInt(cleanCNS[1]);
       if (isNaN(secondDigit9)) {
         return { valid: false, message: 'CNS provisório tipo 9 com formato inválido' };
       }
-      
+
       // Validação adicional: não pode ter padrões específicos inválidos
       if (cleanCNS.startsWith('90000000000') || cleanCNS.startsWith('99999999999')) {
         return { valid: false, message: 'CNS provisório tipo 9 com sequência reservada' };
       }
-      
+
       // CNS tipo 9 tem validação de dígito verificador simplificada
       let sum9 = 0;
       for (let i = 0; i < 14; i++) {
         sum9 += parseInt(cleanCNS[i]) * (15 - i);
       }
-      
+
       const remainder9 = sum9 % 11;
       const expectedLastDigit = remainder9 < 2 ? 0 : 11 - remainder9;
       const actualLastDigit = parseInt(cleanCNS[14]);
-      
+
       if (actualLastDigit !== expectedLastDigit) {
         return { valid: false, message: 'CNS provisório tipo 9 com dígito verificador incorreto' };
       }
@@ -227,11 +227,11 @@ function validateProvisionalCNS(cleanCNS) {
   }
 
   // Validação adicional: verifica se não é uma sequência óbvia inválida
-  const hasValidPattern = /^[789]\d{14}$/.test(cleanCNS) && 
+  const hasValidPattern = /^[789]\d{14}$/.test(cleanCNS) &&
                          !/^([789])\1{14}$/.test(cleanCNS) &&
                          !/^[789]0{14}$/.test(cleanCNS) &&
                          !/^[789]1{14}$/.test(cleanCNS);
-  
+
   if (!hasValidPattern) {
     return { valid: false, message: 'CNS provisório com padrão inválido' };
   }
@@ -251,7 +251,7 @@ export function validateCNS(cns) {
   }
 
   const cleanCNS = cns.replace(/[^\d]/g, '');
-  
+
   // Verifica formato básico
   if (!PATTERNS.CNS.test(cleanCNS)) {
     return { valid: false, message: 'CNS deve ter exatamente 15 dígitos' };
@@ -306,7 +306,7 @@ export function validateSearchTerm(searchTerm) {
   }
 
   const trimmed = searchTerm.trim();
-  
+
   if (trimmed.length === 0) {
     return { valid: false, message: 'Termo de busca não pode estar vazio' };
   }
@@ -325,8 +325,8 @@ export function validateSearchTerm(searchTerm) {
     return { valid: false, message: 'Termo de busca contém caracteres HTML não permitidos' };
   }
 
-  return { 
-    valid: true, 
+  return {
+    valid: true,
     sanitized: sanitizeSearchTerm(trimmed)
   };
 }
@@ -342,7 +342,7 @@ export function validateName(name) {
   }
 
   const trimmed = name.trim();
-  
+
   if (trimmed.length < 2) {
     return { valid: false, message: 'Nome deve ter pelo menos 2 caracteres' };
   }
@@ -370,16 +370,16 @@ export function validateBrazilianDate(dateStr) {
 
   const [day, month, year] = dateStr.split('/').map(Number);
   const date = new Date(year, month - 1, day);
-  
+
   // Verifica limites básicos antes de criar o objeto Date
   if (day < 1 || day > 31) {
     return { valid: false, message: 'Dia inválido (deve estar entre 1 e 31)' };
   }
-  
+
   if (month < 1 || month > 12) {
     return { valid: false, message: 'Mês inválido (deve estar entre 1 e 12)' };
   }
-  
+
   // Verifica se a data é válida (JavaScript Date corrige automaticamente datas inválidas)
   if (date.getDate() !== day || date.getMonth() !== month - 1 || date.getFullYear() !== year) {
     return { valid: false, message: 'Data inválida (ex: 31/02 não existe)' };
@@ -401,7 +401,7 @@ export function validateBrazilianDate(dateStr) {
  */
 export function sanitizeSearchTerm(term) {
   if (!term || typeof term !== 'string') return '';
-  
+
   return term
     .trim()
     .replace(/[<>\"'&]/g, '') // Remove caracteres XSS básicos
@@ -417,7 +417,7 @@ export function sanitizeSearchTerm(term) {
  */
 export function sanitizeInput(input) {
   if (!input || typeof input !== 'string') return '';
-  
+
   return input
     .trim()
     .replace(/[<>\"'&]/g, '') // Remove XSS
@@ -447,7 +447,7 @@ export function applyRealtimeValidation(inputElement, validator, onValid, onInva
 
   const validate = () => {
     const result = validator(inputElement.value);
-    
+
     if (result.valid) {
       inputElement.classList.remove('border-red-500', 'bg-red-50');
       inputElement.classList.add('border-green-500');
@@ -470,7 +470,7 @@ export function applyRealtimeValidation(inputElement, validator, onValid, onInva
 
   // Validação imediata no blur
   inputElement.addEventListener('blur', validate);
-  
+
   // Limpeza no focus
   inputElement.addEventListener('focus', () => {
     inputElement.classList.remove('border-red-500', 'border-green-500', 'bg-red-50');

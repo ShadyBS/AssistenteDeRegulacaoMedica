@@ -1,4 +1,4 @@
-﻿/**
+/**
 };
 import { createComponentLogger } from "./logger.js";
 
@@ -60,7 +60,7 @@ function generateSessionPassword() {
   const timestamp = Date.now();
   const random = crypto.getRandomValues(new Uint8Array(16));
   const randomHex = Array.from(random, byte => byte.toString(16).padStart(2, '0')).join('');
-  
+
   return `${extensionId}-${timestamp}-${randomHex}`;
 }
 
@@ -161,7 +161,7 @@ export async function decryptMedicalData(encryptedData, customPassword = null) {
  */
 export function isEncrypted(data) {
   if (typeof data !== 'string') return false;
-  
+
   try {
     // Tenta decodificar base64
     const decoded = atob(data);
@@ -198,7 +198,7 @@ export async function encryptForStorage(data, ttlMinutes = 60) {
 export async function decryptFromStorage(encryptedData) {
   try {
     const dataWithTTL = await decryptMedicalData(encryptedData);
-    
+
     // Verifica se os dados expiraram
     if (dataWithTTL.expiresAt && Date.now() > dataWithTTL.expiresAt) {
       logger.info('[Crypto] Dados mÃ©dicos expiraram, removendo do cache');

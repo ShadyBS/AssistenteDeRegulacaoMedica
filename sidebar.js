@@ -1,4 +1,4 @@
-﻿import "./browser-polyfill.js";
+import "./browser-polyfill.js";
 import * as API from "./api.js";
 import { defaultFieldConfig } from "./field-config.js";
 import { filterConfig } from "./filter-config.js";
@@ -49,20 +49,20 @@ let patientSelectionTimeout = null;
  */
 function cleanupPatientResources() {
   logger.info('[Sidebar] Limpando recursos do paciente anterior');
-  
+
   // Limpa timeout de seleÃ§Ã£o de paciente se existir
   if (patientSelectionTimeout) {
     memoryManager.clearTimeout(patientSelectionTimeout);
     patientSelectionTimeout = null;
   }
-  
+
   // Reseta variÃ¡veis de controle
   patientSelectionInProgress = false;
   pendingPatientSelection = null;
-  
+
   // Limpa dados de regulaÃ§Ã£o atual
   currentRegulationData = null;
-  
+
   // Limpa dados dos section managers
   Object.values(sectionManagers).forEach((manager) => {
     if (typeof manager.cleanup === "function") {
@@ -74,10 +74,10 @@ function cleanupPatientResources() {
       manager.clearAutomation();
     }
   });
-  
+
   // ForÃ§a limpeza de memÃ³ria
   memoryManager.performMemoryCleanup();
-  
+
   logger.info('[Sidebar] Limpeza de recursos concluÃ­da');
 }
 
@@ -99,7 +99,7 @@ function registerCleanupCallbacks() {
     });
     sectionManagers = {};
   });
-  
+
   // Callback para limpeza de timeouts globais
   memoryManager.addCleanupCallback(() => {
     logger.info('[Sidebar] Limpando timeouts globais');
@@ -108,7 +108,7 @@ function registerCleanupCallbacks() {
       patientSelectionTimeout = null;
     }
   });
-  
+
   // Callback para limpeza de variÃ¡veis globais
   memoryManager.addCleanupCallback(() => {
     logger.info('[Sidebar] Limpando variÃ¡veis globais');
@@ -431,9 +431,9 @@ async function selectPatient(patientInfo, forceRefresh = false) {
   patientSelectionTimeout = memoryManager.setTimeout(async () => {
     // Limpa recursos do paciente anterior antes de carregar novo
     cleanupPatientResources();
-    
+
     await executePatientSelection(patientInfo, forceRefresh);
-    
+
     // Processar requisiÃ§Ã£o pendente se existir
     if (pendingPatientSelection) {
       const pending = pendingPatientSelection;
@@ -452,19 +452,19 @@ async function executePatientSelection(patientInfo, forceRefresh = false) {
   }
 
   patientSelectionInProgress = true;
-  
+
   try {
     Utils.toggleLoader(true);
     Utils.clearMessage();
     store.setPatientUpdating();
-    
+
     const ficha = await API.fetchVisualizaUsuario(patientInfo);
     const cadsus = await API.fetchCadsusData({
       cpf: Utils.getNestedValue(ficha, "entidadeFisica.entfCPF"),
       cns: ficha.isenNumCadSus,
       skipValidation: true // Pular validaÃ§Ã£o quando carregando dados do paciente selecionado
     });
-    
+
     Object.values(sectionManagers).forEach((manager) => {
       if (typeof manager.clearAutomationFeedbackAndFilters === "function") {
         manager.clearAutomationFeedbackAndFilters(false);
@@ -472,10 +472,10 @@ async function executePatientSelection(patientInfo, forceRefresh = false) {
         manager.clearAutomation();
       }
     });
-    
+
     store.setPatient(ficha, cadsus);
     await updateRecentPatients(store.getPatient());
-    
+
     logger.info("SeleÃ§Ã£o de paciente concluÃ­da com sucesso:", patientInfo.idp);
   } catch (error) {
     Utils.showMessage(error.message, "error");
@@ -489,7 +489,7 @@ async function executePatientSelection(patientInfo, forceRefresh = false) {
 
 async function init() {
   logger.info('[Sidebar] Iniciando aplicaÃ§Ã£o');
-  
+
   // âœ… SEGURANÃ‡A: Limpeza automÃ¡tica de dados mÃ©dicos expirados na inicializaÃ§Ã£o
   try {
     await cleanupExpiredData(browserAPI);
@@ -497,14 +497,14 @@ async function init() {
   } catch (error) {
     logger.error('[Sidebar] Erro na limpeza de dados expirados:', error);
   }
-  
+
   // Registra callbacks de limpeza no MemoryManager
   registerCleanupCallbacks();
-  
+
   // Registra referÃªncias globais importantes
   memoryManager.setGlobalRef('sectionManagers', sectionManagers);
   memoryManager.setGlobalRef('currentRegulationData', currentRegulationData);
-  
+
   let baseUrlConfigured = true;
 
   try {
@@ -577,10 +577,10 @@ async function init() {
   setupAutoModeToggle();
 
   await checkForPendingRegulation();
-  
+
   // Log estatÃ­sticas iniciais do MemoryManager
   memoryManager.logStats();
-  
+
   logger.info('[Sidebar] AplicaÃ§Ã£o inicializada com sucesso');
 }
 
@@ -601,13 +601,13 @@ async function loadConfigAndData() {
     sidebarSectionOrder: [],
     sectionHeaderStyles: {}, // Carrega a nova configuraÃ§Ã£o de estilos
   });
-  
+
   const localData = await browserAPI.storage.local.get({
     recentPatients: [],
     savedFilterSets: {},
     automationRules: [],
   });
-  
+
   // âœ… SEGURANÃ‡A: Descriptografar dados de pacientes recentes se estiverem criptografados
   let recentPatients = [];
   if (localData.recentPatients) {
@@ -628,20 +628,20 @@ async function loadConfigAndData() {
         // Dados nÃ£o criptografados (formato antigo) - migrar para formato criptografado
         recentPatients = localData.recentPatients;
         logger.info('[Sidebar] Migrando pacientes recentes para formato criptografado');
-        
+
         // Criptografar e salvar no novo formato
         if (recentPatients.length > 0) {
           try {
             const encryptedRecentPatients = await encryptForStorage(
-              recentPatients, 
+              recentPatients,
               MEDICAL_DATA_CONFIG.DEFAULT_TTL_MINUTES * 24 // 24 horas
             );
-            
-            await browserAPI.storage.local.set({ 
+
+            await browserAPI.storage.local.set({
               recentPatients: encryptedRecentPatients,
               recentPatientsTimestamp: Date.now()
             });
-            
+
             logger.info('[Sidebar] MigraÃ§Ã£o para formato criptografado concluÃ­da');
           } catch (error) {
             logger.error('[Sidebar] Erro na migraÃ§Ã£o para formato criptografado:', error);
@@ -654,7 +654,7 @@ async function loadConfigAndData() {
       await browserAPI.storage.local.remove(['recentPatients', 'recentPatientsTimestamp']);
     }
   }
-  
+
   store.setRecentPatients(recentPatients);
   store.setSavedFilterSets(localData.savedFilterSets);
 
@@ -905,7 +905,7 @@ function handleShowRegulationInfo() {
   const preElement = document.createElement("pre");
   preElement.className = `${getCSSClass('BG_SLATE_100')} p-2 rounded-md text-xs whitespace-pre-wrap break-all`;
   preElement.textContent = formattedJson;
-  
+
   // Limpar conteÃºdo anterior e adicionar o elemento de forma segura
   modalContent.innerHTML = "";
   modalContent.appendChild(preElement);
@@ -915,7 +915,7 @@ function handleShowRegulationInfo() {
 
 function addGlobalEventListeners() {
   logger.info('[Sidebar] Adicionando event listeners globais');
-  
+
   const mainContent = document.getElementById("main-content");
   const infoModal = document.getElementById("info-modal");
   const modalCloseBtn = document.getElementById("modal-close-btn");
@@ -943,7 +943,7 @@ function addGlobalEventListeners() {
 
   // Handler para fechar modal
   const modalCloseHandler = () => infoModal.classList.add("hidden");
-  
+
   // Handler para clique no backdrop do modal
   const modalBackdropHandler = (e) => {
     if (e.target === infoModal) infoModal.classList.add("hidden");
@@ -957,15 +957,15 @@ function addGlobalEventListeners() {
   if (modalCloseBtn) {
     memoryManager.addEventListener(modalCloseBtn, "click", modalCloseHandler);
   }
-  
+
   if (infoModal) {
     memoryManager.addEventListener(infoModal, "click", modalBackdropHandler);
   }
-  
+
   if (mainContent) {
     memoryManager.addEventListener(mainContent, "click", handleGlobalActions);
   }
-  
+
   if (infoBtn) {
     memoryManager.addEventListener(infoBtn, "click", handleShowRegulationInfo);
   }
@@ -1005,7 +1005,7 @@ function addGlobalEventListeners() {
 
   // Adiciona listener para mudanÃ§as no storage
   browserAPI.storage.onChanged.addListener(storageChangeHandler);
-  
+
   // Registra callback para remover listener do storage na limpeza
   memoryManager.addCleanupCallback(() => {
     logger.info('[Sidebar] Removendo listener de storage');
@@ -1015,7 +1015,7 @@ function addGlobalEventListeners() {
       logger.error('[Sidebar] Erro ao remover listener de storage:', error);
     }
   });
-  
+
   logger.info('[Sidebar] Event listeners globais adicionados');
 }
 
@@ -1089,7 +1089,7 @@ async function copyToClipboard(button) {
  */
 async function updateRecentPatients(patientData) {
   if (!patientData || !patientData.ficha) return;
-  
+
   try {
     const newRecent = { ...patientData };
     const currentRecents = store.getRecentPatients();
@@ -1097,21 +1097,21 @@ async function updateRecentPatients(patientData) {
       (p) => p.ficha.isenPK.idp !== newRecent.ficha.isenPK.idp
     );
     const updatedRecents = [newRecent, ...filtered].slice(0, 5);
-    
+
     // âœ… SEGURANÃ‡A: Criptografar dados de pacientes recentes antes do armazenamento
     // TTL de 24 horas para dados de pacientes recentes (menos sensÃ­vel que dados de regulaÃ§Ã£o)
     const encryptedRecentPatients = await encryptForStorage(
-      updatedRecents, 
+      updatedRecents,
       MEDICAL_DATA_CONFIG.DEFAULT_TTL_MINUTES * 24 // 24 horas
     );
-    
-    await browserAPI.storage.local.set({ 
+
+    await browserAPI.storage.local.set({
       recentPatients: encryptedRecentPatients,
       recentPatientsTimestamp: Date.now()
     });
-    
+
     store.setRecentPatients(updatedRecents);
-    
+
     logger.info('[Sidebar] Pacientes recentes atualizados e criptografados no storage');
   } catch (error) {
     logger.error('[Sidebar] Erro ao atualizar pacientes recentes:', error);
@@ -1128,12 +1128,12 @@ async function updateRecentPatients(patientData) {
 async function handleViewExamResult(button) {
   const { idp, ids } = button.dataset;
   const newTab = window.open("", "_blank");
-  
+
   // Criar elemento de loading de forma segura
   const loadingElement = document.createElement("p");
   loadingElement.textContent = "Carregando resultado do exame...";
   newTab.document.body.appendChild(loadingElement);
-  
+
   try {
     const filePath = await API.fetchResultadoExame({ idp, ids });
     const baseUrl = await API.getBaseUrl();
@@ -1161,7 +1161,7 @@ async function handleViewExamResult(button) {
 async function handleViewDocument(button) {
   const { idp, ids } = button.dataset;
   const newTab = window.open("", "_blank");
-  
+
   // Criar elemento de loading de forma segura
   const loadingElement = document.createElement("p");
   loadingElement.textContent = "Carregando documento...";
@@ -1191,7 +1191,7 @@ async function handleViewDocument(button) {
 async function handleViewRegulationAttachment(button) {
   const { idp, ids } = button.dataset;
   const newTab = window.open("", "_blank");
-  
+
   // Criar elemento de loading de forma segura
   const loadingElement = document.createElement("p");
   loadingElement.textContent = "Carregando anexo da regulaÃ§Ã£o...";
@@ -1225,7 +1225,7 @@ function showModal(title, content) {
 
   // âœ… SEGURO: Sempre usar textContent para tÃ­tulo
   modalTitle.textContent = title;
-  
+
   // âœ… SEGURO: SanitizaÃ§Ã£o rigorosa de conteÃºdo
   if (typeof content === 'string') {
     modalContent.textContent = content;
@@ -1237,27 +1237,27 @@ function showModal(title, content) {
     // Fallback seguro para outros tipos
     modalContent.textContent = String(content);
   }
-  
+
   modal.classList.remove("hidden");
 }
 
 function createDetailRowElement(label, value) {
   if (!value || String(value).trim() === "") return null;
-  
+
   const div = document.createElement('div');
   div.className = `py-2 border-b border-slate-100 flex justify-between items-start gap-4`;
-  
+
   const labelSpan = document.createElement('span');
   labelSpan.className = `font-semibold ${getCSSClass('TEXT_SECONDARY')} flex-shrink-0`;
   labelSpan.textContent = `${label}:`;
-  
+
   const valueSpan = document.createElement('span');
   valueSpan.className = `${getCSSClass('TEXT_PRIMARY')} text-right break-words`;
   valueSpan.textContent = String(value);
-  
+
   div.appendChild(labelSpan);
   div.appendChild(valueSpan);
-  
+
   return div;
 }
 
@@ -1267,9 +1267,9 @@ function createRegulationDetailsElement(data) {
     p.textContent = 'Dados da regulaÃ§Ã£o nÃ£o encontrados.';
     return p;
   }
-  
+
   const container = document.createElement('div');
-  
+
   const details = [
     { label: 'Status', value: data.reguStatus },
     { label: 'Tipo', value: data.reguTipo === "ENC" ? "Consulta" : "Exame" },
@@ -1281,30 +1281,30 @@ function createRegulationDetailsElement(data) {
     { label: 'Unidade Desejada', value: data.limoDesejadaNome },
     { label: 'Gravidade', value: data.reguGravidade }
   ];
-  
+
   details.forEach(detail => {
     const row = createDetailRowElement(detail.label, detail.value);
     if (row) container.appendChild(row);
   });
-  
+
   // Adicionar justificativa se existir
   if (data.reguJustificativa && data.reguJustificativa !== "null") {
     const justDiv = document.createElement('div');
     justDiv.className = 'py-2';
-    
+
     const justLabel = document.createElement('span');
     justLabel.className = `font-semibold ${getCSSClass('TEXT_SECONDARY')}`;
     justLabel.textContent = 'Justificativa:';
-    
+
     const justText = document.createElement('p');
     justText.className = `${getCSSClass('TEXT_PRIMARY')} whitespace-pre-wrap mt-1 p-2 ${getCSSClass('BG_SLATE_50')} rounded`;
     justText.textContent = data.reguJustificativa.replace(/\\n/g, "\n");
-    
+
     justDiv.appendChild(justLabel);
     justDiv.appendChild(justText);
     container.appendChild(justDiv);
   }
-  
+
   return container;
 }
 
@@ -1314,14 +1314,14 @@ function createAppointmentDetailsElement(data) {
     p.textContent = 'Dados do agendamento nÃ£o encontrados.';
     return p;
   }
-  
+
   const container = document.createElement('div');
-  
+
   let status = "Agendado";
   if (data.agcoIsCancelado === "t") status = "Cancelado";
   else if (data.agcoIsFaltante === "t") status = "Faltou";
   else if (data.agcoIsAtendido === "t") status = "Atendido";
-  
+
   const details = [
     { label: 'Status', value: status },
     { label: 'Data', value: `${data.agcoData} Ã s ${data.agcoHoraPrevista}` },
@@ -1331,30 +1331,30 @@ function createAppointmentDetailsElement(data) {
     { label: 'Procedimento', value: data.procedimento?.prciNome },
     { label: 'ConvÃªnio', value: data.convenio?.entidade?.entiNome }
   ];
-  
+
   details.forEach(detail => {
     const row = createDetailRowElement(detail.label, detail.value);
     if (row) container.appendChild(row);
   });
-  
+
   // Adicionar observaÃ§Ã£o se existir
   if (data.agcoObs) {
     const obsDiv = document.createElement('div');
     obsDiv.className = 'py-2';
-    
+
     const obsLabel = document.createElement('span');
     obsLabel.className = `font-semibold ${getCSSClass('TEXT_SECONDARY')}`;
     obsLabel.textContent = 'ObservaÃ§Ã£o:';
-    
+
     const obsText = document.createElement('p');
     obsText.className = `${getCSSClass('TEXT_PRIMARY')} whitespace-pre-wrap mt-1 p-2 ${getCSSClass('BG_SLATE_50')} rounded`;
     obsText.textContent = data.agcoObs;
-    
+
     obsDiv.appendChild(obsLabel);
     obsDiv.appendChild(obsText);
     container.appendChild(obsDiv);
   }
-  
+
   return container;
 }
 
@@ -1364,9 +1364,9 @@ function createExamAppointmentDetailsElement(data) {
     p.textContent = 'Dados do agendamento de exame nÃ£o encontrados.';
     return p;
   }
-  
+
   const container = document.createElement('div');
-  
+
   const details = [
     { label: 'Data Agendamento', value: data.examDataCad },
     { label: 'Unidade Origem', value: data.ligacaoModularOrigem?.limoNome },
@@ -1375,12 +1375,12 @@ function createExamAppointmentDetailsElement(data) {
     { label: 'CarÃ¡ter', value: data.CaraterAtendimento?.caraDescri },
     { label: 'CritÃ©rio', value: data.criterioExame?.critNome }
   ];
-  
+
   details.forEach(detail => {
     const row = createDetailRowElement(detail.label, detail.value);
     if (row) container.appendChild(row);
   });
-  
+
   return container;
 }
 
@@ -1531,17 +1531,17 @@ function handleShowAppointmentInfo(button) {
   const modalTitle = document.getElementById("modal-title");
   const modalContent = document.getElementById("modal-content");
   const infoModal = document.getElementById("info-modal");
-  
+
   modalTitle.textContent = "Detalhes do Agendamento";
-  
+
   // Criar conteÃºdo de forma segura usando DOM
   modalContent.innerHTML = '';
-  
+
   const appointmentDetails = [
     { label: 'ID', value: data.id },
-    { 
-      label: 'Tipo', 
-      value: data.isSpecialized ? "Especializada" : data.isOdonto ? "OdontolÃ³gica" : data.type 
+    {
+      label: 'Tipo',
+      value: data.isSpecialized ? "Especializada" : data.isOdonto ? "OdontolÃ³gica" : data.type
     },
     { label: 'Status', value: data.status },
     { label: 'Data', value: `${data.date} Ã s ${data.time}` },
@@ -1550,7 +1550,7 @@ function handleShowAppointmentInfo(button) {
     { label: 'Especialidade', value: data.specialty || "N/A" },
     { label: 'Procedimento', value: data.description }
   ];
-  
+
   appointmentDetails.forEach(detail => {
     const p = document.createElement('p');
     const strong = document.createElement('strong');
@@ -1559,7 +1559,7 @@ function handleShowAppointmentInfo(button) {
     p.appendChild(document.createTextNode(detail.value));
     modalContent.appendChild(p);
   });
-  
+
   infoModal.classList.remove("hidden");
 }
 

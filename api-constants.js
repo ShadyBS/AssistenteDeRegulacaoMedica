@@ -271,12 +271,12 @@ export const API_UTILS = {
   buildUrl: (baseUrl, endpoint) => {
     const cleanBaseUrl = baseUrl.endsWith("/") ? baseUrl.slice(0, -1) : baseUrl;
     const fullUrl = `${cleanBaseUrl}${endpoint}`;
-    
+
     // ✅ SEGURANÇA: Validar domínio antes de retornar URL
     if (!SECURITY_CONFIG.validateURL(fullUrl)) {
       throw new Error(`URL não autorizada para requisições: ${fullUrl}`);
     }
-    
+
     return fullUrl;
   },
 
@@ -287,7 +287,7 @@ export const API_UTILS = {
    */
   buildRegulationParams: (params) => {
     const searchParams = new URLSearchParams();
-    
+
     // Adiciona filtros base
     REGULATION_FILTERS.BASE.forEach((filter, index) => {
       const key = `filters[${index}]`;
@@ -326,7 +326,7 @@ export const API_UTILS = {
    */
   buildCadsusParams: (searchData = {}) => {
     const params = new URLSearchParams();
-    
+
     // Adiciona parâmetros base do CADSUS
     Object.entries(API_PARAMS.CADSUS).forEach(([key, value]) => {
       params.set(key, value);
@@ -375,7 +375,7 @@ export const SECURITY_CONFIG = {
     'localhost',
     '127.0.0.1'
   ],
-  
+
   /**
    * Valida se uma URL está em domínio autorizado
    * @param {string} url - URL a ser validada
@@ -384,7 +384,7 @@ export const SECURITY_CONFIG = {
   validateURL: (url) => {
     try {
       const urlObj = new URL(url);
-      return SECURITY_CONFIG.ALLOWED_DOMAINS.some(domain => 
+      return SECURITY_CONFIG.ALLOWED_DOMAINS.some(domain =>
         urlObj.hostname === domain || urlObj.hostname.endsWith('.' + domain)
       );
     } catch {

@@ -2,7 +2,7 @@
 
 /**
  * Build Script Principal - Assistente de Regulação Médica
- * 
+ *
  * Script principal que coordena todo o processo de build para Chrome e Firefox
  * Inclui manifest switching, asset optimization, validação e geração de ZIPs
  */
@@ -58,7 +58,7 @@ const EXTENSION_FILES = [
   "sidebar.html",
   "options.js",
   "options.html",
-  
+
   // APIs e utilitários essenciais
   "api.js",
   "api-constants.js",
@@ -69,25 +69,25 @@ const EXTENSION_FILES = [
   "renderers.js",
   "logger.js",
   "test-logger.js",
-  
+
   // Managers necessários para funcionamento
   "MemoryManager.js",
   "KeepAliveManager.js",
   "SectionManager.js",
   "TimelineManager.js",
-  
+
   // Parsers e configurações específicas
   "consultation-parser.js",
   "field-config.js",
   "filter-config.js",
-  
+
   // Utilitários de segurança
   "crypto-utils.js",
   "BrowserAPI.js",
-  
+
   // Polyfills para compatibilidade
   "browser-polyfill.js",
-  
+
   // Páginas de ajuda
   "help.html",
   "help.js"
@@ -109,7 +109,7 @@ class ExtensionBuilder {
     this.isDryRun = options.dryRun || false;
     this.isProduction = options.production !== false;
     this.verbose = options.verbose || false;
-    
+
     this.log('🚀 Iniciando ExtensionBuilder');
     this.log(`   Targets: ${this.targets.join(', ')}`);
     this.log(`   Modo: ${this.isProduction ? 'Produção' : 'Desenvolvimento'}`);
@@ -121,7 +121,7 @@ class ExtensionBuilder {
   log(message, level = 'info') {
     const timestamp = new Date().toISOString().substring(11, 19);
     const prefix = `[${timestamp}]`;
-    
+
     switch (level) {
       case 'error':
         console.error(`${prefix} ❌ ${message}`);
@@ -154,7 +154,7 @@ class ExtensionBuilder {
     for (const target of this.targets) {
       const config = BUILD_CONFIGS[target];
       const manifestPath = path.join(PROJECT_ROOT, config.manifestSource);
-      
+
       if (!await fs.pathExists(manifestPath)) {
         throw new Error(`Manifest não encontrado: ${config.manifestSource}`);
       }
@@ -176,7 +176,7 @@ class ExtensionBuilder {
   isVersionCompatible(current, required) {
     const currentParts = current.split('.').map(Number);
     const requiredParts = required.split('.').map(Number);
-    
+
     for (let i = 0; i < 3; i++) {
       if (currentParts[i] > requiredParts[i]) return true;
       if (currentParts[i] < requiredParts[i]) return false;
@@ -189,29 +189,29 @@ class ExtensionBuilder {
    */
   async buildCSS() {
     this.log('🎨 Compilando CSS...');
-    
+
     try {
       const inputPath = path.join(PROJECT_ROOT, 'src', 'input.css');
       const outputPath = path.join(PROJECT_ROOT, 'dist', 'output.css');
-      
+
       if (!await fs.pathExists(inputPath)) {
         throw new Error(`Arquivo CSS de entrada não encontrado: ${inputPath}`);
       }
 
       await fs.ensureDir(path.dirname(outputPath));
-      
-      const command = this.isProduction 
+
+      const command = this.isProduction
         ? `npx tailwindcss -i ${inputPath} -o ${outputPath} --minify`
         : `npx tailwindcss -i ${inputPath} -o ${outputPath}`;
-      
-      execSync(command, { 
+
+      execSync(command, {
         stdio: this.verbose ? 'inherit' : 'pipe',
-        cwd: PROJECT_ROOT 
+        cwd: PROJECT_ROOT
       });
-      
+
       const stats = await fs.stat(outputPath);
       this.log(`✅ CSS compilado: ${(stats.size / 1024).toFixed(2)} KB`, 'success');
-      
+
     } catch (error) {
       throw new Error(`Falha na compilação do CSS: ${error.message}`);
     }
@@ -223,28 +223,28 @@ class ExtensionBuilder {
   async processManifest(target) {
     const config = BUILD_CONFIGS[target];
     const manifestPath = path.join(PROJECT_ROOT, config.manifestSource);
-    
+
     this.log(`📄 Processando manifest para ${target}...`);
-    
+
     try {
       const manifestContent = await fs.readFile(manifestPath, 'utf8');
       const manifest = JSON.parse(manifestContent.replace(/^\uFEFF/, ''));
-      
+
       // Validações básicas
       if (!manifest.version) {
         throw new Error('Versão não encontrada no manifest');
       }
-      
+
       if (!manifest.name) {
         throw new Error('Nome não encontrado no manifest');
       }
-      
+
       // Validação de versão semver
       const versionRegex = /^\d+\.\d+\.\d+(-[\w\.-]+)?$/;
       if (!versionRegex.test(manifest.version)) {
         throw new Error(`Formato de versão inválido: ${manifest.version}`);
       }
-      
+
       // Aplicar otimizações específicas do target se necessário
       if (target === 'chrome') {
         // Otimizações específicas para Chrome
@@ -252,10 +252,10 @@ class ExtensionBuilder {
           manifest.background = { service_worker: manifest.background.scripts[0] };
         }
       }
-      
+
       this.log(`   ✓ Manifest validado: ${manifest.name} v${manifest.version}`);
       return manifest;
-      
+
     } catch (error) {
       throw new Error(`Erro ao processar manifest ${config.manifestSource}: ${error.message}`);
     }
@@ -267,26 +267,26 @@ class ExtensionBuilder {
   async copyFiles(target) {
     const config = BUILD_CONFIGS[target];
     const outputDir = config.outputDir;
-    
+
     this.log(`📁 Copiando arquivos para ${target} (WHITELIST)...`);
-    
+
     await fs.ensureDir(outputDir);
     await fs.emptyDir(outputDir);
-    
+
     let copiedCount = 0;
     let skippedCount = 0;
-    
+
     // Copia APENAS arquivos individuais permitidos
     for (const fileName of EXTENSION_FILES) {
       const sourcePath = path.join(PROJECT_ROOT, fileName);
-      
+
       if (await fs.pathExists(sourcePath)) {
         const stats = await fs.stat(sourcePath);
-        
+
         if (stats.isFile()) {
           const targetPath = path.join(outputDir, fileName);
           await fs.copy(sourcePath, targetPath);
-          
+
           if (this.verbose) {
             this.log(`   + ${fileName}`);
           }
@@ -299,15 +299,15 @@ class ExtensionBuilder {
         skippedCount++;
       }
     }
-    
+
     // Copia diretórios permitidos com filtros
     for (const [dirName, filter] of Object.entries(ALLOWED_DIRECTORIES)) {
       const sourceDirPath = path.join(PROJECT_ROOT, dirName);
       const targetDirPath = path.join(outputDir, dirName);
-      
+
       if (await fs.pathExists(sourceDirPath)) {
         await fs.ensureDir(targetDirPath);
-        
+
         const result = await this.copyDirectoryWithFilter(sourceDirPath, targetDirPath, dirName, filter);
         copiedCount += result.fileCount;
         skippedCount += result.skippedCount;
@@ -317,17 +317,17 @@ class ExtensionBuilder {
         }
       }
     }
-    
+
     // Copia o manifest correto
     const manifestSource = path.join(PROJECT_ROOT, config.manifestSource);
     const manifestTarget = path.join(outputDir, 'manifest.json');
     await fs.copy(manifestSource, manifestTarget);
-    
+
     if (this.verbose) {
       this.log(`   + manifest.json (${config.manifestSource})`);
     }
     copiedCount++;
-    
+
     this.log(`   ✓ ${copiedCount} arquivos copiados, ${skippedCount} filtrados`);
   }
 
@@ -337,20 +337,20 @@ class ExtensionBuilder {
   async copyDirectoryWithFilter(sourceDirPath, targetDirPath, dirName, filter) {
     let fileCount = 0;
     let skippedCount = 0;
-    
+
     const files = await fs.readdir(sourceDirPath);
-    
+
     for (const file of files) {
       const sourceFilePath = path.join(sourceDirPath, file);
       const targetFilePath = path.join(targetDirPath, file);
       const stats = await fs.stat(sourceFilePath);
-      
+
       if (stats.isFile()) {
         const isAllowed = filter(file);
-        
+
         if (isAllowed) {
           await fs.copy(sourceFilePath, targetFilePath);
-          
+
           if (this.verbose) {
             this.log(`   + ${dirName}/${file}`);
           }
@@ -365,20 +365,20 @@ class ExtensionBuilder {
         // Processa subdiretórios recursivamente
         const subTargetDir = path.join(targetDirPath, file);
         await fs.ensureDir(subTargetDir);
-        
+
         const subFiles = await fs.readdir(sourceFilePath);
-        
+
         for (const subFile of subFiles) {
           const subSourcePath = path.join(sourceFilePath, subFile);
           const subTargetPath = path.join(subTargetDir, subFile);
           const subStats = await fs.stat(subSourcePath);
-          
+
           if (subStats.isFile()) {
             const isAllowed = filter(subFile);
-            
+
             if (isAllowed) {
               await fs.copy(subSourcePath, subTargetPath);
-              
+
               if (this.verbose) {
                 this.log(`   + ${dirName}/${file}/${subFile}`);
               }
@@ -393,40 +393,40 @@ class ExtensionBuilder {
         }
       }
     }
-    
+
     return { fileCount, skippedCount };
   }
 
-  
+
   /**
    * Otimiza assets (minificação, compressão)
    */
   async optimizeAssets(target) {
     const config = BUILD_CONFIGS[target];
     const outputDir = config.outputDir;
-    
+
     if (!this.isProduction) {
       this.log(`⚡ Pulando otimização (modo desenvolvimento)`);
       return;
     }
-    
+
     this.log(`⚡ Otimizando assets para ${target}...`);
-    
+
     try {
       // Otimiza JavaScript files
       const jsFiles = await this.findFiles(outputDir, '.js');
       let optimizedCount = 0;
-      
+
       for (const jsFile of jsFiles) {
         // Pular arquivos já minificados ou bibliotecas
         if (jsFile.includes('.min.') || jsFile.includes('browser-polyfill')) {
           continue;
         }
-        
+
         // Remove comentários e espaços desnecessários
         const content = await fs.readFile(jsFile, 'utf8');
         const originalSize = content.length;
-        
+
         // Otimizações básicas
         let optimized = content
           // Remove comentários de linha
@@ -440,26 +440,26 @@ class ExtensionBuilder {
           // Remove quebras de linha desnecessárias
           .replace(/\n\s*\n/g, '\n')
           .trim();
-        
+
         if (optimized.length < originalSize) {
           await fs.writeFile(jsFile, optimized);
           optimizedCount++;
-          
+
           if (this.verbose) {
             const savings = ((originalSize - optimized.length) / originalSize * 100).toFixed(1);
             this.log(`   • ${path.basename(jsFile)}: -${savings}%`);
           }
         }
       }
-      
+
       // Otimiza CSS files
       const cssFiles = await this.findFiles(outputDir, '.css');
       for (const cssFile of cssFiles) {
         if (cssFile.includes('.min.')) continue;
-        
+
         const content = await fs.readFile(cssFile, 'utf8');
         const originalSize = content.length;
-        
+
         // Otimizações básicas de CSS
         let optimized = content
           // Remove comentários
@@ -471,22 +471,22 @@ class ExtensionBuilder {
           // Remove último ponto e vírgula antes de }
           .replace(/;}/g, '}')
           .trim();
-        
+
         if (optimized.length < originalSize) {
           await fs.writeFile(cssFile, optimized);
-          
+
           if (this.verbose) {
             const savings = ((originalSize - optimized.length) / originalSize * 100).toFixed(1);
             this.log(`   • ${path.basename(cssFile)}: -${savings}%`);
           }
         }
       }
-      
+
       // Remove arquivos desnecessários
       await this.removeUnnecessaryFiles(outputDir);
-      
+
       this.log(`   ✓ ${optimizedCount} arquivos JS otimizados`);
-      
+
     } catch (error) {
       this.log(`   ⚠️  Erro na otimização: ${error.message}`, 'warn');
     }
@@ -506,7 +506,7 @@ class ExtensionBuilder {
       '**/Thumbs.db', // Windows
       '**/*.log' // Logs
     ];
-    
+
     for (const pattern of unnecessaryPatterns) {
       try {
         const files = await this.findFilesByPattern(outputDir, pattern);
@@ -527,16 +527,16 @@ class ExtensionBuilder {
    */
   async findFilesByPattern(dir, pattern) {
     const files = [];
-    
+
     // Implementação simples sem dependência externa
     const glob = (dir, pattern) => {
       const results = [];
       const items = fs.readdirSync(dir);
-      
+
       for (const item of items) {
         const fullPath = path.join(dir, item);
         const stats = fs.statSync(fullPath);
-        
+
         if (stats.isDirectory()) {
           results.push(...glob(fullPath, pattern));
         } else {
@@ -560,10 +560,10 @@ class ExtensionBuilder {
           }
         }
       }
-      
+
       return results;
     };
-    
+
     try {
       return glob(dir, pattern);
     } catch (error) {
@@ -576,14 +576,14 @@ class ExtensionBuilder {
    */
   async findFiles(dir, extension) {
     const files = [];
-    
+
     async function scan(currentDir) {
       const items = await fs.readdir(currentDir);
-      
+
       for (const item of items) {
         const fullPath = path.join(currentDir, item);
         const stats = await fs.stat(fullPath);
-        
+
         if (stats.isDirectory()) {
           await scan(fullPath);
         } else if (item.endsWith(extension)) {
@@ -591,7 +591,7 @@ class ExtensionBuilder {
         }
       }
     }
-    
+
     await scan(dir);
     return files;
   }
@@ -602,17 +602,17 @@ class ExtensionBuilder {
   async validateBuild(target) {
     const config = BUILD_CONFIGS[target];
     const outputDir = config.outputDir;
-    
+
     this.log(`🔍 Validando build para ${target}...`);
-    
+
     // Verifica se o manifest existe e é válido
     const manifestPath = path.join(outputDir, 'manifest.json');
     if (!await fs.pathExists(manifestPath)) {
       throw new Error('Manifest.json não encontrado no build');
     }
-    
+
     const manifest = JSON.parse(await fs.readFile(manifestPath, 'utf8'));
-    
+
     // Verifica arquivos essenciais
     const essentialFiles = [
       'background.js',
@@ -620,20 +620,20 @@ class ExtensionBuilder {
       'sidebar.js',
       'sidebar.html'
     ];
-    
+
     for (const file of essentialFiles) {
       const filePath = path.join(outputDir, file);
       if (!await fs.pathExists(filePath)) {
         throw new Error(`Arquivo essencial não encontrado: ${file}`);
       }
     }
-    
+
     // Verifica se o CSS foi incluído
     const cssPath = path.join(outputDir, 'dist', 'output.css');
     if (!await fs.pathExists(cssPath)) {
       this.log('   ⚠️  CSS compilado não encontrado', 'warn');
     }
-    
+
     this.log(`   ✓ Build validado para ${target}`, 'success');
   }
 
@@ -643,40 +643,40 @@ class ExtensionBuilder {
   async createZip(target) {
     const config = BUILD_CONFIGS[target];
     const outputDir = config.outputDir;
-    
+
     // Lê versão do manifest
     const manifestPath = path.join(outputDir, 'manifest.json');
     const manifest = JSON.parse(await fs.readFile(manifestPath, 'utf8'));
     const version = manifest.version;
-    
+
     const zipName = `${config.zipPrefix}-v${version}.zip`;
     const zipPath = path.join(DIST_ZIPS_DIR, zipName);
-    
+
     this.log(`📦 Criando ZIP: ${zipName}...`);
-    
+
     await fs.ensureDir(DIST_ZIPS_DIR);
-    
+
     return new Promise((resolve, reject) => {
       const output = fs.createWriteStream(zipPath);
-      const archive = archiver('zip', { 
+      const archive = archiver('zip', {
         zlib: { level: 9 },
         comment: `${manifest.name} v${version} - ${config.description} build`
       });
-      
+
       let fileCount = 0;
-      
+
       output.on('close', () => {
         const sizeInMB = (archive.pointer() / 1024 / 1024).toFixed(2);
         this.log(`   ✓ ${zipName}: ${fileCount} arquivos, ${sizeInMB} MB`, 'success');
         resolve({ zipPath, size: archive.pointer(), fileCount });
       });
-      
+
       archive.on('error', reject);
-      
+
       archive.on('entry', () => {
         fileCount++;
       });
-      
+
       archive.pipe(output);
       archive.directory(outputDir, false);
       archive.finalize();
@@ -688,7 +688,7 @@ class ExtensionBuilder {
    */
   async generateReport(builds) {
     const reportPath = path.join(DIST_ZIPS_DIR, 'build-report.json');
-    
+
     const report = {
       timestamp: new Date().toISOString(),
       mode: this.isProduction ? 'production' : 'development',
@@ -700,10 +700,10 @@ class ExtensionBuilder {
         totalFiles: builds.reduce((sum, build) => sum + build.fileCount, 0)
       }
     };
-    
+
     await fs.writeJson(reportPath, report, { spaces: 2 });
     this.log(`📋 Relatório salvo: ${reportPath}`);
-    
+
     return report;
   }
 
@@ -712,79 +712,79 @@ class ExtensionBuilder {
    */
   async build() {
     const startTime = Date.now();
-    
+
     try {
       // Validação inicial
       await this.validateEnvironment();
-      
+
       // Limpa diretórios de build
       this.log('🧹 Limpando diretórios...');
       await fs.remove(DIST_DIR);
       await fs.remove(DIST_ZIPS_DIR);
-      
+
       // Compila CSS
       await this.buildCSS();
-      
+
       const builds = [];
-      
+
       // Build para cada target
       for (const target of this.targets) {
         this.log(`\n🎯 Iniciando build para ${target}...`);
-        
+
         // Processa manifest
         const manifest = await this.processManifest(target);
-        
+
         // Copia arquivos
         await this.copyFiles(target);
-        
+
         // Otimiza assets
         await this.optimizeAssets(target);
-        
+
         // Valida build
         await this.validateBuild(target);
-        
+
         // Cria ZIP
         const zipResult = await this.createZip(target);
-        
+
         builds.push({
           target,
           version: manifest.version,
           manifest: manifest.name,
           ...zipResult
         });
-        
+
         this.log(`✅ Build concluído para ${target}`, 'success');
       }
-      
+
       // Gera relatório
       const report = await this.generateReport(builds);
-      
+
       // Resumo final
       const duration = ((Date.now() - startTime) / 1000).toFixed(2);
       const totalSizeMB = (report.summary.totalSize / 1024 / 1024).toFixed(2);
-      
+
       this.log(`\n🎉 Build completo!`, 'success');
       this.log(`   ⏱️  Tempo: ${duration}s`);
       this.log(`   📦 Builds: ${builds.length}`);
       this.log(`   ���� Tamanho total: ${totalSizeMB} MB`);
       this.log(`   📁 Localização: ${DIST_ZIPS_DIR}`);
-      
+
       // Lista arquivos criados
       this.log(`\n📋 Arquivos criados:`);
       for (const build of builds) {
         this.log(`   • ${path.basename(build.zipPath)} (${build.target})`);
       }
-      
+
       return report;
-      
+
     } catch (error) {
       this.log(`Build falhou: ${error.message}`, 'error');
-      
+
       if (this.verbose && error.stack) {
         console.error('\n🔍 Stack trace:');
         console.error(error.stack);
       }
-      
+
       throw error;
     }
   }
@@ -795,7 +795,7 @@ class ExtensionBuilder {
  */
 async function main() {
   const args = process.argv.slice(2);
-  
+
   // Parse argumentos
   const options = {
     targets: [],
@@ -803,7 +803,7 @@ async function main() {
     production: true,
     verbose: false
   };
-  
+
   for (const arg of args) {
     if (arg === '--target=chrome' || arg === '-t=chrome') {
       options.targets = ['chrome'];
@@ -835,19 +835,19 @@ Exemplos:
       process.exit(0);
     }
   }
-  
+
   // Se nenhum target especificado, build para todos
   if (options.targets.length === 0) {
     options.targets = ['chrome', 'firefox'];
   }
-  
+
   try {
     const builder = new ExtensionBuilder(options);
     await builder.build();
-    
+
     console.log('\n🎯 Build concluído com sucesso!');
     process.exit(0);
-    
+
   } catch (error) {
     console.error('\n❌ Build falhou:', error.message);
     process.exit(1);

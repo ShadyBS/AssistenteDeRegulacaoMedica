@@ -128,8 +128,8 @@ A correção implementada resolve efetivamente o problema de performance identif
 
 ---
 
-**Data da Correção:** 2024-12-19  
-**Responsável:** Assistente de IA  
-**Status:** CONCLUÍDO ✅  
-**Commit:** `perf(content-script): otimizar MutationObserver para melhor performance`  
-**Build:** Testado e validado em Chrome e Firefox  
+**Data da Correção:** 2024-12-19
+**Responsável:** Assistente de IA
+**Status:** CONCLUÍDO ✅
+**Commit:** `perf(content-script): otimizar MutationObserver para melhor performance`
+**Build:** Testado e validado em Chrome e Firefox

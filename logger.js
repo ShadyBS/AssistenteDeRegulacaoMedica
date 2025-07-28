@@ -39,7 +39,7 @@ class StructuredLogger {
     this.logBuffer = [];
     this.isInitialized = false;
     this.api = null;
-    
+
     this.init();
   }
 
@@ -50,17 +50,17 @@ class StructuredLogger {
     try {
       // Compatibilidade cross-browser
       this.api = globalThis.browser || globalThis.chrome;
-      
+
       if (this.api && this.config.enableStorage) {
         await this.loadStoredLogs();
         await this.setupRotation();
       }
-      
+
       this.isInitialized = true;
-      this.info('Logger inicializado', { 
+      this.info('Logger inicializado', {
         component: 'Logger',
         sessionId: this.sessionId,
-        config: this.config 
+        config: this.config
       });
     } catch (error) {
       console.error('[Logger] Falha na inicialização:', error);
@@ -79,7 +79,7 @@ class StructuredLogger {
    */
   formatTimestamp() {
     const now = new Date();
-    
+
     switch (this.config.timestampFormat) {
       case 'ISO':
         return now.toISOString();
@@ -98,7 +98,7 @@ class StructuredLogger {
   createLogEntry(level, message, context = {}) {
     const timestamp = this.formatTimestamp();
     const levelName = Object.keys(LOG_LEVELS)[level];
-    
+
     // Filtra campos de contexto permitidos
     const filteredContext = {};
     this.config.contextFields.forEach(field => {
@@ -167,7 +167,7 @@ class StructuredLogger {
    */
   addToBuffer(entry) {
     this.logBuffer.push(entry);
-    
+
     // Limita tamanho do buffer
     if (this.logBuffer.length > this.config.maxStoredLogs) {
       this.logBuffer = this.logBuffer.slice(-this.config.maxStoredLogs);
@@ -186,11 +186,11 @@ class StructuredLogger {
       const storageKey = 'structuredLogs';
       const existingData = await this.api.storage.local.get([storageKey]);
       const existingLogs = existingData[storageKey] || [];
-      
+
       const allLogs = [...existingLogs, ...this.logBuffer];
-      
+
       // Aplica rotação se necessário
-      const logsToStore = allLogs.length > this.config.maxStoredLogs 
+      const logsToStore = allLogs.length > this.config.maxStoredLogs
         ? allLogs.slice(-this.config.maxStoredLogs)
         : allLogs;
 
@@ -214,7 +214,7 @@ class StructuredLogger {
     try {
       const data = await this.api.storage.local.get(['structuredLogs']);
       const storedLogs = data.structuredLogs || [];
-      
+
       // Mantém apenas logs recentes no buffer
       this.logBuffer = storedLogs.slice(-this.config.rotationSize);
     } catch (error) {
@@ -243,14 +243,14 @@ class StructuredLogger {
       const data = await this.api.storage.local.get(['structuredLogs', 'lastLogRotation']);
       const logs = data.structuredLogs || [];
       const lastRotation = data.lastLogRotation || 0;
-      
+
       // Rotaciona se há muitos logs ou se passou muito tempo
-      const shouldRotate = logs.length > this.config.maxStoredLogs || 
+      const shouldRotate = logs.length > this.config.maxStoredLogs ||
                           (Date.now() - lastRotation) > (24 * 60 * 60 * 1000); // 24h
 
       if (shouldRotate) {
         const recentLogs = logs.slice(-this.config.rotationSize);
-        
+
         await this.api.storage.local.set({
           structuredLogs: recentLogs,
           lastLogRotation: Date.now()
@@ -275,7 +275,7 @@ class StructuredLogger {
     if (!this.shouldLog(level)) return;
 
     const entry = this.createLogEntry(level, message, context);
-    
+
     this.logToConsole(entry);
     this.addToBuffer(entry);
 
@@ -353,17 +353,17 @@ class StructuredLogger {
    */
   async exportLogs(format = 'json') {
     const logs = await this.getStoredLogs();
-    
+
     switch (format) {
       case 'json':
         return JSON.stringify(logs, null, 2);
-      
+
       case 'csv':
         if (logs.length === 0) return '';
-        
+
         const headers = ['timestamp', 'level', 'message', 'component', 'operation'];
         const csvRows = [headers.join(',')];
-        
+
         logs.forEach(log => {
           const row = [
             log.timestamp,
@@ -374,14 +374,14 @@ class StructuredLogger {
           ];
           csvRows.push(row.join(','));
         });
-        
+
         return csvRows.join('\n');
-      
+
       case 'text':
-        return logs.map(log => 
+        return logs.map(log =>
           `${log.timestamp} [${log.level}] ${log.context.component ? `[${log.context.component}] ` : ''}${log.message}`
         ).join('\n');
-      
+
       default:
         return logs;
     }
@@ -392,7 +392,7 @@ class StructuredLogger {
    */
   async clearLogs() {
     this.logBuffer = [];
-    
+
     if (this.api && this.config.enableStorage) {
       try {
         await this.api.storage.local.remove(['structuredLogs', 'lastLogRotation']);
@@ -408,7 +408,7 @@ class StructuredLogger {
    */
   async getLogStats() {
     const logs = await this.getStoredLogs();
-    
+
     const stats = {
       total: logs.length,
       byLevel: {},
@@ -439,11 +439,11 @@ class StructuredLogger {
     if (typeof level === 'string') {
       level = LOG_LEVELS[level.toUpperCase()];
     }
-    
+
     if (level !== undefined && level >= 0 && level <= 3) {
       this.config.level = level;
-      this.info('Nível de log alterado', { 
-        component: 'Logger', 
+      this.info('Nível de log alterado', {
+        component: 'Logger',
         operation: 'setLevel',
         newLevel: Object.keys(LOG_LEVELS)[level]
       });
@@ -537,7 +537,7 @@ export const COMPONENT_CONFIGS = {
  */
 export function createComponentLogger(componentName) {
   const logger = getLogger();
-  
+
   return {
     debug: (message, context = {}) => logger.debug(message, { ...context, component: componentName }),
     info: (message, context = {}) => logger.info(message, { ...context, component: componentName }),

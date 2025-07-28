@@ -1,0 +1,77 @@
+# Configuração de Line Endings - Assistente de Regulação Médica
+# Garante encoding e line endings consistentes em todos os ambientes
+
+# Configuração padrão: todos os arquivos de texto usam LF
+* text=auto eol=lf
+
+# Arquivos de código fonte
+*.js text eol=lf
+*.json text eol=lf
+*.html text eol=lf
+*.css text eol=lf
+*.md text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.xml text eol=lf
+
+# Arquivos de configuração
+*.config.js text eol=lf
+*.config.json text eol=lf
+.gitignore text eol=lf
+.gitattributes text eol=lf
+.eslintrc.js text eol=lf
+.eslintrc.json text eol=lf
+
+# Manifests da extensão
+manifest.json text eol=lf
+manifest-edge.json text eol=lf
+
+# Scripts de build
+*.sh text eol=lf
+*.bat text eol=crlf
+*.ps1 text eol=crlf
+
+# Documentação
+README.md text eol=lf
+CHANGELOG.md text eol=lf
+LICENSE text eol=lf
+*.txt text eol=lf
+
+# Arquivos binários (não devem ser modificados)
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.svg binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.eot binary
+*.zip binary
+*.tar.gz binary
+*.tgz binary
+*.rar binary
+*.7z binary
+
+# Arquivos de lock (mantém formato original)
+package-lock.json text eol=lf
+yarn.lock text eol=lf
+
+# Arquivos temporários e de build (geralmente ignorados pelo git)
+*.log text eol=lf
+*.tmp text eol=lf
+*.cache text eol=lf
+
+# Configurações específicas do VSCode
+.vscode/*.json text eol=lf
+
+# Configurações específicas do projeto
+agents.md text eol=lf
+ENCODING_GUIDELINES.md text eol=lf
+BUILD.md text eol=lf
+
+# Força encoding UTF-8 para arquivos críticos
+manifest.json text eol=lf working-tree-encoding=UTF-8
+manifest-edge.json text eol=lf working-tree-encoding=UTF-8
+package.json text eol=lf working-tree-encoding=UTF-8

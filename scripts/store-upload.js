@@ -2,7 +2,7 @@
 
 /**
  * Store Upload Script - Assistente de Regulação Médica
- * 
+ *
  * Script para upload automático para Chrome Web Store e Firefox Add-ons
  * Suporta upload, atualização e publicação de extensões
  */
@@ -44,11 +44,11 @@ class StoreUploader {
     this.verbose = options.verbose || false;
     this.autoPublish = options.autoPublish || false;
     this.skipValidation = options.skipValidation || false;
-    
+
     if (!this.target || !STORE_CONFIGS[this.target]) {
       throw new Error(`Target inválido: ${this.target}. Use: ${Object.keys(STORE_CONFIGS).join(', ')}`);
     }
-    
+
     this.config = STORE_CONFIGS[this.target];
   }
 
@@ -58,7 +58,7 @@ class StoreUploader {
   log(message, level = 'info') {
     const timestamp = new Date().toISOString().substring(11, 19);
     const prefix = `[${timestamp}]`;
-    
+
     switch (level) {
       case 'error':
         console.error(`${prefix} ❌ ${message}`);
@@ -82,9 +82,9 @@ class StoreUploader {
    */
   validateEnvironment() {
     this.log(`🔍 Validando ambiente para ${this.config.name}...`);
-    
+
     const missing = this.config.requiredEnvVars.filter(envVar => !process.env[envVar]);
-    
+
     if (missing.length > 0) {
       throw new Error(
         `Variáveis de ambiente obrigatórias não encontradas para ${this.target}:\n` +
@@ -92,7 +92,7 @@ class StoreUploader {
         'Configure essas variáveis no arquivo .env ou como variáveis de ambiente.'
       );
     }
-    
+
     this.log(`   ✓ Todas as variáveis de ambiente estão configuradas`, 'success');
   }
 
@@ -101,21 +101,21 @@ class StoreUploader {
    */
   async findLatestZip() {
     this.log(`📦 Procurando ZIP para ${this.target}...`);
-    
+
     if (!await fs.pathExists(DIST_ZIPS_DIR)) {
       throw new Error(`Diretório de ZIPs não encontrado: ${DIST_ZIPS_DIR}`);
     }
-    
+
     const files = await fs.readdir(DIST_ZIPS_DIR);
     const zipFiles = files.filter(file => this.config.zipPattern.test(file));
-    
+
     if (zipFiles.length === 0) {
       throw new Error(
         `Nenhum ZIP encontrado para ${this.target}. ` +
         `Execute 'npm run build:all' primeiro.`
       );
     }
-    
+
     // Ordena por data de modificação (mais recente primeiro)
     const zipStats = await Promise.all(
       zipFiles.map(async file => ({
@@ -123,13 +123,13 @@ class StoreUploader {
         stats: await fs.stat(path.join(DIST_ZIPS_DIR, file))
       }))
     );
-    
+
     zipStats.sort((a, b) => b.stats.mtime - a.stats.mtime);
     const latestZip = zipStats[0].file;
     const zipPath = path.join(DIST_ZIPS_DIR, latestZip);
-    
+
     this.log(`   ✓ ZIP encontrado: ${latestZip}`, 'success');
-    
+
     return zipPath;
   }
 
@@ -139,11 +139,11 @@ class StoreUploader {
   extractVersionFromZip(zipPath) {
     const fileName = path.basename(zipPath);
     const versionMatch = fileName.match(/v(\d+\.\d+\.\d+)/);
-    
+
     if (!versionMatch) {
       throw new Error(`Não foi possível extrair versão do arquivo: ${fileName}`);
     }
-    
+
     return versionMatch[1];
   }
 
@@ -155,28 +155,28 @@ class StoreUploader {
       this.log('⚡ Pulando validação do ZIP (--skip-validation)');
       return;
     }
-    
+
     this.log(`🔍 Validando ZIP: ${path.basename(zipPath)}...`);
-    
+
     // Verifica se o arquivo existe e tem tamanho válido
     const stats = await fs.stat(zipPath);
     const sizeMB = (stats.size / 1024 / 1024).toFixed(2);
-    
+
     this.log(`   📊 Tamanho: ${sizeMB} MB`);
-    
+
     // Limites de tamanho por store
     const maxSizes = {
       chrome: 128, // 128 MB para Chrome Web Store
       firefox: 200 // 200 MB para Firefox Add-ons
     };
-    
+
     if (stats.size > maxSizes[this.target] * 1024 * 1024) {
       throw new Error(
         `ZIP muito grande para ${this.config.name}: ${sizeMB} MB ` +
         `(máximo: ${maxSizes[this.target]} MB)`
       );
     }
-    
+
     // Validação básica do conteúdo (se possível)
     try {
       // Aqui poderia adicionar validação do conteúdo do ZIP
@@ -192,9 +192,9 @@ class StoreUploader {
    */
   async getChromeAccessToken() {
     const { CHROME_CLIENT_ID, CHROME_CLIENT_SECRET, CHROME_REFRESH_TOKEN } = process.env;
-    
+
     this.log('🔑 Obtendo token de acesso para Chrome Web Store...');
-    
+
     const tokenUrl = 'https://oauth2.googleapis.com/token';
     const params = new URLSearchParams({
       client_id: CHROME_CLIENT_ID,
@@ -202,7 +202,7 @@ class StoreUploader {
       refresh_token: CHROME_REFRESH_TOKEN,
       grant_type: 'refresh_token'
     });
-    
+
     try {
       const response = await fetch(tokenUrl, {
         method: 'POST',
@@ -211,21 +211,21 @@ class StoreUploader {
         },
         body: params
       });
-      
+
       if (!response.ok) {
         const errorText = await response.text();
         throw new Error(`Falha na autenticação: ${response.status} ${errorText}`);
       }
-      
+
       const data = await response.json();
-      
+
       if (!data.access_token) {
         throw new Error('Token de acesso não recebido');
       }
-      
+
       this.log('   ✓ Token obtido com sucesso', 'success');
       return data.access_token;
-      
+
     } catch (error) {
       throw new Error(`Erro ao obter token Chrome: ${error.message}`);
     }
@@ -236,38 +236,38 @@ class StoreUploader {
    */
   generateFirefoxJWT() {
     const { FIREFOX_JWT_ISSUER, FIREFOX_JWT_SECRET } = process.env;
-    
+
     this.log('🔑 Gerando JWT para Firefox Add-ons...');
-    
+
     try {
       // Implementação básica de JWT (em produção, use uma biblioteca como 'jsonwebtoken')
       const header = {
         alg: 'HS256',
         typ: 'JWT'
       };
-      
+
       const payload = {
         iss: FIREFOX_JWT_ISSUER,
         jti: Math.random().toString(),
         iat: Math.floor(Date.now() / 1000),
         exp: Math.floor(Date.now() / 1000) + (5 * 60) // 5 minutos
       };
-      
+
       const crypto = require('crypto');
-      
+
       const base64Header = Buffer.from(JSON.stringify(header)).toString('base64url');
       const base64Payload = Buffer.from(JSON.stringify(payload)).toString('base64url');
-      
+
       const signature = crypto
         .createHmac('sha256', FIREFOX_JWT_SECRET)
         .update(`${base64Header}.${base64Payload}`)
         .digest('base64url');
-      
+
       const jwt = `${base64Header}.${base64Payload}.${signature}`;
-      
+
       this.log('   ✓ JWT gerado com sucesso', 'success');
       return jwt;
-      
+
     } catch (error) {
       throw new Error(`Erro ao gerar JWT Firefox: ${error.message}`);
     }
@@ -279,21 +279,21 @@ class StoreUploader {
   async uploadToChrome(zipPath, version) {
     const accessToken = await this.getChromeAccessToken();
     const extensionId = process.env.CHROME_EXTENSION_ID;
-    
+
     this.log(`🚀 Fazendo upload para Chrome Web Store...`);
-    
+
     if (this.dryRun) {
       this.log(`Faria upload de ${path.basename(zipPath)} para Chrome Web Store`, 'dry');
       return { success: true, dryRun: true };
     }
-    
+
     try {
       // Lê o arquivo ZIP
       const zipBuffer = await fs.readFile(zipPath);
-      
+
       // Upload do ZIP
       const uploadUrl = `${this.config.apiUrl}/items/${extensionId}`;
-      
+
       const uploadResponse = await fetch(uploadUrl, {
         method: 'PUT',
         headers: {
@@ -302,27 +302,27 @@ class StoreUploader {
         },
         body: zipBuffer
       });
-      
+
       if (!uploadResponse.ok) {
         const errorText = await uploadResponse.text();
         throw new Error(`Upload falhou: ${uploadResponse.status} ${errorText}`);
       }
-      
+
       const uploadResult = await uploadResponse.json();
-      
+
       this.log(`   ✓ Upload concluído`, 'success');
-      
+
       // Publicação (se solicitada)
       if (this.autoPublish) {
         await this.publishOnChrome(extensionId, accessToken);
       }
-      
+
       return {
         success: true,
         uploadResult,
         published: this.autoPublish
       };
-      
+
     } catch (error) {
       throw new Error(`Erro no upload para Chrome: ${error.message}`);
     }
@@ -333,9 +333,9 @@ class StoreUploader {
    */
   async publishOnChrome(extensionId, accessToken) {
     this.log(`📢 Publicando no Chrome Web Store...`);
-    
+
     const publishUrl = `${this.config.apiUrl}/items/${extensionId}/publish`;
-    
+
     const publishResponse = await fetch(publishUrl, {
       method: 'POST',
       headers: {
@@ -343,12 +343,12 @@ class StoreUploader {
         'x-goog-api-version': '2'
       }
     });
-    
+
     if (!publishResponse.ok) {
       const errorText = await publishResponse.text();
       throw new Error(`Publicação falhou: ${publishResponse.status} ${errorText}`);
     }
-    
+
     this.log(`   ✓ Publicação iniciada`, 'success');
   }
 
@@ -357,32 +357,32 @@ class StoreUploader {
    */
   async uploadToFirefox(zipPath, version) {
     const jwt = this.generateFirefoxJWT();
-    
+
     this.log(`🚀 Fazendo upload para Firefox Add-ons...`);
-    
+
     if (this.dryRun) {
       this.log(`Faria upload de ${path.basename(zipPath)} para Firefox Add-ons`, 'dry');
       return { success: true, dryRun: true };
     }
-    
+
     try {
       // Implementação do upload para Firefox
       // Nota: A API do Firefox Add-ons é mais complexa e requer
       // diferentes endpoints dependendo se é uma nova extensão ou atualização
-      
+
       this.log(`   ⚠️  Upload para Firefox Add-ons requer implementação específica`, 'warn');
       this.log(`   📋 Passos manuais necessários:`, 'warn');
       this.log(`      1. Acesse https://addons.mozilla.org/developers/`);
       this.log(`      2. Faça login com sua conta de desenvolvedor`);
       this.log(`      3. Navegue até sua extensão`);
       this.log(`      4. Faça upload do arquivo: ${path.basename(zipPath)}`);
-      
+
       return {
         success: true,
         manual: true,
         zipPath: zipPath
       };
-      
+
     } catch (error) {
       throw new Error(`Erro no upload para Firefox: ${error.message}`);
     }
@@ -393,54 +393,54 @@ class StoreUploader {
    */
   async upload() {
     const startTime = Date.now();
-    
+
     try {
       this.log(`🚀 Iniciando upload para ${this.config.name}...`);
-      
+
       // Validações iniciais
       this.validateEnvironment();
-      
+
       // Encontra ZIP mais recente
       const zipPath = await this.findLatestZip();
       const version = this.extractVersionFromZip(zipPath);
-      
+
       this.log(`📋 Versão detectada: ${version}`);
-      
+
       // Valida ZIP
       await this.validateZip(zipPath);
-      
+
       // Upload específico por target
       let result;
-      
+
       if (this.target === 'chrome') {
         result = await this.uploadToChrome(zipPath, version);
       } else if (this.target === 'firefox') {
         result = await this.uploadToFirefox(zipPath, version);
       }
-      
+
       // Resumo final
       const duration = ((Date.now() - startTime) / 1000).toFixed(2);
-      
+
       this.log(`\n🎉 Upload concluído!`, 'success');
       this.log(`   ⏱️  Tempo: ${duration}s`);
       this.log(`   🎯 Target: ${this.config.name}`);
       this.log(`   📦 Arquivo: ${path.basename(zipPath)}`);
       this.log(`   🔢 Versão: ${version}`);
-      
+
       if (result.dryRun) {
         this.log(`   🔍 Modo DRY-RUN - nenhum upload foi feito`);
       } else if (result.manual) {
         this.log(`   📋 Upload manual necessário`);
       } else {
         this.log(`   ✅ Upload automático concluído`);
-        
+
         if (result.published) {
           this.log(`   📢 Publicação iniciada`);
         }
       }
-      
+
       return result;
-      
+
     } catch (error) {
       this.log(`Upload falhou: ${error.message}`, 'error');
       throw error;
@@ -453,7 +453,7 @@ class StoreUploader {
  */
 async function main() {
   const args = process.argv.slice(2);
-  
+
   const options = {
     target: null,
     dryRun: false,
@@ -461,7 +461,7 @@ async function main() {
     autoPublish: false,
     skipValidation: false
   };
-  
+
   // Parse argumentos
   for (const arg of args) {
     if (arg.startsWith('--target=')) {
@@ -509,19 +509,19 @@ Exemplos:
       process.exit(0);
     }
   }
-  
+
   if (!options.target) {
     console.error('❌ Target obrigatório. Use --target=chrome ou --target=firefox');
     console.error('   Execute --help para mais informações');
     process.exit(1);
   }
-  
+
   try {
     const uploader = new StoreUploader(options);
     await uploader.upload();
-    
+
     process.exit(0);
-    
+
   } catch (error) {
     console.error('\n❌ Upload falhou:', error.message);
     process.exit(1);

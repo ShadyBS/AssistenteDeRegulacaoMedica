@@ -1,8 +1,8 @@
 # 📦 Resumo Executivo - Auditoria dos ZIPs da Extensão
 
-**Data:** 2025-01-23  
-**Status:** ✅ **RESOLVIDO**  
-**Impacto:** 🔥 **CRÍTICO**  
+**Data:** 2025-01-23
+**Status:** ✅ **RESOLVIDO**
+**Impacto:** 🔥 **CRÍTICO**
 
 ---
 
@@ -193,5 +193,5 @@ A auditoria dos ZIPs identificou e **resolveu completamente** um problema críti
 
 ---
 
-**Commit:** `7266e26` - fix(build): corrigir ZIPs de release com arquivos desnecessários  
+**Commit:** `7266e26` - fix(build): corrigir ZIPs de release com arquivos desnecessários
 **Arquivos:** `build-zips-clean.js`, `scripts/build-optimized.js`, `ZIP_AUDIT_REPORT.md`

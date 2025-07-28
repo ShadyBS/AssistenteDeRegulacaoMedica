@@ -2,7 +2,7 @@
 
 /**
  * Validation Script - Assistente de Regulação Médica (Improved)
- * 
+ *
  * Sistema completo de validação para extensão de navegador
  * Inclui validações de código, manifests, segurança e compatibilidade
  */
@@ -23,7 +23,7 @@ class ExtensionValidator {
     this.fixIssues = options.fix || false;
     this.skipLinting = options.skipLinting || false;
     this.skipSecurity = options.skipSecurity || false;
-    
+
     this.errors = [];
     this.warnings = [];
     this.fixes = [];
@@ -35,7 +35,7 @@ class ExtensionValidator {
   log(message, level = 'info') {
     const timestamp = new Date().toISOString().substring(11, 19);
     const prefix = `[${timestamp}]`;
-    
+
     switch (level) {
       case 'error':
         console.error(`${prefix} ❌ ${message}`);
@@ -62,27 +62,27 @@ class ExtensionValidator {
    */
   async validateManifests() {
     this.log('📄 Validando manifests...');
-    
+
     const manifestFiles = [
       { file: 'manifest.json', target: 'Firefox' },
       { file: 'manifest-edge.json', target: 'Chrome/Edge' }
     ];
-    
+
     const manifests = {};
-    
+
     for (const { file, target } of manifestFiles) {
       const manifestPath = path.join(PROJECT_ROOT, file);
-      
+
       try {
         if (!await fs.pathExists(manifestPath)) {
           this.log(`Manifest não encontrado: ${file}`, 'error');
           continue;
         }
-        
+
         // Lê e valida JSON
         const content = await fs.readFile(manifestPath, 'utf8');
         const cleanContent = content.replace(/^\uFEFF/, ''); // Remove BOM
-        
+
         let manifest;
         try {
           manifest = JSON.parse(cleanContent);
@@ -90,22 +90,22 @@ class ExtensionValidator {
           this.log(`JSON inválido em ${file}: ${parseError.message}`, 'error');
           continue;
         }
-        
+
         manifests[target] = manifest;
-        
+
         // Validações básicas
         await this.validateManifestStructure(manifest, file, target);
-        
+
         this.log(`   ✓ ${file} (${target}) validado`);
-        
+
       } catch (error) {
         this.log(`Erro ao validar ${file}: ${error.message}`, 'error');
       }
     }
-    
+
     // Validação de sincronização entre manifests
     await this.validateManifestSync(manifests);
-    
+
     return manifests;
   }
 
@@ -115,13 +115,13 @@ class ExtensionValidator {
   async validateManifestStructure(manifest, file, target) {
     // Campos obrigatórios
     const requiredFields = ['name', 'version', 'manifest_version', 'description'];
-    
+
     for (const field of requiredFields) {
       if (!manifest[field]) {
         this.log(`Campo obrigatório ausente em ${file}: ${field}`, 'error');
       }
     }
-    
+
     // Validação de versão
     if (manifest.version) {
       const versionRegex = /^\d+\.\d+\.\d+(-[\w\.-]+)?$/;
@@ -129,19 +129,19 @@ class ExtensionValidator {
         this.log(`Formato de versão inválido em ${file}: ${manifest.version}`, 'error');
       }
     }
-    
+
     // Validação de Manifest V3
     if (manifest.manifest_version !== 3) {
       this.log(`Manifest V3 obrigatório em ${file}. Versão atual: ${manifest.manifest_version}`, 'error');
     }
-    
+
     // Validações específicas por target
     if (target === 'Chrome/Edge') {
       // Chrome/Edge específico
       if (manifest.background && !manifest.background.service_worker) {
         this.log(`Chrome requer service_worker em background (${file})`, 'warn');
       }
-      
+
       if (manifest.browser_action) {
         this.log(`Chrome usa 'action' em vez de 'browser_action' (${file})`, 'warn');
       }
@@ -159,21 +159,21 @@ class ExtensionValidator {
   async validateManifestSync(manifests) {
     const firefox = manifests['Firefox'];
     const chrome = manifests['Chrome/Edge'];
-    
+
     if (!firefox || !chrome) {
       this.log('Não é possível validar sincronização - manifests ausentes', 'warn');
       return;
     }
-    
+
     // Campos que devem ser idênticos
     const syncFields = ['name', 'version', 'description'];
-    
+
     for (const field of syncFields) {
       if (firefox[field] !== chrome[field]) {
         this.log(`Campo dessincronizado '${field}': Firefox="${firefox[field]}" vs Chrome="${chrome[field]}"`, 'error');
       }
     }
-    
+
     this.log('   ✓ Sincronização de manifests validada');
   }
 
@@ -185,9 +185,9 @@ class ExtensionValidator {
       this.log('⚡ Pulando validação de JavaScript (--skip-linting)');
       return;
     }
-    
+
     this.log('🔍 Validando código JavaScript...');
-    
+
     try {
       // Verifica se ESLint está disponível
       try {
@@ -196,7 +196,7 @@ class ExtensionValidator {
         this.log('ESLint não encontrado, pulando validação de código', 'warn');
         return;
       }
-      
+
       // Lista arquivos JavaScript principais
       const jsFiles = [
         'background.js',
@@ -208,7 +208,7 @@ class ExtensionValidator {
         'store.js',
         'config.js'
       ];
-      
+
       const existingFiles = [];
       for (const file of jsFiles) {
         const filePath = path.join(PROJECT_ROOT, file);
@@ -216,29 +216,29 @@ class ExtensionValidator {
           existingFiles.push(file);
         }
       }
-      
+
       if (existingFiles.length === 0) {
         this.log('Nenhum arquivo JavaScript encontrado para validação', 'warn');
         return;
       }
-      
+
       // Executa ESLint
       const command = `npx eslint ${existingFiles.join(' ')} --format=compact`;
-      
+
       try {
-        execSync(command, { 
+        execSync(command, {
           stdio: this.verbose ? 'inherit' : 'pipe',
-          cwd: PROJECT_ROOT 
+          cwd: PROJECT_ROOT
         });
         this.log(`   ✓ ${existingFiles.length} arquivos JavaScript validados`);
       } catch (error) {
         this.log(`Problemas encontrados no código JavaScript`, 'warn');
-        
+
         if (this.fixIssues) {
           try {
-            execSync(`${command} --fix`, { 
+            execSync(`${command} --fix`, {
               stdio: this.verbose ? 'inherit' : 'pipe',
-              cwd: PROJECT_ROOT 
+              cwd: PROJECT_ROOT
             });
             this.log('Auto-fix aplicado ao código JavaScript', 'fix');
           } catch (fixError) {
@@ -246,7 +246,7 @@ class ExtensionValidator {
           }
         }
       }
-      
+
     } catch (error) {
       this.log(`Erro na validação de JavaScript: ${error.message}`, 'error');
     }
@@ -260,9 +260,9 @@ class ExtensionValidator {
       this.log('⚡ Pulando validações de segurança (--skip-security)');
       return;
     }
-    
+
     this.log('🔒 Executando validações de segurança...');
-    
+
     // Busca por padrões inseguros
     const securityPatterns = [
       {
@@ -271,14 +271,14 @@ class ExtensionValidator {
         severity: 'error'
       }
     ];
-    
+
     const jsFiles = await this.findJavaScriptFiles();
     let issuesFound = 0;
-    
+
     for (const filePath of jsFiles) {
       const content = await fs.readFile(filePath, 'utf8');
       const fileName = path.basename(filePath);
-      
+
       for (const { pattern, message, severity } of securityPatterns) {
         const matches = content.match(pattern);
         if (matches) {
@@ -287,7 +287,7 @@ class ExtensionValidator {
         }
       }
     }
-    
+
     if (issuesFound === 0) {
       this.log('   ✓ Nenhum problema de segurança detectado');
     } else {
@@ -300,7 +300,7 @@ class ExtensionValidator {
    */
   async findJavaScriptFiles() {
     const files = [];
-    
+
     // Arquivos e diretórios a serem ignorados
     const excludePatterns = [
       'node_modules',
@@ -317,14 +317,14 @@ class ExtensionValidator {
       'scripts/validate.js',
       'scripts/validate-improved.js'
     ];
-    
+
     async function scan(dir) {
       const items = await fs.readdir(dir);
-      
+
       for (const item of items) {
         const fullPath = path.join(dir, item);
         const stats = await fs.stat(fullPath);
-        
+
         if (stats.isDirectory()) {
           // Pula diretórios específicos
           if (excludePatterns.includes(item)) {
@@ -334,17 +334,17 @@ class ExtensionValidator {
         } else if (item.endsWith('.js') && !item.includes('.min.')) {
           // Verifica se o arquivo deve ser excluído
           const relativePath = path.relative(PROJECT_ROOT, fullPath);
-          const shouldExclude = excludePatterns.some(pattern => 
+          const shouldExclude = excludePatterns.some(pattern =>
             item === pattern || relativePath.includes(pattern)
           );
-          
+
           if (!shouldExclude) {
             files.push(fullPath);
           }
         }
       }
     }
-    
+
     await scan(PROJECT_ROOT);
     return files;
   }
@@ -354,14 +354,14 @@ class ExtensionValidator {
    */
   async validateCompatibility() {
     this.log('🌐 Validando compatibilidade cross-browser...');
-    
+
     const jsFiles = await this.findJavaScriptFiles();
     let compatibilityIssues = 0;
-    
+
     for (const filePath of jsFiles) {
       const content = await fs.readFile(filePath, 'utf8');
       const fileName = path.basename(filePath);
-      
+
       // Ignora o arquivo BrowserAPI.js, que gerencia a API do browser intencionalmente
       if (fileName === 'BrowserAPI.js') {
         continue;
@@ -369,15 +369,15 @@ class ExtensionValidator {
 
       // Verifica uso direto de chrome.* sem fallback
       const hasDirectChromeUsage = /(?<!browser\s*\|\|\s*)(^|\s)chrome\./gm.test(content);
-      const hasBrowserFallback = content.includes('globalThis.browser || globalThis.chrome') || 
+      const hasBrowserFallback = content.includes('globalThis.browser || globalThis.chrome') ||
                                  content.includes('browser || chrome');
-      
+
       if (hasDirectChromeUsage && !hasBrowserFallback) {
         compatibilityIssues++;
         this.log(`${fileName}: Uso direto de chrome.* API sem fallback para browser.*`, 'warn');
       }
     }
-    
+
     if (compatibilityIssues === 0) {
       this.log('   ✓ Nenhum problema de compatibilidade detectado');
     } else {
@@ -390,7 +390,7 @@ class ExtensionValidator {
    */
   async validatePerformance() {
     this.log('⚡ Validando performance...');
-    
+
     // Verifica se CSS foi compilado
     const cssPath = path.join(PROJECT_ROOT, 'dist', 'output.css');
     if (await fs.pathExists(cssPath)) {
@@ -420,7 +420,7 @@ class ExtensionValidator {
         fixes: this.fixes
       }
     };
-    
+
     return report;
   }
 
@@ -429,9 +429,9 @@ class ExtensionValidator {
    */
   async validate() {
     const startTime = Date.now();
-    
+
     this.log('🔍 Iniciando validações completas...\n');
-    
+
     try {
       // Validações principais
       await this.validateManifests();
@@ -439,26 +439,26 @@ class ExtensionValidator {
       await this.validateSecurity();
       await this.validateCompatibility();
       await this.validatePerformance();
-      
+
       // Gera relatório
       const report = this.generateReport();
       const duration = ((Date.now() - startTime) / 1000).toFixed(2);
-      
+
       // Resumo final
       this.log(`\n📊 Validação concluída em ${duration}s:`);
       this.log(`   ❌ Erros: ${report.summary.errors}`);
       this.log(`   ⚠️  Avisos: ${report.summary.warnings}`);
       this.log(`   🔧 Correções: ${report.summary.fixes}`);
       this.log(`   📋 Status: ${report.summary.status}`);
-      
+
       if (report.summary.status === 'PASS') {
         this.log('\n✅ Todas as validações passaram!', 'success');
       } else {
         this.log('\n❌ Validação falhou - corrija os erros antes de continuar', 'error');
       }
-      
+
       return report;
-      
+
     } catch (error) {
       this.log(`Erro durante validação: ${error.message}`, 'error');
       throw error;
@@ -471,14 +471,14 @@ class ExtensionValidator {
  */
 async function main() {
   const args = process.argv.slice(2);
-  
+
   const options = {
     verbose: false,
     fix: false,
     skipLinting: false,
     skipSecurity: false
   };
-  
+
   // Parse argumentos
   for (const arg of args) {
     if (arg === '--verbose' || arg === '-v') {
@@ -508,18 +508,18 @@ Exemplos:
       process.exit(0);
     }
   }
-  
+
   try {
     const validator = new ExtensionValidator(options);
     const report = await validator.validate();
-    
+
     // Salva relatório
     const reportPath = path.join(PROJECT_ROOT, 'validation-report-improved.json');
     await fs.writeJson(reportPath, report, { spaces: 2 });
     console.log(`\n📋 Relatório salvo em: ${reportPath}`);
-    
+
     process.exit(report.summary.status === 'PASS' ? 0 : 1);
-    
+
   } catch (error) {
     console.error('\n❌ Validação falhou:', error.message);
     process.exit(1);

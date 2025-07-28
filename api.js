@@ -1,27 +1,25 @@
-﻿import "./browser-polyfill.js";
-import { CONFIG, getAPIConfig } from "./config.js";
 import { getBrowserAPIInstance } from "./BrowserAPI.js";
 import {
   API_ENDPOINTS,
-  API_PARAMS,
-  API_HEADERS,
   API_ERROR_MESSAGES,
+  API_HEADERS,
   API_UTILS,
   API_VALIDATIONS,
-  REGULATION_FILTERS,
-  PRONTUARIO_PARAMS,
-  DATA_FORMATS,
-  HTTP_STATUS,
+  HTTP_STATUS
 } from "./api-constants.js";
+import "./browser-polyfill.js";
+import { CONFIG } from "./config.js";
 import { parseConsultasHTML } from "./consultation-parser.js";
+import { createComponentLogger } from "./logger.js";
 
 const api = getBrowserAPIInstance();
+const logger = createComponentLogger("API");
 
 // âœ… TASK-A-002: Error Boundaries e Circuit Breaker Pattern
 class CircuitBreaker {
   constructor(threshold = 5, timeout = 60000, resetTimeout = 30000) {
-    this.threshold = threshold; // NÃºmero de falhas antes de abrir o circuito
-    this.timeout = timeout; // Timeout para requisiÃ§Ãµes
+    this.threshold = threshold; // Número de falhas antes de abrir o circuito
+    this.timeout = timeout; // Timeout para requisições
     this.resetTimeout = resetTimeout; // Tempo para tentar fechar o circuito
     this.failureCount = 0;
     this.lastFailureTime = null;
@@ -43,7 +41,7 @@ class CircuitBreaker {
     try {
       const result = await Promise.race([
         operation(),
-        new Promise((_, reject) => 
+        new Promise((_, reject) =>
           setTimeout(() => reject(new Error(`Timeout after ${this.timeout}ms`)), this.timeout)
         )
       ]);
@@ -88,16 +86,16 @@ class RetryHandler {
 
   async execute(operation, operationName = 'API Operation') {
     let lastError;
-    
+
     for (let attempt = 0; attempt <= this.maxRetries; attempt++) {
       try {
         return await operation();
       } catch (error) {
         lastError = error;
-        
-        // NÃ£o fazer retry para erros que nÃ£o sÃ£o temporÃ¡rios
+
+        // Não fazer retry para erros que não são temporários
         if (this.isNonRetryableError(error)) {
-          logger.error(`[Retry Handler] Erro nÃ£o recuperÃ¡vel em ${operationName}:`, error.message);
+          logger.error(`[Retry Handler] Erro não recuperável em ${operationName}:`, error.message);
           throw error;
         }
 
@@ -110,28 +108,28 @@ class RetryHandler {
           this.baseDelay * Math.pow(2, attempt),
           this.maxDelay
         );
-        
+
         logger.warn(`[Retry Handler] Tentativa ${attempt + 1}/${this.maxRetries + 1} falhou para ${operationName}, tentando novamente em ${delay}ms:`, error.message);
         await new Promise(resolve => setTimeout(resolve, delay));
       }
     }
-    
+
     throw lastError;
   }
 
   isNonRetryableError(error) {
-    // Erros que nÃ£o devem ser retentados
+    // Erros que não devem ser retentados
     if (error.circuitBreakerOpen) return true;
     if (error.message.includes('URL_BASE_NOT_CONFIGURED')) return true;
-    if (error.message.includes('invÃ¡lido')) return true;
-    if (error.message.includes('necessÃ¡rio')) return true;
-    
-    // CÃ³digos HTTP que nÃ£o devem ser retentados
+    if (error.message.includes('inválido')) return true;
+    if (error.message.includes('necessário')) return true;
+
+    // Códigos HTTP que não devem ser retentados
     if (error.status) {
       const nonRetryableStatuses = [400, 401, 403, 404, 422];
       return nonRetryableStatuses.includes(error.status);
     }
-    
+
     return false;
   }
 }
@@ -153,7 +151,7 @@ class ErrorLogger {
     // Log estruturado no console
     logger.error(`[API Error] ${timestamp}:`, errorInfo);
 
-    // Salvar no storage para debugging (Ãºltimos 50 erros)
+    // Salvar no storage para debugging (últimos 50 erros)
     this.saveToStorage(errorInfo).catch(storageError => {
       logger.warn('[Error Logger] Falha ao salvar erro no storage:', storageError);
     });
@@ -163,13 +161,13 @@ class ErrorLogger {
     try {
       const stored = await api.storage.local.get({ apiErrors: [] });
       const errors = stored.apiErrors || [];
-      
-      // Manter apenas os Ãºltimos 50 erros
+
+      // Manter apenas os últimos 50 erros
       errors.unshift(errorInfo);
       if (errors.length > 50) {
         errors.splice(50);
       }
-      
+
       await api.storage.local.set({ apiErrors: errors });
     } catch (error) {
       // Falha silenciosa para nÃ£o criar loop de erros
@@ -260,12 +258,12 @@ class APIErrorBoundary {
 // âœ… TASK-A-006: Rate Limiting System
 class TokenBucket {
   constructor(capacity = 10, refillRate = 2, refillInterval = 1000) {
-    this.capacity = capacity; // MÃ¡ximo de tokens
+    this.capacity = capacity; // Máximo de tokens
     this.tokens = capacity; // Tokens atuais
     this.refillRate = refillRate; // Tokens adicionados por intervalo
     this.refillInterval = refillInterval; // Intervalo em ms
     this.lastRefill = Date.now();
-    
+
     // Auto-refill tokens
     this.refillTimer = setInterval(() => {
       this.refill();
@@ -276,7 +274,7 @@ class TokenBucket {
     const now = Date.now();
     const timePassed = now - this.lastRefill;
     const tokensToAdd = Math.floor((timePassed / this.refillInterval) * this.refillRate);
-    
+
     if (tokensToAdd > 0) {
       this.tokens = Math.min(this.capacity, this.tokens + tokensToAdd);
       this.lastRefill = now;
@@ -285,7 +283,7 @@ class TokenBucket {
 
   consume(tokens = 1) {
     this.refill(); // Atualiza tokens antes de consumir
-    
+
     if (this.tokens >= tokens) {
       this.tokens -= tokens;
       return true;
@@ -300,11 +298,11 @@ class TokenBucket {
 
   getWaitTime(tokens = 1) {
     this.refill();
-    
+
     if (this.tokens >= tokens) {
       return 0;
     }
-    
+
     const tokensNeeded = tokens - this.tokens;
     const timeNeeded = Math.ceil(tokensNeeded / this.refillRate) * this.refillInterval;
     return timeNeeded;
@@ -329,7 +327,7 @@ class RequestQueue {
     if (this.queue.length >= this.maxSize) {
       throw new Error(`Request queue is full (max: ${this.maxSize})`);
     }
-    
+
     return new Promise((resolve, reject) => {
       this.queue.push({
         request,
@@ -337,7 +335,7 @@ class RequestQueue {
         reject,
         timestamp: Date.now()
       });
-      
+
       this.processQueue();
     });
   }
@@ -346,23 +344,23 @@ class RequestQueue {
     if (this.processing || this.queue.length === 0) {
       return;
     }
-    
+
     this.processing = true;
-    
+
     while (this.queue.length > 0) {
       const item = this.queue.shift();
-      
+
       try {
         const result = await item.request();
         item.resolve(result);
       } catch (error) {
         item.reject(error);
       }
-      
+
       // Pequeno delay entre processamentos
       await new Promise(resolve => setTimeout(resolve, 50));
     }
-    
+
     this.processing = false;
   }
 
@@ -382,8 +380,8 @@ class APICache {
   constructor(defaultTTL = 300000) { // 5 minutos default
     this.cache = new Map();
     this.defaultTTL = defaultTTL;
-    
-    // Limpeza automÃ¡tica a cada 5 minutos
+
+    // Limpeza automática a cada 5 minutos
     this.cleanupTimer = setInterval(() => {
       this.cleanup();
     }, 300000);
@@ -396,7 +394,7 @@ class APICache {
       body: options.body || '',
       headers: JSON.stringify(options.headers || {})
     };
-    
+
     return btoa(JSON.stringify(keyData)).replace(/[^a-zA-Z0-9]/g, '');
   }
 
@@ -411,16 +409,16 @@ class APICache {
 
   get(key) {
     const item = this.cache.get(key);
-    
+
     if (!item) {
       return null;
     }
-    
+
     if (Date.now() > item.expiresAt) {
       this.cache.delete(key);
       return null;
     }
-    
+
     return item.value;
   }
 
@@ -435,16 +433,16 @@ class APICache {
   cleanup() {
     const now = Date.now();
     let cleaned = 0;
-    
+
     for (const [key, item] of this.cache.entries()) {
       if (now > item.expiresAt) {
         this.cache.delete(key);
         cleaned++;
       }
     }
-    
+
     if (cleaned > 0) {
-      logger.info(`[API Cache] Limpeza automÃ¡tica: ${cleaned} itens removidos`);
+      logger.info(`[API Cache] Limpeza automática: ${cleaned} itens removidos`);
     }
   }
 
@@ -456,7 +454,7 @@ class APICache {
     const now = Date.now();
     let valid = 0;
     let expired = 0;
-    
+
     for (const [key, item] of this.cache.entries()) {
       if (now > item.expiresAt) {
         expired++;
@@ -464,7 +462,7 @@ class APICache {
         valid++;
       }
     }
-    
+
     return {
       total: this.cache.size,
       valid,
@@ -493,41 +491,41 @@ class RateLimitMonitor {
       queuedRequests: 0,
       errors: 0
     };
-    
+
     this.requestTimes = [];
     this.maxHistorySize = 1000;
   }
 
   recordRequest(waitTime = 0, fromCache = false, error = false) {
     this.metrics.totalRequests++;
-    
+
     if (waitTime > 0) {
       this.metrics.rateLimitedRequests++;
     }
-    
+
     if (fromCache) {
       this.metrics.cacheHits++;
     } else {
       this.metrics.cacheMisses++;
     }
-    
+
     if (error) {
       this.metrics.errors++;
     }
-    
+
     this.requestTimes.push({
       timestamp: Date.now(),
       waitTime,
       fromCache,
       error
     });
-    
-    // Manter apenas os Ãºltimos registros
+
+    // Manter apenas os últimos registros
     if (this.requestTimes.length > this.maxHistorySize) {
       this.requestTimes.splice(0, this.requestTimes.length - this.maxHistorySize);
     }
-    
-    // Calcular tempo mÃ©dio de espera
+
+    // Calcular tempo médio de espera
     const totalWaitTime = this.requestTimes.reduce((sum, req) => sum + req.waitTime, 0);
     this.metrics.averageWaitTime = totalWaitTime / this.requestTimes.length;
   }
@@ -574,7 +572,7 @@ class RateLimiter {
       enableCache = true,
       enableQueue = true
     } = options;
-    
+
     this.tokenBucket = new TokenBucket(burstCapacity, tokensPerSecond, 1000);
     this.requestQueue = enableQueue ? new RequestQueue(queueMaxSize) : null;
     this.cache = enableCache ? new APICache(cacheDefaultTTL) : null;
@@ -587,13 +585,13 @@ class RateLimiter {
     const startTime = Date.now();
     let fromCache = false;
     let waitTime = 0;
-    
+
     try {
       // Verificar cache primeiro
       if (this.enableCache && this.cache) {
         const cacheKey = this.cache.generateKey(url, options);
         const cachedResult = this.cache.get(cacheKey);
-        
+
         if (cachedResult) {
           fromCache = true;
           this.monitor.recordRequest(0, true, false);
@@ -601,52 +599,52 @@ class RateLimiter {
           return cachedResult;
         }
       }
-      
+
       // FunÃ§Ã£o de requisiÃ§Ã£o
       const makeRequest = async () => {
         // Verificar tokens disponÃ­veis
         if (!this.tokenBucket.consume(1)) {
           waitTime = this.tokenBucket.getWaitTime(1);
-          
+
           if (waitTime > 0) {
             logger.info(`[Rate Limiter] Aguardando ${waitTime}ms para ${url}`);
             await new Promise(resolve => setTimeout(resolve, waitTime));
-            
+
             // Tentar consumir novamente apÃ³s espera
             if (!this.tokenBucket.consume(1)) {
               throw new Error('Rate limit exceeded after waiting');
             }
           }
         }
-        
+
         // Fazer a requisiÃ§Ã£o
         const response = await fetch(url, options);
-        
+
         // Verificar se a resposta Ã© JSON para cache
         let result;
         const contentType = response.headers.get('content-type');
-        
+
         if (contentType && contentType.includes('application/json')) {
           result = await response.clone().json();
         } else {
           result = response;
         }
-        
+
         // Armazenar no cache se habilitado
         if (this.enableCache && this.cache && response.ok) {
           const cacheKey = this.cache.generateKey(url, options);
           const ttl = cacheOptions.ttl || this.cache.defaultTTL;
-          
+
           // SÃ³ cachear respostas JSON
           if (contentType && contentType.includes('application/json')) {
             this.cache.set(cacheKey, result, ttl);
             logger.info(`[Rate Limiter] Resultado cacheado para ${url} (TTL: ${ttl}ms)`);
           }
         }
-        
+
         return result;
       };
-      
+
       // Executar com ou sem queue
       let result;
       if (this.enableQueue && this.requestQueue) {
@@ -655,10 +653,10 @@ class RateLimiter {
       } else {
         result = await makeRequest();
       }
-      
+
       this.monitor.recordRequest(waitTime, fromCache, false);
       return result;
-      
+
     } catch (error) {
       this.monitor.recordRequest(waitTime, fromCache, true);
       throw error;
@@ -667,7 +665,7 @@ class RateLimiter {
 
   getMetrics() {
     const baseMetrics = this.monitor.getMetrics();
-    
+
     return {
       ...baseMetrics,
       tokenBucket: {
@@ -699,24 +697,24 @@ class RateLimiter {
     if (this.tokenBucket) {
       this.tokenBucket.destroy();
     }
-    
+
     if (this.requestQueue) {
       this.requestQueue.clear();
     }
-    
+
     if (this.cache) {
       this.cache.destroy();
     }
-    
+
     logger.info('[Rate Limiter] DestruÃ­do');
   }
 }
 
 // InstÃ¢ncia global do Rate Limiter
 const rateLimiter = new RateLimiter({
-  tokensPerSecond: 2, // 2 requisiÃ§Ãµes por segundo
-  burstCapacity: 10, // AtÃ© 10 requisiÃ§Ãµes em burst
-  queueMaxSize: 50, // MÃ¡ximo 50 requisiÃ§Ãµes na fila
+  tokensPerSecond: 2, // 2 requisições por segundo
+  burstCapacity: 10, // Até 10 requisições em burst
+  queueMaxSize: 50, // Máximo 50 requisições na fila
   cacheDefaultTTL: 300000, // Cache de 5 minutos
   enableCache: true,
   enableQueue: true
@@ -764,7 +762,7 @@ async function getBatchConfig() {
       ATTACHMENT_BATCH_SIZE: Math.max(
         1,
         parseInt(stored.batchAttachmentSize, 10) ||
-          DEFAULT_BATCH_CONFIG.ATTACHMENT_BATCH_SIZE
+        DEFAULT_BATCH_CONFIG.ATTACHMENT_BATCH_SIZE
       ),
       BATCH_DELAY_MS: Math.max(
         0,
@@ -806,7 +804,7 @@ async function processBatched(
   for (let i = 0; i < items.length; i += batchSize) {
     const batch = items.slice(i, i + batchSize);
     let retryCount = 0;
-    
+
     while (retryCount < maxRetries) {
       try {
         // âœ… SEGURO: Implementar timeout para cada lote
@@ -821,18 +819,18 @@ async function processBatched(
               }
             })
           ),
-          new Promise((_, reject) => 
+          new Promise((_, reject) =>
             setTimeout(() => reject(new Error('Batch timeout')), batchTimeout)
           )
         ]);
-        
+
         results.push(...batchResults);
         break; // Sucesso, sair do loop de retry
-        
+
       } catch (error) {
         retryCount++;
         logger.warn(`Lote ${i} falhou (tentativa ${retryCount}/${maxRetries}):`, error.message);
-        
+
         if (retryCount === maxRetries) {
           logger.error(`Lote ${i} falhou apÃ³s ${maxRetries} tentativas, preenchendo com nulls`);
           // Preenche com nulls para manter Ã­ndices consistentes
@@ -855,7 +853,7 @@ async function processBatched(
 }
 
 /**
- * ObtÃ©m a URL base do sistema a partir das configuraÃ§Ãµes salvas pelo usuÃ¡rio.
+ * Obtém a URL base do sistema a partir das configurações salvas pelo usuário.
  * @returns {Promise<string>} A URL base salva.
  */
 export async function getBaseUrl() {
@@ -899,7 +897,7 @@ function getTextFromHTML(htmlString) {
 }
 
 /**
- * Busca as configuraÃ§Ãµes de prioridade de regulaÃ§Ã£o do sistema.
+ * Busca as configurações de prioridade de regulação do sistema.
  * @returns {Promise<Array<object>>} Uma lista de objetos de prioridade.
  */
 export async function fetchRegulationPriorities() {
@@ -910,7 +908,7 @@ export async function fetchRegulationPriorities() {
 
       // âœ… TASK-A-006: Rate limiting aplicado
       const data = await rateLimitedFetch(url, {}, { ttl: 600000 }); // Cache por 10 minutos
-      
+
       // Filtra apenas as ativas e ordena pela ordem de exibiÃ§Ã£o definida no sistema
       return data
         .filter((p) => p.coreIsAtivo === "t")
@@ -925,17 +923,17 @@ export async function fetchRegulationPriorities() {
 }
 
 /**
- * Busca os detalhes completos de uma regulaÃ§Ã£o especÃ­fica.
+ * Busca os detalhes completos de uma regulação específica.
  * @param {object} params
- * @param {string} params.reguIdp - O IDP da regulaÃ§Ã£o.
- * @param {string} params.reguIds - O IDS da regulaÃ§Ã£o.
- * @returns {Promise<object>} O objeto com os dados da regulaÃ§Ã£o.
+ * @param {string} params.reguIdp - O IDP da regulação.
+ * @param {string} params.reguIds - O IDS da regulação.
+ * @returns {Promise<object>} O objeto com os dados da regulação.
  */
 export async function fetchRegulationDetails({ reguIdp, reguIds }) {
   if (!API_VALIDATIONS.isValidRegulationId(reguIdp, reguIds)) {
     throw new Error(API_ERROR_MESSAGES.MISSING_REGULATION_ID);
   }
-  
+
   const baseUrl = await getBaseUrl();
   const url = new URL(API_UTILS.buildUrl(baseUrl, API_ENDPOINTS.REGULATION_DETAILS));
   url.search = new URLSearchParams({
@@ -958,13 +956,13 @@ export async function fetchRegulationDetails({ reguIdp, reguIds }) {
   }
 
   const data = await response.json();
-  // O objeto de dados estÃ¡ aninhado sob a chave "regulacao"
+  // O objeto de dados está aninhado sob a chave "regulacao"
   return data.regulacao || null;
 }
 
 
-// âœ… SEGURANÃ‡A: Import estÃ¡tico para evitar dynamic imports inseguros
-import { validateSearchTerm, sanitizeSearchTerm, validateCPF, validateCNS } from "./validation.js";
+// âœ… SEGURANÇA: Import estático para evitar dynamic imports inseguros
+import { sanitizeSearchTerm, validateCNS, validateCPF, validateSearchTerm } from "./validation.js";
 
 export async function searchPatients(term) {
   // Early exit for empty terms
@@ -986,21 +984,21 @@ export async function searchPatients(term) {
       const baseUrl = await getBaseUrl();
       const url = new URL(API_UTILS.buildUrl(baseUrl, API_ENDPOINTS.PATIENT_SEARCH));
       url.search = new URLSearchParams({ searchString: sanitizedTerm });
-      
+
       // âœ… TASK-A-006: Rate limiting aplicado com cache curto para buscas
       const data = await rateLimitedFetch(url, {
         headers: API_HEADERS.AJAX,
       }, { ttl: 60000 }); // Cache por 1 minuto para buscas
-      
+
       return Array.isArray(data)
         ? data.map((p) => ({
-            idp: p[0],
-            ids: p[1],
-            value: p[5],
-            cns: p[6],
-            dataNascimento: p[7],
-            cpf: p[15],
-          }))
+          idp: p[0],
+          ids: p[1],
+          value: p[5],
+          cns: p[6],
+          dataNascimento: p[7],
+          cpf: p[15],
+        }))
         : [];
     },
     'searchPatients',
@@ -1013,19 +1011,19 @@ export async function searchPatients(term) {
 
 export async function fetchVisualizaUsuario({ idp, ids }) {
   if (!API_VALIDATIONS.isValidRegulationId(idp, ids)) {
-    throw new Error(`ID invÃ¡lido. idp: '${idp}', ids: '${ids}'.`);
+    throw new Error(`ID inválido. idp: '${idp}', ids: '${ids}'.`);
   }
-  
+
   const baseUrl = await getBaseUrl();
   const url = API_UTILS.buildUrl(baseUrl, API_ENDPOINTS.PATIENT_DETAILS);
   const body = `isenPK.idp=${encodeURIComponent(idp)}&isenPK.ids=${encodeURIComponent(ids)}`;
-  
+
   const response = await fetch(url, {
     method: "POST",
     headers: API_HEADERS.FORM,
     body,
   });
-  
+
   if (!response.ok) handleFetchError(response);
 
   if (!API_VALIDATIONS.isJsonResponse(response)) {
@@ -1043,12 +1041,12 @@ export async function fetchProntuarioHash({
   dataFinal,
 }) {
   if (!isenFullPKCrypto) {
-    throw new Error("ID criptografado necessÃ¡rio.");
+    throw new Error("ID criptografado necessário.");
   }
 
   const baseUrl = await getBaseUrl();
   const url = API_UTILS.buildUrl(baseUrl, API_ENDPOINTS.PARAM_HASH);
-  
+
   const paramString = API_UTILS.buildProntuarioParamString({
     isenFullPKCrypto,
     dataInicial,
@@ -1067,7 +1065,7 @@ export async function fetchProntuarioHash({
 
   const data = await response.json();
   if (data?.string) return data.string;
-  throw new Error(data.mensagem || "Resposta nÃ£o continha o hash.");
+  throw new Error(data.mensagem || "Resposta não continha o hash.");
 }
 
 export async function fetchConsultasEspecializadas({
@@ -1075,7 +1073,7 @@ export async function fetchConsultasEspecializadas({
   dataInicial,
   dataFinal,
 }) {
-  if (!isenFullPKCrypto) throw new Error("ID criptografado necessÃ¡rio.");
+  if (!isenFullPKCrypto) throw new Error("ID criptografado necessário.");
   const baseUrl = await getBaseUrl();
   const url = new URL(
     `${baseUrl}/sigss/prontuarioAmbulatorial2/buscaDadosConsultaEspecializadas_HTML`
@@ -1104,7 +1102,7 @@ export async function fetchConsultasBasicas({
   dataInicial,
   dataFinal,
 }) {
-  if (!isenFullPKCrypto) throw new Error("ID criptografado necessÃ¡rio.");
+  if (!isenFullPKCrypto) throw new Error("ID criptografado necessário.");
   const baseUrl = await getBaseUrl();
   const url = new URL(
     `${baseUrl}/sigss/prontuarioAmbulatorial2/buscaDadosConsulta_HTML`
@@ -1141,7 +1139,7 @@ export async function fetchAllConsultations({
     ...basicasResult.jsonData,
     ...especializadasResult.jsonData,
   ];
-  const combinedHtmlData = `<h3>Consultas BÃ¡sicas</h3>${basicasResult.htmlData}<h3>Consultas Especializadas</h3>${especializadasResult.htmlData}`;
+  const combinedHtmlData = `<h3>Consultas Básicas</h3>${basicasResult.htmlData}<h3>Consultas Especializadas</h3>${especializadasResult.htmlData}`;
   return { jsonData: combinedJsonData, htmlData: combinedHtmlData };
 }
 
@@ -1152,7 +1150,7 @@ export async function fetchExamesSolicitados({
   comResultado,
   semResultado,
 }) {
-  if (!isenPK) throw new Error("ID (isenPK) do paciente Ã© necessÃ¡rio.");
+  if (!isenPK) throw new Error("ID (isenPK) do paciente é necessário.");
   const baseUrl = await getBaseUrl();
   const url = new URL(`${baseUrl}/sigss/exameRequisitado/findAllReex`);
   const params = {
@@ -1197,7 +1195,7 @@ export async function fetchExamesSolicitados({
 
 export async function fetchResultadoExame({ idp, ids }) {
   if (!idp || !ids)
-    throw new Error("IDs do resultado do exame sÃ£o necessÃ¡rios.");
+    throw new Error("IDs do resultado do exame são necessários.");
   const baseUrl = await getBaseUrl();
   const url = new URL(`${baseUrl}/sigss/resultadoExame/visualizaImagem`);
   url.search = new URLSearchParams({
@@ -1222,15 +1220,15 @@ export async function fetchCadsusData({ cpf, cns, skipValidation = false }) {
 
   return await apiErrorBoundary.execute(
     async () => {
-      // SÃ³ validar se nÃ£o for uma busca interna (quando skipValidation for false)
+      // Só validar se não for uma busca interna (quando skipValidation for false)
       if (!skipValidation) {
-        // âœ… SEGURANÃ‡A: Usando imports estÃ¡ticos jÃ¡ disponÃ­veis no topo do arquivo
+        // âœ… SEGURANÇA: Usando imports estáticos já disponíveis no topo do arquivo
 
         // Validate CPF if provided
         if (cpf) {
           const cpfValidation = validateCPF(cpf);
           if (!cpfValidation.valid) {
-            throw new Error(`CPF invÃ¡lido: ${cpfValidation.message}`);
+            throw new Error(`CPF inválido: ${cpfValidation.message}`);
           }
         }
 
@@ -1238,7 +1236,7 @@ export async function fetchCadsusData({ cpf, cns, skipValidation = false }) {
         if (cns) {
           const cnsValidation = validateCNS(cns);
           if (!cnsValidation.valid) {
-            throw new Error(`CNS invÃ¡lido: ${cnsValidation.message}`);
+            throw new Error(`CNS inválido: ${cnsValidation.message}`);
           }
         }
       }
@@ -1276,7 +1274,7 @@ export async function fetchCadsusData({ cpf, cns, skipValidation = false }) {
 }
 
 export async function fetchAppointmentDetails({ idp, ids }) {
-  if (!idp || !ids) throw new Error("ID do agendamento Ã© necessÃ¡rio.");
+  if (!idp || !ids) throw new Error("ID do agendamento é necessário.");
   const baseUrl = await getBaseUrl();
   const url = new URL(`${baseUrl}/sigss/agendamentoConsulta/visualiza`);
   url.search = new URLSearchParams({
@@ -1307,7 +1305,7 @@ export async function fetchAppointmentDetails({ idp, ids }) {
  * @returns {Promise<object>} O objeto com os dados do agendamento de exame.
  */
 export async function fetchExamAppointmentDetails({ idp, ids }) {
-  if (!idp || !ids) throw new Error("ID do agendamento de exame Ã© necessÃ¡rio.");
+  if (!idp || !ids) throw new Error("ID do agendamento de exame é necessário.");
   const baseUrl = await getBaseUrl();
   const url = new URL(`${baseUrl}/sigss/agendamentoExame/visualizar`);
   url.search = new URLSearchParams({
@@ -1331,7 +1329,7 @@ export async function fetchExamAppointmentDetails({ idp, ids }) {
 }
 
 export async function fetchAppointments({ isenPK, dataInicial, dataFinal }) {
-  if (!isenPK) throw new Error("ID (isenPK) do paciente Ã© necessÃ¡rio.");
+  if (!isenPK) throw new Error("ID (isenPK) do paciente é necessário.");
   const baseUrl = await getBaseUrl();
   const url = new URL(`${baseUrl}/sigss/resumoCompromisso/lista`);
   const params = {
@@ -1385,9 +1383,9 @@ export async function fetchAppointments({ isenPK, dataInicial, dataFinal }) {
     basicAppointments,
     async (appt) => {
       if (appt.type.toUpperCase().includes("EXAME")) {
-        // CORREÃ‡ÃƒO: O ID de agendamentos de exame vem no formato "EXAM-IDP-IDS".
-        // A lÃ³gica posterior (renderizadores) espera "IDP-IDS".
-        // Normalizamos o ID aqui para garantir consistÃªncia.
+        // CORREÇÃO: O ID de agendamentos de exame vem no formato "EXAM-IDP-IDS".
+        // A lógica posterior (renderizadores) espera "IDP-IDS".
+        // Normalizamos o ID aqui para garantir consistência.
         const parts = (appt.id || "").split("-");
         if (parts.length === 3 && parts[0].toUpperCase() === "EXAM") {
           // ReconstrÃ³i o appt com o ID normalizado.
@@ -1446,7 +1444,7 @@ async function fetchRegulations({
   dataInicial,
   dataFinal,
 }) {
-  if (!isenPK) throw new Error("ID (isenPK) do paciente Ã© necessÃ¡rio.");
+  if (!isenPK) throw new Error("ID (isenPK) do paciente é necessário.");
   const baseUrl = await getBaseUrl();
   const url = new URL(`${baseUrl}/sigss/regulacaoRegulador/lista`);
 
@@ -1563,7 +1561,7 @@ export async function fetchAllRegulations({
     async (regulation) => {
       if (regulation.idp && regulation.ids) {
         try {
-          // CORREÃ‡ÃƒO: Usa o ID da prÃ³pria regulaÃ§Ã£o como o isenPK para esta chamada especÃ­fica.
+          // CORREÇÃO: Usa o ID da própria regulação como o isenPK para esta chamada específica.
           const attachmentIsenPk = `${regulation.idp}-${regulation.ids}`;
           const attachments = await fetchRegulationAttachments({
             reguIdp: regulation.idp,
@@ -1573,7 +1571,7 @@ export async function fetchAllRegulations({
           return { ...regulation, attachments };
         } catch (error) {
           logger.warn(
-            `Falha ao buscar anexos para regulaÃ§Ã£o ${regulation.id}:`,
+            `Falha ao buscar anexos para regulação ${regulation.id}:`,
             error
           );
           return { ...regulation, attachments: [] };
@@ -1601,10 +1599,10 @@ export async function fetchAllRegulations({
  * @returns {Promise<Array<object>>} Uma lista de objetos de documento.
  */
 export async function fetchDocuments({ isenPK }) {
-  if (!isenPK) throw new Error("ID (isenPK) do paciente Ã© necessÃ¡rio.");
+  if (!isenPK) throw new Error("ID (isenPK) do paciente é necessário.");
   const [idp, ids] = isenPK.split("-");
   if (!idp || !ids)
-    throw new Error("ID (isenPK) do paciente em formato invÃ¡lido.");
+    throw new Error("ID (isenPK) do paciente em formato inválido.");
 
   const baseUrl = await getBaseUrl();
   const url = new URL(`${baseUrl}/sigss/isar/buscaGrid`);
@@ -1647,10 +1645,10 @@ export async function fetchDocuments({ isenPK }) {
  * @param {object} params
  * @param {string} params.idp - O IDP do documento.
  * @param {string} params.ids - O IDS do documento.
- * @returns {Promise<string|null>} A URL completa para visualizaÃ§Ã£o do arquivo.
+ * @returns {Promise<string|null>} A URL completa para visualização do arquivo.
  */
 export async function fetchDocumentUrl({ idp, ids }) {
-  if (!idp || !ids) throw new Error("IDs do documento sÃ£o necessÃ¡rios.");
+  if (!idp || !ids) throw new Error("IDs do documento são necessários.");
 
   const baseUrl = await getBaseUrl();
   const url = new URL(`${baseUrl}/sigss/isar/getHashArquivo`);
@@ -1678,20 +1676,20 @@ export async function fetchDocumentUrl({ idp, ids }) {
 }
 
 /**
- * Busca a lista de arquivos anexados a uma solicitaÃ§Ã£o de regulaÃ§Ã£o especÃ­fica.
+ * Busca a lista de arquivos anexados a uma solicitação de regulação específica.
  * @param {object} params
- * @param {string} params.reguIdp - O IDP da regulaÃ§Ã£o.
- * @param {string} params.reguIds - O IDS da regulaÃ§Ã£o.
+ * @param {string} params.reguIdp - O IDP da regulação.
+ * @param {string} params.reguIds - O IDS da regulação.
  * @param {string} params.isenPK - O PK do paciente no formato "idp-ids".
  * @returns {Promise<Array<object>>} Uma lista de objetos de anexo.
  */
 export async function fetchRegulationAttachments({ reguIdp, reguIds, isenPK }) {
-  if (!reguIdp || !reguIds) throw new Error("ID da regulaÃ§Ã£o Ã© necessÃ¡rio.");
-  if (!isenPK) throw new Error("ID do paciente (isenPK) Ã© necessÃ¡rio.");
+  if (!reguIdp || !reguIds) throw new Error("ID da regulação é necessário.");
+  if (!isenPK) throw new Error("ID do paciente (isenPK) é necessário.");
 
   const [isenIdp, isenIds] = isenPK.split("-");
   if (!isenIdp || !isenIds)
-    throw new Error("ID do paciente (isenPK) em formato invÃ¡lido.");
+    throw new Error("ID do paciente (isenPK) em formato inválido.");
 
   const baseUrl = await getBaseUrl();
   const url = new URL(`${baseUrl}/sigss/rear/buscaGrid`);
@@ -1704,8 +1702,8 @@ export async function fetchRegulationAttachments({ reguIdp, reguIds, isenPK }) {
     nd: Date.now(),
     rows: String(CONFIG.API.MAX_ROWS_REGULATIONS),
     page: "1",
-    sidx: "", // Corrigido para corresponder Ã  requisiÃ§Ã£o da aplicaÃ§Ã£o
-    sord: "asc", // Corrigido para corresponder Ã  requisiÃ§Ã£o da aplicaÃ§Ã£o
+    sidx: "", // Corrigido para corresponder à requisição da aplicação
+    sord: "asc", // Corrigido para corresponder à requisição da aplicação
   };
   url.search = new URLSearchParams(params).toString();
 
@@ -1732,14 +1730,14 @@ export async function fetchRegulationAttachments({ reguIdp, reguIds, isenPK }) {
 }
 
 /**
- * ObtÃ©m a URL de visualizaÃ§Ã£o para um anexo de regulaÃ§Ã£o especÃ­fico.
+ * Obtém a URL de visualização para um anexo de regulação específico.
  * @param {object} params
  * @param {string} params.idp - O IDP do anexo (rearPK.idp).
  * @param {string} params.ids - O IDS do anexo (rearPK.ids).
- * @returns {Promise<string|null>} A URL completa para visualizaÃ§Ã£o do arquivo.
+ * @returns {Promise<string|null>} A URL completa para visualização do arquivo.
  */
 export async function fetchRegulationAttachmentUrl({ idp, ids }) {
-  if (!idp || !ids) throw new Error("IDs do anexo sÃ£o necessÃ¡rios.");
+  if (!idp || !ids) throw new Error("IDs do anexo são necessários.");
 
   const baseUrl = await getBaseUrl();
   const url = new URL(`${baseUrl}/sigss/rear/getHashArquivo`);
@@ -1777,7 +1775,7 @@ export async function fetchAllTimelineData({
   dataInicial,
   dataFinal,
 }) {
-  // Usando um objeto de promessas para tornar a extraÃ§Ã£o de resultados mais robusta.
+  // Usando um objeto de promessas para tornar a extração de resultados mais robusta.
   const dataPromises = {
     consultations: fetchAllConsultations({
       isenFullPKCrypto,
@@ -1824,8 +1822,8 @@ export async function fetchAllTimelineData({
 }
 
 /**
- * Envia uma requisiÃ§Ã£o para manter a sessÃ£o ativa no sistema.
- * @returns {Promise<boolean>} True se a requisiÃ§Ã£o foi bem-sucedida, false caso contrÃ¡rio.
+ * Envia uma requisição para manter a sessão ativa no sistema.
+ * @returns {Promise<boolean>} True se a requisição foi bem-sucedida, false caso contrário.
  */
 export async function keepSessionAlive() {
   return await apiErrorBoundary.execute(
@@ -1840,9 +1838,9 @@ export async function keepSessionAlive() {
       });
 
       if (!response.ok) {
-        // Se for erro 401 ou 403, provavelmente a sessÃ£o expirou
+        // Se for erro 401 ou 403, provavelmente a sessão expirou
         if (response.status === HTTP_STATUS.UNAUTHORIZED || response.status === HTTP_STATUS.FORBIDDEN) {
-          const error = new Error("SessÃ£o expirou - keep-alive nÃ£o pode manter a sessÃ£o ativa");
+          const error = new Error("Sessão expirou - keep-alive não pode manter a sessão ativa");
           error.status = response.status;
           throw error;
         }
@@ -1858,26 +1856,26 @@ export async function keepSessionAlive() {
 
       const data = await response.json();
 
-      // Verifica se a resposta contÃ©m dados vÃ¡lidos
+      // Verifica se a resposta contém dados válidos
       // A resposta pode ser um objeto com propriedades ou uma string direta
       if (data) {
-        // Se for um objeto com propriedades especÃ­ficas
+        // Se for um objeto com propriedades específicas
         if (typeof data === 'object' && (data.dataHora || data.data || data.hora)) {
-          logger.info(`SessÃ£o mantida ativa: ${data.dataHora || data.data || "OK"}`);
+          logger.info(`Sessão mantida ativa: ${data.dataHora || data.data || "OK"}`);
           return true;
         }
         // Se for uma string direta com data/hora (formato ISO ou similar)
         else if (typeof data === 'string' && data.trim().length > 0) {
-          logger.info(`SessÃ£o mantida ativa: ${data}`);
+          logger.info(`Sessão mantida ativa: ${data}`);
           return true;
         }
-        // Se for qualquer outro valor nÃ£o-nulo/nÃ£o-vazio
+        // Se for qualquer outro valor não-nulo/não-vazio
         else if (data !== null && data !== undefined && data !== '') {
-          logger.info(`SessÃ£o mantida ativa: ${JSON.stringify(data)}`);
+          logger.info(`Sessão mantida ativa: ${JSON.stringify(data)}`);
           return true;
         }
       }
-      
+
       throw new Error(API_ERROR_MESSAGES.KEEP_ALIVE_INVALID_RESPONSE);
     },
     'keepSessionAlive',
@@ -1890,8 +1888,8 @@ export async function keepSessionAlive() {
 
 // âœ… TASK-A-002: FunÃ§Ãµes de Debugging e Monitoramento
 /**
- * ObtÃ©m os erros armazenados para debugging.
- * @returns {Promise<Array>} Lista dos Ãºltimos erros de API
+ * Obtém os erros armazenados para debugging.
+ * @returns {Promise<Array>} Lista dos últimos erros de API
  */
 export async function getAPIErrors() {
   return await ErrorLogger.getStoredErrors();
@@ -1914,7 +1912,7 @@ export function getCircuitBreakerState() {
 }
 
 /**
- * ForÃ§a o reset do Circuit Breaker (para debugging).
+ * Força o reset do Circuit Breaker (para debugging).
  * @returns {void}
  */
 export function resetCircuitBreaker() {
@@ -1926,17 +1924,17 @@ export function resetCircuitBreaker() {
 
 // âœ… TASK-A-006: FunÃ§Ãµes de Monitoramento de Rate Limiting
 /**
- * ObtÃ©m as mÃ©tricas atuais do rate limiter.
- * @returns {object} MÃ©tricas detalhadas do rate limiting
+ * Obtém as métricas atuais do rate limiter.
+ * @returns {object} Métricas detalhadas do rate limiting
  */
 export function getRateLimitMetrics() {
   return rateLimiter.getMetrics();
 }
 
 /**
- * ObtÃ©m a atividade recente do rate limiter.
- * @param {number} minutes - NÃºmero de minutos para buscar atividade (padrÃ£o: 5)
- * @returns {Array} Lista de requisiÃ§Ãµes recentes
+ * Obtém a atividade recente do rate limiter.
+ * @param {number} minutes - Número de minutos para buscar atividade (padrão: 5)
+ * @returns {Array} Lista de requisições recentes
  */
 export function getRateLimitActivity(minutes = 5) {
   return rateLimiter.monitor.getRecentActivity(minutes);
@@ -1972,14 +1970,14 @@ export function getTokenBucketStatus() {
 }
 
 /**
- * ObtÃ©m o status atual da fila de requisiÃ§Ãµes.
+ * Obtém o status atual da fila de requisições.
  * @returns {object} Status da fila
  */
 export function getRequestQueueStatus() {
   if (!rateLimiter.requestQueue) {
     return { enabled: false };
   }
-  
+
   return {
     enabled: true,
     currentSize: rateLimiter.requestQueue.getQueueSize(),
@@ -1989,14 +1987,14 @@ export function getRequestQueueStatus() {
 }
 
 /**
- * ObtÃ©m estatÃ­sticas detalhadas do cache.
- * @returns {object} EstatÃ­sticas do cache
+ * Obtém estatísticas detalhadas do cache.
+ * @returns {object} Estatísticas do cache
  */
 export function getCacheStats() {
   if (!rateLimiter.cache) {
     return { enabled: false };
   }
-  
+
   return {
     enabled: true,
     ...rateLimiter.cache.getStats(),
@@ -2005,7 +2003,7 @@ export function getCacheStats() {
 }
 
 /**
- * ForÃ§a a limpeza do cache expirado.
+ * Força a limpeza do cache expirado.
  * @returns {void}
  */
 export function cleanupExpiredCache() {
@@ -2015,16 +2013,16 @@ export function cleanupExpiredCache() {
 }
 
 /**
- * ObtÃ©m um relatÃ³rio completo do sistema de rate limiting.
- * @returns {object} RelatÃ³rio completo
+ * Obtém um relatório completo do sistema de rate limiting.
+ * @returns {object} Relatório completo
  */
 export function getRateLimitReport() {
   const metrics = getRateLimitMetrics();
   const tokenBucket = getTokenBucketStatus();
   const queue = getRequestQueueStatus();
   const cache = getCacheStats();
-  const recentActivity = getRateLimitActivity(10); // Ãšltimos 10 minutos
-  
+  const recentActivity = getRateLimitActivity(10); // Últimos 10 minutos
+
   return {
     timestamp: new Date().toISOString(),
     summary: {
@@ -2039,24 +2037,24 @@ export function getRateLimitReport() {
     cache,
     recentActivity: {
       count: recentActivity.length,
-      requests: recentActivity.slice(-10) // Ãšltimas 10 requisiÃ§Ãµes
+      requests: recentActivity.slice(-10) // Últimas 10 requisições
     },
     recommendations: generateRateLimitRecommendations(metrics, tokenBucket, queue, cache)
   };
 }
 
 /**
- * Gera recomendaÃ§Ãµes baseadas nas mÃ©tricas atuais.
- * @param {object} metrics - MÃ©tricas do rate limiter
+ * Gera recomendações baseadas nas métricas atuais.
+ * @param {object} metrics - Métricas do rate limiter
  * @param {object} tokenBucket - Status do token bucket
  * @param {object} queue - Status da fila
  * @param {object} cache - Status do cache
- * @returns {Array} Lista de recomendaÃ§Ãµes
+ * @returns {Array} Lista de recomendações
  */
 function generateRateLimitRecommendations(metrics, tokenBucket, queue, cache) {
   const recommendations = [];
-  
-  // AnÃ¡lise de rate limiting
+
+  // Análise de rate limiting
   if (metrics.rateLimitRate > 0.3) {
     recommendations.push({
       type: 'warning',
@@ -2065,8 +2063,8 @@ function generateRateLimitRecommendations(metrics, tokenBucket, queue, cache) {
       action: 'increase_capacity'
     });
   }
-  
-  // AnÃ¡lise de cache
+
+  // Análise de cache
   if (cache.enabled && metrics.cacheHitRate < 0.5) {
     recommendations.push({
       type: 'info',
@@ -2075,43 +2073,43 @@ function generateRateLimitRecommendations(metrics, tokenBucket, queue, cache) {
       action: 'increase_ttl'
     });
   }
-  
-  // AnÃ¡lise de erros
+
+  // Análise de erros
   if (metrics.errorRate > 0.1) {
     recommendations.push({
       type: 'error',
       category: 'errors',
-      message: `Taxa de erro alta (${(metrics.errorRate * 100).toFixed(1)}%). Verifique a conectividade e saÃºde do servidor.`,
+      message: `Taxa de erro alta (${(metrics.errorRate * 100).toFixed(1)}%). Verifique a conectividade e saúde do servidor.`,
       action: 'check_server_health'
     });
   }
-  
-  // AnÃ¡lise da fila
+
+  // Análise da fila
   if (queue.enabled && queue.currentSize > queue.maxSize * 0.8) {
     recommendations.push({
       type: 'warning',
       category: 'queue',
-      message: `Fila de requisiÃ§Ãµes quase cheia (${queue.currentSize}/${queue.maxSize}). Considere aumentar o tamanho da fila.`,
+      message: `Fila de requisições quase cheia (${queue.currentSize}/${queue.maxSize}). Considere aumentar o tamanho da fila.`,
       action: 'increase_queue_size'
     });
   }
-  
-  // AnÃ¡lise de tokens
+
+  // Análise de tokens
   if (tokenBucket.availableTokens < tokenBucket.capacity * 0.2) {
     recommendations.push({
       type: 'info',
       category: 'tokens',
-      message: `Poucos tokens disponÃ­veis (${tokenBucket.availableTokens}/${tokenBucket.capacity}). Sistema sob carga.`,
+      message: `Poucos tokens disponíveis (${tokenBucket.availableTokens}/${tokenBucket.capacity}). Sistema sob carga.`,
       action: 'monitor_load'
     });
   }
-  
+
   return recommendations;
 }
 
 /**
- * Configura o rate limiter com novos parÃ¢metros.
- * @param {object} config - Nova configuraÃ§Ã£o
+ * Configura o rate limiter com novos parâmetros.
+ * @param {object} config - Nova configuração
  * @returns {void}
  */
 export function configureRateLimiter(config = {}) {
@@ -2121,13 +2119,13 @@ export function configureRateLimiter(config = {}) {
     queueMaxSize,
     cacheDefaultTTL
   } = config;
-  
+
   logger.info('[Rate Limiter] Reconfigurando com:', config);
-  
+
   // Destruir instÃ¢ncia atual
   rateLimiter.destroy();
-  
-  // Criar nova instÃ¢ncia com configuraÃ§Ã£o atualizada
+
+  // Criar nova instância com configuração atualizada
   const newConfig = {
     tokensPerSecond: tokensPerSecond || 2,
     burstCapacity: burstCapacity || 10,
@@ -2136,15 +2134,15 @@ export function configureRateLimiter(config = {}) {
     enableCache: true,
     enableQueue: true
   };
-  
-  // Substituir instÃ¢ncia global
+
+  // Substituir instância global
   Object.assign(rateLimiter, new RateLimiter(newConfig));
-  
-  logger.info('[Rate Limiter] ReconfiguraÃ§Ã£o concluÃ­da');
+
+  logger.info('[Rate Limiter] Reconfiguração concluída');
 }
 
 /**
- * Salva as mÃ©tricas atuais no storage para anÃ¡lise posterior.
+ * Salva as métricas atuais no storage para análise posterior.
  * @returns {Promise<void>}
  */
 export async function saveRateLimitMetrics() {
@@ -2152,13 +2150,13 @@ export async function saveRateLimitMetrics() {
     const report = getRateLimitReport();
     const stored = await api.storage.local.get({ rateLimitHistory: [] });
     const history = stored.rateLimitHistory || [];
-    
-    // Manter apenas os Ãºltimos 100 relatÃ³rios
+
+    // Manter apenas os últimos 100 relatórios
     history.unshift(report);
     if (history.length > 100) {
       history.splice(100);
     }
-    
+
     await api.storage.local.set({ rateLimitHistory: history });
     logger.info('[Rate Limiter] MÃ©tricas salvas no storage');
   } catch (error) {
@@ -2167,8 +2165,8 @@ export async function saveRateLimitMetrics() {
 }
 
 /**
- * ObtÃ©m o histÃ³rico de mÃ©tricas salvas.
- * @returns {Promise<Array>} HistÃ³rico de mÃ©tricas
+ * Obtém o histórico de métricas salvas.
+ * @returns {Promise<Array>} Histórico de métricas
  */
 export async function getRateLimitHistory() {
   try {
@@ -2181,7 +2179,7 @@ export async function getRateLimitHistory() {
 }
 
 /**
- * Limpa o histÃ³rico de mÃ©tricas.
+ * Limpa o histórico de métricas.
  * @returns {Promise<void>}
  */
 export async function clearRateLimitHistory() {
@@ -2192,4 +2190,3 @@ export async function clearRateLimitHistory() {
     logger.warn('[Rate Limiter] Falha ao limpar histÃ³rico:', error);
   }
 }
-

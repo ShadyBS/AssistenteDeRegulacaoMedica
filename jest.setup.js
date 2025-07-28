@@ -1,6 +1,6 @@
 /**
  * Jest Setup - Assistente de Regulação Médica
- * 
+ *
  * Configurações e mocks globais para testes
  */
 
@@ -20,7 +20,7 @@ const mockBrowserAPI = {
     })),
     id: 'test-extension-id'
   },
-  
+
   storage: {
     local: {
       get: jest.fn(),
@@ -35,14 +35,14 @@ const mockBrowserAPI = {
       clear: jest.fn()
     }
   },
-  
+
   tabs: {
     query: jest.fn(),
     create: jest.fn(),
     update: jest.fn(),
     sendMessage: jest.fn()
   },
-  
+
   scripting: {
     executeScript: jest.fn(),
     insertCSS: jest.fn(),
@@ -83,15 +83,15 @@ global.BrowserAPI = class MockBrowserAPI {
   static getInstance() {
     return new MockBrowserAPI();
   }
-  
+
   async sendMessage(message) {
     return Promise.resolve({ success: true });
   }
-  
+
   async getStorage(key) {
     return Promise.resolve({});
   }
-  
+
   async setStorage(data) {
     return Promise.resolve();
   }
@@ -103,29 +103,29 @@ global.MemoryManager = class MockMemoryManager {
     this.listeners = [];
     this.timeouts = [];
   }
-  
+
   addEventListener(element, event, handler) {
     this.listeners.push({ element, event, handler });
     if (element && element.addEventListener) {
       element.addEventListener(event, handler);
     }
   }
-  
+
   setTimeout(callback, delay) {
     const id = setTimeout(callback, delay);
     this.timeouts.push(id);
     return id;
   }
-  
+
   cleanup() {
     this.listeners.forEach(({ element, event, handler }) => {
       if (element && element.removeEventListener) {
         element.removeEventListener(event, handler);
       }
     });
-    
+
     this.timeouts.forEach(id => clearTimeout(id));
-    
+
     this.listeners = [];
     this.timeouts = [];
   }
@@ -135,15 +135,15 @@ global.SectionManager = class MockSectionManager {
   constructor() {
     this.sections = new Map();
   }
-  
+
   addSection(id, config) {
     this.sections.set(id, config);
   }
-  
+
   getSection(id) {
     return this.sections.get(id);
   }
-  
+
   removeSection(id) {
     return this.sections.delete(id);
   }
@@ -153,15 +153,15 @@ global.TimelineManager = class MockTimelineManager {
   constructor() {
     this.events = [];
   }
-  
+
   addEvent(event) {
     this.events.push(event);
   }
-  
+
   getEvents() {
     return [...this.events];
   }
-  
+
   clearEvents() {
     this.events = [];
   }
@@ -171,15 +171,15 @@ global.KeepAliveManager = class MockKeepAliveManager {
   constructor() {
     this.isActive = false;
   }
-  
+
   start() {
     this.isActive = true;
   }
-  
+
   stop() {
     this.isActive = false;
   }
-  
+
   isRunning() {
     return this.isActive;
   }
@@ -190,30 +190,30 @@ global.KeepAliveManager = class MockKeepAliveManager {
 // Helper para criar elementos DOM mock
 global.createMockElement = (tagName, attributes = {}) => {
   const element = document.createElement(tagName);
-  
+
   Object.keys(attributes).forEach(key => {
     element.setAttribute(key, attributes[key]);
   });
-  
+
   // Mock methods comuns
   element.click = jest.fn();
   element.focus = jest.fn();
   element.blur = jest.fn();
-  
+
   return element;
 };
 
 // Helper para criar eventos mock
 global.createMockEvent = (type, properties = {}) => {
   const event = new Event(type);
-  
+
   Object.keys(properties).forEach(key => {
     Object.defineProperty(event, key, {
       value: properties[key],
       writable: true
     });
   });
-  
+
   return event;
 };
 
@@ -227,7 +227,7 @@ global.mockFetch = (response, options = {}) => {
     text: jest.fn().mockResolvedValue(JSON.stringify(response)),
     headers: new Headers(options.headers || {})
   };
-  
+
   global.fetch.mockResolvedValue(mockResponse);
   return mockResponse;
 };
@@ -235,12 +235,12 @@ global.mockFetch = (response, options = {}) => {
 // Helper para mock de storage
 global.mockStorage = (data = {}) => {
   const api = global.browser || global.chrome;
-  
+
   api.storage.local.get.mockImplementation((keys) => {
     if (typeof keys === 'string') {
       return Promise.resolve({ [keys]: data[keys] });
     }
-    
+
     if (Array.isArray(keys)) {
       const result = {};
       keys.forEach(key => {
@@ -250,10 +250,10 @@ global.mockStorage = (data = {}) => {
       });
       return Promise.resolve(result);
     }
-    
+
     return Promise.resolve(data);
   });
-  
+
   api.storage.local.set.mockImplementation((newData) => {
     Object.assign(data, newData);
     return Promise.resolve();
@@ -266,15 +266,15 @@ global.mockStorage = (data = {}) => {
 afterEach(() => {
   // Reset all mocks
   jest.clearAllMocks();
-  
+
   // Reset fetch mock
   if (global.fetch.mockReset) {
     global.fetch.mockReset();
   }
-  
+
   // Clear DOM
   document.body.innerHTML = '';
-  
+
   // Reset console
   global.console.log.mockClear();
   global.console.warn.mockClear();
@@ -286,7 +286,7 @@ afterEach(() => {
 beforeEach(() => {
   // Reset storage mock
   global.mockStorage({});
-  
+
   // Reset fetch mock
   global.fetch = jest.fn();
 });
@@ -297,7 +297,7 @@ beforeEach(() => {
 expect.extend({
   toHaveClass(received, className) {
     const pass = received.classList && received.classList.contains(className);
-    
+
     if (pass) {
       return {
         message: () => `expected element not to have class "${className}"`,
@@ -310,7 +310,7 @@ expect.extend({
       };
     }
   },
-  
+
   // Matcher para verificar chamadas de storage
   toHaveBeenCalledWithStorage(received, expectedData) {
     const calls = received.mock.calls;
@@ -318,7 +318,7 @@ expect.extend({
       const callData = call[0];
       return JSON.stringify(callData) === JSON.stringify(expectedData);
     });
-    
+
     if (pass) {
       return {
         message: () => `expected storage not to have been called with ${JSON.stringify(expectedData)}`,
@@ -341,7 +341,7 @@ global.nextTick = () => new Promise(resolve => setTimeout(resolve, 0));
 // Utilitário para aguardar elemento aparecer
 global.waitForElement = async (selector, timeout = 1000) => {
   const start = Date.now();
-  
+
   while (Date.now() - start < timeout) {
     const element = document.querySelector(selector);
     if (element) {
@@ -349,7 +349,7 @@ global.waitForElement = async (selector, timeout = 1000) => {
     }
     await new Promise(resolve => setTimeout(resolve, 10));
   }
-  
+
   throw new Error(`Element "${selector}" not found within ${timeout}ms`);
 };
 

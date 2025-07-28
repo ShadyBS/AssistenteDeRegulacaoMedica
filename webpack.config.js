@@ -1,6 +1,6 @@
 /**
  * Webpack Configuration - Assistente de Regulação Médica
- * 
+ *
  * Configuração otimizada para build de extensão de navegador com:
  * - Chrome/Edge (Manifest V3)
  * - Firefox (Manifest V3)
@@ -22,10 +22,10 @@ module.exports = (env, argv) => {
   const target = env.target || 'chrome'; // chrome or firefox
   const isDevelopment = !isProduction;
   const analyze = env.analyze === 'true';
-  
+
   console.log(`🔧 Webpack build: ${target} (${isProduction ? 'production' : 'development'})`);
   if (analyze) console.log('📊 Bundle analysis enabled');
-  
+
   // Configurações específicas por target
   const targetConfigs = {
     chrome: {
@@ -39,40 +39,40 @@ module.exports = (env, argv) => {
       description: 'Firefox/Mozilla'
     }
   };
-  
+
   const config = targetConfigs[target];
-  
+
   if (!config) {
     throw new Error(`Target inválido: ${target}. Use 'chrome' ou 'firefox'`);
   }
-  
+
   return {
     // Modo de desenvolvimento ou produção
     mode: isProduction ? 'production' : 'development',
-    
+
     // Source maps otimizados
     devtool: isProduction ? false : 'cheap-module-source-map', // Remove source maps em produção para reduzir tamanho
-    
+
     // Entry points otimizados com lazy loading
     entry: {
       // Core scripts (sempre carregados)
       background: './background.js',
       'content-script': './content-script.js',
-      
+
       // UI scripts (carregados sob demanda)
       sidebar: {
         import: './sidebar.js',
         dependOn: 'shared'
       },
       options: {
-        import: './options.js', 
+        import: './options.js',
         dependOn: 'shared'
       },
-      
+
       // Shared dependencies
       shared: ['./api-constants.js', './validation.js', './utils.js']
     },
-    
+
     // Configuração de output otimizada
     output: {
       path: config.outputPath,
@@ -94,7 +94,7 @@ module.exports = (env, argv) => {
         module: false,
       },
     },
-    
+
     // Configuração de módulos otimizada
     module: {
       rules: [
@@ -125,7 +125,7 @@ module.exports = (env, argv) => {
             }
           ],
         },
-        
+
         // JavaScript com otimizações agressivas
         {
           test: /\.js$/,
@@ -160,7 +160,7 @@ module.exports = (env, argv) => {
             }
           }
         },
-        
+
         // Assets otimizados
         {
           test: /\.(png|jpg|jpeg|gif|svg|ico)$/i,
@@ -174,7 +174,7 @@ module.exports = (env, argv) => {
             filename: 'assets/[name].[hash:8][ext]'
           }
         },
-        
+
         // Fonts otimizados
         {
           test: /\.(woff|woff2|eot|ttf|otf)$/i,
@@ -185,7 +185,7 @@ module.exports = (env, argv) => {
         },
       ],
     },
-    
+
     // Plugins otimizados
     plugins: [
       // Extração de CSS otimizada
@@ -196,7 +196,7 @@ module.exports = (env, argv) => {
           ignoreOrder: true // Ignora ordem de CSS para melhor otimização
         })
       ] : []),
-      
+
       // Bundle analyzer (apenas quando solicitado)
       ...(analyze ? [
         new BundleAnalyzerPlugin({
@@ -205,7 +205,7 @@ module.exports = (env, argv) => {
           reportFilename: `bundle-analysis-${target}.html`
         })
       ] : []),
-      
+
       // Copia arquivos estáticos com otimizações
       new CopyWebpackPlugin({
         patterns: [
@@ -215,7 +215,7 @@ module.exports = (env, argv) => {
             to: 'manifest.json',
             transform(content) {
               const manifest = JSON.parse(content.toString());
-              
+
               // Otimizações específicas do target
               if (target === 'chrome') {
                 if (manifest.background && manifest.background.scripts) {
@@ -224,17 +224,17 @@ module.exports = (env, argv) => {
                   };
                 }
               }
-              
+
               // Remove campos desnecessários em produção
               if (isProduction) {
                 delete manifest.developer;
                 delete manifest.homepage_url;
               }
-              
+
               return JSON.stringify(manifest, null, isProduction ? 0 : 2);
             }
           },
-          
+
           // HTML files com minificação
           {
             from: '*.html',
@@ -250,7 +250,7 @@ module.exports = (env, argv) => {
               ignore: ['**/node_modules/**']
             }
           },
-          
+
           // Ícones (apenas necessários)
           {
             from: 'icons/',
@@ -260,42 +260,42 @@ module.exports = (env, argv) => {
               ignore: isProduction ? ['**/*.svg'] : [] // Remove SVGs em produção se não usados
             }
           },
-          
+
           // CSS compilado do Tailwind
           {
             from: 'dist/output.css',
             to: 'dist/output.css',
             noErrorOnMissing: true
           },
-          
+
           // Browser polyfill (apenas se necessário)
           {
             from: 'browser-polyfill.js',
             to: 'browser-polyfill.js',
             noErrorOnMissing: true
           },
-          
+
           // Arquivos essenciais apenas
           {
             from: 'api-constants.js',
             to: 'api-constants.js'
           },
           {
-            from: 'validation.js', 
+            from: 'validation.js',
             to: 'validation.js'
           },
           {
             from: 'utils.js',
             to: 'utils.js'
           },
-          
+
           // Managers (lazy loaded)
           {
             from: '*Manager.js',
             to: 'managers/[name][ext]',
             noErrorOnMissing: true
           },
-          
+
           // API files
           {
             from: 'api.js',
@@ -309,7 +309,7 @@ module.exports = (env, argv) => {
             from: 'renderers.js',
             to: 'renderers.js'
           },
-          
+
           // UI components (apenas se existirem)
           {
             from: 'ui/',
@@ -322,7 +322,7 @@ module.exports = (env, argv) => {
         ],
       }),
     ],
-    
+
     // Otimizações agressivas
     optimization: {
       minimize: isProduction,
@@ -368,7 +368,7 @@ module.exports = (env, argv) => {
           parallel: true
         }),
       ],
-      
+
       // Code splitting inteligente
       splitChunks: {
         chunks: 'all',
@@ -383,7 +383,7 @@ module.exports = (env, argv) => {
             priority: 10,
             reuseExistingChunk: true
           },
-          
+
           // Shared utilities
           shared: {
             name: 'shared',
@@ -394,7 +394,7 @@ module.exports = (env, argv) => {
             test: /\.(js)$/,
             enforce: true
           },
-          
+
           // CSS comum
           styles: {
             name: 'styles',
@@ -405,29 +405,29 @@ module.exports = (env, argv) => {
           }
         },
       },
-      
+
       // Tree shaking agressivo
       usedExports: true,
       sideEffects: false, // Habilita tree shaking agressivo
-      
+
       // Otimização de módulos
       moduleIds: isProduction ? 'deterministic' : 'named',
       chunkIds: isProduction ? 'deterministic' : 'named',
-      
+
       // Concatenação de módulos
       concatenateModules: isProduction,
-      
+
       // Remoção de módulos vazios
       removeEmptyChunks: true,
-      
+
       // Merge de chunks duplicados
       mergeDuplicateChunks: true,
-      
+
       // Otimização de imports
       providedExports: true,
       innerGraph: true
     },
-    
+
     // Configurações de resolução otimizadas
     resolve: {
       extensions: ['.js', '.json'],
@@ -447,17 +447,17 @@ module.exports = (env, argv) => {
       // Fallbacks desnecessários removidos
       fallback: false
     },
-    
+
     // Configurações específicas para extensões
     target: 'web',
-    
+
     // Externals otimizados
     externals: {
       // Browser APIs fornecidas pelo navegador
       'chrome': 'chrome',
       'browser': 'browser'
     },
-    
+
     // Configurações de desenvolvimento
     ...(isDevelopment && {
       watchOptions: {
@@ -466,7 +466,7 @@ module.exports = (env, argv) => {
         aggregateTimeout: 300
       }
     }),
-    
+
     // Configurações de performance otimizadas
     performance: {
       hints: isProduction ? 'warning' : false,
@@ -474,12 +474,12 @@ module.exports = (env, argv) => {
       maxAssetSize: 300000,
       assetFilter: (assetFilename) => {
         // Ignora arquivos que não afetam performance
-        return !assetFilename.endsWith('.map') && 
+        return !assetFilename.endsWith('.map') &&
                !assetFilename.endsWith('.html') &&
                !assetFilename.includes('icons/');
       }
     },
-    
+
     // Configurações de stats otimizadas
     stats: {
       colors: true,
@@ -499,7 +499,7 @@ module.exports = (env, argv) => {
       errors: true,
       errorDetails: true
     },
-    
+
     // Cache para builds mais rápidos
     cache: {
       type: 'filesystem',
@@ -507,7 +507,7 @@ module.exports = (env, argv) => {
         config: [__filename]
       }
     },
-    
+
     // Experiments para funcionalidades avançadas
     experiments: {
       // Habilita otimizações futuras

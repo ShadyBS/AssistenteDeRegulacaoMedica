@@ -2,7 +2,7 @@
 
 /**
  * Bundle Size Analyzer - Assistente de Regulação Médica
- * 
+ *
  * Script para análise detalhada do tamanho do bundle e identificação
  * de oportunidades de otimização
  */
@@ -35,7 +35,7 @@ class BundleAnalyzer {
   log(message, level = 'info') {
     const timestamp = new Date().toISOString().substring(11, 19);
     const prefix = `[${timestamp}]`;
-    
+
     switch (level) {
       case 'error':
         console.error(`${prefix} ❌ ${message}`);
@@ -74,11 +74,11 @@ class BundleAnalyzer {
     };
 
     await this.scanDirectory(dirPath, dirPath, analysis);
-    
+
     // Calcula percentuais
     for (const category of Object.keys(analysis.categories)) {
       const cat = analysis.categories[category];
-      cat.percentage = analysis.totalSize > 0 ? 
+      cat.percentage = analysis.totalSize > 0 ?
         ((cat.size / analysis.totalSize) * 100).toFixed(2) : 0;
     }
 
@@ -226,7 +226,7 @@ class BundleAnalyzer {
    */
   async compareWithPrevious(currentAnalysis) {
     const previousReportPath = path.join(REPORTS_DIR, 'latest-analysis.json');
-    
+
     if (!await fs.pathExists(previousReportPath)) {
       return null;
     }
@@ -234,7 +234,7 @@ class BundleAnalyzer {
     try {
       const previousReport = await fs.readJson(previousReportPath);
       const previousAnalysis = previousReport.targets[currentAnalysis.target];
-      
+
       if (!previousAnalysis) {
         return null;
       }
@@ -253,7 +253,7 @@ class BundleAnalyzer {
       for (const category of Object.keys(currentAnalysis.categories)) {
         const current = currentAnalysis.categories[category].size;
         const previous = previousAnalysis.categories[category]?.size || 0;
-        
+
         comparison.categories[category] = {
           current,
           previous,
@@ -279,24 +279,24 @@ class BundleAnalyzer {
 
     // Analisa cada target
     const targets = ['chrome', 'firefox'];
-    
+
     for (const target of targets) {
       const targetPath = path.join(DIST_DIR, target);
       const analysis = await this.analyzeDirectory(targetPath, target);
-      
+
       if (analysis) {
         this.results.targets[target] = analysis;
-        
+
         // Gera recomendações
         const recommendations = this.generateRecommendations(analysis);
         this.results.recommendations.push(...recommendations);
-        
+
         // Compara com build anterior
         const comparison = await this.compareWithPrevious(analysis);
         if (comparison) {
           analysis.comparison = comparison;
         }
-        
+
         this.log(`✅ Análise concluída para ${target}: ${(analysis.totalSize / 1024).toFixed(2)} KB`);
       }
     }
@@ -307,7 +307,7 @@ class BundleAnalyzer {
     // Salva relatório
     const reportPath = path.join(REPORTS_DIR, `analysis-${Date.now()}.json`);
     const latestPath = path.join(REPORTS_DIR, 'latest-analysis.json');
-    
+
     await fs.writeJson(reportPath, this.results, { spaces: 2 });
     await fs.writeJson(latestPath, this.results, { spaces: 2 });
 
@@ -315,7 +315,7 @@ class BundleAnalyzer {
     await this.generateHTMLReport();
 
     this.log(`📋 Relatório salvo: ${reportPath}`, 'success');
-    
+
     return this.results;
   }
 
@@ -324,7 +324,7 @@ class BundleAnalyzer {
    */
   generateSummary() {
     const targets = Object.values(this.results.targets);
-    
+
     if (targets.length === 0) {
       return;
     }
@@ -345,7 +345,7 @@ class BundleAnalyzer {
   async generateHTMLReport() {
     const htmlContent = this.generateHTMLContent();
     const htmlPath = path.join(REPORTS_DIR, 'bundle-analysis.html');
-    
+
     await fs.writeFile(htmlPath, htmlContent);
     this.log(`📄 Relatório HTML gerado: ${htmlPath}`);
   }
@@ -355,7 +355,7 @@ class BundleAnalyzer {
    */
   generateHTMLContent() {
     const { targets, summary, recommendations } = this.results;
-    
+
     return `
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -389,7 +389,7 @@ class BundleAnalyzer {
     <div class="container">
         <h1>📊 Bundle Size Analysis</h1>
         <p><strong>Timestamp:</strong> ${new Date(this.results.timestamp).toLocaleString('pt-BR')}</p>
-        
+
         ${summary ? `
         <h2>📋 Resumo</h2>
         <div class="summary">
@@ -411,22 +411,22 @@ class BundleAnalyzer {
             </div>
         </div>
         ` : ''}
-        
+
         ${Object.entries(targets).map(([targetName, target]) => `
         <div class="target">
             <h2>🎯 ${targetName.toUpperCase()}</h2>
             <p><strong>Tamanho Total:</strong> <span class="size">${(target.totalSize / 1024).toFixed(2)} KB</span></p>
-            
+
             ${target.comparison ? `
             <div class="comparison">
                 <strong>Comparação com build anterior:</strong>
                 <span class="${target.comparison.totalSize.diff > 0 ? 'positive' : target.comparison.totalSize.diff < 0 ? 'negative' : 'neutral'}">
-                    ${target.comparison.totalSize.diff > 0 ? '+' : ''}${(target.comparison.totalSize.diff / 1024).toFixed(2)} KB 
+                    ${target.comparison.totalSize.diff > 0 ? '+' : ''}${(target.comparison.totalSize.diff / 1024).toFixed(2)} KB
                     (${target.comparison.totalSize.percentage}%)
                 </span>
             </div>
             ` : ''}
-            
+
             <h3>📁 Categorias</h3>
             <div class="categories">
                 ${Object.entries(target.categories).map(([catName, category]) => `
@@ -437,7 +437,7 @@ class BundleAnalyzer {
                 </div>
                 `).join('')}
             </div>
-            
+
             <h3>📄 Maiores Arquivos</h3>
             <div class="file-list">
                 ${target.files
@@ -452,7 +452,7 @@ class BundleAnalyzer {
             </div>
         </div>
         `).join('')}
-        
+
         ${recommendations.length > 0 ? `
         <h2>💡 Recomendações</h2>
         ${recommendations.map(rec => `
@@ -489,13 +489,13 @@ class BundleAnalyzer {
    */
   displaySummary() {
     const { targets, summary, recommendations } = this.results;
-    
+
     console.log('\n📊 RESUMO DA ANÁLISE DE BUNDLE SIZE\n');
-    
+
     // Targets
     Object.entries(targets).forEach(([name, target]) => {
       console.log(`🎯 ${name.toUpperCase()}: ${(target.totalSize / 1024).toFixed(2)} KB`);
-      
+
       if (target.comparison) {
         const diff = target.comparison.totalSize.diff;
         const symbol = diff > 0 ? '📈' : diff < 0 ? '📉' : '➡️';
@@ -503,7 +503,7 @@ class BundleAnalyzer {
         console.log(`   ${symbol} ${sign}${(diff / 1024).toFixed(2)} KB (${target.comparison.totalSize.percentage}%)`);
       }
     });
-    
+
     // Recomendações
     if (recommendations.length > 0) {
       console.log('\n💡 RECOMENDAÇÕES:');
@@ -513,7 +513,7 @@ class BundleAnalyzer {
         console.log(`   ${rec.description}`);
       });
     }
-    
+
     console.log('\n✅ Análise concluída! Verifique o relatório HTML para detalhes completos.\n');
   }
 }
@@ -523,7 +523,7 @@ class BundleAnalyzer {
  */
 async function main() {
   const args = process.argv.slice(2);
-  
+
   if (args.includes('--help') || args.includes('-h')) {
     console.log(`
 Uso: node scripts/bundle-analyzer.js [opções]
@@ -540,20 +540,20 @@ Exemplos:
 `);
     process.exit(0);
   }
-  
+
   try {
     const analyzer = new BundleAnalyzer();
     const results = await analyzer.generateReport();
-    
+
     if (!args.includes('--quiet') && !args.includes('-q')) {
       analyzer.displaySummary();
     }
-    
+
     // Abre relatório HTML se solicitado
     if (args.includes('--open')) {
       const htmlPath = path.join(REPORTS_DIR, 'bundle-analysis.html');
       const { execSync } = require('child_process');
-      
+
       try {
         // Windows
         execSync(`start ${htmlPath}`, { stdio: 'ignore' });
@@ -571,11 +571,11 @@ Exemplos:
         }
       }
     }
-    
+
     // Exit code baseado em recomendações de alta prioridade
     const highPriorityCount = results.recommendations.filter(r => r.priority === 'high').length;
     process.exit(highPriorityCount > 0 ? 1 : 0);
-    
+
   } catch (error) {
     console.error('❌ Erro na análise:', error.message);
     process.exit(1);

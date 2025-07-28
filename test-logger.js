@@ -24,28 +24,28 @@ export async function testLoggingSystem() {
   try {
     // Teste 1: Verificar se o logger principal está disponível
     testResults.tests.push(await testLoggerAvailability());
-    
+
     // Teste 2: Verificar criação de logger de componente
     testResults.tests.push(await testComponentLoggerCreation());
-    
+
     // Teste 3: Verificar diferentes níveis de log
     testResults.tests.push(await testLogLevels());
-    
+
     // Teste 4: Verificar configuração de nível de log
     testResults.tests.push(await testLogLevelConfiguration());
-    
+
     // Teste 5: Verificar estatísticas de logs
     testResults.tests.push(await testLogStats());
-    
+
     // Teste 6: Verificar exportação de logs
     testResults.tests.push(await testLogExport());
-    
+
     // Calcular estatísticas finais
     testResults.summary.total = testResults.tests.length;
     testResults.summary.passed = testResults.tests.filter(test => test.passed).length;
     testResults.summary.failed = testResults.summary.total - testResults.summary.passed;
     testResults.success = testResults.summary.failed === 0;
-    
+
     // Log do resultado final
     const logger = createComponentLogger('TestLogger');
     if (testResults.success) {
@@ -56,7 +56,7 @@ export async function testLoggingSystem() {
         failures: testResults.tests.filter(test => !test.passed)
       });
     }
-    
+
   } catch (error) {
     testResults.errors.push({
       test: 'Sistema de Testes',
@@ -105,7 +105,7 @@ async function testComponentLoggerCreation() {
 
   try {
     const componentLogger = createComponentLogger('TestComponent');
-    if (componentLogger && 
+    if (componentLogger &&
         typeof componentLogger.debug === 'function' &&
         typeof componentLogger.info === 'function' &&
         typeof componentLogger.warn === 'function' &&
@@ -133,15 +133,15 @@ async function testLogLevels() {
 
   try {
     const logger = createComponentLogger('TestLevels');
-    
+
     // Testa cada nível de log
     logger.debug('Teste de debug', { level: 'DEBUG' });
     logger.info('Teste de info', { level: 'INFO' });
     logger.warn('Teste de warning', { level: 'WARN' });
     logger.error('Teste de error', { level: 'ERROR' });
-    
+
     // Verifica se LOG_LEVELS está disponível
-    if (LOG_LEVELS && 
+    if (LOG_LEVELS &&
         LOG_LEVELS.DEBUG !== undefined &&
         LOG_LEVELS.INFO !== undefined &&
         LOG_LEVELS.WARN !== undefined &&
@@ -169,18 +169,18 @@ async function testLogLevelConfiguration() {
 
   try {
     const originalLevel = getLogger().config?.logLevel;
-    
+
     // Testa mudança de nível
     setLogLevel('DEBUG');
     setLogLevel('INFO');
     setLogLevel('WARN');
     setLogLevel('ERROR');
-    
+
     // Restaura nível original se existir
     if (originalLevel) {
       setLogLevel(originalLevel);
     }
-    
+
     test.passed = true;
   } catch (error) {
     test.error = error.message;
@@ -201,8 +201,8 @@ async function testLogStats() {
 
   try {
     const stats = await getLogStats();
-    
-    if (stats && 
+
+    if (stats &&
         typeof stats.total === 'number' &&
         stats.byLevel &&
         typeof stats.byLevel === 'object') {
@@ -229,7 +229,7 @@ async function testLogExport() {
 
   try {
     const exportedLogs = await exportLogs('json');
-    
+
     if (typeof exportedLogs === 'string') {
       // Tenta fazer parse do JSON para verificar se é válido
       try {
@@ -276,14 +276,14 @@ export async function testLoggingPerformance() {
 
     const endTime = performance.now();
     const totalTime = endTime - startTime;
-    
+
     test.metrics.totalTime = totalTime;
     test.metrics.averageTime = totalTime / iterations;
     test.metrics.logsPerSecond = (iterations / totalTime) * 1000;
 
     // Considera bem-sucedido se conseguir processar pelo menos 100 logs por segundo
     test.passed = test.metrics.logsPerSecond >= 100;
-    
+
     if (!test.passed) {
       test.error = `Performance insuficiente: ${test.metrics.logsPerSecond.toFixed(2)} logs/segundo (mínimo: 100)`;
     }
@@ -319,8 +319,8 @@ export async function testLoggingStress() {
     // Executa muitos logs rapidamente para testar estabilidade
     for (let i = 0; i < iterations; i++) {
       try {
-        logger.info(`Stress test ${i}`, { 
-          iteration: i, 
+        logger.info(`Stress test ${i}`, {
+          iteration: i,
           timestamp: Date.now(),
           randomData: Math.random().toString(36).substring(7)
         });
@@ -335,7 +335,7 @@ export async function testLoggingStress() {
 
     // Considera bem-sucedido se tiver pelo menos 95% de sucesso
     test.passed = test.metrics.successRate >= 95;
-    
+
     if (!test.passed) {
       test.error = `Taxa de sucesso insuficiente: ${test.metrics.successRate.toFixed(2)}% (mínimo: 95%)`;
     }

@@ -9,7 +9,7 @@
  */
 function getBrowserAPI() {
   // ✅ SEGURANÇA: Verificação mais robusta de APIs
-  
+
   // Verifica globalThis primeiro (mais moderno e seguro)
   if (typeof globalThis !== 'undefined') {
     if (globalThis.browser && globalThis.browser.runtime) {
@@ -19,16 +19,16 @@ function getBrowserAPI() {
       return { api: globalThis.chrome, name: 'Chromium' };
     }
   }
-  
+
   // Fallback para verificação direta (compatibilidade)
   if (typeof browser !== "undefined" && browser.runtime) {
     return { api: browser, name: 'Firefox' };
   }
-  
+
   if (typeof chrome !== "undefined" && chrome.runtime) {
     return { api: chrome, name: 'Chromium' };
   }
-  
+
   // Fallback para window (contextos específicos)
   if (typeof window !== 'undefined') {
     if (window.browser && window.browser.runtime) {
@@ -38,7 +38,7 @@ function getBrowserAPI() {
       return { api: window.chrome, name: 'Chromium' };
     }
   }
-  
+
   // Se nenhuma API estiver disponível, lança erro detalhado
   throw new Error("Nenhuma API de browser extension disponível. Verifique se está executando em contexto de extensão.");
 }

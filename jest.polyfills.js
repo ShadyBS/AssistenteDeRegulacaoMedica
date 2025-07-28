@@ -1,6 +1,6 @@
 /**
  * Jest Polyfills - Assistente de Regulação Médica
- * 
+ *
  * Polyfills necessários para testes de extensões de navegador
  */
 
@@ -34,15 +34,15 @@ if (typeof MutationObserver === 'undefined') {
       this.callback = callback;
       this.observations = [];
     }
-    
+
     observe(target, options) {
       this.observations.push({ target, options });
     }
-    
+
     disconnect() {
       this.observations = [];
     }
-    
+
     takeRecords() {
       return [];
     }
@@ -57,18 +57,18 @@ if (typeof IntersectionObserver === 'undefined') {
       this.options = options;
       this.observations = [];
     }
-    
+
     observe(target) {
       this.observations.push(target);
     }
-    
+
     unobserve(target) {
       const index = this.observations.indexOf(target);
       if (index > -1) {
         this.observations.splice(index, 1);
       }
     }
-    
+
     disconnect() {
       this.observations = [];
     }
@@ -82,18 +82,18 @@ if (typeof ResizeObserver === 'undefined') {
       this.callback = callback;
       this.observations = [];
     }
-    
+
     observe(target) {
       this.observations.push(target);
     }
-    
+
     unobserve(target) {
       const index = this.observations.indexOf(target);
       if (index > -1) {
         this.observations.splice(index, 1);
       }
     }
-    
+
     disconnect() {
       this.observations = [];
     }
@@ -106,33 +106,33 @@ if (typeof ResizeObserver === 'undefined') {
 if (typeof localStorage === 'undefined') {
   const localStorageMock = {
     store: {},
-    
+
     getItem(key) {
       return this.store[key] || null;
     },
-    
+
     setItem(key, value) {
       this.store[key] = String(value);
     },
-    
+
     removeItem(key) {
       delete this.store[key];
     },
-    
+
     clear() {
       this.store = {};
     },
-    
+
     get length() {
       return Object.keys(this.store).length;
     },
-    
+
     key(index) {
       const keys = Object.keys(this.store);
       return keys[index] || null;
     }
   };
-  
+
   global.localStorage = localStorageMock;
 }
 
@@ -140,33 +140,33 @@ if (typeof localStorage === 'undefined') {
 if (typeof sessionStorage === 'undefined') {
   const sessionStorageMock = {
     store: {},
-    
+
     getItem(key) {
       return this.store[key] || null;
     },
-    
+
     setItem(key, value) {
       this.store[key] = String(value);
     },
-    
+
     removeItem(key) {
       delete this.store[key];
     },
-    
+
     clear() {
       this.store = {};
     },
-    
+
     get length() {
       return Object.keys(this.store).length;
     },
-    
+
     key(index) {
       const keys = Object.keys(this.store);
       return keys[index] || null;
     }
   };
-  
+
   global.sessionStorage = sessionStorageMock;
 }
 
@@ -247,7 +247,7 @@ if (typeof FormData === 'undefined') {
     constructor() {
       this.data = new Map();
     }
-    
+
     append(name, value) {
       if (this.data.has(name)) {
         const existing = this.data.get(name);
@@ -260,37 +260,37 @@ if (typeof FormData === 'undefined') {
         this.data.set(name, value);
       }
     }
-    
+
     delete(name) {
       this.data.delete(name);
     }
-    
+
     get(name) {
       const value = this.data.get(name);
       return Array.isArray(value) ? value[0] : value;
     }
-    
+
     getAll(name) {
       const value = this.data.get(name);
       return Array.isArray(value) ? value : [value];
     }
-    
+
     has(name) {
       return this.data.has(name);
     }
-    
+
     set(name, value) {
       this.data.set(name, value);
     }
-    
+
     entries() {
       return this.data.entries();
     }
-    
+
     keys() {
       return this.data.keys();
     }
-    
+
     values() {
       return this.data.values();
     }
@@ -309,15 +309,15 @@ if (typeof Blob === 'undefined') {
         return size + (typeof part === 'string' ? part.length : part.byteLength || 0);
       }, 0);
     }
-    
+
     slice(start = 0, end = this.size, contentType = '') {
       return new Blob(this.parts.slice(start, end), { type: contentType });
     }
-    
+
     text() {
       return Promise.resolve(this.parts.join(''));
     }
-    
+
     arrayBuffer() {
       const text = this.parts.join('');
       const buffer = new ArrayBuffer(text.length);
@@ -348,7 +348,7 @@ if (typeof Headers === 'undefined') {
   global.Headers = class Headers {
     constructor(init = {}) {
       this.map = new Map();
-      
+
       if (init) {
         if (init instanceof Headers) {
           init.forEach((value, key) => {
@@ -365,43 +365,43 @@ if (typeof Headers === 'undefined') {
         }
       }
     }
-    
+
     append(name, value) {
       const key = name.toLowerCase();
       const existing = this.map.get(key);
       this.map.set(key, existing ? `${existing}, ${value}` : value);
     }
-    
+
     delete(name) {
       this.map.delete(name.toLowerCase());
     }
-    
+
     get(name) {
       return this.map.get(name.toLowerCase()) || null;
     }
-    
+
     has(name) {
       return this.map.has(name.toLowerCase());
     }
-    
+
     set(name, value) {
       this.map.set(name.toLowerCase(), value);
     }
-    
+
     forEach(callback, thisArg) {
       this.map.forEach((value, key) => {
         callback.call(thisArg, value, key, this);
       });
     }
-    
+
     entries() {
       return this.map.entries();
     }
-    
+
     keys() {
       return this.map.keys();
     }
-    
+
     values() {
       return this.map.values();
     }
@@ -413,7 +413,7 @@ if (typeof Headers === 'undefined') {
 // Garante que todos os métodos de console existem
 if (typeof console !== 'undefined') {
   const consoleMethods = ['log', 'warn', 'error', 'info', 'debug', 'trace', 'group', 'groupEnd', 'time', 'timeEnd'];
-  
+
   consoleMethods.forEach(method => {
     if (typeof console[method] !== 'function') {
       console[method] = () => {};

@@ -82,7 +82,7 @@
       "problemMatcher": [],
       "detail": "Gera apenas os ZIPs de distribuição"
     },
-    
+
     // === DEVELOPMENT TASKS ===
     {
       "label": "🔄 Dev: CSS Watch",
@@ -153,7 +153,7 @@
       },
       "detail": "Webpack em modo watch para desenvolvimento"
     },
-    
+
     // === VALIDATION TASKS ===
     {
       "label": "🔍 Validate: All",
@@ -233,7 +233,7 @@
       "problemMatcher": [],
       "detail": "Aplica correções automáticas do ESLint"
     },
-    
+
     // === VERSION TASKS ===
     {
       "label": "🔢 Version: Patch",
@@ -280,7 +280,7 @@
       "problemMatcher": [],
       "detail": "Incrementa versão major (1.0.0 → 2.0.0)"
     },
-    
+
     // === RELEASE TASKS ===
     {
       "label": "🚀 Release: Patch",
@@ -342,7 +342,7 @@
       "problemMatcher": [],
       "detail": "Simula processo de release sem fazer alterações"
     },
-    
+
     // === STORE UPLOAD TASKS ===
     {
       "label": "🔵 Upload: Chrome Store",
@@ -374,7 +374,7 @@
       "problemMatcher": [],
       "detail": "Upload para Firefox Add-ons"
     },
-    
+
     // === UTILITY TASKS ===
     {
       "label": "🧹 Clean: All",
@@ -421,7 +421,7 @@
       "problemMatcher": [],
       "detail": "Atualiza dependências do projeto"
     },
-    
+
     // === TESTING TASKS ===
     {
       "label": "🧪 Test: All",
@@ -453,7 +453,7 @@
       },
       "detail": "Executa todos os testes"
     },
-    
+
     // === COMPOSITE TASKS ===
     {
       "label": "🎯 Quick Build",
@@ -506,7 +506,7 @@
       "detail": "Verificação completa antes de release"
     }
   ],
-  
+
   // Configurações de input para tasks interativas
   "inputs": [
     {

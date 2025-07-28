@@ -259,7 +259,7 @@ O sistema de build é baseado em múltiplas ferramentas:
 module.exports = (env, argv) => {
   const target = env.target || 'chrome';
   const isProduction = argv.mode === 'production';
-  
+
   return {
     entry: {
       background: './background.js',

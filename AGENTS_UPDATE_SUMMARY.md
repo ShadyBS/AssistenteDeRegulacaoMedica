@@ -1,9 +1,9 @@
 # 📚 Resumo da Atualização do agents.md
 
-**Data:** 2025-01-23  
-**Versão:** 2.1.0  
-**Commit:** `2f55474`  
-**Status:** ✅ **CONCLUÍDO**  
+**Data:** 2025-01-23
+**Versão:** 2.1.0
+**Commit:** `2f55474`
+**Status:** ✅ **CONCLUÍDO**
 
 ---
 
@@ -28,7 +28,7 @@ Atualizar o `agents.md` com **orientações críticas** sobre o sistema de white
 
 ### ⚠️ EXTREMA IMPORTÂNCIA PARA NOVOS ARQUIVOS
 
-O projeto utiliza um **sistema de WHITELIST** para builds de release que inclui 
+O projeto utiliza um **sistema de WHITELIST** para builds de release que inclui
 **APENAS arquivos essenciais** na extensão final.
 ```
 
@@ -133,12 +133,12 @@ git commit -m "feat(component): adicionar novo-componente.js
 const EXTENSION_FILES = [
   // Core da extensão (obrigatórios)
   'background.js',
-  'content-script.js', 
+  'content-script.js',
   'sidebar.js',
   'sidebar.html',
   'options.js',
   'options.html',
-  
+
   // APIs e utilitários essenciais
   'api.js',
   'api-constants.js',
@@ -147,23 +147,23 @@ const EXTENSION_FILES = [
   'store.js',
   'config.js',
   'renderers.js',
-  
+
   // Managers necessários
   'MemoryManager.js',
   'KeepAliveManager.js',
   'SectionManager.js',
   'TimelineManager.js',
-  
+
   // Parsers e configurações
   'consultation-parser.js',
   'field-config.js',
   'filter-config.js',
-  
+
   // Utilitários de segurança
   'crypto-utils.js',
   'BrowserAPI.js',
   'browser-polyfill.js',
-  
+
   // Páginas de ajuda
   'help.html',
   'help.js'
@@ -308,5 +308,5 @@ npm run validate
 
 ---
 
-**Commit:** `2f55474` - docs(agents): atualizar guia com sistema de whitelist crítico  
+**Commit:** `2f55474` - docs(agents): atualizar guia com sistema de whitelist crítico
 **Arquivos:** `agents.md`, `ZIP_AUDIT_SUMMARY.md`

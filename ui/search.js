@@ -87,55 +87,55 @@ function renderPatientListItem(patient) {
  */
 function detectInputType(value) {
   if (!value || typeof value !== 'string') return 'text';
-  
+
   const cleanValue = value.trim();
-  
+
   // Detecta CPF (xxx.xxx.xxx-xx ou 11 dígitos)
   if (/^\d{3}\.?\d{3}\.?\d{3}-?\d{2}$/.test(cleanValue)) {
     return 'cpf';
   }
-  
+
   // Detecta CNS (15 dígitos)
   if (/^\d{15}$/.test(cleanValue.replace(/\D/g, ''))) {
     return 'cns';
   }
-  
+
   // Detecta data brasileira (dd/mm/yyyy ou dd/mm/yy)
   if (/^\d{1,2}\/\d{1,2}\/\d{2,4}$/.test(cleanValue)) {
     return 'date';
   }
-  
+
   // Detecta possível CPF parcial (para dar feedback antecipado)
   if (/^\d{3}\.?\d{0,3}\.?\d{0,3}-?\d{0,2}$/.test(cleanValue) && cleanValue.length >= 7) {
     return 'cpf';
   }
-  
+
   // Detecta possível CNS parcial
   if (/^\d{10,14}$/.test(cleanValue.replace(/\D/g, ''))) {
     return 'cns';
   }
-  
+
   return 'text';
 }
 
 const handleSearchInput = Utils.debounce(async () => {
   const searchTerm = searchInput.value.trim();
-  
+
   store.clearPatient();
   recentPatientsList.classList.add("hidden");
   searchResultsList.classList.remove("hidden");
-  
+
   if (searchTerm.length < 1) {
     searchResultsList.innerHTML = "";
     return;
   }
-  
+
   // ✅ SEGURANÇA: Usando imports estáticos já disponíveis no topo do arquivo
-  
+
   // Detect input type and apply specific validation
   const inputType = detectInputType(searchTerm);
   let validation = { valid: true };
-  
+
   switch (inputType) {
     case 'cpf':
       validation = validateCPF(searchTerm);
@@ -148,7 +148,7 @@ const handleSearchInput = Utils.debounce(async () => {
         return;
       }
       break;
-      
+
     case 'cns':
       validation = validateCNS(searchTerm);
       if (!validation.valid) {
@@ -160,7 +160,7 @@ const handleSearchInput = Utils.debounce(async () => {
         return;
       }
       break;
-      
+
     case 'date':
       validation = validateBrazilianDate(searchTerm);
       if (!validation.valid) {
@@ -173,7 +173,7 @@ const handleSearchInput = Utils.debounce(async () => {
         return;
       }
       break;
-      
+
     case 'text':
     default:
       validation = validateSearchTerm(searchTerm);
@@ -187,10 +187,10 @@ const handleSearchInput = Utils.debounce(async () => {
       }
       break;
   }
-  
+
   // Remove estilos de erro se a validação passou
   searchInput.classList.remove('border-red-500', 'bg-red-50');
-  
+
   Utils.toggleLoader(true);
   try {
     // Use sanitized search term for API call
@@ -199,8 +199,8 @@ const handleSearchInput = Utils.debounce(async () => {
     renderSearchResults(patients);
   } catch (error) {
     // Handle validation errors from API
-    if (error.message.includes('Invalid search term') || 
-        error.message.includes('CPF inválido') || 
+    if (error.message.includes('Invalid search term') ||
+        error.message.includes('CPF inválido') ||
         error.message.includes('CNS inválido')) {
       searchResultsList.innerHTML = `<li class="px-4 py-3 text-sm text-red-600">
         <div class="font-medium">Erro de Validação</div>
@@ -219,7 +219,7 @@ function handleSearchFocus() {
   if (searchInput) {
     searchInput.classList.remove('border-red-500', 'bg-red-50');
   }
-  
+
   if (searchInput.value.length > 0) return;
   renderRecentPatients();
   searchResultsList.classList.add("hidden");

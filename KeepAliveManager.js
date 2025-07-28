@@ -1,12 +1,12 @@
-﻿/**
- * @file Gerenciador de Keep-Alive para manter a sessÃ£o ativa
+/**
+ * @file Gerenciador de Keep-Alive para manter a sessão ativa
  * Usa a API de alarmes para garantir funcionamento em Manifest V3
  */
 import * as API from "./api.js";
 import { getBrowserAPIInstance } from "./BrowserAPI.js";
 import { createComponentLogger } from "./logger.js";
 
-// Logger especÃ­fico para KeepAliveManager
+// Logger específico para KeepAliveManager
 const logger = createComponentLogger('KeepAliveManager');
 
 
@@ -16,18 +16,18 @@ export class KeepAliveManager {
     this.intervalMinutes = 10; // PadrÃ£o: 10 minutos
     this.alarmName = "keepSessionAlive";
     this.api = getBrowserAPIInstance();
-    
+
     this.init();
   }
 
   async init() {
-    // Carrega as configuraÃ§Ãµes salvas
+    // Carrega as configurações salvas
     await this.loadSettings();
-    
+
     // Configura listener para alarmes
     this.setupAlarmListener();
-    
-    // Escuta mudanÃ§as nas configuraÃ§Ãµes
+
+    // Escuta mudanças nas configurações
     this.api.storage.onChanged.addListener((changes, areaName) => {
       if (areaName === "sync" && changes.keepSessionAliveInterval) {
         this.updateInterval(changes.keepSessionAliveInterval.newValue);
@@ -59,21 +59,21 @@ export class KeepAliveManager {
       const result = await this.api.storage.sync.get({
         keepSessionAliveInterval: 10
       });
-      
+
       this.updateInterval(result.keepSessionAliveInterval);
     } catch (error) {
-      logger.error("[KeepAlive] Erro ao carregar configuraÃ§Ãµes:", error);
+      logger.error("[KeepAlive] Erro ao carregar configurações:", error);
     }
   }
 
   updateInterval(minutes) {
     const newMinutes = parseInt(minutes, 10) || 0;
-    
+
     this.intervalMinutes = newMinutes;
-    
+
     // Para o alarme atual
     this.stop();
-    
+
     // Inicia novo alarme se o valor for maior que 0
     if (this.intervalMinutes > 0) {
       this.start();
@@ -90,9 +90,9 @@ export class KeepAliveManager {
       logger.info("[KeepAlive] JÃ¡ estÃ¡ ativo");
       return;
     }
-    
+
     if (!this.api.alarms) {
-      logger.error("[KeepAlive] API de alarmes nÃ£o disponÃ­vel - keep-alive nÃ£o funcionarÃ¡");
+      logger.error("[KeepAlive] API de alarmes não disponível - keep-alive não funcionará");
       return;
     }
 
@@ -105,19 +105,27 @@ export class KeepAliveManager {
 
       this.isActive = true;
       logger.info(`[KeepAlive] Iniciado: ${this.intervalMinutes} minutos usando alarmes`);
-      
-      // Executa imediatamente uma vez para testar
+
+      // Executa imediatamente uma vez para testar, mas apenas se a URL base estiver configurada
       try {
+        // Verifica se a URL base está disponível antes de tentar a chamada
+        await API.getBaseUrl();
+
         const success = await API.keepSessionAlive();
         if (success) {
-          logger.info(`[KeepAlive] ExecuÃ§Ã£o inicial bem-sucedida (${new Date().toLocaleTimeString()})`);
+          logger.info(`[KeepAlive] Execução inicial bem-sucedida (${new Date().toLocaleTimeString()})`);
         } else {
-          logger.warn(`[KeepAlive] ExecuÃ§Ã£o inicial falhou (${new Date().toLocaleTimeString()})`);
+          logger.warn(`[KeepAlive] Execução inicial falhou, mas o alarme está agendado. (${new Date().toLocaleTimeString()})`);
         }
       } catch (error) {
-        logger.error("[KeepAlive] Erro na execuÃ§Ã£o inicial:", error);
+        // Se o erro for a URL não configurada, é um comportamento esperado.
+        if (error.message === 'URL_BASE_NOT_CONFIGURED') {
+          logger.warn("[KeepAlive] URL base não configurada. A execução inicial foi pulada, mas o alarme está agendado para tentativas futuras.");
+        } else {
+          logger.error("[KeepAlive] Erro na execução inicial:", error);
+        }
       }
-      
+
     } catch (error) {
       logger.error("[KeepAlive] Erro ao criar alarme:", error);
     }
@@ -131,14 +139,14 @@ export class KeepAliveManager {
         logger.error("[KeepAlive] Erro ao limpar alarme:", error);
       }
     }
-    
+
     this.isActive = false;
     logger.info("[KeepAlive] Parado");
   }
 
   async getStatus() {
     let nextExecution = null;
-    
+
     if (this.isActive && this.api.alarms) {
       try {
         const alarm = await this.api.alarms.get(this.alarmName);
@@ -149,7 +157,7 @@ export class KeepAliveManager {
         logger.error("[KeepAlive] Erro ao obter status do alarme:", error);
       }
     }
-    
+
     return {
       isActive: this.isActive,
       intervalMinutes: this.intervalMinutes,
@@ -157,4 +165,3 @@ export class KeepAliveManager {
     };
   }
 }
-

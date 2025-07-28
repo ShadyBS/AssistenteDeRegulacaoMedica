@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @file ContÃ©m funÃ§Ãµes utilitÃ¡rias compartilhadas em toda a extensÃ£o.
  */
 
@@ -196,10 +196,10 @@ export function setupTabs(container) {
  * @returns {Array<object>} A sorted array of timeline event objects.
  */
 export function normalizeTimelineData(apiData, options = {}) {
-  const { 
+  const {
     maxEvents = CONFIG.PERFORMANCE.MAX_TIMELINE_EVENTS || 1000,
     batchSize = CONFIG.PERFORMANCE.BATCH_SIZE || 100,
-    enableGC = true 
+    enableGC = true
   } = options;
 
   // Use a priority queue-like approach to maintain only the most recent events
@@ -242,11 +242,11 @@ export function normalizeTimelineData(apiData, options = {}) {
   // Streaming processor for memory efficiency
   const processStream = (items, normalizer, typeName) => {
     if (!Array.isArray(items) || items.length === 0) return;
-    
+
     let batchBuffer = [];
     const processBatch = () => {
       if (batchBuffer.length === 0) return;
-      
+
       for (const item of batchBuffer) {
         try {
           const event = normalizer(item);
@@ -259,10 +259,10 @@ export function normalizeTimelineData(apiData, options = {}) {
           rejectedCount++;
         }
       }
-      
+
       // Clear batch buffer to free memory
       batchBuffer = [];
-      
+
       // Trigger garbage collection hint periodically
       if (enableGC && processedCount % 500 === 0) {
         // Force garbage collection by removing references
@@ -277,12 +277,12 @@ export function normalizeTimelineData(apiData, options = {}) {
     // Process items in streaming fashion
     for (let i = 0; i < items.length; i++) {
       batchBuffer.push(items[i]);
-      
+
       if (batchBuffer.length >= batchSize) {
         processBatch();
       }
     }
-    
+
     // Process remaining items
     processBatch();
   };
@@ -290,7 +290,7 @@ export function normalizeTimelineData(apiData, options = {}) {
   // Consultation normalizer with memory optimization
   const normalizeConsultation = (c) => {
     if (!c?.date) return null;
-    
+
     const searchText = normalizeString(
       [
         c.specialty,
@@ -299,7 +299,7 @@ export function normalizeTimelineData(apiData, options = {}) {
         ...(c.details || []).map((d) => d.value || ''),
       ].filter(Boolean).join(" ")
     );
-    
+
     return {
       type: "consultation",
       date: parseDate(c.date.split("\n")[0]),
@@ -315,14 +315,14 @@ export function normalizeTimelineData(apiData, options = {}) {
   // Exam normalizer with validation
   const normalizeExam = (e) => {
     if (!e?.date) return null;
-    
+
     const eventDate = parseDate(e.date);
     if (!eventDate) return null;
-    
+
     const searchText = normalizeString(
       [e.examName, e.professional, e.specialty].filter(Boolean).join(" ")
     );
-    
+
     return {
       type: "exam",
       date: eventDate,
@@ -343,11 +343,11 @@ export function normalizeTimelineData(apiData, options = {}) {
   // Appointment normalizer
   const normalizeAppointment = (a) => {
     if (!a?.date) return null;
-    
+
     const searchText = normalizeString(
       [a.specialty, a.description, a.location, a.professional].filter(Boolean).join(" ")
     );
-    
+
     return {
       type: "appointment",
       date: parseDate(a.date),
@@ -366,11 +366,11 @@ export function normalizeTimelineData(apiData, options = {}) {
   // Regulation normalizer
   const normalizeRegulation = (r) => {
     if (!r?.date) return null;
-    
+
     const searchText = normalizeString(
       [r.procedure, r.requester, r.provider, r.cid].filter(Boolean).join(" ")
     );
-    
+
     return {
       type: "regulation",
       date: parseDate(r.date),
@@ -389,9 +389,9 @@ export function normalizeTimelineData(apiData, options = {}) {
   // Document normalizer
   const normalizeDocument = (doc) => {
     if (!doc?.date) return null;
-    
+
     const searchText = normalizeString(doc.description || "");
-    
+
     return {
       type: "document",
       date: parseDate(doc.date),
@@ -429,7 +429,7 @@ export function normalizeTimelineData(apiData, options = {}) {
   if (enableGC) {
     // Clear references to help garbage collection
     apiData = null;
-    
+
     // Trigger garbage collection if available
     // No ambiente de browser extension, nÃ£o temos acesso ao global.gc()
     if (typeof window !== 'undefined' && window.gc) {

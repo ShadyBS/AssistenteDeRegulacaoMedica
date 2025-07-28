@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @file MÃ³dulo TimelineManager, responsÃ¡vel por gerir a secÃ§Ã£o da Linha do Tempo.
  */
 import * as API from "./api.js";

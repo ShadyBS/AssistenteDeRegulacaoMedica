@@ -5,36 +5,36 @@
     "bradlc.vscode-tailwindcss",
     "ms-vscode.vscode-json",
     "ms-vscode.vscode-typescript-next",
-    
+
     // === EXTENSÕES DE NAVEGADOR ===
     "firefox-devtools.vscode-firefox-debug",
     "msjsdiag.debugger-for-chrome",
     "ms-vscode.js-debug",
-    
+
     // === GIT E VERSIONAMENTO ===
     "eamodio.gitlens",
     "github.vscode-pull-request-github",
     "github.copilot",
-    
+
     // === PRODUTIVIDADE ===
     "ms-vscode.vscode-npm-script",
     "christian-kohler.path-intellisense",
     "formulahendry.auto-rename-tag",
     "ms-vscode.vscode-todo-highlight",
-    
+
     // === QUALIDADE DE CÓDIGO ===
     "streetsidesoftware.code-spell-checker",
     "ms-vscode.vscode-json",
     "redhat.vscode-yaml",
-    
+
     // === MARKDOWN E DOCUMENTAÇÃO ===
     "yzhang.markdown-all-in-one",
     "davidanson.vscode-markdownlint",
-    
+
     // === TEMAS E UI ===
     "pkief.material-icon-theme",
     "ms-vscode.theme-tomorrowkit",
-    
+
     // === UTILITÁRIOS ===
     "ms-vscode.vscode-json",
     "ms-vscode.hexeditor",

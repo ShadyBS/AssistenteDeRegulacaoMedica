@@ -559,7 +559,7 @@ graph TD
 - Zero vulnerabilidades de segurança
 - CSP implementada corretamente
 
-### 🏁 Milestone 2: Performance & Stability (Semana 2-3) 
+### 🏁 Milestone 2: Performance & Stability (Semana 2-3)
 - Tasks ALTAS resolvidas
 - Performance score > 85/100
 - Zero crashes reportados
@@ -625,7 +625,7 @@ npm run test
 npm run validate:manifests
 
 # Análise de segurança
-Get-ChildItem -Include "*.js" -Recurse | Select-String -Pattern "eval\(|innerHTML\s*=" 
+Get-ChildItem -Include "*.js" -Recurse | Select-String -Pattern "eval\(|innerHTML\s*="
 
 # Verificar imports dinâmicos
 Select-String -Path "*.js" -Pattern "import\(" -Recurse

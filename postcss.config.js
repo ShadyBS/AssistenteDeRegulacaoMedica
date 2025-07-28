@@ -1,6 +1,6 @@
 /**
  * PostCSS Configuration - Assistente de Regulação Médica
- * 
+ *
  * Configuração para otimização de CSS com:
  * - Autoprefixer para compatibilidade cross-browser
  * - CSSnano para minificação em produção
@@ -23,7 +23,7 @@ module.exports = {
       // Adiciona prefixos conservadores
       cascade: false
     }),
-    
+
     // CSSnano para minificação em produção
     ...(process.env.NODE_ENV === 'production' ? [
       require('cssnano')({

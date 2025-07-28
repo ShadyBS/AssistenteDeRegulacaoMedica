@@ -133,7 +133,7 @@ pattern: /(?<!['"`])eval\s*\(/g, // ✅ Ignora strings e comentários
 
 ---
 
-**Data da Correção:** 2024-12-19  
-**Responsável:** Assistente de IA  
-**Status:** CONCLUÍDO ✅  
-**Próxima Revisão:** 2025-01-19  
+**Data da Correção:** 2024-12-19
+**Responsável:** Assistente de IA
+**Status:** CONCLUÍDO ✅
+**Próxima Revisão:** 2025-01-19

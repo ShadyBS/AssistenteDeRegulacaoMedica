@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @file ContÃ©m todas as funÃ§Ãµes responsÃ¡veis por gerar o HTML dos resultados.
  */
 
@@ -24,17 +24,17 @@ export function renderConsultations(consultations, sortState) {
   // Criar cabeÃ§alho
   const headerDiv = document.createElement('div');
   headerDiv.className = `flex justify-between text-xs font-bold ${getCSSClass('TEXT_MUTED')} mb-2 px-3`;
-  
+
   const specialtyHeader = document.createElement('span');
   specialtyHeader.className = 'sort-header w-2/3';
   specialtyHeader.setAttribute('data-sort-key', 'specialty');
   specialtyHeader.innerHTML = `Especialidade/Profissional <span class="sort-indicator">${getSortIndicator("specialty", sortState)}</span>`;
-  
+
   const dateHeader = document.createElement('span');
   dateHeader.className = 'sort-header w-1/3 text-right';
   dateHeader.setAttribute('data-sort-key', 'sortableDate');
   dateHeader.innerHTML = `Data <span class="sort-indicator">${getSortIndicator("sortableDate", sortState)}</span>`;
-  
+
   headerDiv.appendChild(specialtyHeader);
   headerDiv.appendChild(dateHeader);
   contentDiv.appendChild(headerDiv);
@@ -43,35 +43,35 @@ export function renderConsultations(consultations, sortState) {
   consultations.forEach(c => {
     const consultationDiv = document.createElement('div');
     consultationDiv.className = `p-3 mb-3 border rounded-lg ${c.isNoShow ? getCSSClass('PATIENT_NO_SHOW') : getCSSClass('PATIENT_NORMAL')} consultation-item`;
-    
+
     // Header da consulta
     const headerDiv = document.createElement('div');
     headerDiv.className = 'flex justify-between items-start cursor-pointer consultation-header';
-    
+
     const leftDiv = document.createElement('div');
-    
+
     const specialtyP = document.createElement('p');
     specialtyP.className = `font-bold ${getCSSClass('TEXT_BLUE')} pointer-events-none`;
     specialtyP.textContent = c.specialty;
-    
+
     const professionalP = document.createElement('p');
     professionalP.className = `text-sm ${getCSSClass('TEXT_SECONDARY')} pointer-events-none`;
     professionalP.textContent = c.professional;
-    
+
     leftDiv.appendChild(specialtyP);
     leftDiv.appendChild(professionalP);
-    
+
     const dateP = document.createElement('p');
     dateP.className = 'text-sm font-medium text-slate-800 bg-slate-100 px-2 py-1 rounded whitespace-pre-wrap text-right pointer-events-none';
     dateP.innerHTML = c.date.replace(/\n/g, "<br>");
-    
+
     headerDiv.appendChild(leftDiv);
     headerDiv.appendChild(dateP);
-    
+
     // Body da consulta
     const bodyDiv = document.createElement('div');
     bodyDiv.className = 'consultation-body collapse-section show';
-    
+
     if (c.isNoShow) {
       const noShowP = document.createElement('p');
       noShowP.className = 'text-center font-bold text-red-600 mt-2';
@@ -82,35 +82,35 @@ export function renderConsultations(consultations, sortState) {
       unitP.className = 'text-sm text-slate-500 mt-1';
       unitP.textContent = c.unit;
       bodyDiv.appendChild(unitP);
-      
+
       const detailsDiv = document.createElement('div');
       detailsDiv.className = 'mt-3 pt-3 border-t border-slate-200 space-y-2';
-      
+
       c.details.forEach(d => {
         const labelP = document.createElement('p');
         labelP.className = 'text-xs font-semibold text-slate-500 uppercase';
         labelP.textContent = d.label;
-        
+
         const valueP = document.createElement('p');
         valueP.className = 'text-sm text-slate-700 whitespace-pre-wrap';
         valueP.innerHTML = d.value.replace(/\n/g, "<br>");
-        
+
         const copySpan = document.createElement('span');
         copySpan.className = 'copy-icon';
         copySpan.title = 'Copiar';
         copySpan.setAttribute('data-copy-text', d.value);
         copySpan.textContent = 'ðŸ“„';
-        
+
         valueP.appendChild(document.createTextNode(' '));
         valueP.appendChild(copySpan);
-        
+
         detailsDiv.appendChild(labelP);
         detailsDiv.appendChild(valueP);
       });
-      
+
       bodyDiv.appendChild(detailsDiv);
     }
-    
+
     consultationDiv.appendChild(headerDiv);
     consultationDiv.appendChild(bodyDiv);
     contentDiv.appendChild(consultationDiv);
@@ -135,17 +135,17 @@ export function renderExams(exams, sortState) {
   // Criar cabeÃ§alho
   const headerDiv = document.createElement('div');
   headerDiv.className = 'flex justify-between text-xs font-bold text-slate-500 mb-2 px-3';
-  
+
   const examNameHeader = document.createElement('span');
   examNameHeader.className = 'sort-header w-2/3';
   examNameHeader.setAttribute('data-sort-key', 'examName');
   examNameHeader.innerHTML = `Nome do Exame <span class="sort-indicator">${getSortIndicator("examName", sortState)}</span>`;
-  
+
   const dateHeader = document.createElement('span');
   dateHeader.className = 'sort-header w-1/3 text-right';
   dateHeader.setAttribute('data-sort-key', 'date');
   dateHeader.innerHTML = `Data <span class="sort-indicator">${getSortIndicator("date", sortState)}</span>`;
-  
+
   headerDiv.appendChild(examNameHeader);
   headerDiv.appendChild(dateHeader);
   contentDiv.appendChild(headerDiv);
@@ -167,37 +167,37 @@ export function renderExams(exams, sortState) {
 
     const examDiv = document.createElement('div');
     examDiv.className = 'p-3 mb-3 border rounded-lg bg-white';
-    
+
     // Nome do exame
     const examNameP = document.createElement('p');
     examNameP.className = 'font-semibold text-indigo-700';
     examNameP.textContent = exam.examName || "Nome do exame nÃ£o informado";
-    
+
     const copySpan = document.createElement('span');
     copySpan.className = 'copy-icon';
     copySpan.title = 'Copiar';
     copySpan.setAttribute('data-copy-text', exam.examName);
     copySpan.textContent = 'ðŸ“„';
-    
+
     examNameP.appendChild(document.createTextNode(' '));
     examNameP.appendChild(copySpan);
-    
+
     // Detalhes do exame
     const detailsDiv = document.createElement('div');
     detailsDiv.className = 'text-sm text-slate-500 mt-1';
-    
+
     const professionalP = document.createElement('p');
     professionalP.textContent = `Solicitado por: ${exam.professional || "NÃ£o informado"} (${exam.specialty || "N/A"})`;
-    
+
     const dateP = document.createElement('p');
     dateP.textContent = `Data: ${exam.date || "NÃ£o informada"}`;
-    
+
     detailsDiv.appendChild(professionalP);
     detailsDiv.appendChild(dateP);
-    
+
     examDiv.appendChild(examNameP);
     examDiv.appendChild(detailsDiv);
-    
+
     // BotÃ£o de visualizar resultado (se disponÃ­vel)
     if (showBtn) {
       const resultBtn = document.createElement('button');
@@ -207,7 +207,7 @@ export function renderExams(exams, sortState) {
       resultBtn.textContent = 'Visualizar Resultado';
       examDiv.appendChild(resultBtn);
     }
-    
+
     contentDiv.appendChild(examDiv);
   });
 }
@@ -238,22 +238,22 @@ export function renderAppointments(appointments, sortState) {
   // Criar cabeÃ§alho
   const headerDiv = document.createElement('div');
   headerDiv.className = 'flex justify-between text-xs font-bold text-slate-500 mb-2 px-3';
-  
+
   const specialtyHeader = document.createElement('span');
   specialtyHeader.className = 'sort-header w-1/2';
   specialtyHeader.setAttribute('data-sort-key', 'specialty');
   specialtyHeader.innerHTML = `Especialidade <span class="sort-indicator">${getSortIndicator("specialty", sortState)}</span>`;
-  
+
   const statusHeader = document.createElement('span');
   statusHeader.className = 'sort-header w-1/4 text-center';
   statusHeader.setAttribute('data-sort-key', 'status');
   statusHeader.innerHTML = `Status <span class="sort-indicator">${getSortIndicator("status", sortState)}</span>`;
-  
+
   const dateHeader = document.createElement('span');
   dateHeader.className = 'sort-header w-1/4 text-right';
   dateHeader.setAttribute('data-sort-key', 'date');
   dateHeader.innerHTML = `Data <span class="sort-indicator">${getSortIndicator("date", sortState)}</span>`;
-  
+
   headerDiv.appendChild(specialtyHeader);
   headerDiv.appendChild(statusHeader);
   headerDiv.appendChild(dateHeader);
@@ -274,17 +274,17 @@ export function renderAppointments(appointments, sortState) {
     // Corrigir problema com IDs que podem ter prefixos como "exam-"
     let idp, ids;
     const parts = item.id.split("-");
-    
+
     // Verificar se o primeiro part nÃ£o Ã© numÃ©rico (indica prefixo)
     if (parts.length >= 2 && isNaN(parts[0])) {
       // Se o primeiro part nÃ£o Ã© numÃ©rico, Ã© um prefixo (ex: "exam-525411")
       // Usar o segundo part como ids e tentar obter idp de outras fontes
       ids = parts[1];
-      
+
       // Para exames, tentar obter o idp correto do objeto original
       // Se nÃ£o disponÃ­vel, usar o mesmo valor como fallback
       idp = item.examIdp || item.originalIdp || parts[1];
-      
+
       logger.warn(`ID com prefixo detectado: ${item.id}, usando idp=${idp}, ids=${ids}`);
     } else {
       // Formato normal: "idp-ids"
@@ -293,61 +293,61 @@ export function renderAppointments(appointments, sortState) {
 
     const appointmentDiv = document.createElement('div');
     appointmentDiv.className = 'p-3 mb-3 border rounded-lg bg-white';
-    
+
     // Header do agendamento
     const headerDiv = document.createElement('div');
     headerDiv.className = 'flex justify-between items-start';
-    
+
     const leftDiv = document.createElement('div');
-    
+
     const typeP = document.createElement('p');
     typeP.className = 'font-semibold text-gray-800';
     typeP.textContent = typeText;
-    
+
     const specialtyP = document.createElement('p');
     specialtyP.className = 'text-sm text-indigo-600 font-medium';
     specialtyP.textContent = item.specialty || "Sem especialidade";
-    
+
     leftDiv.appendChild(typeP);
     leftDiv.appendChild(specialtyP);
-    
+
     const statusSpan = document.createElement('span');
     statusSpan.className = `text-xs font-bold px-2 py-1 rounded-full ${style}`;
     statusSpan.textContent = item.status;
-    
+
     headerDiv.appendChild(leftDiv);
     headerDiv.appendChild(statusSpan);
-    
+
     // Detalhes do agendamento
     const detailsDiv = document.createElement('div');
     detailsDiv.className = 'text-sm text-slate-500 mt-2 border-t pt-2';
-    
+
     const dateP = document.createElement('p');
     dateP.innerHTML = `<strong>Data:</strong> ${item.date} Ã s ${item.time}`;
-    
+
     const locationP = document.createElement('p');
     locationP.innerHTML = `<strong>Local:</strong> ${item.location}`;
-    
+
     const professionalP = document.createElement('p');
     professionalP.innerHTML = `<strong>Profissional:</strong> ${item.professional}`;
-    
+
     detailsDiv.appendChild(dateP);
     detailsDiv.appendChild(locationP);
     detailsDiv.appendChild(professionalP);
-    
+
     // BotÃ£o de detalhes
     const buttonDiv = document.createElement('div');
     buttonDiv.className = 'flex items-center justify-between mt-2 pt-2 border-t';
-    
+
     const detailsBtn = document.createElement('button');
     detailsBtn.className = 'view-appointment-details-btn text-sm bg-gray-100 text-gray-800 py-1 px-3 rounded hover:bg-gray-200';
     detailsBtn.setAttribute('data-idp', idp || "");
     detailsBtn.setAttribute('data-ids', ids || "");
     detailsBtn.setAttribute('data-type', item.type);
     detailsBtn.textContent = 'Ver Detalhes';
-    
+
     buttonDiv.appendChild(detailsBtn);
-    
+
     appointmentDiv.appendChild(headerDiv);
     appointmentDiv.appendChild(detailsDiv);
     appointmentDiv.appendChild(buttonDiv);
@@ -391,22 +391,22 @@ export function renderRegulations(regulations, sortState, globalSettings) {
   // Criar cabeÃ§alho
   const headerDiv = document.createElement('div');
   headerDiv.className = 'flex justify-between text-xs font-bold text-slate-500 mb-2 px-3';
-  
+
   const procedureHeader = document.createElement('span');
   procedureHeader.className = 'sort-header w-1/2';
   procedureHeader.setAttribute('data-sort-key', 'procedure');
   procedureHeader.innerHTML = `Procedimento <span class="sort-indicator">${getSortIndicator("procedure", sortState)}</span>`;
-  
+
   const statusHeader = document.createElement('span');
   statusHeader.className = 'sort-header w-1/4 text-center';
   statusHeader.setAttribute('data-sort-key', 'status');
   statusHeader.innerHTML = `Status <span class="sort-indicator">${getSortIndicator("status", sortState)}</span>`;
-  
+
   const dateHeader = document.createElement('span');
   dateHeader.className = 'sort-header w-1/4 text-right';
   dateHeader.setAttribute('data-sort-key', 'date');
   dateHeader.innerHTML = `Data <span class="sort-indicator">${getSortIndicator("date", sortState)}</span>`;
-  
+
   headerDiv.appendChild(procedureHeader);
   headerDiv.appendChild(statusHeader);
   headerDiv.appendChild(dateHeader);
@@ -428,119 +428,119 @@ export function renderRegulations(regulations, sortState, globalSettings) {
 
     const regulationDiv = document.createElement('div');
     regulationDiv.className = 'p-3 mb-3 border rounded-lg bg-white';
-    
+
     // Header da regulaÃ§Ã£o
     const headerDiv = document.createElement('div');
     headerDiv.className = 'flex justify-between items-start';
-    
+
     const leftDiv = document.createElement('div');
-    
+
     const typeDiv = document.createElement('div');
     typeDiv.className = 'flex items-center gap-2 mb-1';
-    
+
     const typeP = document.createElement('p');
     typeP.className = `font-bold ${typeColor}`;
     typeP.textContent = typeText;
-    
+
     const prioritySpan = document.createElement('span');
     prioritySpan.className = 'text-xs font-bold px-2 py-0.5 rounded-full';
     prioritySpan.style.cssText = priorityStyle;
     prioritySpan.textContent = priorityText;
-    
+
     typeDiv.appendChild(typeP);
     typeDiv.appendChild(prioritySpan);
-    
+
     const procedureP = document.createElement('p');
     procedureP.className = 'text-sm text-slate-800 font-medium';
     procedureP.textContent = item.procedure;
-    
+
     const procedureCopySpan = document.createElement('span');
     procedureCopySpan.className = 'copy-icon';
     procedureCopySpan.title = 'Copiar';
     procedureCopySpan.setAttribute('data-copy-text', item.procedure);
     procedureCopySpan.textContent = 'ðŸ“„';
-    
+
     procedureP.appendChild(document.createTextNode(' '));
     procedureP.appendChild(procedureCopySpan);
-    
+
     const cidP = document.createElement('p');
     cidP.className = 'text-xs text-slate-500';
     cidP.textContent = item.cid;
-    
+
     const cidCopySpan = document.createElement('span');
     cidCopySpan.className = 'copy-icon';
     cidCopySpan.title = 'Copiar';
     cidCopySpan.setAttribute('data-copy-text', item.cid);
     cidCopySpan.textContent = 'ðŸ“„';
-    
+
     cidP.appendChild(document.createTextNode(' '));
     cidP.appendChild(cidCopySpan);
-    
+
     leftDiv.appendChild(typeDiv);
     leftDiv.appendChild(procedureP);
     leftDiv.appendChild(cidP);
-    
+
     const statusSpan = document.createElement('span');
     statusSpan.className = `text-xs font-bold px-2 py-1 rounded-full ${style}`;
     statusSpan.textContent = item.status;
-    
+
     headerDiv.appendChild(leftDiv);
     headerDiv.appendChild(statusSpan);
-    
+
     // Detalhes da regulaÃ§Ã£o
     const detailsDiv = document.createElement('div');
     detailsDiv.className = 'text-sm text-slate-500 mt-2 border-t pt-2 space-y-1';
-    
+
     const dateP = document.createElement('p');
     dateP.innerHTML = `<strong>Data:</strong> ${item.date}`;
-    
+
     const requesterP = document.createElement('p');
     requesterP.innerHTML = `<strong>Solicitante:</strong> ${item.requester}`;
-    
+
     const providerP = document.createElement('p');
     providerP.innerHTML = `<strong>Executante:</strong> ${item.provider || "NÃ£o definido"}`;
-    
+
     detailsDiv.appendChild(dateP);
     detailsDiv.appendChild(requesterP);
     detailsDiv.appendChild(providerP);
-    
+
     // BotÃ£o de detalhes
     const buttonDiv = document.createElement('div');
     buttonDiv.className = 'mt-2 pt-2 border-t';
-    
+
     const detailsBtn = document.createElement('button');
     detailsBtn.className = 'view-regulation-details-btn w-full text-sm bg-gray-100 text-gray-800 py-1 px-3 rounded hover:bg-gray-200';
     detailsBtn.setAttribute('data-idp', item.idp);
     detailsBtn.setAttribute('data-ids', item.ids);
     detailsBtn.textContent = 'Visualizar Detalhes';
-    
+
     buttonDiv.appendChild(detailsBtn);
-    
+
     regulationDiv.appendChild(headerDiv);
     regulationDiv.appendChild(detailsDiv);
     regulationDiv.appendChild(buttonDiv);
-    
+
     // Anexos (se existirem)
     if (item.attachments && item.attachments.length > 0) {
       const attachmentsDiv = document.createElement('div');
       attachmentsDiv.className = 'mt-2 pt-2 border-t border-slate-100';
-      
+
       const attachmentsLabel = document.createElement('p');
       attachmentsLabel.className = 'text-xs font-semibold text-slate-500 mb-1';
       attachmentsLabel.textContent = 'ANEXOS:';
-      
+
       const attachmentsContainer = document.createElement('div');
       attachmentsContainer.className = 'space-y-1';
-      
+
       item.attachments.forEach(att => {
         const attachmentBtn = document.createElement('button');
         attachmentBtn.className = 'view-regulation-attachment-btn w-full text-left text-sm bg-gray-50 text-gray-700 py-1 px-2 rounded hover:bg-gray-100 flex justify-between items-center';
         attachmentBtn.setAttribute('data-idp', att.idp);
         attachmentBtn.setAttribute('data-ids', att.ids);
-        
+
         const leftAttDiv = document.createElement('div');
         leftAttDiv.className = 'flex items-center gap-2 overflow-hidden';
-        
+
         const iconSvg = document.createElement('svg');
         iconSvg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
         iconSvg.setAttribute('width', '14');
@@ -549,30 +549,30 @@ export function renderRegulations(regulations, sortState, globalSettings) {
         iconSvg.className = 'flex-shrink-0';
         iconSvg.setAttribute('viewBox', '0 0 16 16');
         iconSvg.innerHTML = '<path d="M4 0h8a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2zM2 2a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H2z"/><path d="M4.5 12.5a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7a.5.5 0 0 1-.5-.5zm0-2a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7a.5.5 0 0 1-.5-.5zm0-2a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7a.5.5 0 0 1-.5-.5z"/>';
-        
+
         const descSpan = document.createElement('span');
         descSpan.className = 'truncate';
         descSpan.title = `${att.description} (${att.fileType.toUpperCase()})`;
         descSpan.textContent = `${att.description} (${att.fileType.toUpperCase()})`;
-        
+
         leftAttDiv.appendChild(iconSvg);
         leftAttDiv.appendChild(descSpan);
-        
+
         const dateSpan = document.createElement('span');
         dateSpan.className = 'text-xs text-slate-400 flex-shrink-0 ml-2';
         dateSpan.textContent = att.date;
-        
+
         attachmentBtn.appendChild(leftAttDiv);
         attachmentBtn.appendChild(dateSpan);
-        
+
         attachmentsContainer.appendChild(attachmentBtn);
       });
-      
+
       attachmentsDiv.appendChild(attachmentsLabel);
       attachmentsDiv.appendChild(attachmentsContainer);
       regulationDiv.appendChild(attachmentsDiv);
     }
-    
+
     contentDiv.appendChild(regulationDiv);
   });
 }
@@ -595,17 +595,17 @@ export function renderDocuments(documents, sortState) {
   // Criar cabeÃ§alho
   const headerDiv = document.createElement('div');
   headerDiv.className = 'flex justify-between text-xs font-bold text-slate-500 mb-2 px-3';
-  
+
   const descriptionHeader = document.createElement('span');
   descriptionHeader.className = 'sort-header w-2/3';
   descriptionHeader.setAttribute('data-sort-key', 'description');
   descriptionHeader.innerHTML = `DescriÃ§Ã£o <span class="sort-indicator">${getSortIndicator("description", sortState)}</span>`;
-  
+
   const dateHeader = document.createElement('span');
   dateHeader.className = 'sort-header w-1/3 text-right';
   dateHeader.setAttribute('data-sort-key', 'date');
   dateHeader.innerHTML = `Data <span class="sort-indicator">${getSortIndicator("date", sortState)}</span>`;
-  
+
   headerDiv.appendChild(descriptionHeader);
   headerDiv.appendChild(dateHeader);
   contentDiv.appendChild(headerDiv);
@@ -614,37 +614,37 @@ export function renderDocuments(documents, sortState) {
   documents.forEach(doc => {
     const documentDiv = document.createElement('div');
     documentDiv.className = 'p-3 mb-2 border rounded-lg bg-white';
-    
+
     // DescriÃ§Ã£o do documento
     const descriptionP = document.createElement('p');
     descriptionP.className = 'font-semibold text-gray-800';
     descriptionP.textContent = doc.description;
-    
+
     // Detalhes do documento
     const detailsDiv = document.createElement('div');
     detailsDiv.className = 'text-sm text-slate-500 mt-1';
-    
+
     const dateSpan = document.createElement('span');
     dateSpan.textContent = `Data: ${doc.date}`;
-    
+
     const separatorSpan = document.createElement('span');
     separatorSpan.textContent = ' | ';
-    
+
     const typeSpan = document.createElement('span');
     typeSpan.className = 'font-medium';
     typeSpan.textContent = `Tipo: ${doc.fileType.toUpperCase()}`;
-    
+
     detailsDiv.appendChild(dateSpan);
     detailsDiv.appendChild(separatorSpan);
     detailsDiv.appendChild(typeSpan);
-    
+
     // BotÃ£o de visualizar documento
     const viewBtn = document.createElement('button');
     viewBtn.className = 'view-document-btn mt-2 w-full text-sm bg-gray-100 text-gray-800 py-1 rounded hover:bg-gray-200';
     viewBtn.setAttribute('data-idp', doc.idp);
     viewBtn.setAttribute('data-ids', doc.ids);
     viewBtn.textContent = 'Visualizar Documento';
-    
+
     documentDiv.appendChild(descriptionP);
     documentDiv.appendChild(detailsDiv);
     documentDiv.appendChild(viewBtn);
@@ -743,21 +743,21 @@ export function renderTimeline(events, status) {
 
           if (event.type === "appointment") {
             const a = event.details;
-            
+
             // Corrigir problema com IDs que podem ter prefixos como "exam-"
             let idp, ids;
             const parts = a.id.split("-");
-            
+
             // Verificar se o primeiro part nÃ£o Ã© numÃ©rico (indica prefixo)
             if (parts.length >= 2 && isNaN(parts[0])) {
               // Se o primeiro part nÃ£o Ã© numÃ©rico, Ã© um prefixo (ex: "exam-525411")
               // Usar o segundo part como ids e tentar obter idp de outras fontes
               ids = parts[1];
-              
+
               // Para exames, tentar obter o idp correto do objeto original
               // Se nÃ£o disponÃ­vel, usar o mesmo valor como fallback
               idp = a.examIdp || a.originalIdp || parts[1];
-              
+
               logger.warn(`ID com prefixo detectado: ${a.id}, usando idp=${idp}, ids=${ids}`);
             } else {
               // Formato normal: "idp-ids"
@@ -807,7 +807,7 @@ export function renderTimeline(events, status) {
             const c = event.details;
             const icon = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-search-2"><path d="M14 2v6h6"/><path d="M4 22h14a2 2 0 0 0 2-2V7.5L14.5 2H6a2 2 0 0 0-2 2v4"/><path d="M5 17a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/><path d="m9 21-1.5-1.5"/></svg>`;
             topRightDetailsHtml = `<button class="timeline-toggle-details-btn mt-2 text-xs bg-gray-100 text-gray-800 py-1 px-3 rounded hover:bg-gray-200 flex items-center gap-1">${icon}<span>Detalhes</span></button>`;
-            
+
             extraInfoHtml = `
                 <div class="timeline-details-body mt-2 pt-2 border-t border-slate-200">
                     <p class="text-sm text-slate-500 mb-2">${c.unit}</p>

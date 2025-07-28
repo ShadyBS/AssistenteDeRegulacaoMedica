@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @file store.js - Gestor de estado centralizado para a aplicaÃ§Ã£o.
  * Implementa um padrÃ£o simples de "publish-subscribe" para gerir o estado global.
  */
@@ -35,7 +35,7 @@ export const store = {
       logger.error('Store listener deve ser uma funÃ§Ã£o');
       return () => {};
     }
-    
+
     listeners.push(listener);
     // PASSO 3.3: Retorna uma funÃ§Ã£o de unsubscribe para melhor gestÃ£o de memÃ³ria.
     return () => {
@@ -75,7 +75,7 @@ export const store = {
       } catch (error) {
         currentErrorCount++;
         logger.error("Erro num listener do store:", error);
-        
+
         // Se o erro for crÃ­tico, remove o listener problemÃ¡tico
         if (error.name === 'TypeError' || error.name === 'ReferenceError') {
           logger.warn("Removendo listener problemÃ¡tico que causou erro crÃ­tico");
@@ -96,7 +96,7 @@ export const store = {
     }
 
     logger.info(`NotificaÃ§Ãµes do store: ${successCount} sucesso(s), ${currentErrorCount} erro(s)`);
-    
+
     notificationInProgress = false;
   },
 

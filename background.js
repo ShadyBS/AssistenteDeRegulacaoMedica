@@ -17,34 +17,37 @@ const MAX_MESSAGES_PER_WINDOW = 100; // máximo 100 mensagens por minuto por ori
 
 // Função para carregar módulos dinamicamente
 async function loadModules() {
+  // Logger ainda não está disponível, então o console.log é aceitável aqui.
+  console.log('[Background] Carregando módulos...');
+
   try {
-    console.log('[Background] Carregando módulos...');
-    
     const apiModule = await import("./api.js");
     fetchRegulationDetails = apiModule.fetchRegulationDetails;
-    
+
     const keepAliveModule = await import("./KeepAliveManager.js");
     KeepAliveManager = keepAliveModule.KeepAliveManager;
-    
+
     const browserAPIModule = await import("./BrowserAPI.js");
     getBrowserAPIInstance = browserAPIModule.getBrowserAPIInstance;
-    
+
     const cryptoModule = await import("./crypto-utils.js");
     encryptForStorage = cryptoModule.encryptForStorage;
     decryptFromStorage = cryptoModule.decryptFromStorage;
     cleanupExpiredData = cryptoModule.cleanupExpiredData;
     MEDICAL_DATA_CONFIG = cryptoModule.MEDICAL_DATA_CONFIG;
-    
+
     const loggerModule = await import("./logger.js");
     createComponentLogger = loggerModule.createComponentLogger;
-    
+
     // Inicializar logger após carregamento
     logger = createComponentLogger('Background');
-    
-    console.log('[Background] Módulos carregados com sucesso');
+
+    logger.info('Módulos carregados com sucesso');
     return true;
   } catch (error) {
-    console.error('[Background] Erro ao carregar módulos:', error);
+    // O logger pode não ter sido inicializado, então use console.error como fallback
+    const log = logger || console;
+    log.error('Erro ao carregar módulos:', error);
     return false;
   }
 }
@@ -53,25 +56,25 @@ async function loadModules() {
 function checkRateLimit(senderId) {
   const now = Date.now();
   const key = senderId || 'unknown';
-  
+
   if (!messageRateLimit.has(key)) {
     messageRateLimit.set(key, { count: 1, windowStart: now });
     return true;
   }
-  
+
   const rateData = messageRateLimit.get(key);
-  
+
   // Reset window if expired
   if (now - rateData.windowStart > RATE_LIMIT_WINDOW) {
     messageRateLimit.set(key, { count: 1, windowStart: now });
     return true;
   }
-  
+
   // Check if limit exceeded
   if (rateData.count >= MAX_MESSAGES_PER_WINDOW) {
     return false;
   }
-  
+
   // Increment counter
   rateData.count++;
   return true;
@@ -82,13 +85,9 @@ function initializeKeepAlive() {
   if (!keepAliveManager && KeepAliveManager) {
     try {
       keepAliveManager = new KeepAliveManager();
-      if (logger) {
-        logger.info("KeepAliveManager inicializado", { operation: 'initializeKeepAlive' });
-      } else {
-        console.log('[Background] KeepAliveManager inicializado');
-      }
+      logger.info("KeepAliveManager inicializado", { operation: 'initializeKeepAlive' });
     } catch (error) {
-      console.error('[Background] Erro ao inicializar KeepAliveManager:', error);
+      logger.error('Erro ao inicializar KeepAliveManager:', error);
     }
   }
 }
@@ -96,19 +95,17 @@ function initializeKeepAlive() {
 // Configurar limpeza automática de dados médicos
 async function setupDataCleanup() {
   if (!cleanupExpiredData) return;
-  
+
   try {
     // Limpa dados expirados na inicialização
     await cleanupExpiredData(api);
-    
+
     // Configura limpeza periódica (a cada 30 minutos)
     api.alarms.create('cleanupExpiredData', { periodInMinutes: 30 });
-    
-    if (logger) {
-      logger.info('Sistema de limpeza automática configurado');
-    }
+
+    logger.info('Sistema de limpeza automática configurado');
   } catch (error) {
-    console.error('[Background] Erro ao configurar limpeza de dados:', error);
+    logger.error('Erro ao configurar limpeza de dados:', error);
   }
 }
 
@@ -116,15 +113,13 @@ async function setupDataCleanup() {
 api.alarms.onAlarm.addListener(async (alarm) => {
   if (alarm.name === 'cleanupExpiredData' && cleanupExpiredData) {
     try {
-      if (logger) {
-        logger.info('Executando limpeza automática de dados expirados', { 
-          operation: 'setupDataCleanup',
-          alarmName: alarm.name 
-        });
-      }
+      logger.info('Executando limpeza automática de dados expirados', {
+        operation: 'setupDataCleanup',
+        alarmName: alarm.name
+      });
       await cleanupExpiredData(api);
     } catch (error) {
-      console.error('[Background] Erro na limpeza automática:', error);
+      logger.error('Erro na limpeza automática:', error);
     }
   }
 });
@@ -132,11 +127,11 @@ api.alarms.onAlarm.addListener(async (alarm) => {
 // Listener de mensagens
 api.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
   const timestamp = new Date().toISOString();
-  
+
   // Rate limiting check
   const senderId = sender?.id || sender?.tab?.id || 'unknown';
   if (!checkRateLimit(senderId)) {
-    console.warn('[Background] Rate limit excedido para sender:', senderId);
+    logger.warn('Rate limit excedido para sender:', { senderId });
     return false;
   }
 
@@ -144,40 +139,40 @@ api.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
   if (!sender || !sender.tab) {
     // Mensagens de outras partes da extensão (popup, sidebar, etc.)
     if (!sender.id || sender.id !== api.runtime.id) {
-      console.warn('[Background] Mensagem rejeitada - origem não confiável');
+      logger.warn('Mensagem rejeitada - origem não confiável (não é da extensão)');
       return false;
     }
   } else {
     // Mensagens de content scripts devem vir de páginas SIGSS autorizadas
     const allowedOrigins = [
       'sigss.saude.gov.br',
-      'sigss-hom.saude.gov.br', 
+      'sigss-hom.saude.gov.br',
       'sigss.mv.com.br',
       'sigss.cloudmv.com.br',
       'localhost:3000',
       'localhost:8080',
       '127.0.0.1'
     ];
-    
+
     const senderUrl = sender.tab.url || sender.url || '';
     const senderOrigin = new URL(senderUrl).origin;
-    
+
     const isAuthorized = allowedOrigins.some(domain => {
       if (domain.startsWith('http')) {
         return senderOrigin === domain;
       }
       return senderUrl.includes(domain);
     });
-    
+
     if (!isAuthorized) {
-      console.warn('[Background] Mensagem rejeitada - origem não autorizada:', senderUrl);
+      logger.warn('Mensagem rejeitada - origem não autorizada:', { senderUrl });
       return false;
     }
   }
 
   // Validar estrutura da mensagem
   if (!message || typeof message !== 'object' || !message.type) {
-    console.warn('[Background] Mensagem rejeitada - estrutura inválida');
+    logger.warn('Mensagem rejeitada - estrutura inválida', { message });
     return false;
   }
 
@@ -192,12 +187,12 @@ api.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
   ];
 
   if (!allowedMessageTypes.includes(message.type)) {
-    console.warn('[Background] Tipo de mensagem não permitido:', message.type);
+    logger.warn('Tipo de mensagem não permitido:', { type: message.type });
     return false;
   }
 
   // Log de mensagem autorizada
-  console.log(`[Background] ${timestamp} - Mensagem autorizada:`, {
+  logger.info('Mensagem autorizada:', {
     type: message.type,
     senderId,
     origin: sender?.tab?.url || sender?.url || 'extension'
@@ -206,10 +201,10 @@ api.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
   // Processar mensagens
   if (message.type === "SAVE_REGULATION_DATA") {
     if (!fetchRegulationDetails) {
-      console.error('[Background] fetchRegulationDetails não disponível');
+      logger.error('fetchRegulationDetails não disponível');
       return false;
     }
-    
+
     try {
       const regulationDetails = await fetchRegulationDetails(message.payload);
 
@@ -217,32 +212,32 @@ api.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
         // Criptografar dados médicos sensíveis antes do armazenamento
         if (encryptForStorage && MEDICAL_DATA_CONFIG) {
           const encryptedData = await encryptForStorage(
-            regulationDetails, 
+            regulationDetails,
             MEDICAL_DATA_CONFIG.SENSITIVE_TTL_MINUTES
           );
-          
-          await api.storage.local.set({ 
+
+          await api.storage.local.set({
             pendingRegulation: encryptedData,
             pendingRegulationTimestamp: Date.now()
           });
         } else {
           // Fallback sem criptografia se módulos não estiverem disponíveis
-          await api.storage.local.set({ 
+          await api.storage.local.set({
             pendingRegulation: regulationDetails,
             pendingRegulationTimestamp: Date.now()
           });
         }
-        
-        console.log('[Background] Detalhes da regulação salvos no storage local');
+
+        logger.info('Detalhes da regulação salvos no storage local');
       } else {
-        console.warn('[Background] Não foram encontrados detalhes para a regulação:', message.payload);
+        logger.warn('Não foram encontrados detalhes para a regulação:', message.payload);
       }
     } catch (e) {
-      console.error('[Background] Falha ao buscar ou salvar dados da regulação:', e);
+      logger.error('Falha ao buscar ou salvar dados da regulação:', e);
     }
     return true;
   }
-  
+
   // Comando para verificar status do KeepAlive
   if (message.type === "GET_KEEPALIVE_STATUS") {
     if (keepAliveManager) {
@@ -259,7 +254,7 @@ api.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
   }
 
   // Mensagem não reconhecida
-  console.warn('[Background] Tipo de mensagem não reconhecido:', message.type);
+  logger.warn('Tipo de mensagem não reconhecido:', { type: message.type });
   return false;
 });
 
@@ -272,7 +267,7 @@ async function openSidebar(tab) {
       await api.sidebarAction.toggle();
     }
   } catch (error) {
-    console.error('[Background] Erro ao abrir sidebar:', error);
+    logger.error('Erro ao abrir sidebar:', error);
   }
 }
 
@@ -281,23 +276,23 @@ api.action.onClicked.addListener(openSidebar);
 
 // Listener para startup
 api.runtime.onStartup.addListener(async () => {
-  console.log('[Background] Service worker reiniciado - reinicializando');
+  logger.info('Service worker reiniciado - reinicializando');
   await initializeExtension();
 });
 
 // Listener para instalação
 api.runtime.onInstalled.addListener(async (details) => {
-  console.log('[Background] Extensão instalada/atualizada');
-  
+  logger.info('Extensão instalada/atualizada', { reason: details.reason });
+
   // Aguardar inicialização
   await initializeExtension();
-  
+
   // Configurar sidePanel se disponível
   if (api.sidePanel) {
     try {
       await api.sidePanel.setPanelBehavior({ openPanelOnActionClick: false });
     } catch (e) {
-      console.error('[Background] Falha ao definir o comportamento do sidePanel:', e);
+      logger.error('Falha ao definir o comportamento do sidePanel:', e);
     }
   }
 
@@ -309,7 +304,7 @@ api.runtime.onInstalled.addListener(async (details) => {
       contexts: ["all"],
     });
   } catch (error) {
-    console.error('[Background] Erro ao criar menu de contexto:', error);
+    logger.error('Erro ao criar menu de contexto:', error);
   }
 
   // Listener para menu de contexto
@@ -324,36 +319,34 @@ api.runtime.onInstalled.addListener(async (details) => {
     try {
       api.tabs.create({ url: api.runtime.getURL("help.html") });
     } catch (error) {
-      console.error('[Background] Erro ao abrir página de ajuda:', error);
+      logger.error('Erro ao abrir página de ajuda:', error);
     }
   }
 });
 
 // Função principal de inicialização
 async function initializeExtension() {
+  // Usar console.log aqui é aceitável, pois o logger pode não estar pronto.
   console.log('[Background] Iniciando extensão...');
-  
+
   try {
     // Carregar módulos
     const modulesLoaded = await loadModules();
-    
+
     if (modulesLoaded) {
       // Inicializar componentes
       initializeKeepAlive();
       await setupDataCleanup();
-      
-      if (logger) {
-        logger.info('[Background] Inicialização completa');
-      } else {
-        console.log('[Background] Inicialização completa');
-      }
+
+      logger.info('[Background] Inicialização completa');
     } else {
-      console.error('[Background] Falha ao carregar módulos - extensão pode não funcionar corretamente');
+      const log = logger || console;
+      log.error('Falha ao carregar módulos - extensão pode não funcionar corretamente');
     }
   } catch (error) {
-    console.error('[Background] Erro na inicialização:', error);
+    const log = logger || console;
+    log.error('Erro na inicialização:', error);
   }
 }
 
-// Inicializar a extensão
-initializeExtension();
+// A inicialização é tratada pelos listeners onInstalled e onStartup.

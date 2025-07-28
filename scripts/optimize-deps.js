@@ -2,7 +2,7 @@
 
 /**
  * Dependency Optimizer - Assistente de Regulação Médica
- * 
+ *
  * Script para identificar e remover dependências não utilizadas,
  * otimizar imports e reduzir bundle size
  */
@@ -36,7 +36,7 @@ class DependencyOptimizer {
   log(message, level = 'info') {
     const timestamp = new Date().toISOString().substring(11, 19);
     const prefix = `[${timestamp}]`;
-    
+
     switch (level) {
       case 'error':
         console.error(`${prefix} ❌ ${message}`);
@@ -69,13 +69,13 @@ class DependencyOptimizer {
    */
   async scanJavaScriptFiles() {
     this.log('🔍 Escaneando arquivos JavaScript...');
-    
+
     const jsFiles = await this.findJavaScriptFiles(PROJECT_ROOT);
-    
+
     for (const filePath of jsFiles) {
       await this.analyzeFile(filePath);
     }
-    
+
     this.log(`📄 ${jsFiles.length} arquivos JavaScript analisados`);
   }
 
@@ -85,14 +85,14 @@ class DependencyOptimizer {
   async findJavaScriptFiles(dir) {
     const files = [];
     const excludeDirs = ['node_modules', '.git', '.dist', 'dist-zips', 'coverage', '__tests__'];
-    
+
     async function scan(currentDir) {
       const items = await fs.readdir(currentDir);
-      
+
       for (const item of items) {
         const fullPath = path.join(currentDir, item);
         const stats = await fs.stat(fullPath);
-        
+
         if (stats.isDirectory()) {
           if (!excludeDirs.includes(item)) {
             await scan(fullPath);
@@ -102,7 +102,7 @@ class DependencyOptimizer {
         }
       }
     }
-    
+
     await scan(dir);
     return files;
   }
@@ -113,7 +113,7 @@ class DependencyOptimizer {
   async analyzeFile(filePath) {
     try {
       const content = await fs.readFile(filePath, 'utf8');
-      
+
       // Padrões de import/require
       const patterns = [
         /require\(['"`]([^'"`]+)['"`]\)/g,
@@ -121,12 +121,12 @@ class DependencyOptimizer {
         /import\s*\(\s*['"`]([^'"`]+)['"`]\s*\)/g,
         /import\s+['"`]([^'"`]+)['"`]/g
       ];
-      
+
       for (const pattern of patterns) {
         let match;
         while ((match = pattern.exec(content)) !== null) {
           const dependency = match[1];
-          
+
           // Ignora imports relativos e internos
           if (!dependency.startsWith('.') && !dependency.startsWith('/')) {
             // Extrai nome do pacote (remove subpaths)
@@ -151,12 +151,12 @@ class DependencyOptimizer {
    */
   identifyUnusedDependencies() {
     this.log('🔍 Identificando dependências não utilizadas...');
-    
+
     const allDependencies = new Set([
       ...Object.keys(this.packageJson.dependencies || {}),
       ...Object.keys(this.packageJson.devDependencies || {})
     ]);
-    
+
     // Dependências essenciais que podem não aparecer em imports diretos
     const essentialDeps = new Set([
       'webpack',
@@ -170,16 +170,16 @@ class DependencyOptimizer {
       '@babel/core',
       '@babel/preset-env'
     ]);
-    
+
     for (const dep of allDependencies) {
       if (!this.usedDependencies.has(dep) && !essentialDeps.has(dep)) {
         this.unusedDependencies.add(dep);
       }
     }
-    
+
     this.results.analyzed = allDependencies.size;
     this.results.unused = this.unusedDependencies.size;
-    
+
     this.log(`📊 ${this.results.analyzed} dependências analisadas`);
     this.log(`🗑️  ${this.results.unused} dependências não utilizadas encontradas`);
   }
@@ -191,22 +191,22 @@ class DependencyOptimizer {
     if (this.unusedDependencies.size === 0) {
       return;
     }
-    
+
     this.log('💰 Calculando economia potencial...');
-    
+
     try {
       // Simula remoção para calcular economia
       const tempPackageJson = { ...this.packageJson };
-      
+
       for (const dep of this.unusedDependencies) {
         delete tempPackageJson.dependencies?.[dep];
         delete tempPackageJson.devDependencies?.[dep];
       }
-      
+
       // Estima economia baseada no número de dependências
       // (cálculo aproximado - na prática seria necessário npm install para medição exata)
       this.results.savings = this.unusedDependencies.size * 2; // ~2MB por dependência média
-      
+
       this.log(`💾 Economia estimada: ~${this.results.savings}MB`);
     } catch (error) {
       this.log(`Erro ao calcular economia: ${error.message}`, 'warn');
@@ -224,7 +224,7 @@ class DependencyOptimizer {
       unusedDependencies: Array.from(this.unusedDependencies).sort(),
       recommendations: []
     };
-    
+
     // Gera recomendações
     if (this.unusedDependencies.size > 0) {
       report.recommendations.push({
@@ -236,17 +236,17 @@ class DependencyOptimizer {
         dependencies: Array.from(this.unusedDependencies)
       });
     }
-    
+
     // Verifica dependências que poderiam ser devDependencies
     const prodDeps = Object.keys(this.packageJson.dependencies || {});
-    const buildOnlyDeps = prodDeps.filter(dep => 
-      dep.includes('webpack') || 
-      dep.includes('babel') || 
+    const buildOnlyDeps = prodDeps.filter(dep =>
+      dep.includes('webpack') ||
+      dep.includes('babel') ||
       dep.includes('eslint') ||
       dep.includes('tailwind') ||
       dep.includes('postcss')
     );
-    
+
     if (buildOnlyDeps.length > 0) {
       report.recommendations.push({
         type: 'move-to-dev',
@@ -256,7 +256,7 @@ class DependencyOptimizer {
         dependencies: buildOnlyDeps
       });
     }
-    
+
     return report;
   }
 
@@ -268,9 +268,9 @@ class DependencyOptimizer {
       this.log('✅ Nenhuma dependência não utilizada encontrada');
       return;
     }
-    
+
     const depsToRemove = Array.from(this.unusedDependencies);
-    
+
     if (dryRun) {
       this.log('🔍 DRY RUN - Dependências que seriam removidas:');
       depsToRemove.forEach(dep => {
@@ -279,18 +279,18 @@ class DependencyOptimizer {
       this.log('\n💡 Execute com --remove para remover efetivamente');
       return;
     }
-    
+
     this.log('🗑️  Removendo dependências não utilizadas...');
-    
+
     try {
       const command = `npm uninstall ${depsToRemove.join(' ')}`;
       this.log(`Executando: ${command}`);
-      
-      execSync(command, { 
+
+      execSync(command, {
         stdio: 'inherit',
-        cwd: PROJECT_ROOT 
+        cwd: PROJECT_ROOT
       });
-      
+
       this.log('✅ Dependências removidas com sucesso', 'success');
     } catch (error) {
       this.log(`Erro ao remover dependências: ${error.message}`, 'error');
@@ -303,9 +303,9 @@ class DependencyOptimizer {
    */
   async optimizePackageJson() {
     this.log('📦 Otimizando package.json...');
-    
+
     const optimized = { ...this.packageJson };
-    
+
     // Ordena dependências alfabeticamente
     if (optimized.dependencies) {
       const sorted = {};
@@ -314,7 +314,7 @@ class DependencyOptimizer {
       });
       optimized.dependencies = sorted;
     }
-    
+
     if (optimized.devDependencies) {
       const sorted = {};
       Object.keys(optimized.devDependencies).sort().forEach(key => {
@@ -322,14 +322,14 @@ class DependencyOptimizer {
       });
       optimized.devDependencies = sorted;
     }
-    
+
     // Remove campos desnecessários
     delete optimized.readme;
     delete optimized._id;
     delete optimized._from;
     delete optimized._resolved;
     delete optimized._integrity;
-    
+
     await fs.writeJson(PACKAGE_JSON_PATH, optimized, { spaces: 2 });
     this.log('✅ Package.json otimizado');
   }
@@ -339,20 +339,20 @@ class DependencyOptimizer {
    */
   async analyze() {
     this.log('🚀 Iniciando análise de dependências...');
-    
+
     await this.loadPackageJson();
     await this.scanJavaScriptFiles();
     this.identifyUnusedDependencies();
     await this.calculateSavings();
-    
+
     const report = this.generateReport();
-    
+
     // Salva relatório
     const reportPath = path.join(PROJECT_ROOT, 'dependency-analysis.json');
     await fs.writeJson(reportPath, report, { spaces: 2 });
-    
+
     this.log(`📋 Relatório salvo: ${reportPath}`, 'success');
-    
+
     return report;
   }
 
@@ -361,22 +361,22 @@ class DependencyOptimizer {
    */
   displaySummary(report) {
     console.log('\n📊 RESUMO DA ANÁLISE DE DEPENDÊNCIAS\n');
-    
+
     console.log(`📦 Total de dependências: ${report.summary.analyzed}`);
     console.log(`✅ Dependências utilizadas: ${report.usedDependencies.length}`);
     console.log(`🗑️  Dependências não utilizadas: ${report.summary.unused}`);
-    
+
     if (report.summary.savings > 0) {
       console.log(`💾 Economia estimada: ~${report.summary.savings}MB`);
     }
-    
+
     if (report.unusedDependencies.length > 0) {
       console.log('\n🗑️  DEPENDÊNCIAS NÃO UTILIZADAS:');
       report.unusedDependencies.forEach(dep => {
         console.log(`  - ${dep}`);
       });
     }
-    
+
     if (report.recommendations.length > 0) {
       console.log('\n💡 RECOMENDAÇÕES:');
       report.recommendations.forEach((rec, index) => {
@@ -387,7 +387,7 @@ class DependencyOptimizer {
         }
       });
     }
-    
+
     console.log('\n✅ Análise concluída!\n');
   }
 }
@@ -397,7 +397,7 @@ class DependencyOptimizer {
  */
 async function main() {
   const args = process.argv.slice(2);
-  
+
   if (args.includes('--help') || args.includes('-h')) {
     console.log(`
 Uso: node scripts/optimize-deps.js [opções]
@@ -415,29 +415,29 @@ Exemplos:
 `);
     process.exit(0);
   }
-  
+
   try {
     const optimizer = new DependencyOptimizer();
     const report = await optimizer.analyze();
-    
+
     if (!args.includes('--quiet') && !args.includes('-q')) {
       optimizer.displaySummary(report);
     }
-    
+
     // Remove dependências se solicitado
     if (args.includes('--remove')) {
       await optimizer.removeUnusedDependencies(false);
     } else if (report.unusedDependencies.length > 0) {
       await optimizer.removeUnusedDependencies(true);
     }
-    
+
     // Otimiza package.json se solicitado
     if (args.includes('--optimize')) {
       await optimizer.optimizePackageJson();
     }
-    
+
     process.exit(0);
-    
+
   } catch (error) {
     console.error('❌ Erro na análise:', error.message);
     process.exit(1);

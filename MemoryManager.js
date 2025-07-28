@@ -1,7 +1,7 @@
-﻿/**
+/**
  * @file MemoryManager - Sistema robusto de gerenciamento de memÃ³ria e limpeza de recursos
  * ResponsÃ¡vel por rastrear e limpar event listeners, timeouts, intervalos e referÃªncias globais
- * 
+ *
  * TASK-A-003: Implementa correÃ§Ãµes para memory leaks em event listeners:
  * - WeakMap para rastreamento de listeners
  * - Cleanup automÃ¡tico em window.beforeunload
@@ -30,13 +30,13 @@ export class MemoryManager {
     this.globalRefs = new Map(); // Rastreia referÃªncias globais
     this.cleanupCallbacks = new Set(); // Callbacks de limpeza customizados
     this.isDestroyed = false;
-    
+
     // TASK-A-003: Controle de cleanup forÃ§ado
     this.forceCleanupTimeout = null;
     this.lastCleanupTime = Date.now();
     this.memoryLeakThreshold = 100; // Limite de listeners antes de cleanup forÃ§ado
     this.cleanupInterval = 5 * 60 * 1000; // 5 minutos
-    
+
     // TASK-A-003: MÃ©tricas de vazamento de memÃ³ria
     this.memoryStats = {
       listenersCreated: 0,
@@ -48,7 +48,7 @@ export class MemoryManager {
       cleanupCount: 0,
       lastMemoryCheck: Date.now()
     };
-    
+
     // Bind methods para preservar contexto
     this.cleanup = this.cleanup.bind(this);
     this.handleBeforeUnload = this.handleBeforeUnload.bind(this);
@@ -56,13 +56,13 @@ export class MemoryManager {
     this.handleError = this.handleError.bind(this);
     this.forceCleanup = this.forceCleanup.bind(this);
     this.checkMemoryLeaks = this.checkMemoryLeaks.bind(this);
-    
+
     // Registra listeners globais para limpeza automÃ¡tica
     this.registerGlobalCleanupListeners();
-    
+
     // TASK-A-003: Iniciar verificaÃ§Ã£o periÃ³dica de vazamentos
     this.startMemoryLeakDetection();
-    
+
     logger.info('[MemoryManager] Inicializado com proteÃ§Ã£o contra memory leaks');
   }
 
@@ -72,19 +72,19 @@ export class MemoryManager {
   registerGlobalCleanupListeners() {
     // TASK-A-003: Limpeza automÃ¡tica em window.beforeunload
     window.addEventListener('beforeunload', this.handleBeforeUnload, { passive: true });
-    
+
     // Limpeza quando a pÃ¡gina fica oculta (mudanÃ§a de aba, minimizar, etc.)
     document.addEventListener('visibilitychange', this.handleVisibilityChange, { passive: true });
-    
+
     // TASK-A-003: Cleanup em caso de erros (melhorado)
     window.addEventListener('error', this.handleError, { passive: true });
     window.addEventListener('unhandledrejection', this.handleError, { passive: true });
-    
+
     // TASK-A-003: Cleanup em caso de perda de foco prolongada
     window.addEventListener('blur', () => {
       this.scheduleForceCleanup();
     }, { passive: true });
-    
+
     // TASK-A-003: Cancelar cleanup forÃ§ado quando a janela volta ao foco
     window.addEventListener('focus', () => {
       this.cancelForceCleanup();
@@ -99,7 +99,7 @@ export class MemoryManager {
     this.memoryCheckInterval = setInterval(() => {
       this.checkMemoryLeaks();
     }, 2 * 60 * 1000);
-    
+
     logger.info('[MemoryManager] DetecÃ§Ã£o de vazamentos de memÃ³ria iniciada');
   }
 
@@ -109,25 +109,25 @@ export class MemoryManager {
   checkMemoryLeaks() {
     const now = Date.now();
     const stats = this.getStats();
-    
+
     // Atualiza estatÃ­sticas
     this.memoryStats.lastMemoryCheck = now;
-    
+
     // Verifica se hÃ¡ muitos listeners ativos
     if (stats.eventListeners > this.memoryLeakThreshold) {
       logger.warn(`[MemoryManager] PossÃ­vel vazamento detectado: ${stats.eventListeners} listeners ativos`);
       this.performMemoryCleanup();
     }
-    
+
     // Verifica se hÃ¡ timeouts/intervals antigos
     const oldTimeouts = this.getOldTimeouts();
     const oldIntervals = this.getOldIntervals();
-    
+
     if (oldTimeouts.length > 10 || oldIntervals.length > 10) {
       logger.warn(`[MemoryManager] Timeouts/intervals antigos detectados: ${oldTimeouts.length}/${oldIntervals.length}`);
       this.cleanupOldTimers();
     }
-    
+
     // Log estatÃ­sticas periodicamente (a cada 10 minutos)
     if (now - this.lastCleanupTime > 10 * 60 * 1000) {
       this.logMemoryStats();
@@ -142,13 +142,13 @@ export class MemoryManager {
     const now = Date.now();
     const threshold = 5 * 60 * 1000; // 5 minutos
     const oldTimeouts = [];
-    
+
     this.timeouts.forEach((timestamp, timeoutId) => {
       if (now - timestamp > threshold) {
         oldTimeouts.push(timeoutId);
       }
     });
-    
+
     return oldTimeouts;
   }
 
@@ -159,13 +159,13 @@ export class MemoryManager {
     const now = Date.now();
     const threshold = 5 * 60 * 1000; // 5 minutos
     const oldIntervals = [];
-    
+
     this.intervals.forEach((timestamp, intervalId) => {
       if (now - timestamp > threshold) {
         oldIntervals.push(intervalId);
       }
     });
-    
+
     return oldIntervals;
   }
 
@@ -175,17 +175,17 @@ export class MemoryManager {
   cleanupOldTimers() {
     const oldTimeouts = this.getOldTimeouts();
     const oldIntervals = this.getOldIntervals();
-    
+
     oldTimeouts.forEach(timeoutId => {
       this.clearTimeout(timeoutId);
       this.memoryStats.timeoutsCleared++;
     });
-    
+
     oldIntervals.forEach(intervalId => {
       this.clearInterval(intervalId);
       this.memoryStats.intervalsCleared++;
     });
-    
+
     if (oldTimeouts.length > 0 || oldIntervals.length > 0) {
       logger.info(`[MemoryManager] Limpeza de timers antigos: ${oldTimeouts.length} timeouts, ${oldIntervals.length} intervals`);
     }
@@ -197,13 +197,13 @@ export class MemoryManager {
   scheduleForceCleanup() {
     // Cancela cleanup anterior se existir
     this.cancelForceCleanup();
-    
+
     // Agenda novo cleanup em 30 segundos
     this.forceCleanupTimeout = setTimeout(() => {
       logger.info('[MemoryManager] Executando cleanup forÃ§ado por inatividade');
       this.forceCleanup();
     }, 30 * 1000);
-    
+
     logger.debug('[MemoryManager] Cleanup forÃ§ado agendado para 30 segundos');
   }
 
@@ -223,16 +223,16 @@ export class MemoryManager {
    */
   forceCleanup() {
     logger.info('[MemoryManager] Executando cleanup forÃ§ado');
-    
+
     // Limpa timers antigos
     this.cleanupOldTimers();
-    
+
     // Executa limpeza de memÃ³ria
     this.performMemoryCleanup();
-    
+
     // Atualiza estatÃ­sticas
     this.memoryStats.cleanupCount++;
-    
+
     // Cancela timeout de cleanup forÃ§ado
     this.cancelForceCleanup();
   }
@@ -242,10 +242,10 @@ export class MemoryManager {
    */
   handleError(event) {
     logger.warn('[MemoryManager] Erro detectado, executando limpeza preventiva:', event.error || event.reason);
-    
+
     // Executa limpeza preventiva
     this.performMemoryCleanup();
-    
+
     // Agenda cleanup forÃ§ado se muitos erros
     this.scheduleForceCleanup();
   }
@@ -256,7 +256,7 @@ export class MemoryManager {
   logMemoryStats() {
     const stats = this.getStats();
     const memoryStats = this.getMemoryStats();
-    
+
     logger.info('[MemoryManager] EstatÃ­sticas de memÃ³ria:', {
       ...stats,
       ...memoryStats,
@@ -270,8 +270,8 @@ export class MemoryManager {
   getMemoryStats() {
     return {
       ...this.memoryStats,
-      leakRatio: this.memoryStats.listenersCreated > 0 
-        ? (this.memoryStats.listenersCreated - this.memoryStats.listenersRemoved) / this.memoryStats.listenersCreated 
+      leakRatio: this.memoryStats.listenersCreated > 0
+        ? (this.memoryStats.listenersCreated - this.memoryStats.listenersRemoved) / this.memoryStats.listenersCreated
         : 0
     };
   }
@@ -310,7 +310,7 @@ export class MemoryManager {
 
     // Adiciona o listener
     element.addEventListener(event, handler, options);
-    
+
     // TASK-A-003: Rastreamento usando WeakMap (preferencial) e Map (backup)
     const listenerInfo = {
       element,
@@ -319,7 +319,7 @@ export class MemoryManager {
       options,
       timestamp: Date.now()
     };
-    
+
     // Tenta usar WeakMap primeiro (mais eficiente para GC)
     try {
       if (!this.eventListenersWeakMap.has(element)) {
@@ -329,7 +329,7 @@ export class MemoryManager {
     } catch (error) {
       logger.debug('[MemoryManager] WeakMap nÃ£o disponÃ­vel, usando Map backup');
     }
-    
+
     // Backup usando Map tradicional
     const elementKey = this.getElementKey(element);
     if (!this.eventListeners.has(elementKey)) {
@@ -353,12 +353,12 @@ export class MemoryManager {
     if (!element) return;
 
     element.removeEventListener(event, handler);
-    
+
     // TASK-A-003: Remove do WeakMap se disponÃ­vel
     try {
       const weakMapListeners = this.eventListenersWeakMap.get(element);
       if (weakMapListeners) {
-        const weakIndex = weakMapListeners.findIndex(l => 
+        const weakIndex = weakMapListeners.findIndex(l =>
           l.event === event && l.handler === handler
         );
         if (weakIndex !== -1) {
@@ -371,23 +371,23 @@ export class MemoryManager {
     } catch (error) {
       logger.debug('[MemoryManager] Erro ao remover do WeakMap:', error);
     }
-    
+
     // Remove do Map backup
     const elementKey = this.getElementKey(element);
     const listeners = this.eventListeners.get(elementKey);
-    
+
     if (listeners) {
-      const index = listeners.findIndex(l => 
+      const index = listeners.findIndex(l =>
         l.event === event && l.handler === handler
       );
-      
+
       if (index !== -1) {
         listeners.splice(index, 1);
         logger.debug(`[MemoryManager] Listener removido: ${event} de ${elementKey}`);
-        
+
         // TASK-A-003: Atualiza estatÃ­sticas
         this.memoryStats.listenersRemoved++;
-        
+
         // Remove a entrada se nÃ£o hÃ¡ mais listeners
         if (listeners.length === 0) {
           this.eventListeners.delete(elementKey);
@@ -411,20 +411,20 @@ export class MemoryManager {
     const timeoutId = setTimeout(() => {
       // Remove da lista de timeouts ativos quando executado
       this.timeouts.delete(timeoutId);
-      
+
       try {
         callback();
       } catch (error) {
         logger.error('[MemoryManager] Erro em timeout callback:', error);
       }
     }, delay);
-    
+
     // TASK-A-003: Rastreia com timestamp para detecÃ§Ã£o de vazamentos
     this.timeouts.set(timeoutId, Date.now());
     this.memoryStats.timeoutsCreated++;
-    
+
     logger.debug(`[MemoryManager] Timeout criado: ${timeoutId} (${delay}ms)`);
-    
+
     return timeoutId;
   }
 
@@ -436,10 +436,10 @@ export class MemoryManager {
     if (timeoutId && this.timeouts.has(timeoutId)) {
       clearTimeout(timeoutId);
       this.timeouts.delete(timeoutId);
-      
+
       // TASK-A-003: Atualiza estatÃ­sticas
       this.memoryStats.timeoutsCleared++;
-      
+
       logger.debug(`[MemoryManager] Timeout limpo: ${timeoutId}`);
     }
   }
@@ -465,13 +465,13 @@ export class MemoryManager {
         this.clearInterval(intervalId);
       }
     }, delay);
-    
+
     // TASK-A-003: Rastreia com timestamp para detecÃ§Ã£o de vazamentos
     this.intervals.set(intervalId, Date.now());
     this.memoryStats.intervalsCreated++;
-    
+
     logger.debug(`[MemoryManager] Interval criado: ${intervalId} (${delay}ms)`);
-    
+
     return intervalId;
   }
 
@@ -483,10 +483,10 @@ export class MemoryManager {
     if (intervalId && this.intervals.has(intervalId)) {
       clearInterval(intervalId);
       this.intervals.delete(intervalId);
-      
+
       // TASK-A-003: Atualiza estatÃ­sticas
       this.memoryStats.intervalsCleared++;
-      
+
       logger.debug(`[MemoryManager] Interval limpo: ${intervalId}`);
     }
   }
@@ -547,16 +547,16 @@ export class MemoryManager {
    */
   getElementKey(element) {
     if (!element) return 'unknown';
-    
+
     // Usa ID se disponÃ­vel
     if (element.id) return `#${element.id}`;
-    
+
     // Usa classe se disponÃ­vel
     if (element.className) {
       const classes = element.className.split(' ').filter(Boolean);
       if (classes.length > 0) return `.${classes[0]}`;
     }
-    
+
     // Usa tag name como fallback
     return element.tagName?.toLowerCase() || 'unknown';
   }
@@ -633,7 +633,7 @@ export class MemoryManager {
 
     // TASK-A-003: Remove todos os event listeners (incluindo WeakMap)
     let listenersRemoved = 0;
-    
+
     // Limpa do Map tradicional
     this.eventListeners.forEach((listeners, elementKey) => {
       listeners.forEach(({ element, event, handler }) => {
@@ -678,7 +678,7 @@ export class MemoryManager {
     this.timeouts.clear();
     this.intervals.clear();
     this.cleanupCallbacks.clear();
-    
+
     // Limpa WeakMap (nÃ£o hÃ¡ mÃ©todo clear, mas as referÃªncias serÃ£o coletadas pelo GC)
     this.eventListenersWeakMap = new WeakMap();
 

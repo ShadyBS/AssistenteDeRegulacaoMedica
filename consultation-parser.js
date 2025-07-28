@@ -46,7 +46,7 @@ function parseDateForSorting(dateString) {
  */
 function processSoapSections(blockRows, consultation) {
   const soapSections = ["SUBJETIVO", "OBJETIVO", "AVALIAÇÃO", "PLANO"];
-  
+
   soapSections.forEach((sectionName) => {
     const headerRowIndex = blockRows.findIndex((row) =>
       row.textContent.includes(`SOAP - ${sectionName}`)
@@ -212,7 +212,7 @@ function processConsultationRow(mainRow, rows, startIndex) {
  * Converte HTML de consultas em array de objetos estruturados.
  * Esta função processa o HTML retornado pela API do SIGSS e extrai
  * informações estruturadas sobre consultas médicas.
- * 
+ *
  * @param {string} htmlString - HTML da tabela de consultas
  * @returns {Array<object>} Array de objetos de consulta
  */

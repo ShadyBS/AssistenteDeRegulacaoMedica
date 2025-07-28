@@ -1,0 +1,1152 @@
+{
+  "timestamp": "2025-07-28T00:03:21.527Z",
+  "duration": "5.93s",
+  "dryRun": false,
+  "backupPath": ".encoding-backup\\backup-2025-07-28T00-03-15-641Z",
+  "summary": {
+    "totalFiles": 129,
+    "fixedFiles": 115,
+    "skippedFiles": 13,
+    "errorFiles": 0,
+    "filesWithIssues": 116
+  },
+  "fixesByType": [
+    {
+      "type": "LINE_ENDINGS",
+      "count": 42
+    },
+    {
+      "type": "TRAILING_WHITESPACE",
+      "count": 58
+    },
+    {
+      "type": "FINAL_NEWLINE",
+      "count": 82
+    }
+  ],
+  "issuesByType": [
+    {
+      "type": "CRLF_LINE_ENDINGS",
+      "count": 42
+    },
+    {
+      "type": "TRAILING_WHITESPACE",
+      "count": 58
+    },
+    {
+      "type": "NO_FINAL_NEWLINE",
+      "count": 82
+    },
+    {
+      "type": "REPLACEMENT_CHARACTERS",
+      "count": 18
+    },
+    {
+      "type": "BOM_DETECTED",
+      "count": 12
+    }
+  ],
+  "fixedFiles": [
+    {
+      "file": ".eslintrc.js",
+      "appliedFixes": [
+        "LINE_ENDINGS",
+        "TRAILING_WHITESPACE",
+        "FINAL_NEWLINE"
+      ],
+      "originalSize": 6439,
+      "newSize": 6042,
+      "sizeDiff": 397
+    },
+    {
+      "file": ".vscode\\extensions.json",
+      "appliedFixes": [
+        "LINE_ENDINGS",
+        "TRAILING_WHITESPACE",
+        "FINAL_NEWLINE"
+      ],
+      "originalSize": 1353,
+      "newSize": 1278,
+      "sizeDiff": 75
+    },
+    {
+      "file": ".vscode\\launch.json",
+      "appliedFixes": [
+        "LINE_ENDINGS",
+        "TRAILING_WHITESPACE",
+        "FINAL_NEWLINE"
+      ],
+      "originalSize": 8550,
+      "newSize": 8212,
+      "sizeDiff": 338
+    },
+    {
+      "file": ".vscode\\prompts.json",
+      "appliedFixes": [
+        "FINAL_NEWLINE"
+      ],
+      "originalSize": 142,
+      "newSize": 143,
+      "sizeDiff": -1
+    },
+    {
+      "file": ".vscode\\settings.json",
+      "appliedFixes": [
+        "LINE_ENDINGS"
+      ],
+      "originalSize": 3492,
+      "newSize": 3364,
+      "sizeDiff": 128
+    },
+    {
+      "file": ".vscode\\tasks.json",
+      "appliedFixes": [
+        "LINE_ENDINGS",
+        "TRAILING_WHITESPACE",
+        "FINAL_NEWLINE"
+      ],
+      "originalSize": 13493,
+      "newSize": 12930,
+      "sizeDiff": 563
+    },
+    {
+      "file": "AGENTS_UPDATE_SUMMARY.md",
+      "appliedFixes": [
+        "TRAILING_WHITESPACE",
+        "FINAL_NEWLINE"
+      ],
+      "originalSize": 8781,
+      "newSize": 8760,
+      "sizeDiff": 21
+    },
+    {
+      "file": "BUILD.md",
+      "appliedFixes": [
+        "LINE_ENDINGS",
+        "TRAILING_WHITESPACE",
+        "FINAL_NEWLINE"
+      ],
+      "originalSize": 11454,
+      "newSize": 10941,
+      "sizeDiff": 513
+    },
+    {
+      "file": "BrowserAPI.js",
+      "appliedFixes": [
+        "LINE_ENDINGS",
+        "TRAILING_WHITESPACE"
+      ],
+      "originalSize": 5764,
+      "newSize": 5539,
+      "sizeDiff": 225
+    },
+    {
+      "file": "CLEANUP_SYSTEM_REPORT.md",
+      "appliedFixes": [
+        "TRAILING_WHITESPACE",
+        "FINAL_NEWLINE"
+      ],
+      "originalSize": 10456,
+      "newSize": 10446,
+      "sizeDiff": 10
+    },
+    {
+      "file": "ENCODING_GUIDELINES.md",
+      "appliedFixes": [
+        "TRAILING_WHITESPACE",
+        "FINAL_NEWLINE"
+      ],
+      "originalSize": 15091,
+      "newSize": 14995,
+      "sizeDiff": 96
+    },
+    {
+      "file": "EXTENSION_AUDIT_TASKS.md",
+      "appliedFixes": [
+        "TRAILING_WHITESPACE",
+        "FINAL_NEWLINE"
+      ],
+      "originalSize": 27418,
+      "newSize": 27417,
+      "sizeDiff": 1
+    },
+    {
+      "file": "KeepAliveManager.js",
+      "appliedFixes": [
+        "LINE_ENDINGS"
+      ],
+      "originalSize": 5017,
+      "newSize": 4850,
+      "sizeDiff": 167
+    },
+    {
+      "file": "LEGACY_SYSTEM_REMOVAL_REPORT.md",
+      "appliedFixes": [
+        "TRAILING_WHITESPACE",
+        "FINAL_NEWLINE"
+      ],
+      "originalSize": 9441,
+      "newSize": 9422,
+      "sizeDiff": 19
+    },
+    {
+      "file": "LOGGING_GUIDELINES_REPORT.md",
+      "appliedFixes": [
+        "FINAL_NEWLINE"
+      ],
+      "originalSize": 7655,
+      "newSize": 7656,
+      "sizeDiff": -1
+    },
+    {
+      "file": "LOGGING_SYSTEM_REPORT.md",
+      "appliedFixes": [
+        "FINAL_NEWLINE"
+      ],
+      "originalSize": 7784,
+      "newSize": 7785,
+      "sizeDiff": -1
+    },
+    {
+      "file": "MemoryManager.js",
+      "appliedFixes": [
+        "LINE_ENDINGS",
+        "TRAILING_WHITESPACE"
+      ],
+      "originalSize": 23798,
+      "newSize": 22780,
+      "sizeDiff": 1018
+    },
+    {
+      "file": "PERFORMANCE_FIX_REPORT.md",
+      "appliedFixes": [
+        "LINE_ENDINGS",
+        "TRAILING_WHITESPACE",
+        "FINAL_NEWLINE"
+      ],
+      "originalSize": 5275,
+      "newSize": 5132,
+      "sizeDiff": 143
+    },
+    {
+      "file": "README.md",
+      "appliedFixes": [
+        "LINE_ENDINGS"
+      ],
+      "originalSize": 2487,
+      "newSize": 2414,
+      "sizeDiff": 73
+    },
+    {
+      "file": "SECURITY_FIXES_REPORT.md",
+      "appliedFixes": [
+        "LINE_ENDINGS",
+        "TRAILING_WHITESPACE",
+        "FINAL_NEWLINE"
+      ],
+      "originalSize": 4818,
+      "newSize": 4673,
+      "sizeDiff": 145
+    },
+    {
+      "file": "SectionManager.js",
+      "appliedFixes": [
+        "LINE_ENDINGS",
+        "TRAILING_WHITESPACE"
+      ],
+      "originalSize": 36363,
+      "newSize": 35237,
+      "sizeDiff": 1126
+    },
+    {
+      "file": "TASK-A-003-COMPLETION-REPORT.md",
+      "appliedFixes": [
+        "TRAILING_WHITESPACE",
+        "FINAL_NEWLINE"
+      ],
+      "originalSize": 7150,
+      "newSize": 7141,
+      "sizeDiff": 9
+    },
+    {
+      "file": "TASK-A-004-COMPLETION-REPORT.md",
+      "appliedFixes": [
+        "TRAILING_WHITESPACE",
+        "FINAL_NEWLINE"
+      ],
+      "originalSize": 6635,
+      "newSize": 6624,
+      "sizeDiff": 11
+    },
+    {
+      "file": "TASK-A-005-COMPLETION-REPORT.md",
+      "appliedFixes": [
+        "TRAILING_WHITESPACE",
+        "FINAL_NEWLINE"
+      ],
+      "originalSize": 9315,
+      "newSize": 9300,
+      "sizeDiff": 15
+    },
+    {
+      "file": "TASK-A-006-COMPLETION-REPORT.md",
+      "appliedFixes": [
+        "TRAILING_WHITESPACE",
+        "FINAL_NEWLINE"
+      ],
+      "originalSize": 15234,
+      "newSize": 15173,
+      "sizeDiff": 61
+    },
+    {
+      "file": "TASK-M-001-COMPLETION-REPORT.md",
+      "appliedFixes": [
+        "TRAILING_WHITESPACE",
+        "FINAL_NEWLINE"
+      ],
+      "originalSize": 10502,
+      "newSize": 10489,
+      "sizeDiff": 13
+    },
+    {
+      "file": "TASK-M-001-FINAL-REPORT.md",
+      "appliedFixes": [
+        "TRAILING_WHITESPACE",
+        "FINAL_NEWLINE"
+      ],
+      "originalSize": 9366,
+      "newSize": 9357,
+      "sizeDiff": 9
+    },
+    {
+      "file": "TASK-M-001-MIGRATION-SUMMARY.md",
+      "appliedFixes": [
+        "TRAILING_WHITESPACE",
+        "FINAL_NEWLINE"
+      ],
+      "originalSize": 6783,
+      "newSize": 6762,
+      "sizeDiff": 21
+    },
+    {
+      "file": "TimelineManager.js",
+      "appliedFixes": [
+        "LINE_ENDINGS"
+      ],
+      "originalSize": 8420,
+      "newSize": 8149,
+      "sizeDiff": 271
+    },
+    {
+      "file": "WHITELIST_PROBLEM_RESOLUTION.md",
+      "appliedFixes": [
+        "TRAILING_WHITESPACE",
+        "FINAL_NEWLINE"
+      ],
+      "originalSize": 8706,
+      "newSize": 8690,
+      "sizeDiff": 16
+    },
+    {
+      "file": "ZIP_AUDIT_REPORT.md",
+      "appliedFixes": [
+        "TRAILING_WHITESPACE",
+        "FINAL_NEWLINE"
+      ],
+      "originalSize": 8024,
+      "newSize": 8017,
+      "sizeDiff": 7
+    },
+    {
+      "file": "ZIP_AUDIT_SUMMARY.md",
+      "appliedFixes": [
+        "TRAILING_WHITESPACE",
+        "FINAL_NEWLINE"
+      ],
+      "originalSize": 5736,
+      "newSize": 5729,
+      "sizeDiff": 7
+    },
+    {
+      "file": "agents.md",
+      "appliedFixes": [
+        "TRAILING_WHITESPACE"
+      ],
+      "originalSize": 42922,
+      "newSize": 42868,
+      "sizeDiff": 54
+    },
+    {
+      "file": "api-constants.js",
+      "appliedFixes": [
+        "LINE_ENDINGS",
+        "TRAILING_WHITESPACE",
+        "FINAL_NEWLINE"
+      ],
+      "originalSize": 12766,
+      "newSize": 12321,
+      "sizeDiff": 445
+    },
+    {
+      "file": "api.js",
+      "appliedFixes": [],
+      "originalSize": 62838,
+      "newSize": 62838,
+      "sizeDiff": 0
+    },
+    {
+      "file": "babel.config.js",
+      "appliedFixes": [
+        "TRAILING_WHITESPACE",
+        "FINAL_NEWLINE"
+      ],
+      "originalSize": 3270,
+      "newSize": 3192,
+      "sizeDiff": 78
+    },
+    {
+      "file": "browser-polyfill.js",
+      "appliedFixes": [
+        "LINE_ENDINGS"
+      ],
+      "originalSize": 754,
+      "newSize": 733,
+      "sizeDiff": 21
+    },
+    {
+      "file": "build-zips-clean.js",
+      "appliedFixes": [
+        "TRAILING_WHITESPACE",
+        "FINAL_NEWLINE"
+      ],
+      "originalSize": 12808,
+      "newSize": 12591,
+      "sizeDiff": 217
+    },
+    {
+      "file": "config.js",
+      "appliedFixes": [
+        "LINE_ENDINGS",
+        "TRAILING_WHITESPACE"
+      ],
+      "originalSize": 5055,
+      "newSize": 4865,
+      "sizeDiff": 190
+    },
+    {
+      "file": "consultation-parser.js",
+      "appliedFixes": [
+        "LINE_ENDINGS",
+        "TRAILING_WHITESPACE",
+        "FINAL_NEWLINE"
+      ],
+      "originalSize": 8125,
+      "newSize": 7875,
+      "sizeDiff": 250
+    },
+    {
+      "file": "content-script.js",
+      "appliedFixes": [
+        "LINE_ENDINGS",
+        "TRAILING_WHITESPACE"
+      ],
+      "originalSize": 10127,
+      "newSize": 10039,
+      "sizeDiff": 88
+    },
+    {
+      "file": "crypto-utils.js",
+      "appliedFixes": [
+        "LINE_ENDINGS",
+        "TRAILING_WHITESPACE"
+      ],
+      "originalSize": 8791,
+      "newSize": 8516,
+      "sizeDiff": 275
+    },
+    {
+      "file": "dist\\output.css",
+      "appliedFixes": [
+        "LINE_ENDINGS",
+        "FINAL_NEWLINE"
+      ],
+      "originalSize": 25258,
+      "newSize": 25258,
+      "sizeDiff": 0
+    },
+    {
+      "file": "field-config.js",
+      "appliedFixes": [
+        "LINE_ENDINGS"
+      ],
+      "originalSize": 9214,
+      "newSize": 8837,
+      "sizeDiff": 377
+    },
+    {
+      "file": "filter-config.js",
+      "appliedFixes": [
+        "LINE_ENDINGS"
+      ],
+      "originalSize": 8947,
+      "newSize": 8644,
+      "sizeDiff": 303
+    },
+    {
+      "file": "help.html",
+      "appliedFixes": [
+        "LINE_ENDINGS"
+      ],
+      "originalSize": 31318,
+      "newSize": 30647,
+      "sizeDiff": 671
+    },
+    {
+      "file": "help.js",
+      "appliedFixes": [
+        "LINE_ENDINGS"
+      ],
+      "originalSize": 808,
+      "newSize": 783,
+      "sizeDiff": 25
+    },
+    {
+      "file": "jest.config.js",
+      "appliedFixes": [
+        "TRAILING_WHITESPACE",
+        "FINAL_NEWLINE"
+      ],
+      "originalSize": 2128,
+      "newSize": 2096,
+      "sizeDiff": 32
+    },
+    {
+      "file": "jest.polyfills.js",
+      "appliedFixes": [
+        "LINE_ENDINGS",
+        "TRAILING_WHITESPACE",
+        "FINAL_NEWLINE"
+      ],
+      "originalSize": 9548,
+      "newSize": 8947,
+      "sizeDiff": 601
+    },
+    {
+      "file": "jest.setup.js",
+      "appliedFixes": [
+        "LINE_ENDINGS",
+        "TRAILING_WHITESPACE",
+        "FINAL_NEWLINE"
+      ],
+      "originalSize": 8147,
+      "newSize": 7701,
+      "sizeDiff": 446
+    },
+    {
+      "file": "logger.js",
+      "appliedFixes": [
+        "TRAILING_WHITESPACE",
+        "FINAL_NEWLINE"
+      ],
+      "originalSize": 13952,
+      "newSize": 13822,
+      "sizeDiff": 130
+    },
+    {
+      "file": "manifest.json",
+      "appliedFixes": [
+        "FINAL_NEWLINE"
+      ],
+      "originalSize": 1868,
+      "newSize": 1869,
+      "sizeDiff": -1
+    },
+    {
+      "file": "options.html",
+      "appliedFixes": [
+        "TRAILING_WHITESPACE"
+      ],
+      "originalSize": 51381,
+      "newSize": 51373,
+      "sizeDiff": 8
+    },
+    {
+      "file": "options.js",
+      "appliedFixes": [],
+      "originalSize": 48491,
+      "newSize": 48491,
+      "sizeDiff": 0
+    },
+    {
+      "file": "postcss.config.js",
+      "appliedFixes": [
+        "TRAILING_WHITESPACE",
+        "FINAL_NEWLINE"
+      ],
+      "originalSize": 1921,
+      "newSize": 1917,
+      "sizeDiff": 4
+    },
+    {
+      "file": "renderers.js",
+      "appliedFixes": [
+        "LINE_ENDINGS",
+        "TRAILING_WHITESPACE"
+      ],
+      "originalSize": 41050,
+      "newSize": 39606,
+      "sizeDiff": 1444
+    },
+    {
+      "file": "scripts\\build-optimized.js",
+      "appliedFixes": [
+        "TRAILING_WHITESPACE",
+        "FINAL_NEWLINE"
+      ],
+      "originalSize": 18318,
+      "newSize": 17840,
+      "sizeDiff": 478
+    },
+    {
+      "file": "scripts\\build.js",
+      "appliedFixes": [
+        "TRAILING_WHITESPACE",
+        "FINAL_NEWLINE"
+      ],
+      "originalSize": 25408,
+      "newSize": 24734,
+      "sizeDiff": 674
+    },
+    {
+      "file": "scripts\\bundle-analyzer.js",
+      "appliedFixes": [
+        "TRAILING_WHITESPACE",
+        "FINAL_NEWLINE"
+      ],
+      "originalSize": 19251,
+      "newSize": 19061,
+      "sizeDiff": 190
+    },
+    {
+      "file": "scripts\\fix-encoding.js",
+      "appliedFixes": [
+        "TRAILING_WHITESPACE",
+        "FINAL_NEWLINE"
+      ],
+      "originalSize": 14535,
+      "newSize": 14215,
+      "sizeDiff": 320
+    },
+    {
+      "file": "scripts\\optimize-deps.js",
+      "appliedFixes": [
+        "TRAILING_WHITESPACE",
+        "FINAL_NEWLINE"
+      ],
+      "originalSize": 12819,
+      "newSize": 12580,
+      "sizeDiff": 239
+    },
+    {
+      "file": "scripts\\release.js",
+      "appliedFixes": [
+        "LINE_ENDINGS",
+        "TRAILING_WHITESPACE",
+        "FINAL_NEWLINE"
+      ],
+      "originalSize": 23813,
+      "newSize": 22476,
+      "sizeDiff": 1337
+    },
+    {
+      "file": "scripts\\store-upload.js",
+      "appliedFixes": [
+        "LINE_ENDINGS",
+        "TRAILING_WHITESPACE",
+        "FINAL_NEWLINE"
+      ],
+      "originalSize": 16117,
+      "newSize": 15206,
+      "sizeDiff": 911
+    },
+    {
+      "file": "scripts\\validate-encoding.js",
+      "appliedFixes": [
+        "TRAILING_WHITESPACE",
+        "FINAL_NEWLINE"
+      ],
+      "originalSize": 13193,
+      "newSize": 12922,
+      "sizeDiff": 271
+    },
+    {
+      "file": "scripts\\validate-old.js",
+      "appliedFixes": [
+        "LINE_ENDINGS",
+        "TRAILING_WHITESPACE",
+        "FINAL_NEWLINE"
+      ],
+      "originalSize": 19928,
+      "newSize": 18839,
+      "sizeDiff": 1089
+    },
+    {
+      "file": "scripts\\validate.js",
+      "appliedFixes": [
+        "TRAILING_WHITESPACE",
+        "FINAL_NEWLINE"
+      ],
+      "originalSize": 15445,
+      "newSize": 15117,
+      "sizeDiff": 328
+    },
+    {
+      "file": "scripts\\version.js",
+      "appliedFixes": [
+        "LINE_ENDINGS",
+        "TRAILING_WHITESPACE",
+        "FINAL_NEWLINE"
+      ],
+      "originalSize": 16427,
+      "newSize": 15459,
+      "sizeDiff": 968
+    },
+    {
+      "file": "sidebar.js",
+      "appliedFixes": [
+        "LINE_ENDINGS",
+        "TRAILING_WHITESPACE"
+      ],
+      "originalSize": 56818,
+      "newSize": 55018,
+      "sizeDiff": 1800
+    },
+    {
+      "file": "src\\input.css",
+      "appliedFixes": [
+        "LINE_ENDINGS"
+      ],
+      "originalSize": 83,
+      "newSize": 79,
+      "sizeDiff": 4
+    },
+    {
+      "file": "store.js",
+      "appliedFixes": [
+        "TRAILING_WHITESPACE"
+      ],
+      "originalSize": 4093,
+      "newSize": 4077,
+      "sizeDiff": 16
+    },
+    {
+      "file": "tailwind.config.js",
+      "appliedFixes": [
+        "LINE_ENDINGS"
+      ],
+      "originalSize": 496,
+      "newSize": 479,
+      "sizeDiff": 17
+    },
+    {
+      "file": "temp-zip-analysis\\.eslintrc.js",
+      "appliedFixes": [
+        "FINAL_NEWLINE"
+      ],
+      "originalSize": 3087,
+      "newSize": 3088,
+      "sizeDiff": -1
+    },
+    {
+      "file": "temp-zip-analysis\\BrowserAPI.js",
+      "appliedFixes": [
+        "FINAL_NEWLINE"
+      ],
+      "originalSize": 2550,
+      "newSize": 2551,
+      "sizeDiff": -1
+    },
+    {
+      "file": "temp-zip-analysis\\KeepAliveManager.js",
+      "appliedFixes": [
+        "FINAL_NEWLINE"
+      ],
+      "originalSize": 2947,
+      "newSize": 2948,
+      "sizeDiff": -1
+    },
+    {
+      "file": "temp-zip-analysis\\MemoryManager.js",
+      "appliedFixes": [
+        "FINAL_NEWLINE"
+      ],
+      "originalSize": 12505,
+      "newSize": 12506,
+      "sizeDiff": -1
+    },
+    {
+      "file": "temp-zip-analysis\\SectionManager.js",
+      "appliedFixes": [
+        "FINAL_NEWLINE"
+      ],
+      "originalSize": 24632,
+      "newSize": 24633,
+      "sizeDiff": -1
+    },
+    {
+      "file": "temp-zip-analysis\\TimelineManager.js",
+      "appliedFixes": [
+        "FINAL_NEWLINE"
+      ],
+      "originalSize": 6217,
+      "newSize": 6218,
+      "sizeDiff": -1
+    },
+    {
+      "file": "temp-zip-analysis\\api-constants.js",
+      "appliedFixes": [
+        "FINAL_NEWLINE"
+      ],
+      "originalSize": 4325,
+      "newSize": 4326,
+      "sizeDiff": -1
+    },
+    {
+      "file": "temp-zip-analysis\\api.js",
+      "appliedFixes": [
+        "FINAL_NEWLINE"
+      ],
+      "originalSize": 35906,
+      "newSize": 35907,
+      "sizeDiff": -1
+    },
+    {
+      "file": "temp-zip-analysis\\babel.config.js",
+      "appliedFixes": [
+        "FINAL_NEWLINE"
+      ],
+      "originalSize": 1216,
+      "newSize": 1217,
+      "sizeDiff": -1
+    },
+    {
+      "file": "temp-zip-analysis\\background.js",
+      "appliedFixes": [
+        "FINAL_NEWLINE"
+      ],
+      "originalSize": 5606,
+      "newSize": 5607,
+      "sizeDiff": -1
+    },
+    {
+      "file": "temp-zip-analysis\\browser-polyfill.js",
+      "appliedFixes": [
+        "LINE_ENDINGS"
+      ],
+      "originalSize": 754,
+      "newSize": 733,
+      "sizeDiff": 21
+    },
+    {
+      "file": "temp-zip-analysis\\build-zips-clean.js",
+      "appliedFixes": [
+        "FINAL_NEWLINE"
+      ],
+      "originalSize": 8889,
+      "newSize": 8890,
+      "sizeDiff": -1
+    },
+    {
+      "file": "temp-zip-analysis\\build-zips-optimized.js",
+      "appliedFixes": [
+        "FINAL_NEWLINE"
+      ],
+      "originalSize": 8622,
+      "newSize": 8623,
+      "sizeDiff": -1
+    },
+    {
+      "file": "temp-zip-analysis\\config.js",
+      "appliedFixes": [
+        "FINAL_NEWLINE"
+      ],
+      "originalSize": 2269,
+      "newSize": 2270,
+      "sizeDiff": -1
+    },
+    {
+      "file": "temp-zip-analysis\\consultation-parser.js",
+      "appliedFixes": [
+        "FINAL_NEWLINE"
+      ],
+      "originalSize": 4694,
+      "newSize": 4695,
+      "sizeDiff": -1
+    },
+    {
+      "file": "temp-zip-analysis\\content-script.js",
+      "appliedFixes": [
+        "FINAL_NEWLINE"
+      ],
+      "originalSize": 5556,
+      "newSize": 5557,
+      "sizeDiff": -1
+    },
+    {
+      "file": "temp-zip-analysis\\crypto-utils.js",
+      "appliedFixes": [
+        "FINAL_NEWLINE"
+      ],
+      "originalSize": 4597,
+      "newSize": 4598,
+      "sizeDiff": -1
+    },
+    {
+      "file": "temp-zip-analysis\\dist\\output.css",
+      "appliedFixes": [
+        "FINAL_NEWLINE"
+      ],
+      "originalSize": 24751,
+      "newSize": 24752,
+      "sizeDiff": -1
+    },
+    {
+      "file": "temp-zip-analysis\\field-config.js",
+      "appliedFixes": [
+        "FINAL_NEWLINE"
+      ],
+      "originalSize": 5683,
+      "newSize": 5684,
+      "sizeDiff": -1
+    },
+    {
+      "file": "temp-zip-analysis\\filter-config.js",
+      "appliedFixes": [
+        "FINAL_NEWLINE"
+      ],
+      "originalSize": 5677,
+      "newSize": 5678,
+      "sizeDiff": -1
+    },
+    {
+      "file": "temp-zip-analysis\\help.html",
+      "appliedFixes": [
+        "LINE_ENDINGS"
+      ],
+      "originalSize": 31318,
+      "newSize": 30647,
+      "sizeDiff": 671
+    },
+    {
+      "file": "temp-zip-analysis\\help.js",
+      "appliedFixes": [
+        "FINAL_NEWLINE"
+      ],
+      "originalSize": 617,
+      "newSize": 618,
+      "sizeDiff": -1
+    },
+    {
+      "file": "temp-zip-analysis\\jest.config.js",
+      "appliedFixes": [
+        "FINAL_NEWLINE"
+      ],
+      "originalSize": 1077,
+      "newSize": 1078,
+      "sizeDiff": -1
+    },
+    {
+      "file": "temp-zip-analysis\\jest.polyfills.js",
+      "appliedFixes": [
+        "FINAL_NEWLINE"
+      ],
+      "originalSize": 5895,
+      "newSize": 5896,
+      "sizeDiff": -1
+    },
+    {
+      "file": "temp-zip-analysis\\jest.setup.js",
+      "appliedFixes": [
+        "FINAL_NEWLINE"
+      ],
+      "originalSize": 5171,
+      "newSize": 5172,
+      "sizeDiff": -1
+    },
+    {
+      "file": "temp-zip-analysis\\logger.js",
+      "appliedFixes": [
+        "FINAL_NEWLINE"
+      ],
+      "originalSize": 9209,
+      "newSize": 9210,
+      "sizeDiff": -1
+    },
+    {
+      "file": "temp-zip-analysis\\options.html",
+      "appliedFixes": [
+        "LINE_ENDINGS"
+      ],
+      "originalSize": 47864,
+      "newSize": 46567,
+      "sizeDiff": 1297
+    },
+    {
+      "file": "temp-zip-analysis\\options.js",
+      "appliedFixes": [
+        "FINAL_NEWLINE"
+      ],
+      "originalSize": 30441,
+      "newSize": 30442,
+      "sizeDiff": -1
+    },
+    {
+      "file": "temp-zip-analysis\\postcss.config.js",
+      "appliedFixes": [
+        "FINAL_NEWLINE"
+      ],
+      "originalSize": 713,
+      "newSize": 714,
+      "sizeDiff": -1
+    },
+    {
+      "file": "temp-zip-analysis\\renderers.js",
+      "appliedFixes": [
+        "FINAL_NEWLINE"
+      ],
+      "originalSize": 28615,
+      "newSize": 28616,
+      "sizeDiff": -1
+    },
+    {
+      "file": "temp-zip-analysis\\sidebar.js",
+      "appliedFixes": [
+        "FINAL_NEWLINE"
+      ],
+      "originalSize": 38360,
+      "newSize": 38361,
+      "sizeDiff": -1
+    },
+    {
+      "file": "temp-zip-analysis\\store.js",
+      "appliedFixes": [
+        "FINAL_NEWLINE"
+      ],
+      "originalSize": 2456,
+      "newSize": 2457,
+      "sizeDiff": -1
+    },
+    {
+      "file": "temp-zip-analysis\\ui\\patient-card.js",
+      "appliedFixes": [
+        "FINAL_NEWLINE"
+      ],
+      "originalSize": 4207,
+      "newSize": 4208,
+      "sizeDiff": -1
+    },
+    {
+      "file": "temp-zip-analysis\\ui\\search.js",
+      "appliedFixes": [
+        "FINAL_NEWLINE"
+      ],
+      "originalSize": 7082,
+      "newSize": 7083,
+      "sizeDiff": -1
+    },
+    {
+      "file": "temp-zip-analysis\\utils.js",
+      "appliedFixes": [
+        "FINAL_NEWLINE"
+      ],
+      "originalSize": 10021,
+      "newSize": 10022,
+      "sizeDiff": -1
+    },
+    {
+      "file": "temp-zip-analysis\\validation-report.json",
+      "appliedFixes": [
+        "LINE_ENDINGS"
+      ],
+      "originalSize": 1064,
+      "newSize": 1039,
+      "sizeDiff": 25
+    },
+    {
+      "file": "temp-zip-analysis\\validation.js",
+      "appliedFixes": [
+        "FINAL_NEWLINE"
+      ],
+      "originalSize": 9724,
+      "newSize": 9725,
+      "sizeDiff": -1
+    },
+    {
+      "file": "test-logger.js",
+      "appliedFixes": [
+        "TRAILING_WHITESPACE",
+        "FINAL_NEWLINE"
+      ],
+      "originalSize": 8814,
+      "newSize": 8738,
+      "sizeDiff": 76
+    },
+    {
+      "file": "ui\\patient-card.js",
+      "appliedFixes": [
+        "LINE_ENDINGS"
+      ],
+      "originalSize": 5655,
+      "newSize": 5482,
+      "sizeDiff": 173
+    },
+    {
+      "file": "ui\\search.js",
+      "appliedFixes": [
+        "TRAILING_WHITESPACE"
+      ],
+      "originalSize": 10031,
+      "newSize": 9981,
+      "sizeDiff": 50
+    },
+    {
+      "file": "utils.js",
+      "appliedFixes": [
+        "LINE_ENDINGS",
+        "TRAILING_WHITESPACE"
+      ],
+      "originalSize": 17636,
+      "newSize": 17553,
+      "sizeDiff": 83
+    },
+    {
+      "file": "validation-report.json",
+      "appliedFixes": [
+        "LINE_ENDINGS"
+      ],
+      "originalSize": 1064,
+      "newSize": 1039,
+      "sizeDiff": 25
+    },
+    {
+      "file": "validation.js",
+      "appliedFixes": [
+        "TRAILING_WHITESPACE"
+      ],
+      "originalSize": 16826,
+      "newSize": 16723,
+      "sizeDiff": 103
+    },
+    {
+      "file": "webpack.config.js",
+      "appliedFixes": [
+        "TRAILING_WHITESPACE",
+        "FINAL_NEWLINE"
+      ],
+      "originalSize": 15802,
+      "newSize": 15501,
+      "sizeDiff": 301
+    }
+  ],
+  "errors": []
+}
