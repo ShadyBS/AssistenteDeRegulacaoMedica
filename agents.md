@@ -266,7 +266,7 @@ git commit -m "tipo(escopo): descrição"  # 5. Commit obrigatório
 #### Teste Local
 1. **Build da extensão**: `npm run build:all`
 2. **Carregar no Firefox**: `about:debugging` → "Este Firefox" → "Carregar extensão temporária"
-3. **Carregar no Chrome**: `chrome://extensions` �� "Modo desenvolvedor" → "Carregar sem compactação"
+3. **Carregar no Chrome**: `chrome://extensions` → "Modo desenvolvedor" → "Carregar sem compactação"
 4. **Testar funcionalidades** no sistema SIGSS
 
 #### Teste de Compatibilidade
@@ -380,7 +380,7 @@ if (!validateCNS(cns)) {
   throw new Error('CNS inválido');
 }
 
-// Sanitiza��ão de dados
+// Sanitização de dados
 const safePatientData = sanitizePatientData(rawData);
 ```
 

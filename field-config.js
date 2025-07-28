@@ -96,8 +96,7 @@ export const defaultFieldConfig = [
   {
     id: "telefone",
     key: (data) =>
-      `${data.entidadeFisica?.entidade?.entiTel1Pre || ""}${
-        data.entidadeFisica?.entidade?.entiTel1 || ""
+      `${data.entidadeFisica?.entidade?.entiTel1Pre || ""}${data.entidadeFisica?.entidade?.entiTel1 || ""
       }`,
     cadsusKey: 16,
     label: "Telefone",
@@ -128,12 +127,11 @@ export const defaultFieldConfig = [
   {
     id: "endereco",
     key: (data) =>
-      `${
-        data.entidadeFisica?.entidade?.logradouro?.tipoLogradouro?.tiloNome ||
+      `${data.entidadeFisica?.entidade?.logradouro?.tipoLogradouro?.tiloNome ||
         ""
-      } ${String(data.entidadeFisica?.entidade?.logradouro?.logrNome || "")
-        .split("/")[0]
-        .trim()}`.trim(),
+        } ${String(data.entidadeFisica?.entidade?.logradouro?.logrNome || "")
+          .split("/")[0]
+          .trim()}`.trim(),
     cadsusKey: (cell) =>
       `${String(cell[35] || "")} ${String(cell[34] || "")
         .split("/")[0]

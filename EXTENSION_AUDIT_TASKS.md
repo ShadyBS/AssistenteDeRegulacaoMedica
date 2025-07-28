@@ -235,7 +235,7 @@
 - **🎯 Problema:** Falta de rate limiting pode causar sobrecarga do servidor SIGSS
 - **⚡ Impacto:** Possível bloqueio de IP por uso excessivo da API
 - **🌐 Navegador:** Ambos (Chrome/Firefox)
-- **��� Localização:** Todas as funções de API
+- **📍 Localização:** Todas as funções de API
 - **🔧 Ação Required:**
   - [x] Implementar rate limiting baseado em token bucket
   - [x] Adicionar queue para requisições

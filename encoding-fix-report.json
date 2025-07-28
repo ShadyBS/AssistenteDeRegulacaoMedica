@@ -1,49 +1,130 @@
 {
-  "timestamp": "2025-07-28T00:05:03.616Z",
-  "duration": "0.37s",
+  "timestamp": "2025-07-28T01:50:36.274Z",
+  "duration": "1.08s",
   "dryRun": false,
-  "backupPath": ".encoding-backup\\backup-2025-07-28T00-05-03-333Z",
+  "backupPath": ".encoding-backup\\backup-2025-07-28T01-50-35-552Z",
   "summary": {
     "totalFiles": 89,
-    "fixedFiles": 1,
-    "skippedFiles": 72,
+    "fixedFiles": 11,
+    "skippedFiles": 74,
     "errorFiles": 0,
-    "filesWithIssues": 17
+    "filesWithIssues": 15
   },
   "fixesByType": [
     {
-      "type": "TRAILING_WHITESPACE",
-      "count": 1
-    },
-    {
-      "type": "FINAL_NEWLINE",
-      "count": 1
+      "type": "LINE_ENDINGS",
+      "count": 11
     }
   ],
   "issuesByType": [
     {
       "type": "REPLACEMENT_CHARACTERS",
-      "count": 17
+      "count": 8
     },
     {
-      "type": "TRAILING_WHITESPACE",
-      "count": 1
-    },
-    {
-      "type": "NO_FINAL_NEWLINE",
-      "count": 1
+      "type": "CRLF_LINE_ENDINGS",
+      "count": 11
     }
   ],
   "fixedFiles": [
     {
-      "file": "ENCODING_PREVENTION_SUMMARY.md",
+      "file": "scripts\\build-optimized.js",
       "appliedFixes": [
-        "TRAILING_WHITESPACE",
-        "FINAL_NEWLINE"
+        "LINE_ENDINGS"
       ],
-      "originalSize": 7329,
-      "newSize": 7312,
-      "sizeDiff": 17
+      "originalSize": 17843,
+      "newSize": 17842,
+      "sizeDiff": 1
+    },
+    {
+      "file": "scripts\\build.js",
+      "appliedFixes": [
+        "LINE_ENDINGS"
+      ],
+      "originalSize": 24737,
+      "newSize": 24736,
+      "sizeDiff": 1
+    },
+    {
+      "file": "scripts\\bundle-analyzer.js",
+      "appliedFixes": [
+        "LINE_ENDINGS"
+      ],
+      "originalSize": 19064,
+      "newSize": 19063,
+      "sizeDiff": 1
+    },
+    {
+      "file": "scripts\\fix-encoding.js",
+      "appliedFixes": [
+        "LINE_ENDINGS"
+      ],
+      "originalSize": 14218,
+      "newSize": 14217,
+      "sizeDiff": 1
+    },
+    {
+      "file": "scripts\\optimize-deps.js",
+      "appliedFixes": [
+        "LINE_ENDINGS"
+      ],
+      "originalSize": 12583,
+      "newSize": 12582,
+      "sizeDiff": 1
+    },
+    {
+      "file": "scripts\\release.js",
+      "appliedFixes": [
+        "LINE_ENDINGS"
+      ],
+      "originalSize": 22479,
+      "newSize": 22478,
+      "sizeDiff": 1
+    },
+    {
+      "file": "scripts\\store-upload.js",
+      "appliedFixes": [
+        "LINE_ENDINGS"
+      ],
+      "originalSize": 15209,
+      "newSize": 15208,
+      "sizeDiff": 1
+    },
+    {
+      "file": "scripts\\validate-encoding.js",
+      "appliedFixes": [
+        "LINE_ENDINGS"
+      ],
+      "originalSize": 12925,
+      "newSize": 12924,
+      "sizeDiff": 1
+    },
+    {
+      "file": "scripts\\validate-old.js",
+      "appliedFixes": [
+        "LINE_ENDINGS"
+      ],
+      "originalSize": 18842,
+      "newSize": 18841,
+      "sizeDiff": 1
+    },
+    {
+      "file": "scripts\\validate.js",
+      "appliedFixes": [
+        "LINE_ENDINGS"
+      ],
+      "originalSize": 15120,
+      "newSize": 15119,
+      "sizeDiff": 1
+    },
+    {
+      "file": "scripts\\version.js",
+      "appliedFixes": [
+        "LINE_ENDINGS"
+      ],
+      "originalSize": 15462,
+      "newSize": 15461,
+      "sizeDiff": 1
     }
   ],
   "errors": []

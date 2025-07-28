@@ -1,18 +1,18 @@
 /**
- * @file ContÃ©m funÃ§Ãµes utilitÃ¡rias compartilhadas em toda a extensÃ£o.
+ * @file Contém funções utilitárias compartilhadas em toda a extensão.
  */
 
 import { CONFIG, getTimeout, getCSSClass, getUIConfig } from "./config.js";
 import { createComponentLogger } from "./logger.js";
 
-// Logger especÃ­fico para utilitÃ¡rios
+// Logger específico para utilitários
 const logger = createComponentLogger('Utils');
 
 /**
- * Atraso na execuÃ§Ã£o de uma funÃ§Ã£o apÃ³s o utilizador parar de digitar.
- * @param {Function} func A funÃ§Ã£o a ser executada.
+ * Atraso na execução de uma função após o utilizador parar de digitar.
+ * @param {Function} func A função a ser executada.
  * @param {number} [delay=500] O tempo de espera em milissegundos.
- * @returns {Function} A funÃ§Ã£o com debounce.
+ * @returns {Function} A função com debounce.
  */
 export function debounce(func, delay = CONFIG.TIMEOUTS.DEBOUNCE_DEFAULT) {
   let timeoutId;
@@ -36,7 +36,7 @@ export function toggleLoader(show) {
 }
 
 /**
- * Exibe uma mensagem na Ã¡rea de mensagens.
+ * Exibe uma mensagem na área de mensagens.
  * @param {string} text O texto da mensagem.
  * @param {'error' | 'success' | 'info'} [type='error'] O tipo de mensagem.
  */
@@ -57,7 +57,7 @@ export function showMessage(text, type = "error") {
 }
 
 /**
- * Limpa a Ã¡rea de mensagens.
+ * Limpa a área de mensagens.
  */
 export function clearMessage() {
   const messageArea = document.getElementById("message-area");
@@ -67,14 +67,14 @@ export function clearMessage() {
 }
 
 /**
- * Converte uma string de data em vÃ¡rios formatos para um objeto Date.
+ * Converte uma string de data em vários formatos para um objeto Date.
  * @param {string} dateString A data no formato "dd/MM/yyyy" ou "yyyy-MM-dd", podendo conter prefixos.
- * @returns {Date|null} O objeto Date ou null se a string for invÃ¡lida.
+ * @returns {Date|null} O objeto Date ou null se a string for inválida.
  */
 export function parseDate(dateString) {
   if (!dateString || typeof dateString !== "string") return null;
 
-  // Tenta extrair o primeiro padrÃ£o de data vÃ¡lido da string.
+  // Tenta extrair o primeiro padrão de data válido da string.
   const dateMatch = dateString.match(
     /(\d{4}-\d{2}-\d{2})|(\d{2}\/\d{2}\/\d{2,4})/
   );
@@ -91,17 +91,17 @@ export function parseDate(dateString) {
     [day, month, year] = matchedDate.split("/").map(Number);
   }
 
-  // Valida se os nÃºmeros sÃ£o vÃ¡lidos e se a data Ã© real
+  // Valida se os números são válidos e se a data é real
   if (isNaN(year) || isNaN(month) || isNaN(day)) return null;
 
-  // Lida com anos de 2 dÃ­gitos (ex: '24' -> 2024)
+  // Lida com anos de 2 dígitos (ex: '24' -> 2024)
   if (year >= 0 && year < getUIConfig("TWO_DIGIT_YEAR_THRESHOLD")) {
     year += getUIConfig("YEAR_BASE");
   }
 
   const date = new Date(Date.UTC(year, month - 1, day));
 
-  // Confirma que a data nÃ£o "rolou" para o mÃªs seguinte (ex: 31 de Abril -> 1 de Maio)
+  // Confirma que a data não "rolou" para o mês seguinte (ex: 31 de Abril -> 1 de Maio)
   if (
     date.getUTCFullYear() === year &&
     date.getUTCMonth() === month - 1 &&
@@ -110,11 +110,11 @@ export function parseDate(dateString) {
     return date;
   }
 
-  return null; // Retorna nulo se a data for invÃ¡lida (ex: 31/02/2024)
+  return null; // Retorna nulo se a data for inválida (ex: 31/02/2024)
 }
 
 /**
- * ObtÃ©m um valor aninhado de um objeto de forma segura.
+ * Obtém um valor aninhado de um objeto de forma segura.
  * @param {object} obj O objeto.
  * @param {string} path O caminho para a propriedade (ex: 'a.b.c').
  * @returns {*} O valor encontrado ou undefined.
@@ -125,15 +125,15 @@ export const getNestedValue = (obj, path) => {
 };
 
 /**
- * Calcula uma data relativa Ã  data atual com base num desvio em meses.
- * @param {number} offsetInMonths - O nÃºmero de meses a adicionar ou subtrair.
- * @returns {Date} O objeto Date resultante.
- */
+* Calcula uma data relativa à data atual com base num desvio em meses.
+* @param {number} offsetInMonths - O número de meses a adicionar ou subtrair.
+* @returns {Date} O objeto Date resultante.
+*/
 export function calculateRelativeDate(offsetInMonths) {
-  const date = new Date();
-  // setMonth lida corretamente com transiÃ§Ãµes de ano e dias do mÃªs
-  date.setMonth(date.getMonth() + offsetInMonths);
-  return date;
+const date = new Date();
+// setMonth lida corretamente com transições de ano e dias do mês
+date.setMonth(date.getMonth() + offsetInMonths);
+return date;
 }
 
 /**
@@ -151,7 +151,7 @@ export function getContrastYIQ(hexcolor) {
 }
 
 /**
- * Normaliza uma string removendo acentos, cedilha e convertendo para minÃºsculas.
+ * Normaliza uma string removendo acentos, cedilha e convertendo para minúsculas.
  * @param {string} str - A string a ser normalizada.
  * @returns {string} A string normalizada.
  */
@@ -166,7 +166,7 @@ export function normalizeString(str) {
 
 /**
  * Configura um sistema de abas (tabs) dentro de um container.
- * @param {HTMLElement} container - O elemento que contÃ©m os botÃµes e os painÃ©is das abas.
+ * @param {HTMLElement} container - O elemento que contém os botões e os painéis das abas.
  */
 export function setupTabs(container) {
   if (!container) return;
@@ -266,8 +266,8 @@ export function normalizeTimelineData(apiData, options = {}) {
       // Trigger garbage collection hint periodically
       if (enableGC && processedCount % 500 === 0) {
         // Force garbage collection by removing references
-        // No ambiente de browser extension, nÃ£o temos acesso ao global.gc()
-        // Apenas fazemos limpeza manual de referÃªncias
+        // No ambiente de browser extension, não temos acesso ao global.gc()
+        // Apenas fazemos limpeza manual de referências
         if (typeof window !== 'undefined' && window.gc) {
           window.gc();
         }
@@ -304,8 +304,8 @@ export function normalizeTimelineData(apiData, options = {}) {
       type: "consultation",
       date: parseDate(c.date.split("\n")[0]),
       sortableDate: c.sortableDate || parseDate(c.date),
-      title: `Consulta: ${c.specialty || "Especialidade nÃ£o informada"}`,
-      summary: `com ${c.professional || "Profissional nÃ£o informado"}`,
+      title: `Consulta: ${c.specialty || "Especialidade não informada"}`,
+      summary: `com ${c.professional || "Profissional não informado"}`,
       details: c,
       subDetails: c.details || [],
       searchText,
@@ -327,13 +327,13 @@ export function normalizeTimelineData(apiData, options = {}) {
       type: "exam",
       date: eventDate,
       sortableDate: eventDate,
-      title: `Exame Solicitado: ${e.examName || "Nome nÃ£o informado"}`,
-      summary: `Solicitado por ${e.professional || "NÃ£o informado"}`,
+      title: `Exame Solicitado: ${e.examName || "Nome não informado"}`,
+      summary: `Solicitado por ${e.professional || "Não informado"}`,
       details: e,
       subDetails: [
         {
           label: "Resultado",
-          value: e.hasResult ? "DisponÃ­vel" : "Pendente",
+          value: e.hasResult ? "Disponível" : "Pendente",
         },
       ],
       searchText,
@@ -352,8 +352,8 @@ export function normalizeTimelineData(apiData, options = {}) {
       type: "appointment",
       date: parseDate(a.date),
       sortableDate: parseDate(a.date),
-      title: `Agendamento: ${a.specialty || a.description || "NÃ£o descrito"}`,
-      summary: a.location || "Local nÃ£o informado",
+      title: `Agendamento: ${a.specialty || a.description || "Não descrito"}`,
+      summary: a.location || "Local não informado",
       details: a,
       subDetails: [
         { label: "Status", value: a.status || "N/A" },
@@ -375,8 +375,8 @@ export function normalizeTimelineData(apiData, options = {}) {
       type: "regulation",
       date: parseDate(r.date),
       sortableDate: parseDate(r.date),
-      title: `RegulaÃ§Ã£o: ${r.procedure || "Procedimento nÃ£o informado"}`,
-      summary: `Solicitante: ${r.requester || "NÃ£o informado"}`,
+      title: `Regulação: ${r.procedure || "Procedimento não informado"}`,
+      summary: `Solicitante: ${r.requester || "Não informado"}`,
       details: r,
       subDetails: [
         { label: "Status", value: r.status || "N/A" },
@@ -396,7 +396,7 @@ export function normalizeTimelineData(apiData, options = {}) {
       type: "document",
       date: parseDate(doc.date),
       sortableDate: parseDate(doc.date),
-      title: `Documento: ${doc.description || "Sem descriÃ§Ã£o"}`,
+      title: `Documento: ${doc.description || "Sem descrição"}`,
       summary: `Tipo: ${(doc.fileType || '').toUpperCase()}`,
       details: doc,
       subDetails: [],
@@ -431,7 +431,7 @@ export function normalizeTimelineData(apiData, options = {}) {
     apiData = null;
 
     // Trigger garbage collection if available
-    // No ambiente de browser extension, nÃ£o temos acesso ao global.gc()
+    // No ambiente de browser extension, não temos acesso ao global.gc()
     if (typeof window !== 'undefined' && window.gc) {
       window.gc();
     }

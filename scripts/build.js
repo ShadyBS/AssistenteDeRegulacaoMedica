@@ -766,7 +766,7 @@ class ExtensionBuilder {
       this.log(`\n🎉 Build completo!`, 'success');
       this.log(`   ⏱️  Tempo: ${duration}s`);
       this.log(`   📦 Builds: ${builds.length}`);
-      this.log(`   ���� Tamanho total: ${totalSizeMB} MB`);
+      this.log(`   🎉 Tamanho total: ${totalSizeMB} MB`);
       this.log(`   📁 Localização: ${DIST_ZIPS_DIR}`);
 
       // Lista arquivos criados

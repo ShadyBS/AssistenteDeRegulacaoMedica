@@ -554,7 +554,7 @@ class OptimizedExtensionBuilder {
       }
 
       // Mostra economia de espaço
-      this.log(`\n�� Otimizações aplicadas:`);
+      this.log(`\n🎉 Otimizações aplicadas:`);
       this.log(`   • Apenas arquivos essenciais incluídos`);
       this.log(`   • Arquivos de desenvolvimento excluídos`);
       this.log(`   • Documentação e testes removidos`);

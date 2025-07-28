@@ -1,5 +1,5 @@
 /**
- * @file ContÃ©m todas as funÃ§Ãµes responsÃ¡veis por gerar o HTML dos resultados.
+ * @file Contém todas as funções responsáveis por gerar o HTML dos resultados.
  */
 
 import { getSortIndicator } from "./SectionManager.js";
@@ -10,7 +10,7 @@ export function renderConsultations(consultations, sortState) {
   const contentDiv = document.getElementById("consultations-content");
   if (!contentDiv) return;
 
-  // Limpar conteÃºdo anterior
+  // Limpar conteúdo anterior
   contentDiv.innerHTML = '';
 
   if (consultations.length === 0) {
@@ -21,7 +21,7 @@ export function renderConsultations(consultations, sortState) {
     return;
   }
 
-  // Criar cabeÃ§alho
+  // Criar cabeçalho
   const headerDiv = document.createElement('div');
   headerDiv.className = `flex justify-between text-xs font-bold ${getCSSClass('TEXT_MUTED')} mb-2 px-3`;
 
@@ -33,7 +33,7 @@ export function renderConsultations(consultations, sortState) {
   const dateHeader = document.createElement('span');
   dateHeader.className = 'sort-header w-1/3 text-right';
   dateHeader.setAttribute('data-sort-key', 'sortableDate');
-  dateHeader.innerHTML = `Data <span class="sort-indicator">${getSortIndicator("sortableDate", sortState)}</span>`;
+  dateHeader.innerHTML = `  <span class="sort-indicator">${getSortIndicator("sortableDate", sortState)}</span>`;
 
   headerDiv.appendChild(specialtyHeader);
   headerDiv.appendChild(dateHeader);
@@ -99,7 +99,12 @@ export function renderConsultations(consultations, sortState) {
         copySpan.className = 'copy-icon';
         copySpan.title = 'Copiar';
         copySpan.setAttribute('data-copy-text', d.value);
-        copySpan.textContent = 'ðŸ“„';
+        copySpan.innerHTML = `
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-clipboard" viewBox="0 0 16 16">
+            <path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1v-1z"/>
+            <path d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h3zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3z"/>
+          </svg>
+        `;
 
         valueP.appendChild(document.createTextNode(' '));
         valueP.appendChild(copySpan);
@@ -121,7 +126,7 @@ export function renderExams(exams, sortState) {
   const contentDiv = document.getElementById("exams-content");
   if (!contentDiv) return;
 
-  // Limpar conteÃºdo anterior
+  // Limpar conteúdo anterior
   contentDiv.innerHTML = '';
 
   if (exams.length === 0) {
@@ -132,7 +137,7 @@ export function renderExams(exams, sortState) {
     return;
   }
 
-  // Criar cabeÃ§alho
+  // Criar cabeçalho
   const headerDiv = document.createElement('div');
   headerDiv.className = 'flex justify-between text-xs font-bold text-slate-500 mb-2 px-3';
 
@@ -171,13 +176,18 @@ export function renderExams(exams, sortState) {
     // Nome do exame
     const examNameP = document.createElement('p');
     examNameP.className = 'font-semibold text-indigo-700';
-    examNameP.textContent = exam.examName || "Nome do exame nÃ£o informado";
+    examNameP.textContent = exam.examName || "Nome do exame não informado";
 
     const copySpan = document.createElement('span');
     copySpan.className = 'copy-icon';
     copySpan.title = 'Copiar';
     copySpan.setAttribute('data-copy-text', exam.examName);
-    copySpan.textContent = 'ðŸ“„';
+    copySpan.innerHTML = `
+      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-clipboard" viewBox="0 0 16 16">
+        <path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1v-1z"/>
+        <path d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h3zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3z"/>
+      </svg>
+    `;
 
     examNameP.appendChild(document.createTextNode(' '));
     examNameP.appendChild(copySpan);
@@ -187,10 +197,10 @@ export function renderExams(exams, sortState) {
     detailsDiv.className = 'text-sm text-slate-500 mt-1';
 
     const professionalP = document.createElement('p');
-    professionalP.textContent = `Solicitado por: ${exam.professional || "NÃ£o informado"} (${exam.specialty || "N/A"})`;
+    professionalP.textContent = `Solicitado por: ${exam.professional || "Não informado"} (${exam.specialty || "N/A"})`;
 
     const dateP = document.createElement('p');
-    dateP.textContent = `Data: ${exam.date || "NÃ£o informada"}`;
+    dateP.textContent = `Data: ${exam.date || "Não informada"}`;
 
     detailsDiv.appendChild(professionalP);
     detailsDiv.appendChild(dateP);
@@ -198,7 +208,7 @@ export function renderExams(exams, sortState) {
     examDiv.appendChild(examNameP);
     examDiv.appendChild(detailsDiv);
 
-    // BotÃ£o de visualizar resultado (se disponÃ­vel)
+    // Botão de visualizar resultado (se disponível)
     if (showBtn) {
       const resultBtn = document.createElement('button');
       resultBtn.className = 'view-exam-result-btn mt-2 w-full text-sm bg-green-100 text-green-800 py-1 rounded hover:bg-green-200';
@@ -224,7 +234,7 @@ export function renderAppointments(appointments, sortState) {
     ATENDIDO: "bg-purple-100 text-purple-800",
   };
 
-  // Limpar conteÃºdo anterior
+  // Limpar conteúdo anterior
   contentDiv.innerHTML = '';
 
   if (appointments.length === 0) {
@@ -235,7 +245,7 @@ export function renderAppointments(appointments, sortState) {
     return;
   }
 
-  // Criar cabeÃ§alho
+  // Criar cabeçalho
   const headerDiv = document.createElement('div');
   headerDiv.className = 'flex justify-between text-xs font-bold text-slate-500 mb-2 px-3';
 
@@ -275,14 +285,14 @@ export function renderAppointments(appointments, sortState) {
     let idp, ids;
     const parts = item.id.split("-");
 
-    // Verificar se o primeiro part nÃ£o Ã© numÃ©rico (indica prefixo)
+    // Verificar se o primeiro part não é numérico (indica prefixo)
     if (parts.length >= 2 && isNaN(parts[0])) {
-      // Se o primeiro part nÃ£o Ã© numÃ©rico, Ã© um prefixo (ex: "exam-525411")
+      // Se o primeiro part não é numérico, é um prefixo (ex: "exam-525411")
       // Usar o segundo part como ids e tentar obter idp de outras fontes
       ids = parts[1];
 
       // Para exames, tentar obter o idp correto do objeto original
-      // Se nÃ£o disponÃ­vel, usar o mesmo valor como fallback
+      // Se não disponível, usar o mesmo valor como fallback
       idp = item.examIdp || item.originalIdp || parts[1];
 
       logger.warn(`ID com prefixo detectado: ${item.id}, usando idp=${idp}, ids=${ids}`);
@@ -323,7 +333,7 @@ export function renderAppointments(appointments, sortState) {
     detailsDiv.className = 'text-sm text-slate-500 mt-2 border-t pt-2';
 
     const dateP = document.createElement('p');
-    dateP.innerHTML = `<strong>Data:</strong> ${item.date} Ã s ${item.time}`;
+    dateP.innerHTML = `<strong>Data:</strong> ${item.date} às ${item.time}`;
 
     const locationP = document.createElement('p');
     locationP.innerHTML = `<strong>Local:</strong> ${item.location}`;
@@ -335,7 +345,7 @@ export function renderAppointments(appointments, sortState) {
     detailsDiv.appendChild(locationP);
     detailsDiv.appendChild(professionalP);
 
-    // BotÃ£o de detalhes
+    // Botão de detalhes
     const buttonDiv = document.createElement('div');
     buttonDiv.className = 'flex items-center justify-between mt-2 pt-2 border-t';
 
@@ -374,10 +384,10 @@ export function renderRegulations(regulations, sortState, globalSettings) {
     NEGADO: "bg-red-100 text-red-800",
     DEVOLVIDO: "bg-orange-100 text-orange-800",
     CANCELADA: "bg-gray-100 text-gray-800",
-    "EM ANÃLISE": "bg-blue-100 text-blue-800",
+    "EM ANÁLISE": "bg-blue-100 text-blue-800",
   };
 
-  // Limpar conteÃºdo anterior
+  // Limpar conteúdo anterior
   contentDiv.innerHTML = '';
 
   if (regulations.length === 0) {
@@ -388,7 +398,7 @@ export function renderRegulations(regulations, sortState, globalSettings) {
     return;
   }
 
-  // Criar cabeÃ§alho
+  // Criar cabeçalho
   const headerDiv = document.createElement('div');
   headerDiv.className = 'flex justify-between text-xs font-bold text-slate-500 mb-2 px-3';
 
@@ -412,7 +422,7 @@ export function renderRegulations(regulations, sortState, globalSettings) {
   headerDiv.appendChild(dateHeader);
   contentDiv.appendChild(headerDiv);
 
-  // Criar itens de regulaÃ§Ã£o
+  // Criar itens de regulação
   regulations.forEach(item => {
     const statusKey = (item.status || "").toUpperCase();
     const style = statusStyles[statusKey] || "bg-gray-100 text-gray-800";
@@ -429,7 +439,7 @@ export function renderRegulations(regulations, sortState, globalSettings) {
     const regulationDiv = document.createElement('div');
     regulationDiv.className = 'p-3 mb-3 border rounded-lg bg-white';
 
-    // Header da regulaÃ§Ã£o
+    // Header da regulação
     const headerDiv = document.createElement('div');
     headerDiv.className = 'flex justify-between items-start';
 
@@ -458,7 +468,12 @@ export function renderRegulations(regulations, sortState, globalSettings) {
     procedureCopySpan.className = 'copy-icon';
     procedureCopySpan.title = 'Copiar';
     procedureCopySpan.setAttribute('data-copy-text', item.procedure);
-    procedureCopySpan.textContent = 'ðŸ“„';
+    procedureCopySpan.innerHTML = `
+      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-clipboard" viewBox="0 0 16 16">
+        <path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1v-1z"/>
+        <path d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h3zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3z"/>
+      </svg>
+    `;
 
     procedureP.appendChild(document.createTextNode(' '));
     procedureP.appendChild(procedureCopySpan);
@@ -471,7 +486,12 @@ export function renderRegulations(regulations, sortState, globalSettings) {
     cidCopySpan.className = 'copy-icon';
     cidCopySpan.title = 'Copiar';
     cidCopySpan.setAttribute('data-copy-text', item.cid);
-    cidCopySpan.textContent = 'ðŸ“„';
+    cidCopySpan.innerHTML = `
+      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-clipboard" viewBox="0 0 16 16">
+        <path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1v-1z"/>
+        <path d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h3zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3z"/>
+      </svg>
+    `;
 
     cidP.appendChild(document.createTextNode(' '));
     cidP.appendChild(cidCopySpan);
@@ -487,7 +507,7 @@ export function renderRegulations(regulations, sortState, globalSettings) {
     headerDiv.appendChild(leftDiv);
     headerDiv.appendChild(statusSpan);
 
-    // Detalhes da regulaÃ§Ã£o
+    // Detalhes da regulação
     const detailsDiv = document.createElement('div');
     detailsDiv.className = 'text-sm text-slate-500 mt-2 border-t pt-2 space-y-1';
 
@@ -498,13 +518,13 @@ export function renderRegulations(regulations, sortState, globalSettings) {
     requesterP.innerHTML = `<strong>Solicitante:</strong> ${item.requester}`;
 
     const providerP = document.createElement('p');
-    providerP.innerHTML = `<strong>Executante:</strong> ${item.provider || "NÃ£o definido"}`;
+    providerP.innerHTML = `<strong>Executante:</strong> ${item.provider || "Não definido"}`;
 
     detailsDiv.appendChild(dateP);
     detailsDiv.appendChild(requesterP);
     detailsDiv.appendChild(providerP);
 
-    // BotÃ£o de detalhes
+    // Botão de detalhes
     const buttonDiv = document.createElement('div');
     buttonDiv.className = 'mt-2 pt-2 border-t';
 
@@ -581,7 +601,7 @@ export function renderDocuments(documents, sortState) {
   const contentDiv = document.getElementById("documents-content");
   if (!contentDiv) return;
 
-  // Limpar conteÃºdo anterior
+  // Limpar conteúdo anterior
   contentDiv.innerHTML = '';
 
   if (!documents || documents.length === 0) {
@@ -592,14 +612,14 @@ export function renderDocuments(documents, sortState) {
     return;
   }
 
-  // Criar cabeÃ§alho
+  // Criar cabeçalho
   const headerDiv = document.createElement('div');
   headerDiv.className = 'flex justify-between text-xs font-bold text-slate-500 mb-2 px-3';
 
   const descriptionHeader = document.createElement('span');
   descriptionHeader.className = 'sort-header w-2/3';
   descriptionHeader.setAttribute('data-sort-key', 'description');
-  descriptionHeader.innerHTML = `DescriÃ§Ã£o <span class="sort-indicator">${getSortIndicator("description", sortState)}</span>`;
+  descriptionHeader.innerHTML = `Descrição <span class="sort-indicator">${getSortIndicator("description", sortState)}</span>`;
 
   const dateHeader = document.createElement('span');
   dateHeader.className = 'sort-header w-1/3 text-right';
@@ -615,7 +635,7 @@ export function renderDocuments(documents, sortState) {
     const documentDiv = document.createElement('div');
     documentDiv.className = 'p-3 mb-2 border rounded-lg bg-white';
 
-    // DescriÃ§Ã£o do documento
+    // Descrição do documento
     const descriptionP = document.createElement('p');
     descriptionP.className = 'font-semibold text-gray-800';
     descriptionP.textContent = doc.description;
@@ -638,7 +658,7 @@ export function renderDocuments(documents, sortState) {
     detailsDiv.appendChild(separatorSpan);
     detailsDiv.appendChild(typeSpan);
 
-    // BotÃ£o de visualizar documento
+    // Botão de visualizar documento
     const viewBtn = document.createElement('button');
     viewBtn.className = 'view-document-btn mt-2 w-full text-sm bg-gray-100 text-gray-800 py-1 rounded hover:bg-gray-200';
     viewBtn.setAttribute('data-idp', doc.idp);
@@ -684,13 +704,13 @@ export function renderTimeline(events, status) {
       icon: "M8 2v4M16 2v4M3 10h18M3 4h18v16H3zM9 16l2 2 4-4",
     },
     regulation: {
-      label: "RegulaÃ§Ã£o",
+      label: "Regulação",
       color: "red",
       bgColorClass: "bg-red-100",
       iconColorClass: "text-red-600",
       icon: "M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1zM9 12l2 2 4-4",
     },
-    // --- INÃCIO DA MODIFICAÃ‡ÃƒO ---
+    // --- INÍCIO DA MODIFICAÇÃO ---
     document: {
       label: "Documento",
       color: "gray",
@@ -698,7 +718,7 @@ export function renderTimeline(events, status) {
       iconColorClass: "text-gray-600",
       icon: "M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z M14 2v6h6",
     },
-    // --- FIM DA MODIFICAÃ‡ÃƒO ---
+    // --- FIM DA MODIFICAÇÃO ---
   };
 
   let contentHtml = "";
@@ -736,7 +756,7 @@ export function renderTimeline(events, status) {
           const dateString =
             event.date instanceof Date && !isNaN(event.date)
               ? event.date.toLocaleDateString("pt-BR")
-              : "Data InvÃ¡lida";
+              : "Data Inválida";
 
           let topRightDetailsHtml = "";
           let extraInfoHtml = "";
@@ -748,14 +768,14 @@ export function renderTimeline(events, status) {
             let idp, ids;
             const parts = a.id.split("-");
 
-            // Verificar se o primeiro part nÃ£o Ã© numÃ©rico (indica prefixo)
+            // Verificar se o primeiro part não é numérico (indica prefixo)
             if (parts.length >= 2 && isNaN(parts[0])) {
-              // Se o primeiro part nÃ£o Ã© numÃ©rico, Ã© um prefixo (ex: "exam-525411")
+              // Se o primeiro part não é numérico, é um prefixo (ex: "exam-525411")
               // Usar o segundo part como ids e tentar obter idp de outras fontes
               ids = parts[1];
 
               // Para exames, tentar obter o idp correto do objeto original
-              // Se nÃ£o disponÃ­vel, usar o mesmo valor como fallback
+              // Se não disponível, usar o mesmo valor como fallback
               idp = a.examIdp || a.originalIdp || parts[1];
 
               logger.warn(`ID com prefixo detectado: ${a.id}, usando idp=${idp}, ids=${ids}`);
@@ -773,7 +793,7 @@ export function renderTimeline(events, status) {
             };
             const statusClass =
               statusStyles[a.status] || "text-slate-600";
-            const timeHtml = `<div class="text-xs text-slate-500">Ã s ${a.time}</div>`;
+            const timeHtml = `<div class="text-xs text-slate-500">às ${a.time}</div>`;
             const statusHtml = `<div class="mt-1 text-xs font-semibold ${statusClass}">${a.status}</div>`;
 
             const icon = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-search-2"><path d="M14 2v6h6"/><path d="M4 22h14a2 2 0 0 0 2-2V7.5L14.5 2H6a2 2 0 0 0-2 2v4"/><path d="M5 17a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/><path d="m9 21-1.5-1.5"/></svg>`;
@@ -812,20 +832,18 @@ export function renderTimeline(events, status) {
                 <div class="timeline-details-body mt-2 pt-2 border-t border-slate-200">
                     <p class="text-sm text-slate-500 mb-2">${c.unit}</p>
                     ${c.details
-                      .map(
-                        (d) => `
-                        <p class="text-xs font-semibold text-slate-500 uppercase mb-1">${
-                          d.label
-                        }</p>
+                .map(
+                  (d) => `
+                        <p class="text-xs font-semibold text-slate-500 uppercase mb-1">${d.label
+                    }</p>
                         <p class="text-sm text-slate-700 mb-2">${d.value.replace(
-                          /\n/g,
-                          "<br>"
-                        )} <span class="copy-icon" title="Copiar" data-copy-text="${
-                          d.value
-                        }">ðŸ“„</span></p>
+                      /\n/g,
+                      "<br>"
+                    )} <span class="copy-icon" title="Copiar" data-copy-text="${d.value
+                    }"></span></p>
                     `
-                      )
-                      .join("")}
+                )
+                .join("")}
                 </div>
             `;
           } else if (event.type === "regulation") {
@@ -837,26 +855,22 @@ export function renderTimeline(events, status) {
                     <p class="text-xs font-semibold text-slate-500 mb-1">ANEXOS:</p>
                     <div class="space-y-1">
                         ${r.attachments
-                          .map(
-                            (att) => `
-                            <button class="view-regulation-attachment-btn w-full text-left text-sm bg-gray-50 text-gray-700 py-1 px-2 rounded hover:bg-gray-100 flex justify-between items-center" data-idp="${
-                              att.idp
-                            }" data-ids="${att.ids}">
+                  .map(
+                    (att) => `
+                            <button class="view-regulation-attachment-btn w-full text-left text-sm bg-gray-50 text-gray-700 py-1 px-2 rounded hover:bg-gray-100 flex justify-between items-center" data-idp="${att.idp
+                      }" data-ids="${att.ids}">
                                 <div class="flex items-center gap-2 overflow-hidden">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="flex-shrink-0" viewBox="0 0 16 16"><path d="M4 0h8a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2zM2 2a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H2z"/><path d="M4.5 12.5a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7a.5.5 0 0 1-.5-.5zm0-2a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7a.5.5 0 0 1-.5-.5zm0-2a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7a.5.5 0 0 1-.5-.5z"/></svg>
-                                    <span class="truncate" title="${
-                                      att.description
-                                    } (${att.fileType.toUpperCase()})">${
-                              att.description
-                            } (${att.fileType.toUpperCase()})</span>
+                                    <span class="truncate" title="${att.description
+                      } (${att.fileType.toUpperCase()})">${att.description
+                      } (${att.fileType.toUpperCase()})</span>
                                 </div>
-                                <span class="text-xs text-slate-400 flex-shrink-0 ml-2">${
-                                  att.date
-                                }</span>
+                                <span class="text-xs text-slate-400 flex-shrink-0 ml-2">${att.date
+                      }</span>
                             </button>
                         `
-                          )
-                          .join("")}
+                  )
+                  .join("")}
                     </div>
                 </div>
                 `
@@ -867,13 +881,12 @@ export function renderTimeline(events, status) {
                     <p class="mb-1"><strong>Status:</strong> ${r.status}</p>
                     <p class="mb-1"><strong>Prioridade:</strong> ${r.priority}</p>
                     <p class="mb-1"><strong>CID:</strong> ${r.cid}</p>
-                    <p class="mb-2"><strong>Executante:</strong> ${
-                      r.provider || "NÃ£o definido"
-                    }</p>
+                    <p class="mb-2"><strong>Executante:</strong> ${r.provider || "Não definido"
+              }</p>
                     ${attachmentsHtml}
                 </div>
             `;
-            // --- INÃCIO DA MODIFICAÃ‡ÃƒO ---
+            // --- INÍCIO DA MODIFICAÇÃO ---
           } else if (event.type === "document") {
             const doc = event.details;
             extraInfoHtml = `
@@ -884,7 +897,7 @@ export function renderTimeline(events, status) {
                 </div>
             `;
           }
-          // --- FIM DA MODIFICAÃ‡ÃƒO ---
+          // --- FIM DA MODIFICAÇÃO ---
 
           return `
                     <div class="relative pl-10 timeline-item" data-event-type="${event.type}">
@@ -917,4 +930,3 @@ export function renderTimeline(events, status) {
   }
   contentDiv.innerHTML = contentHtml;
 }
-

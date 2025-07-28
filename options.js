@@ -517,7 +517,8 @@ async function saveOptions() {
     ...document.querySelectorAll(".tabs .tab-button"),
   ].map((btn) => btn.dataset.tab);
 
-  await browserAPI.storage.sync.set({
+  // Usa StorageManager para salvar configurações (SYNC com fallback para local)
+  const success = await storageManager.set({
     baseUrl: baseUrl.endsWith("/") ? baseUrl.slice(0, -1) : baseUrl,
     enableAutomaticDetection,
     keepSessionAliveInterval,
@@ -532,6 +533,12 @@ async function saveOptions() {
     sidebarSectionOrder,
     sectionHeaderStyles,
   });
+
+  if (!success) {
+    logger.error('Falha ao salvar configurações usando StorageManager');
+    Utils.showMessage("Erro ao salvar configurações. Tente novamente.", "error");
+    return;
+  }
 
   Utils.showMessage(
     "Configurações salvas! As alterações serão aplicadas ao recarregar o assistente.",

@@ -15,11 +15,11 @@ import { getBrowserAPIInstance } from "./BrowserAPI.js";
 import { encryptForStorage, decryptFromStorage, cleanupExpiredData, MEDICAL_DATA_CONFIG } from "./crypto-utils.js";
 import { createComponentLogger } from "./logger.js";
 
-// Logger especÃ­fico para Sidebar
+// Logger específico para Sidebar
 const logger = createComponentLogger('Sidebar');
 
 
-// --- ÃCONES ---
+// --- ÍCONES ---
 const sectionIcons = {
   "patient-details": `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-user-round-check-icon lucide-user-round-check"><path d="M2 21a8 8 0 0 1 13.292-6"/><circle cx="10" cy="8" r="5"/><path d="m16 19 2 2 4-4"/></svg>`,
   timeline: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-gantt-chart"><path d="M8 6h10"/><path d="M6 12h9"/><path d="M11 18h7"/></svg>`,
@@ -31,36 +31,36 @@ const sectionIcons = {
 };
 
 let currentRegulationData = null;
-let sectionManagers = {}; // Objeto para armazenar instÃ¢ncias de SectionManager
+let sectionManagers = {}; // Objeto para armazenar instâncias de SectionManager
 
-// InstÃ¢ncia global do gerenciador de memÃ³ria
+// Instância global do gerenciador de memória
 const memoryManager = getMemoryManager();
 
-// InstÃ¢ncia global da API do browser
+// Instância global da API do browser
 const browserAPI = getBrowserAPIInstance();
 
-// Controle de race condition para seleÃ§Ã£o de pacientes
+// Controle de race condition para seleção de pacientes
 let patientSelectionInProgress = false;
 let pendingPatientSelection = null;
 let patientSelectionTimeout = null;
 
 /**
- * Sistema de limpeza de recursos para mudanÃ§a de paciente
+ * Sistema de limpeza de recursos para mudança de paciente
  */
 function cleanupPatientResources() {
   logger.info('[Sidebar] Limpando recursos do paciente anterior');
 
-  // Limpa timeout de seleÃ§Ã£o de paciente se existir
+  // Limpa timeout de seleção de paciente se existir
   if (patientSelectionTimeout) {
     memoryManager.clearTimeout(patientSelectionTimeout);
     patientSelectionTimeout = null;
   }
 
-  // Reseta variÃ¡veis de controle
+  // Reseta variáveis de controle
   patientSelectionInProgress = false;
   pendingPatientSelection = null;
 
-  // Limpa dados de regulaÃ§Ã£o atual
+  // Limpa dados de regulação atual
   currentRegulationData = null;
 
   // Limpa dados dos section managers
@@ -75,10 +75,10 @@ function cleanupPatientResources() {
     }
   });
 
-  // ForÃ§a limpeza de memÃ³ria
+  // Força limpeza de memória
   memoryManager.performMemoryCleanup();
 
-  logger.info('[Sidebar] Limpeza de recursos concluÃ­da');
+  logger.info('[Sidebar] Limpeza de recursos concluída');
 }
 
 /**
@@ -109,21 +109,21 @@ function registerCleanupCallbacks() {
     }
   });
 
-  // Callback para limpeza de variÃ¡veis globais
+  // Callback para limpeza de variáveis globais
   memoryManager.addCleanupCallback(() => {
-    logger.info('[Sidebar] Limpando variÃ¡veis globais');
+    logger.info('[Sidebar] Limpando variáveis globais');
     currentRegulationData = null;
     patientSelectionInProgress = false;
     pendingPatientSelection = null;
   });
 }
 
-// --- FUNÃ‡ÃƒO AUXILIAR DE FILTRAGEM ---
+// --- FUNÇÃO AUXILIAR DE FILTRAGEM ---
 /**
  * Aplica um filtro de texto normalizado a um array de dados.
  * @param {Array} items - O array de itens a ser filtrado.
- * @param {string} text - O texto de busca (pode conter mÃºltiplos termos separados por vÃ­rgula).
- * @param {Function} getFieldContent - Uma funÃ§Ã£o que recebe um item e retorna a string a ser pesquisada.
+ * @param {string} text - O texto de busca (pode conter múltiplos termos separados por vírgula).
+ * @param {Function} getFieldContent - Uma função que recebe um item e retorna a string a ser pesquisada.
  * @returns {Array} O array de itens filtrado.
  */
 const applyNormalizedTextFilter = (items, text, getFieldContent) => {
@@ -138,7 +138,7 @@ const applyNormalizedTextFilter = (items, text, getFieldContent) => {
   });
 };
 
-// --- LÃ“GICA DE FILTRAGEM ---
+// --- LÓGICA DE FILTRAGEM ---
 const consultationFilterLogic = (data, filters) => {
   let filteredData = [...data];
   if (filters["hide-no-show-checkbox"]) {
@@ -309,8 +309,8 @@ const documentFilterLogic = (data, filters) => {
 };
 
 const sectionConfigurations = {
-  "patient-details": {}, // SeÃ§Ã£o especial sem fetch
-  timeline: {}, // ConfiguraÃ§Ã£o da Timeline serÃ¡ tratada pelo seu prÃ³prio gestor
+  "patient-details": {}, // Seção especial sem fetch
+  timeline: {}, // Configuração da Timeline será tratada pelo seu próprio gestor
   consultations: {
     fetchFunction: API.fetchAllConsultations,
     renderFunction: Renderers.renderConsultations,
@@ -343,10 +343,10 @@ const sectionConfigurations = {
   },
 };
 
-// --- FUNÃ‡Ã•ES DE ESTILO E ÃCONES ---
+// --- FUNÇÕES DE ESTILO E ÍCONES ---
 
 /**
- * Injeta os Ã­cones SVG nos cabeÃ§alhos das seÃ§Ãµes.
+ * Injeta os ícones SVG nos cabeçalhos das seções.
  */
 function applySectionIcons() {
   for (const sectionKey in sectionIcons) {
@@ -358,13 +358,13 @@ function applySectionIcons() {
 }
 
 /**
- * LÃª os estilos customizados do storage e os aplica aos cabeÃ§alhos
- * usando VariÃ¡veis CSS (CSS Custom Properties) para melhor performance e manutenibilidade.
+ * Lê os estilos customizados do storage e os aplica aos cabeçalhos
+ * usando Variáveis CSS (CSS Custom Properties) para melhor performance e manutenibilidade.
  * @param {object} styles - O objeto de estilos vindo do storage.
  */
 function applyCustomHeaderStyles(styles) {
-  // O CSS base com as variÃ¡veis e fallbacks jÃ¡ estÃ¡ definido em sidebar.html.
-  // Esta funÃ§Ã£o apenas define os valores das variÃ¡veis para cada seÃ§Ã£o.
+  // O CSS base com as variáveis e fallbacks já está definido em sidebar.html.
+  // Esta função apenas define os valores das variáveis para cada seção.
 
   const defaultStyles = {
     backgroundColor: "#ffffff",
@@ -382,12 +382,12 @@ function applyCustomHeaderStyles(styles) {
     const sectionElement = document.getElementById(sectionId);
     if (!sectionElement) continue;
 
-    // Pega o estilo salvo para a seÃ§Ã£o ou usa um objeto vazio.
+    // Pega o estilo salvo para a seção ou usa um objeto vazio.
     const savedStyle = styles[sectionKey] || {};
-    // Combina com os padrÃµes para garantir que todas as propriedades existam.
+    // Combina com os padrões para garantir que todas as propriedades existam.
     const finalStyle = { ...defaultStyles, ...savedStyle };
 
-    // Define as variÃ¡veis CSS no elemento da seÃ§Ã£o.
+    // Define as variáveis CSS no elemento da seção.
     sectionElement.style.setProperty(
       "--section-bg-color",
       finalStyle.backgroundColor
@@ -414,9 +414,9 @@ async function selectPatient(patientInfo, forceRefresh = false) {
     return;
   }
 
-  // Implementar debouncing para evitar mÃºltiplas chamadas simultÃ¢neas
+  // Implementar debouncing para evitar múltiplas chamadas simultâneas
   if (patientSelectionInProgress) {
-    // Armazena a Ãºltima requisiÃ§Ã£o para ser processada apÃ³s a atual
+    // Armazena a última requisição para ser processada após a atual
     pendingPatientSelection = { patientInfo, forceRefresh };
     return;
   }
@@ -427,14 +427,14 @@ async function selectPatient(patientInfo, forceRefresh = false) {
     patientSelectionTimeout = null;
   }
 
-  // Implementar debounce de 300ms para evitar mÃºltiplas chamadas rÃ¡pidas
+  // Implementar debounce de 300ms para evitar múltiplas chamadas rápidas
   patientSelectionTimeout = memoryManager.setTimeout(async () => {
     // Limpa recursos do paciente anterior antes de carregar novo
     cleanupPatientResources();
 
     await executePatientSelection(patientInfo, forceRefresh);
 
-    // Processar requisiÃ§Ã£o pendente se existir
+    // Processar requisição pendente se existir
     if (pendingPatientSelection) {
       const pending = pendingPatientSelection;
       pendingPatientSelection = null;
@@ -447,7 +447,7 @@ async function selectPatient(patientInfo, forceRefresh = false) {
 
 async function executePatientSelection(patientInfo, forceRefresh = false) {
   if (patientSelectionInProgress) {
-    logger.warn("Tentativa de seleÃ§Ã£o de paciente jÃ¡ em progresso, ignorando...");
+    logger.warn("Tentativa de seleção de paciente já em progresso, ignorando...");
     return;
   }
 
@@ -462,7 +462,7 @@ async function executePatientSelection(patientInfo, forceRefresh = false) {
     const cadsus = await API.fetchCadsusData({
       cpf: Utils.getNestedValue(ficha, "entidadeFisica.entfCPF"),
       cns: ficha.isenNumCadSus,
-      skipValidation: true // Pular validaÃ§Ã£o quando carregando dados do paciente selecionado
+      skipValidation: true // Pular validação quando carregando dados do paciente selecionado
     });
 
     Object.values(sectionManagers).forEach((manager) => {
@@ -476,10 +476,10 @@ async function executePatientSelection(patientInfo, forceRefresh = false) {
     store.setPatient(ficha, cadsus);
     await updateRecentPatients(store.getPatient());
 
-    logger.info("SeleÃ§Ã£o de paciente concluÃ­da com sucesso:", patientInfo.idp);
+    logger.info("Seleção de paciente concluída com sucesso:", patientInfo.idp);
   } catch (error) {
     Utils.showMessage(error.message, "error");
-    logger.error("Erro na seleÃ§Ã£o de paciente:", error);
+    logger.error("Erro na seleção de paciente:", error);
     store.clearPatient();
   } finally {
     Utils.toggleLoader(false);
@@ -488,12 +488,12 @@ async function executePatientSelection(patientInfo, forceRefresh = false) {
 }
 
 async function init() {
-  logger.info('[Sidebar] Iniciando aplicaÃ§Ã£o');
+  logger.info('[Sidebar] Iniciando aplicação');
 
-  // âœ… SEGURANÃ‡A: Limpeza automÃ¡tica de dados mÃ©dicos expirados na inicializaÃ§Ã£o
+  // ✅ SEGURANÇA: Limpeza automática de dados médicos expirados na inicialização
   try {
     await cleanupExpiredData(browserAPI);
-    logger.info('[Sidebar] Limpeza de dados expirados concluÃ­da');
+    logger.info('[Sidebar] Limpeza de dados expirados concluída');
   } catch (error) {
     logger.error('[Sidebar] Erro na limpeza de dados expirados:', error);
   }
@@ -501,7 +501,7 @@ async function init() {
   // Registra callbacks de limpeza no MemoryManager
   registerCleanupCallbacks();
 
-  // Registra referÃªncias globais importantes
+  // Registra referências globais importantes
   memoryManager.setGlobalRef('sectionManagers', sectionManagers);
   memoryManager.setGlobalRef('currentRegulationData', currentRegulationData);
 
@@ -532,14 +532,14 @@ async function init() {
         reloadSidebar.addEventListener("click", () => window.location.reload());
       }
 
-      // **nÃ£o retornamos mais aqui**, apenas marcamos que deu â€œfallbackâ€
+      // **não retornamos mais aqui**, apenas marcamos que deu “fallback”
     } else {
       logger.error("Initialization failed:", error);
       Utils.showMessage(
-        "Ocorreu um erro inesperado ao iniciar a extensÃ£o.",
+        "Ocorreu um erro inesperado ao iniciar a extensão.",
         "error"
       );
-      // nesse caso vocÃª pode querer return ou throw de verdade
+      // nesse caso você pode querer return ou throw de verdade
       return;
     }
   }
@@ -549,9 +549,9 @@ async function init() {
   Utils.setupTabs(document.getElementById("patterns-tabs-container"));
   // (adicione aqui quaisquer outros containers de aba que tenha)
 
-  // === sÃ³ o resto do fluxo principal depende de baseUrlConfigured ===
+  // === só o resto do fluxo principal depende de baseUrlConfigured ===
   if (!baseUrlConfigured) {
-    // jÃ¡ mostramos o formulÃ¡rio de URL, nÃ£o temos mais nada a fazer
+    // já mostramos o formulário de URL, não temos mais nada a fazer
     return;
   }
 
@@ -578,14 +578,14 @@ async function init() {
 
   await checkForPendingRegulation();
 
-  // Log estatÃ­sticas iniciais do MemoryManager
+  // Log estatísticas iniciais do MemoryManager
   memoryManager.logStats();
 
-  logger.info('[Sidebar] AplicaÃ§Ã£o inicializada com sucesso');
+  logger.info('[Sidebar] Aplicação inicializada com sucesso');
 }
 
 /**
- * âœ… SEGURANÃ‡A: Carrega configuraÃ§Ãµes e dados com descriptografia segura
+ * ✅ SEGURANÇA: Carrega configurações e dados com descriptografia segura
  */
 async function loadConfigAndData() {
   const syncData = await browserAPI.storage.sync.get({
@@ -599,7 +599,7 @@ async function loadConfigAndData() {
     enableAutomaticDetection: true,
     dateRangeDefaults: {},
     sidebarSectionOrder: [],
-    sectionHeaderStyles: {}, // Carrega a nova configuraÃ§Ã£o de estilos
+    sectionHeaderStyles: {}, // Carrega a nova configuração de estilos
   });
 
   const localData = await browserAPI.storage.local.get({
@@ -608,11 +608,11 @@ async function loadConfigAndData() {
     automationRules: [],
   });
 
-  // âœ… SEGURANÃ‡A: Descriptografar dados de pacientes recentes se estiverem criptografados
+  // ✅ SEGURANÇA: Descriptografar dados de pacientes recentes se estiverem criptografados
   let recentPatients = [];
   if (localData.recentPatients) {
     try {
-      // Verifica se os dados estÃ£o criptografados (string) ou nÃ£o (array)
+      // Verifica se os dados estão criptografados (string) ou não (array)
       if (typeof localData.recentPatients === 'string') {
         // Dados criptografados - descriptografar
         const decryptedPatients = await decryptFromStorage(localData.recentPatients);
@@ -620,12 +620,12 @@ async function loadConfigAndData() {
           recentPatients = decryptedPatients;
           logger.info('[Sidebar] Pacientes recentes descriptografados com sucesso');
         } else {
-          logger.warn('[Sidebar] Dados de pacientes recentes expiraram ou sÃ£o invÃ¡lidos');
-          // Remove dados expirados/invÃ¡lidos
+          logger.warn('[Sidebar] Dados de pacientes recentes expiraram ou são inválidos');
+          // Remove dados expirados/inválidos
           await browserAPI.storage.local.remove(['recentPatients', 'recentPatientsTimestamp']);
         }
       } else if (Array.isArray(localData.recentPatients)) {
-        // Dados nÃ£o criptografados (formato antigo) - migrar para formato criptografado
+        // Dados não criptografados (formato antigo) - migrar para formato criptografado
         recentPatients = localData.recentPatients;
         logger.info('[Sidebar] Migrando pacientes recentes para formato criptografado');
 
@@ -642,9 +642,9 @@ async function loadConfigAndData() {
               recentPatientsTimestamp: Date.now()
             });
 
-            logger.info('[Sidebar] MigraÃ§Ã£o para formato criptografado concluÃ­da');
+            logger.info('[Sidebar] Migração para formato criptografado concluída');
           } catch (error) {
-            logger.error('[Sidebar] Erro na migraÃ§Ã£o para formato criptografado:', error);
+            logger.error('[Sidebar] Erro na migração para formato criptografado:', error);
           }
         }
       }
@@ -696,17 +696,17 @@ function applySectionOrder(order) {
 
   const patientCardId = "patient-details";
 
-  // Pega a ordem salva ou a ordem padrÃ£o do DOM
+  // Pega a ordem salva ou a ordem padrão do DOM
   const savedOrder =
     order && order.length > 0 ? order : Object.keys(sectionMap);
 
   // Garante que a ficha do paciente esteja sempre no topo
-  // 1. Remove a ficha da ordem atual, nÃ£o importa onde esteja.
+  // 1. Remove a ficha da ordem atual, não importa onde esteja.
   let finalOrder = savedOrder.filter((id) => id !== patientCardId);
-  // 2. Adiciona a ficha no inÃ­cio da lista.
+  // 2. Adiciona a ficha no início da lista.
   finalOrder.unshift(patientCardId);
 
-  // Adiciona quaisquer novas seÃ§Ãµes (nÃ£o presentes na ordem salva) ao final
+  // Adiciona quaisquer novas seções (não presentes na ordem salva) ao final
   const knownIds = new Set(finalOrder);
   Object.keys(sectionMap).forEach((id) => {
     if (!knownIds.has(id)) {
@@ -922,12 +922,12 @@ function addGlobalEventListeners() {
   const infoBtn = document.getElementById("context-info-btn");
   const reloadBtn = document.getElementById("reload-sidebar-btn");
 
-  // Handler para botÃ£o de reload com confirmaÃ§Ã£o
+  // Handler para botão de reload com confirmação
   const reloadHandler = () => {
     const patient = store.getPatient();
     if (patient && patient.ficha) {
       const confirmation = window.confirm(
-        "Um paciente estÃ¡ selecionado e o estado atual serÃ¡ perdido. Deseja realmente recarregar o assistente?"
+        "Um paciente está selecionado e o estado atual será perdido. Deseja realmente recarregar o assistente?"
       );
       if (confirmation) {
         // Limpa recursos antes de recarregar
@@ -970,10 +970,10 @@ function addGlobalEventListeners() {
     memoryManager.addEventListener(infoBtn, "click", handleShowRegulationInfo);
   }
 
-  // Handler para mudanÃ§as no storage
+  // Handler para mudanças no storage
   const storageChangeHandler = (changes, areaName) => {
     if (areaName === "local" && changes.pendingRegulation) {
-      // Apenas processa se a detecÃ§Ã£o automÃ¡tica estiver LIGADA
+      // Apenas processa se a detecção automática estiver LIGADA
       browserAPI.storage.sync
         .get({ enableAutomaticDetection: true })
         .then((settings) => {
@@ -981,7 +981,7 @@ function addGlobalEventListeners() {
             const { newValue } = changes.pendingRegulation;
             if (newValue && newValue.isenPKIdp) {
               logger.info(
-                "[Assistente Sidebar] Nova regulaÃ§Ã£o detectada via storage.onChanged:",
+                "[Assistente Sidebar] Nova regulação detectada via storage.onChanged:",
                 newValue
               );
               handleRegulationLoaded(newValue);
@@ -998,12 +998,12 @@ function addGlobalEventListeners() {
     }
 
     if (areaName === "sync" && changes.enableAutomaticDetection) {
-      // MantÃ©m o botÃ£o da sidebar sincronizado com a configuraÃ§Ã£o
+      // Mantém o botão da sidebar sincronizado com a configuração
       setupAutoModeToggle();
     }
   };
 
-  // Adiciona listener para mudanÃ§as no storage
+  // Adiciona listener para mudanças no storage
   browserAPI.storage.onChanged.addListener(storageChangeHandler);
 
   // Registra callback para remover listener do storage na limpeza
@@ -1071,21 +1071,21 @@ async function copyToClipboard(button) {
   button.dataset.inProgress = "true";
   try {
     await navigator.clipboard.writeText(textToCopy);
-    button.textContent = "âœ…";
+    button.textContent = "✅";
   } catch (err) {
     logger.error("Falha ao copiar texto: ", err);
-    button.textContent = "âŒ";
+    button.textContent = "❌";
   } finally {
     setTimeout(() => {
-      button.textContent = "ðŸ“„";
+      button.textContent = "📋";
       button.dataset.inProgress = "false";
     }, getTimeout("AUTO_REFRESH"));
   }
 }
 
 /**
- * âœ… SEGURANÃ‡A: Atualiza lista de pacientes recentes com criptografia
- * Dados mÃ©dicos sensÃ­veis sÃ£o criptografados antes do armazenamento
+ * ✅ SEGURANÇA: Atualiza lista de pacientes recentes com criptografia
+ * Dados médicos sensíveis são criptografados antes do armazenamento
  */
 async function updateRecentPatients(patientData) {
   if (!patientData || !patientData.ficha) return;
@@ -1098,8 +1098,8 @@ async function updateRecentPatients(patientData) {
     );
     const updatedRecents = [newRecent, ...filtered].slice(0, 5);
 
-    // âœ… SEGURANÃ‡A: Criptografar dados de pacientes recentes antes do armazenamento
-    // TTL de 24 horas para dados de pacientes recentes (menos sensÃ­vel que dados de regulaÃ§Ã£o)
+    // ✅ SEGURANÇA: Criptografar dados de pacientes recentes antes do armazenamento
+    // TTL de 24 horas para dados de pacientes recentes (menos sensível que dados de regulação)
     const encryptedRecentPatients = await encryptForStorage(
       updatedRecents,
       MEDICAL_DATA_CONFIG.DEFAULT_TTL_MINUTES * 24 // 24 horas
@@ -1145,7 +1145,7 @@ async function handleViewExamResult(button) {
     } else {
       // Criar elemento de forma segura para evitar XSS
       const messageElement = document.createElement("p");
-      messageElement.textContent = "Resultado nÃ£o encontrado.";
+      messageElement.textContent = "Resultado não encontrado.";
       newTab.document.body.innerHTML = "";
       newTab.document.body.appendChild(messageElement);
     }
@@ -1174,7 +1174,7 @@ async function handleViewDocument(button) {
     } else {
       // Criar elemento de forma segura para evitar XSS
       const messageElement = document.createElement("p");
-      messageElement.textContent = "URL do documento nÃ£o encontrada.";
+      messageElement.textContent = "URL do documento não encontrada.";
       newTab.document.body.innerHTML = "";
       newTab.document.body.appendChild(messageElement);
     }
@@ -1194,7 +1194,7 @@ async function handleViewRegulationAttachment(button) {
 
   // Criar elemento de loading de forma segura
   const loadingElement = document.createElement("p");
-  loadingElement.textContent = "Carregando anexo da regulaÃ§Ã£o...";
+  loadingElement.textContent = "Carregando anexo da regulação...";
   newTab.document.body.appendChild(loadingElement);
 
   try {
@@ -1204,7 +1204,7 @@ async function handleViewRegulationAttachment(button) {
     } else {
       // Criar elemento de forma segura para evitar XSS
       const messageElement = document.createElement("p");
-      messageElement.textContent = "URL do anexo nÃ£o encontrada.";
+      messageElement.textContent = "URL do anexo não encontrada.";
       newTab.document.body.innerHTML = "";
       newTab.document.body.appendChild(messageElement);
     }
@@ -1214,7 +1214,7 @@ async function handleViewRegulationAttachment(button) {
     errorElement.textContent = `Erro ao carregar anexo: ${error.message}`;
     newTab.document.body.innerHTML = "";
     newTab.document.body.appendChild(errorElement);
-    logger.error("Falha ao visualizar anexo da regulaÃ§Ã£o:", error);
+    logger.error("Falha ao visualizar anexo da regulação:", error);
   }
 }
 
@@ -1223,14 +1223,14 @@ function showModal(title, content) {
   const modalTitle = document.getElementById("modal-title");
   const modalContent = document.getElementById("modal-content");
 
-  // âœ… SEGURO: Sempre usar textContent para tÃ­tulo
+  // ✅ SEGURO: Sempre usar textContent para título
   modalTitle.textContent = title;
 
-  // âœ… SEGURO: SanitizaÃ§Ã£o rigorosa de conteÃºdo
+  // ✅ SEGURO: Sanitização rigorosa de conteúdo
   if (typeof content === 'string') {
     modalContent.textContent = content;
   } else if (content instanceof HTMLElement) {
-    // Limpa conteÃºdo anterior de forma segura
+    // Limpa conteúdo anterior de forma segura
     modalContent.textContent = '';
     modalContent.appendChild(content);
   } else {
@@ -1264,7 +1264,7 @@ function createDetailRowElement(label, value) {
 function createRegulationDetailsElement(data) {
   if (!data) {
     const p = document.createElement('p');
-    p.textContent = 'Dados da regulaÃ§Ã£o nÃ£o encontrados.';
+    p.textContent = 'Dados da regulação não encontrados.';
     return p;
   }
 
@@ -1273,7 +1273,7 @@ function createRegulationDetailsElement(data) {
   const details = [
     { label: 'Status', value: data.reguStatus },
     { label: 'Tipo', value: data.reguTipo === "ENC" ? "Consulta" : "Exame" },
-    { label: 'Data SolicitaÃ§Ã£o', value: data.reguDataStr },
+    { label: 'Data Solicitação', value: data.reguDataStr },
     { label: 'Procedimento', value: data.prciNome },
     { label: 'CID', value: `${data.tcidCod} - ${data.tcidDescricao}` },
     { label: 'Profissional Sol.', value: data.prsaEntiNome },
@@ -1311,7 +1311,7 @@ function createRegulationDetailsElement(data) {
 function createAppointmentDetailsElement(data) {
   if (!data) {
     const p = document.createElement('p');
-    p.textContent = 'Dados do agendamento nÃ£o encontrados.';
+    p.textContent = 'Dados do agendamento não encontrados.';
     return p;
   }
 
@@ -1324,12 +1324,12 @@ function createAppointmentDetailsElement(data) {
 
   const details = [
     { label: 'Status', value: status },
-    { label: 'Data', value: `${data.agcoData} Ã s ${data.agcoHoraPrevista}` },
+    { label: 'Data', value: `${data.agcoData} às ${data.agcoHoraPrevista}` },
     { label: 'Local', value: data.unidadeSaudeDestino?.entidade?.entiNome },
     { label: 'Profissional', value: data.profissionalDestino?.entidadeFisica?.entidade?.entiNome },
     { label: 'Especialidade', value: data.atividadeProfissionalCnes?.apcnNome },
     { label: 'Procedimento', value: data.procedimento?.prciNome },
-    { label: 'ConvÃªnio', value: data.convenio?.entidade?.entiNome }
+    { label: 'Convênio', value: data.convenio?.entidade?.entiNome }
   ];
 
   details.forEach(detail => {
@@ -1337,14 +1337,14 @@ function createAppointmentDetailsElement(data) {
     if (row) container.appendChild(row);
   });
 
-  // Adicionar observaÃ§Ã£o se existir
+  // Adicionar observação se existir
   if (data.agcoObs) {
     const obsDiv = document.createElement('div');
     obsDiv.className = 'py-2';
 
     const obsLabel = document.createElement('span');
     obsLabel.className = `font-semibold ${getCSSClass('TEXT_SECONDARY')}`;
-    obsLabel.textContent = 'ObservaÃ§Ã£o:';
+    obsLabel.textContent = 'Observação:';
 
     const obsText = document.createElement('p');
     obsText.className = `${getCSSClass('TEXT_PRIMARY')} whitespace-pre-wrap mt-1 p-2 ${getCSSClass('BG_SLATE_50')} rounded`;
@@ -1361,7 +1361,7 @@ function createAppointmentDetailsElement(data) {
 function createExamAppointmentDetailsElement(data) {
   if (!data) {
     const p = document.createElement('p');
-    p.textContent = 'Dados do agendamento de exame nÃ£o encontrados.';
+    p.textContent = 'Dados do agendamento de exame não encontrados.';
     return p;
   }
 
@@ -1372,8 +1372,8 @@ function createExamAppointmentDetailsElement(data) {
     { label: 'Unidade Origem', value: data.ligacaoModularOrigem?.limoNome },
     { label: 'Unidade Destino', value: data.ligacaoModularDestino?.limoNome },
     { label: 'Profissional Sol.', value: data.profissional?.entidadeFisica?.entidade?.entiNome },
-    { label: 'CarÃ¡ter', value: data.CaraterAtendimento?.caraDescri },
-    { label: 'CritÃ©rio', value: data.criterioExame?.critNome }
+    { label: 'Caráter', value: data.CaraterAtendimento?.caraDescri },
+    { label: 'Critério', value: data.criterioExame?.critNome }
   ];
 
   details.forEach(detail => {
@@ -1384,7 +1384,7 @@ function createExamAppointmentDetailsElement(data) {
   return container;
 }
 
-// Manter as funÃ§Ãµes antigas para compatibilidade (agora nÃ£o sÃ£o mais usadas)
+// Manter as funções antigas para compatibilidade (agora não são mais usadas)
 function createDetailRow(label, value) {
   if (!value || String(value).trim() === "") return "";
   return `<div class="py-2 border-b border-slate-100 flex justify-between items-start gap-4">
@@ -1394,14 +1394,14 @@ function createDetailRow(label, value) {
 }
 
 function formatRegulationDetailsForModal(data) {
-  if (!data) return "<p>Dados da regulaÃ§Ã£o nÃ£o encontrados.</p>";
+  if (!data) return "<p>Dados da regulação não encontrados.</p>";
   let content = "";
   content += createDetailRow("Status", data.reguStatus);
   content += createDetailRow(
     "Tipo",
     data.reguTipo === "ENC" ? "Consulta" : "Exame"
   );
-  content += createDetailRow("Data SolicitaÃ§Ã£o", data.reguDataStr);
+  content += createDetailRow("Data Solicitação", data.reguDataStr);
   content += createDetailRow("Procedimento", data.prciNome);
   content += createDetailRow("CID", `${data.tcidCod} - ${data.tcidDescricao}`);
   content += createDetailRow("Profissional Sol.", data.prsaEntiNome);
@@ -1421,7 +1421,7 @@ function formatRegulationDetailsForModal(data) {
 }
 
 function formatAppointmentDetailsForModal(data) {
-  if (!data) return "<p>Dados do agendamento nÃ£o encontrados.</p>";
+  if (!data) return "<p>Dados do agendamento não encontrados.</p>";
 
   let status = "Agendado";
   if (data.agcoIsCancelado === "t") status = "Cancelado";
@@ -1432,7 +1432,7 @@ function formatAppointmentDetailsForModal(data) {
   content += createDetailRow("Status", status);
   content += createDetailRow(
     "Data",
-    `${data.agcoData} Ã s ${data.agcoHoraPrevista}`
+    `${data.agcoData} às ${data.agcoHoraPrevista}`
   );
   content += createDetailRow(
     "Local",
@@ -1447,10 +1447,10 @@ function formatAppointmentDetailsForModal(data) {
     data.atividadeProfissionalCnes?.apcnNome
   );
   content += createDetailRow("Procedimento", data.procedimento?.prciNome);
-  content += createDetailRow("ConvÃªnio", data.convenio?.entidade?.entiNome);
+  content += createDetailRow("Convênio", data.convenio?.entidade?.entiNome);
   if (data.agcoObs) {
     content += `<div class="py-2">
-                        <span class="font-semibold ${getCSSClass('TEXT_SECONDARY')}">ObservaÃ§Ã£o:</span>
+                        <span class="font-semibold ${getCSSClass('TEXT_SECONDARY')}">Observação:</span>
                         <p class="${getCSSClass('TEXT_PRIMARY')} whitespace-pre-wrap mt-1 p-2 ${getCSSClass('BG_SLATE_50')} rounded">${data.agcoObs}</p>
                     </div>`;
   }
@@ -1458,7 +1458,7 @@ function formatAppointmentDetailsForModal(data) {
 }
 
 function formatExamAppointmentDetailsForModal(data) {
-  if (!data) return "<p>Dados do agendamento de exame nÃ£o encontrados.</p>";
+  if (!data) return "<p>Dados do agendamento de exame não encontrados.</p>";
 
   let content = "";
   content += createDetailRow("Data Agendamento", data.examDataCad);
@@ -1474,26 +1474,26 @@ function formatExamAppointmentDetailsForModal(data) {
     "Profissional Sol.",
     data.profissional?.entidadeFisica?.entidade?.entiNome
   );
-  content += createDetailRow("CarÃ¡ter", data.CaraterAtendimento?.caraDescri);
-  content += createDetailRow("CritÃ©rio", data.criterioExame?.critNome);
+  content += createDetailRow("Caráter", data.CaraterAtendimento?.caraDescri);
+  content += createDetailRow("Critério", data.criterioExame?.critNome);
 
   return content;
 }
 
 async function handleShowRegulationDetailsModal(button) {
   const { idp, ids } = button.dataset;
-  showModal("Detalhes da RegulaÃ§Ã£o", "Carregando...");
+  showModal("Detalhes da Regulação", "Carregando...");
   try {
     const data = await API.fetchRegulationDetails({
       reguIdp: idp,
       reguIds: ids,
     });
     const contentElement = createRegulationDetailsElement(data);
-    showModal("Detalhes da RegulaÃ§Ã£o", contentElement);
+    showModal("Detalhes da Regulação", contentElement);
   } catch (error) {
     showModal(
       "Erro",
-      `NÃ£o foi possÃ­vel carregar os detalhes: ${error.message}`
+      `Não foi possível carregar os detalhes: ${error.message}`
     );
   }
 }
@@ -1521,7 +1521,7 @@ async function handleShowAppointmentDetailsModal(button) {
   } catch (error) {
     showModal(
       "Erro",
-      `NÃ£o foi possÃ­vel carregar os detalhes: ${error.message}`
+      `Não foi possível carregar os detalhes: ${error.message}`
     );
   }
 }
@@ -1534,17 +1534,17 @@ function handleShowAppointmentInfo(button) {
 
   modalTitle.textContent = "Detalhes do Agendamento";
 
-  // Criar conteÃºdo de forma segura usando DOM
+  // Criar conteúdo de forma segura usando DOM
   modalContent.innerHTML = '';
 
   const appointmentDetails = [
     { label: 'ID', value: data.id },
     {
       label: 'Tipo',
-      value: data.isSpecialized ? "Especializada" : data.isOdonto ? "OdontolÃ³gica" : data.type
+      value: data.isSpecialized ? "Especializada" : data.isOdonto ? "Odontológica" : data.type
     },
     { label: 'Status', value: data.status },
-    { label: 'Data', value: `${data.date} Ã s ${data.time}` },
+    { label: 'Data', value: `${data.date} às ${data.time}` },
     { label: 'Local', value: data.location },
     { label: 'Profissional', value: data.professional },
     { label: 'Especialidade', value: data.specialty || "N/A" },
@@ -1573,7 +1573,7 @@ async function checkForPendingRegulation() {
       await browserAPI.storage.local.remove("pendingRegulation");
     }
   } catch (e) {
-    logger.error("Erro ao verificar regulaÃ§Ã£o pendente:", e);
+    logger.error("Erro ao verificar regulação pendente:", e);
   }
 }
 

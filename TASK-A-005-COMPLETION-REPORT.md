@@ -97,7 +97,7 @@ plugins: [
 - Remoção de comentários e espaços desnecessários
 - Minificação de HTML inline
 - Compressão de imagens pequenas (inline base64)
-- Remoção de arquivos desnecess��rios (*.map, *.md, LICENSE)
+- Remoção de arquivos desnecessários (*.map, *.md, LICENSE)
 ```
 
 #### **Bundle Analysis**

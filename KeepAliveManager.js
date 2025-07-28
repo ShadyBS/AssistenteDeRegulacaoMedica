@@ -13,7 +13,7 @@ const logger = createComponentLogger('KeepAliveManager');
 export class KeepAliveManager {
   constructor() {
     this.isActive = false;
-    this.intervalMinutes = 10; // PadrÃ£o: 10 minutos
+    this.intervalMinutes = 10; // Padrão: 10 minutos
     this.alarmName = "keepSessionAlive";
     this.api = getBrowserAPIInstance();
 
@@ -47,7 +47,7 @@ export class KeepAliveManager {
               logger.warn(`[KeepAlive] Falhou (${new Date().toLocaleTimeString()})`);
             }
           } catch (error) {
-            logger.error("[KeepAlive] Erro durante execuÃ§Ã£o:", error);
+            logger.error("[KeepAlive] Erro durante execução:", error);
           }
         }
       });
@@ -87,7 +87,7 @@ export class KeepAliveManager {
     }
 
     if (this.isActive) {
-      logger.info("[KeepAlive] JÃ¡ estÃ¡ ativo");
+      logger.info("[KeepAlive] Já está ativo");
       return;
     }
 
@@ -97,7 +97,7 @@ export class KeepAliveManager {
     }
 
     try {
-      // Cria um alarme periÃ³dico
+      // Cria um alarme periódico
       await this.api.alarms.create(this.alarmName, {
         delayInMinutes: this.intervalMinutes,
         periodInMinutes: this.intervalMinutes

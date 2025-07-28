@@ -181,7 +181,7 @@ async function addDirectoryWithFilter(archive, dirPath, dirName, filter) {
  * Cria um ZIP LIMPO da extensão com APENAS arquivos essenciais
  */
 async function zipExtensionClean({ zipName, manifestSource, target }) {
-  console.log(`\n��� Criando ZIP LIMPO para ${target}...`);
+  console.log(`\n📦 Criando ZIP LIMPO para ${target}...`);
 
   const zipPath = path.join(OUT_DIR, zipName);
   await fs.ensureDir(OUT_DIR);

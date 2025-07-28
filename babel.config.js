@@ -81,7 +81,7 @@ module.exports = {
   cacheDirectory: true,
   cacheCompression: false,
 
-  // Configura��ões específicas por ambiente
+  // Configurações específicas por ambiente
   env: {
     production: {
       plugins: [

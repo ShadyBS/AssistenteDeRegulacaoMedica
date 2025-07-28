@@ -392,8 +392,8 @@ async function sendToSIGSS(data) {
 function detectEncodingIssues(text) {
   const issues = [];
 
-  // Detecta caracteres de replacement (�)
-  if (text.includes('�')) {
+  // Detecta caracteres de replacement ()
+  if (text.includes('')) {
     issues.push('REPLACEMENT_CHARACTERS');
   }
 
