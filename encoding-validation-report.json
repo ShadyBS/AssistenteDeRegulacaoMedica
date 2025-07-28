@@ -1,21 +1,22 @@
 {
-  "timestamp": "2025-07-28T00:03:29.684Z",
-  "duration": "0.18s",
+  "timestamp": "2025-07-28T00:04:50.950Z",
+  "duration": "0.53s",
   "summary": {
-    "totalFiles": 129,
-    "filesWithIssues": 18,
-    "totalIssues": 18,
-    "errors": 18,
-    "warnings": 0
+    "totalFiles": 130,
+    "filesWithIssues": 19,
+    "totalIssues": 21,
+    "errors": 19,
+    "warnings": 2
   },
   "issuesByType": [
     {
       "type": "REPLACEMENT_CHARACTERS",
-      "count": 18,
+      "count": 19,
       "severity": "error",
       "files": [
         "CLEANUP_SYSTEM_REPORT.md",
         "ENCODING_GUIDELINES.md",
+        "ENCODING_PREVENTION_SUMMARY.md",
         "EXTENSION_AUDIT_TASKS.md",
         "LEGACY_SYSTEM_REMOVAL_REPORT.md",
         "LOGGING_GUIDELINES_REPORT.md",
@@ -32,6 +33,22 @@
         "scripts\\validate-encoding.js",
         "temp-zip-analysis\\build-zips-clean.js",
         "temp-zip-analysis\\build-zips-optimized.js"
+      ]
+    },
+    {
+      "type": "TRAILING_WHITESPACE",
+      "count": 1,
+      "severity": "warning",
+      "files": [
+        "ENCODING_PREVENTION_SUMMARY.md"
+      ]
+    },
+    {
+      "type": "NO_FINAL_NEWLINE",
+      "count": 1,
+      "severity": "warning",
+      "files": [
+        "ENCODING_PREVENTION_SUMMARY.md"
       ]
     }
   ],
@@ -52,6 +69,37 @@
       "file": "ENCODING_GUIDELINES.md",
       "issueCount": 1,
       "issues": [
+        {
+          "type": "REPLACEMENT_CHARACTERS",
+          "severity": "error",
+          "message": "Arquivo contém caracteres de replacement (�)",
+          "fix": "Corrigir encoding ou dados corrompidos"
+        }
+      ]
+    },
+    {
+      "file": "ENCODING_PREVENTION_SUMMARY.md",
+      "issueCount": 3,
+      "issues": [
+        {
+          "type": "TRAILING_WHITESPACE",
+          "severity": "warning",
+          "message": "Trailing whitespace em 11 linha(s)",
+          "fix": "Remover espaços no final das linhas",
+          "lines": [
+            123,
+            126,
+            129,
+            132,
+            144
+          ]
+        },
+        {
+          "type": "NO_FINAL_NEWLINE",
+          "severity": "warning",
+          "message": "Arquivo não termina com newline",
+          "fix": "Adicionar newline no final do arquivo"
+        },
         {
           "type": "REPLACEMENT_CHARACTERS",
           "severity": "error",
