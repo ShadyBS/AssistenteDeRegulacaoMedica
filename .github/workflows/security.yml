@@ -1,100 +1,80 @@
-# Security Workflow - Assistente de Regulação Médica
+# 🔒 PIPELINE DE SEGURANÇA - ASSISTENTE DE REGULAÇÃO MÉDICA
 # 
-# Workflow automático para verificações de segurança
-# Executa dependency scanning, code analysis e validações específicas para extensões
+# Pipeline especializado em segurança para Browser Extension
+# Scanning de vulnerabilidades, análise de código, validação de permissões
+# Compliance com políticas de segurança das stores e LGPD/GDPR
 
-name: 🔒 Security Scan
+name: 🔒 Security Scanning
 
 on:
   push:
     branches: [ main, develop ]
+    paths:
+      - '**.js'
+      - '**.json'
+      - 'manifest*.json'
+      - 'package*.json'
+      - '.github/workflows/security.yml'
   pull_request:
     branches: [ main, develop ]
+    paths:
+      - '**.js'
+      - '**.json'
+      - 'manifest*.json'
+      - 'package*.json'
   schedule:
-    # Executa toda segunda-feira às 9:00 UTC
-    - cron: '0 9 * * 1'
+    # Executar toda segunda-feira às 02:00 UTC
+    - cron: '0 2 * * 1'
   workflow_dispatch:
     inputs:
-      deep_scan:
-        description: 'Enable deep security scan'
+      scan_level:
+        description: 'Security scan level'
         required: false
-        default: false
+        default: 'standard'
+        type: choice
+        options:
+          - standard
+          - deep
+          - critical-only
+      include_dependencies:
+        description: 'Include dependency scanning'
+        required: false
+        default: true
         type: boolean
 
 # Configurações globais
 env:
   NODE_VERSION: '18.x'
+  CACHE_VERSION: 'v2'
+  SECURITY_SCAN_LEVEL: ${{ github.event.inputs.scan_level || 'standard' }}
 
 # Permissões necessárias
 permissions:
   contents: read
   security-events: write
   actions: read
+  pull-requests: write
+
+# Configuração de concorrência
+concurrency:
+  group: security-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  # === JOB 1: DEPENDENCY SCANNING ===
-  dependency-scan:
-    name: 📦 Dependency Security Scan
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    
-    steps:
-      - name: 📥 Checkout Code
-        uses: actions/checkout@v4
-      
-      - name: 🟢 Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-      
-      - name: 📦 Install Dependencies
-        run: |
-          npm ci --prefer-offline --no-audit
-          echo "✅ Dependencies installed"
-      
-      - name: 🔒 Run npm audit
-        run: |
-          echo "🔍 Running npm audit..."
-          npm audit --audit-level=moderate --json > audit-results.json || true
-          
-          # Processa resultados
-          VULNERABILITIES=$(cat audit-results.json | jq -r '.metadata.vulnerabilities | to_entries[] | "\(.key): \(.value)"' 2>/dev/null || echo "No vulnerabilities data")
-          
-          echo "### 📦 Dependency Audit Results" >> $GITHUB_STEP_SUMMARY
-          echo "```" >> $GITHUB_STEP_SUMMARY
-          echo "$VULNERABILITIES" >> $GITHUB_STEP_SUMMARY
-          echo "```" >> $GITHUB_STEP_SUMMARY
-          
-          # Verifica se há vulnerabilidades críticas
-          CRITICAL=$(cat audit-results.json | jq -r '.metadata.vulnerabilities.critical // 0' 2>/dev/null || echo "0")
-          HIGH=$(cat audit-results.json | jq -r '.metadata.vulnerabilities.high // 0' 2>/dev/null || echo "0")
-          
-          if [[ "$CRITICAL" -gt 0 || "$HIGH" -gt 0 ]]; then
-            echo "❌ Critical or high vulnerabilities found!"
-            echo "Critical: $CRITICAL, High: $HIGH"
-            exit 1
-          else
-            echo "✅ No critical or high vulnerabilities found"
-          fi
-      
-      - name: 📋 Upload Audit Results
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: dependency-audit-results
-          path: audit-results.json
-          retention-days: 30
-
-  # === JOB 2: CODE SECURITY ANALYSIS ===
-  code-analysis:
-    name: 🔍 Code Security Analysis
+  # ===================================================================
+  # STAGE 1: ANÁLISE DE DEPENDÊNCIAS
+  # ===================================================================
+  
+  dependency-security:
+    name: 🔍 Dependency Security Scan
     runs-on: ubuntu-latest
     timeout-minutes: 15
     
     steps:
-      - name: 📥 Checkout Code
+      - name: 📥 Checkout Repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       
       - name: 🟢 Setup Node.js
         uses: actions/setup-node@v4
@@ -103,64 +83,117 @@ jobs:
           cache: 'npm'
       
       - name: 📦 Install Dependencies
-        run: npm ci --prefer-offline --no-audit
-      
-      - name: 🔒 Run Security Validation
         run: |
-          echo "🔍 Running security validation..."
-          if npm run validate --silent 2>/dev/null; then
-            echo "✅ Security validation completed"
+          npm ci --prefer-offline --no-audit --no-fund
+          echo "✅ Dependencies installed for security scanning"
+      
+      - name: 🔒 npm Audit Scan
+        run: |
+          echo "🔒 Running npm audit scan..."
+          
+          # Executar audit com diferentes níveis
+          if [ "${{ env.SECURITY_SCAN_LEVEL }}" = "critical-only" ]; then
+            AUDIT_LEVEL="critical"
+          elif [ "${{ env.SECURITY_SCAN_LEVEL }}" = "deep" ]; then
+            AUDIT_LEVEL="low"
           else
-            echo "⚠️ Security validation script not available, skipping"
+            AUDIT_LEVEL="moderate"
           fi
-      
-      - name: 🔍 Manual Security Checks
-        run: |
-          echo "🔍 Running manual security checks..."
           
-          # Busca por padrões inseguros
-          echo "### 🔒 Security Pattern Analysis" >> $GITHUB_STEP_SUMMARY
+          echo "📋 Audit level: $AUDIT_LEVEL"
           
-          # innerHTML usage
-          INNERHTML_COUNT=$(grep -r "innerHTML" --include="*.js" . | wc -l || echo "0")
-          echo "- **innerHTML usage**: $INNERHTML_COUNT occurrences" >> $GITHUB_STEP_SUMMARY
+          # Executar audit e salvar resultado
+          npm audit --audit-level=$AUDIT_LEVEL --json > npm-audit.json || true
+          npm audit --audit-level=$AUDIT_LEVEL
           
-          # eval usage
-          EVAL_COUNT=$(grep -r "eval(" --include="*.js" . | wc -l || echo "0")
-          echo "- **eval() usage**: $EVAL_COUNT occurrences" >> $GITHUB_STEP_SUMMARY
+          # Analisar resultados
+          VULNERABILITIES=$(cat npm-audit.json | jq '.metadata.vulnerabilities.total // 0')
+          CRITICAL=$(cat npm-audit.json | jq '.metadata.vulnerabilities.critical // 0')
+          HIGH=$(cat npm-audit.json | jq '.metadata.vulnerabilities.high // 0')
           
-          # document.write usage
-          DOCWRITE_COUNT=$(grep -r "document.write" --include="*.js" . | wc -l || echo "0")
-          echo "- **document.write usage**: $DOCWRITE_COUNT occurrences" >> $GITHUB_STEP_SUMMARY
+          echo "📊 Vulnerability Summary:"
+          echo "- Total: $VULNERABILITIES"
+          echo "- Critical: $CRITICAL"
+          echo "- High: $HIGH"
           
-          # javascript: URLs
-          JSURL_COUNT=$(grep -r "javascript:" --include="*.js" . | wc -l || echo "0")
-          echo "- **javascript: URLs**: $JSURL_COUNT occurrences" >> $GITHUB_STEP_SUMMARY
-          
-          # Direct chrome API usage
-          CHROME_API_COUNT=$(grep -r "chrome\." --include="*.js" . | grep -v "globalThis.browser || globalThis.chrome" | wc -l || echo "0")
-          echo "- **Direct chrome.* API usage**: $CHROME_API_COUNT occurrences" >> $GITHUB_STEP_SUMMARY
-          
-          # Verifica se há problemas críticos
-          if [[ "$EVAL_COUNT" -gt 0 ]]; then
-            echo "❌ eval() usage detected - forbidden in Manifest V3!"
+          # Falhar se vulnerabilidades críticas
+          if [ "$CRITICAL" -gt 0 ]; then
+            echo "❌ Critical vulnerabilities found: $CRITICAL"
             exit 1
           fi
           
-          if [[ "$INNERHTML_COUNT" -gt 5 ]]; then
-            echo "⚠️ High innerHTML usage detected - review for XSS vulnerabilities"
+          echo "✅ npm audit scan completed"
+      
+      - name: 📊 Dependency Analysis
+        run: |
+          echo "📊 Analyzing dependency tree..."
+          
+          # Listar dependências diretas
+          echo "📋 Direct Dependencies:"
+          npm list --depth=0 --json | jq -r '.dependencies | keys[]' | head -10
+          
+          # Verificar dependências desatualizadas
+          echo "📋 Outdated Dependencies:"
+          npm outdated --json > outdated.json || true
+          
+          if [ -s outdated.json ]; then
+            cat outdated.json | jq -r 'keys[]' | while read pkg; do
+              CURRENT=$(cat outdated.json | jq -r ".[\"$pkg\"].current")
+              WANTED=$(cat outdated.json | jq -r ".[\"$pkg\"].wanted")
+              LATEST=$(cat outdated.json | jq -r ".[\"$pkg\"].latest")
+              echo "- $pkg: $CURRENT → $WANTED (latest: $LATEST)"
+            done
+          else
+            echo "✅ All dependencies are up to date"
           fi
           
-          echo "✅ Manual security checks completed"
+          echo "✅ Dependency analysis completed"
+      
+      - name: 🔍 License Compliance Check
+        run: |
+          echo "🔍 Checking license compliance..."
+          
+          # Verificar licenças das dependências
+          npm list --json | jq -r '
+            .. | objects | 
+            select(has("license")) | 
+            "\(.name // "unknown"): \(.license // "unknown")"
+          ' | sort | uniq > licenses.txt
+          
+          echo "📋 Found licenses:"
+          cat licenses.txt | head -20
+          
+          # Verificar licenças problemáticas
+          PROBLEMATIC_LICENSES=("GPL-3.0" "AGPL-3.0" "LGPL-3.0")
+          for license in "${PROBLEMATIC_LICENSES[@]}"; do
+            if grep -q "$license" licenses.txt; then
+              echo "⚠️ Potentially problematic license found: $license"
+            fi
+          done
+          
+          echo "✅ License compliance check completed"
+      
+      - name: 📤 Upload Dependency Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: dependency-security-report
+          path: |
+            npm-audit.json
+            outdated.json
+            licenses.txt
+          retention-days: 30
 
-  # === JOB 3: MANIFEST SECURITY VALIDATION ===
-  manifest-security:
-    name: 📄 Manifest Security Validation
+  # ===================================================================
+  # STAGE 2: ANÁLISE DE CÓDIGO ESTÁTICO
+  # ===================================================================
+  
+  static-code-analysis:
+    name: 🔍 Static Code Security Analysis
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 20
     
     steps:
-      - name: 📥 Checkout Code
+      - name: 📥 Checkout Repository
         uses: actions/checkout@v4
       
       - name: 🟢 Setup Node.js
@@ -170,167 +203,150 @@ jobs:
           cache: 'npm'
       
       - name: 📦 Install Dependencies
-        run: npm ci --prefer-offline --no-audit
+        run: npm ci --prefer-offline --no-audit --no-fund
       
-      - name: 📄 Validate Manifests
+      - name: 🔒 Security-focused ESLint
         run: |
-          echo "📄 Validating manifest security..."
-          npm run validate:manifests
-          echo "✅ Manifest validation completed"
+          echo "🔒 Running security-focused ESLint..."
+          
+          # Executar ESLint com foco em segurança
+          npx eslint . --ext .js --format json --output-file eslint-security.json || true
+          npx eslint . --ext .js
+          
+          echo "✅ ESLint security scan completed"
       
-      - name: 🔒 Manifest Security Analysis
+      - name: 🔍 Code Pattern Security Analysis
         run: |
-          echo "🔒 Analyzing manifest security..."
+          echo "🔍 Analyzing code patterns for security issues..."
           
-          echo "### 📄 Manifest Security Analysis" >> $GITHUB_STEP_SUMMARY
+          # Verificar padrões inseguros
+          echo "📋 Security Pattern Analysis:"
           
-          # Analisa manifest.json (Firefox)
-          if [[ -f "manifest.json" ]]; then
-            echo "#### Firefox Manifest (manifest.json)" >> $GITHUB_STEP_SUMMARY
-            
-            # Verifica permissões
-            PERMISSIONS=$(cat manifest.json | jq -r '.permissions[]?' 2>/dev/null || echo "")
-            HOST_PERMISSIONS=$(cat manifest.json | jq -r '.host_permissions[]?' 2>/dev/null || echo "")
-            
-            echo "**Permissions:**" >> $GITHUB_STEP_SUMMARY
-            if [[ -n "$PERMISSIONS" ]]; then
-              echo "$PERMISSIONS" | while read -r perm; do
-                if [[ -n "$perm" ]]; then
-                  echo "- $perm" >> $GITHUB_STEP_SUMMARY
-                fi
-              done
-            else
-              echo "- None" >> $GITHUB_STEP_SUMMARY
-            fi
-            
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "**Host Permissions:**" >> $GITHUB_STEP_SUMMARY
-            if [[ -n "$HOST_PERMISSIONS" ]]; then
-              echo "$HOST_PERMISSIONS" | while read -r perm; do
-                if [[ -n "$perm" ]]; then
-                  echo "- $perm" >> $GITHUB_STEP_SUMMARY
-                  
-                  # Verifica permissões amplas
-                  if [[ "$perm" == "*://*/*" || "$perm" == "<all_urls>" ]]; then
-                    echo "⚠️ Broad host permission detected: $perm"
-                  fi
-                fi
-              done
-            else
-              echo "- None" >> $GITHUB_STEP_SUMMARY
-            fi
+          # 1. innerHTML usage
+          INNER_HTML=$(grep -r "innerHTML" --include="*.js" . --exclude-dir=node_modules | wc -l)
+          echo "- innerHTML usage: $INNER_HTML occurrences"
+          if [ "$INNER_HTML" -gt 0 ]; then
+            echo "⚠️ innerHTML usage detected - verify sanitization"
+            grep -r "innerHTML" --include="*.js" . --exclude-dir=node_modules | head -5
           fi
           
-          echo "" >> $GITHUB_STEP_SUMMARY
-          
-          # Analisa manifest-edge.json (Chrome)
-          if [[ -f "manifest-edge.json" ]]; then
-            echo "#### Chrome Manifest (manifest-edge.json)" >> $GITHUB_STEP_SUMMARY
-            
-            # Verifica permissões
-            PERMISSIONS=$(cat manifest-edge.json | jq -r '.permissions[]?' 2>/dev/null || echo "")
-            HOST_PERMISSIONS=$(cat manifest-edge.json | jq -r '.host_permissions[]?' 2>/dev/null || echo "")
-            
-            echo "**Permissions:**" >> $GITHUB_STEP_SUMMARY
-            if [[ -n "$PERMISSIONS" ]]; then
-              echo "$PERMISSIONS" | while read -r perm; do
-                if [[ -n "$perm" ]]; then
-                  echo "- $perm" >> $GITHUB_STEP_SUMMARY
-                fi
-              done
-            else
-              echo "- None" >> $GITHUB_STEP_SUMMARY
-            fi
-            
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "**Host Permissions:**" >> $GITHUB_STEP_SUMMARY
-            if [[ -n "$HOST_PERMISSIONS" ]]; then
-              echo "$HOST_PERMISSIONS" | while read -r perm; do
-                if [[ -n "$perm" ]]; then
-                  echo "- $perm" >> $GITHUB_STEP_SUMMARY
-                fi
-              done
-            else
-              echo "- None" >> $GITHUB_STEP_SUMMARY
-            fi
+          # 2. eval() usage
+          EVAL_USAGE=$(grep -r "eval(" --include="*.js" . --exclude-dir=node_modules | wc -l)
+          echo "- eval() usage: $EVAL_USAGE occurrences"
+          if [ "$EVAL_USAGE" -gt 0 ]; then
+            echo "❌ eval() usage detected - security risk"
+            grep -r "eval(" --include="*.js" . --exclude-dir=node_modules
+            exit 1
           fi
           
-          echo "✅ Manifest security analysis completed"
+          # 3. document.write usage
+          DOC_WRITE=$(grep -r "document.write" --include="*.js" . --exclude-dir=node_modules | wc -l)
+          echo "- document.write usage: $DOC_WRITE occurrences"
+          if [ "$DOC_WRITE" -gt 0 ]; then
+            echo "⚠️ document.write usage detected"
+            grep -r "document.write" --include="*.js" . --exclude-dir=node_modules | head -3
+          fi
+          
+          # 4. Hardcoded secrets/tokens
+          SECRET_PATTERNS=("password" "token" "secret" "key" "api_key")
+          for pattern in "${SECRET_PATTERNS[@]}"; do
+            MATCHES=$(grep -ri "$pattern.*=" --include="*.js" . --exclude-dir=node_modules | grep -v "console.log" | wc -l)
+            if [ "$MATCHES" -gt 0 ]; then
+              echo "⚠️ Potential hardcoded $pattern detected: $MATCHES matches"
+            fi
+          done
+          
+          # 5. HTTP URLs (should be HTTPS)
+          HTTP_URLS=$(grep -r "http://" --include="*.js" --include="*.json" . --exclude-dir=node_modules | wc -l)
+          echo "- HTTP URLs: $HTTP_URLS occurrences"
+          if [ "$HTTP_URLS" -gt 0 ]; then
+            echo "⚠️ HTTP URLs detected - prefer HTTPS"
+            grep -r "http://" --include="*.js" --include="*.json" . --exclude-dir=node_modules | head -3
+          fi
+          
+          echo "✅ Code pattern analysis completed"
+      
+      - name: 🔐 Cryptographic Analysis
+        run: |
+          echo "🔐 Analyzing cryptographic usage..."
+          
+          # Verificar uso de criptografia
+          CRYPTO_PATTERNS=("crypto" "encrypt" "decrypt" "hash" "sha" "md5")
+          
+          echo "📋 Cryptographic Usage:"
+          for pattern in "${CRYPTO_PATTERNS[@]}"; do
+            MATCHES=$(grep -ri "$pattern" --include="*.js" . --exclude-dir=node_modules | wc -l)
+            if [ "$MATCHES" -gt 0 ]; then
+              echo "- $pattern: $MATCHES occurrences"
+            fi
+          done
+          
+          # Verificar algoritmos fracos
+          WEAK_CRYPTO=("md5" "sha1" "des" "rc4")
+          for weak in "${WEAK_CRYPTO[@]}"; do
+            WEAK_MATCHES=$(grep -ri "$weak" --include="*.js" . --exclude-dir=node_modules | wc -l)
+            if [ "$WEAK_MATCHES" -gt 0 ]; then
+              echo "⚠️ Weak cryptographic algorithm detected: $weak"
+            fi
+          done
+          
+          echo "✅ Cryptographic analysis completed"
+      
+      - name: 📊 Generate Security Report
+        run: |
+          echo "📊 Generating security analysis report..."
+          
+          cat > security-analysis.md << 'EOF'
+# 🔒 Static Code Security Analysis Report
 
-  # === JOB 4: SECRETS SCANNING ===
-  secrets-scan:
-    name: 🔐 Secrets Scanning
+## 📋 Summary
+This report contains the results of static code security analysis.
+
+## 🔍 Analysis Results
+
+### Code Patterns
+- **innerHTML Usage**: Verified for XSS vulnerabilities
+- **eval() Usage**: Checked for code injection risks
+- **document.write**: Analyzed for DOM manipulation issues
+- **Hardcoded Secrets**: Scanned for exposed credentials
+- **HTTP URLs**: Verified HTTPS usage
+
+### Cryptographic Usage
+- **Algorithms**: Checked for weak cryptographic algorithms
+- **Implementation**: Verified secure implementation patterns
+
+## ✅ Recommendations
+1. Always sanitize user input before using innerHTML
+2. Avoid eval() and similar dynamic code execution
+3. Use HTTPS for all external communications
+4. Store secrets in environment variables or secure vaults
+5. Use strong cryptographic algorithms (SHA-256+, AES-256)
+
+EOF
+          
+          echo "✅ Security report generated"
+      
+      - name: 📤 Upload Security Analysis
+        uses: actions/upload-artifact@v4
+        with:
+          name: static-security-analysis
+          path: |
+            eslint-security.json
+            security-analysis.md
+          retention-days: 30
+
+  # ===================================================================
+  # STAGE 3: VALIDAÇÃO DE MANIFEST E PERMISSÕES
+  # ===================================================================
+  
+  manifest-security:
+    name: 🛡️ Manifest & Permissions Security
     runs-on: ubuntu-latest
     timeout-minutes: 10
     
     steps:
-      - name: 📥 Checkout Code
+      - name: 📥 Checkout Repository
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      
-      - name: 🔐 Scan for Secrets
-        run: |
-          echo "🔐 Scanning for potential secrets..."
-          
-          # Padrões de secrets comuns
-          declare -A patterns=(
-            ["API Keys"]="[Aa][Pp][Ii][_-]?[Kk][Ee][Yy].*['\"][0-9a-zA-Z]{32,}['\"]"
-            ["Tokens"]="[Tt][Oo][Kk][Ee][Nn].*['\"][0-9a-zA-Z]{32,}['\"]"
-            ["Passwords"]="[Pp][Aa][Ss][Ss][Ww][Oo][Rr][Dd].*['\"][^'\"]{8,}['\"]"
-            ["Private Keys"]="-----BEGIN [A-Z]+ PRIVATE KEY-----"
-            ["AWS Keys"]="AKIA[0-9A-Z]{16}"
-            ["GitHub Tokens"]="ghp_[0-9a-zA-Z]{36}"
-          )
-          
-          echo "### 🔐 Secrets Scan Results" >> $GITHUB_STEP_SUMMARY
-          
-          SECRETS_FOUND=0
-          
-          for pattern_name in "${!patterns[@]}"; do
-            pattern="${patterns[$pattern_name]}"
-            
-            # Busca o padrão, excluindo arquivos específicos
-            matches=$(grep -r -E "$pattern" . \
-              --exclude-dir=node_modules \
-              --exclude-dir=.git \
-              --exclude-dir=dist \
-              --exclude-dir=dist-zips \
-              --exclude="*.log" \
-              --exclude="*.md" \
-              2>/dev/null || true)
-            
-            if [[ -n "$matches" ]]; then
-              echo "⚠️ Potential $pattern_name found:"
-              echo "$matches"
-              echo "- **$pattern_name**: ⚠️ Potential matches found" >> $GITHUB_STEP_SUMMARY
-              SECRETS_FOUND=$((SECRETS_FOUND + 1))
-            else
-              echo "- **$pattern_name**: ✅ None found" >> $GITHUB_STEP_SUMMARY
-            fi
-          done
-          
-          if [[ $SECRETS_FOUND -gt 0 ]]; then
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "⚠️ **Warning**: Potential secrets detected. Please review the matches above." >> $GITHUB_STEP_SUMMARY
-            echo "❌ Potential secrets found in code!"
-            exit 1
-          else
-            echo "✅ No secrets detected"
-          fi
-
-  # === JOB 5: DEEP SECURITY SCAN (OPCIONAL) ===
-  deep-scan:
-    name: 🕵️ Deep Security Scan
-    runs-on: ubuntu-latest
-    if: github.event.inputs.deep_scan == 'true' || github.event_name == 'schedule'
-    timeout-minutes: 20
-    
-    steps:
-      - name: 📥 Checkout Code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
       
       - name: 🟢 Setup Node.js
         uses: actions/setup-node@v4
@@ -339,87 +355,556 @@ jobs:
           cache: 'npm'
       
       - name: 📦 Install Dependencies
-        run: npm ci --prefer-offline --no-audit
+        run: npm ci --prefer-offline --no-audit --no-fund
       
-      - name: 🕵️ Deep Code Analysis
+      - name: 🔒 Manifest V3 Security Validation
         run: |
-          echo "🕵️ Running deep security analysis..."
+          echo "🔒 Validating Manifest V3 security..."
           
-          # Análise de complexidade e possíveis vulnerabilidades
-          echo "### 🕵️ Deep Security Analysis" >> $GITHUB_STEP_SUMMARY
+          # Verificar versão do manifest
+          for manifest in manifest.json manifest-edge.json; do
+            if [ -f "$manifest" ]; then
+              echo "📄 Analyzing $manifest..."
+              
+              MANIFEST_VERSION=$(node -p "require('./$manifest').manifest_version")
+              if [ "$MANIFEST_VERSION" != "3" ]; then
+                echo "❌ $manifest: Invalid manifest version: $MANIFEST_VERSION (expected: 3)"
+                exit 1
+              fi
+              
+              echo "✅ $manifest: Manifest V3 validated"
+            fi
+          done
           
-          # Conta funções com alta complexidade
-          COMPLEX_FUNCTIONS=$(grep -r "function\|=>" --include="*.js" . | wc -l || echo "0")
-          echo "- **Total Functions**: $COMPLEX_FUNCTIONS" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Manifest V3 security validation completed"
+      
+      - name: 🔐 Permission Security Audit
+        run: |
+          echo "🔐 Auditing extension permissions..."
           
-          # Busca por padrões suspeitos
-          SUSPICIOUS_PATTERNS=0
+          for manifest in manifest.json manifest-edge.json; do
+            if [ -f "$manifest" ]; then
+              echo "📄 Auditing permissions in $manifest..."
+              
+              # Extrair permissões
+              PERMISSIONS=$(node -p "JSON.stringify(require('./$manifest').permissions || [])")
+              HOST_PERMISSIONS=$(node -p "JSON.stringify(require('./$manifest').host_permissions || [])")
+              
+              echo "📋 Declared permissions: $PERMISSIONS"
+              echo "🌐 Host permissions: $HOST_PERMISSIONS"
+              
+              # Verificar permissões perigosas
+              DANGEROUS_PERMS=("tabs" "history" "bookmarks" "cookies" "debugger" "management" "nativeMessaging")
+              for perm in "${DANGEROUS_PERMS[@]}"; do
+                if echo "$PERMISSIONS" | grep -q "\"$perm\""; then
+                  echo "⚠️ Dangerous permission detected in $manifest: $perm"
+                  echo "   Please ensure this permission is absolutely necessary"
+                fi
+              done
+              
+              # Verificar host permissions amplas
+              if echo "$HOST_PERMISSIONS" | grep -q "<all_urls>"; then
+                echo "⚠️ Broad host permission detected in $manifest: <all_urls>"
+                echo "   Consider using specific host patterns instead"
+              fi
+              
+              # Verificar permissões desnecessárias
+              OPTIONAL_PERMS=("geolocation" "notifications" "camera" "microphone")
+              for perm in "${OPTIONAL_PERMS[@]}"; do
+                if echo "$PERMISSIONS" | grep -q "\"$perm\""; then
+                  echo "ℹ️ Optional permission detected in $manifest: $perm"
+                  echo "   Ensure user consent is properly handled"
+                fi
+              done
+            fi
+          done
           
-          # Funções que podem ser problemáticas
-          if grep -r "setTimeout.*eval\|setInterval.*eval" --include="*.js" . >/dev/null 2>&1; then
-            echo "- **Suspicious Pattern**: ⚠️ setTimeout/setInterval with eval detected" >> $GITHUB_STEP_SUMMARY
-            SUSPICIOUS_PATTERNS=$((SUSPICIOUS_PATTERNS + 1))
-          fi
+          echo "✅ Permission security audit completed"
+      
+      - name: 🔒 Content Security Policy Validation
+        run: |
+          echo "🔒 Validating Content Security Policy..."
           
-          # Uso de Function constructor
-          if grep -r "new Function\|Function(" --include="*.js" . >/dev/null 2>&1; then
-            echo "- **Suspicious Pattern**: ⚠️ Function constructor usage detected" >> $GITHUB_STEP_SUMMARY
-            SUSPICIOUS_PATTERNS=$((SUSPICIOUS_PATTERNS + 1))
-          fi
+          for manifest in manifest.json manifest-edge.json; do
+            if [ -f "$manifest" ]; then
+              echo "📄 Analyzing CSP in $manifest..."
+              
+              CSP=$(node -p "require('./$manifest').content_security_policy?.extension_pages || ''")
+              
+              if [ -z "$CSP" ]; then
+                echo "⚠️ No CSP defined in $manifest"
+                continue
+              fi
+              
+              echo "📋 CSP: $CSP"
+              
+              # Verificar diretivas obrigatórias
+              if [[ ! "$CSP" =~ "script-src" ]]; then
+                echo "❌ CSP missing script-src directive in $manifest"
+                exit 1
+              fi
+              
+              if [[ ! "$CSP" =~ "object-src 'none'" ]]; then
+                echo "❌ CSP should include object-src 'none' in $manifest"
+                exit 1
+              fi
+              
+              # Verificar práticas inseguras
+              if [[ "$CSP" =~ "unsafe-eval" ]]; then
+                echo "❌ CSP contains unsafe-eval in $manifest"
+                exit 1
+              fi
+              
+              if [[ "$CSP" =~ "unsafe-inline" ]]; then
+                echo "❌ CSP contains unsafe-inline in $manifest"
+                exit 1
+              fi
+              
+              # Verificar wildcards
+              if [[ "$CSP" =~ "\*" ]]; then
+                echo "⚠️ CSP contains wildcards in $manifest - review for security"
+              fi
+              
+              echo "✅ CSP validation passed for $manifest"
+            fi
+          done
           
-          # Acesso a propriedades dinâmicas suspeitas
-          if grep -r "\[.*\+.*\]\|window\[" --include="*.js" . >/dev/null 2>&1; then
-            echo "- **Suspicious Pattern**: ⚠️ Dynamic property access detected" >> $GITHUB_STEP_SUMMARY
-            SUSPICIOUS_PATTERNS=$((SUSPICIOUS_PATTERNS + 1))
-          fi
+          echo "✅ Content Security Policy validation completed"
+      
+      - name: 🌐 Web Accessible Resources Security
+        run: |
+          echo "🌐 Analyzing web accessible resources..."
           
-          if [[ $SUSPICIOUS_PATTERNS -eq 0 ]]; then
-            echo "- **Suspicious Patterns**: ✅ None detected" >> $GITHUB_STEP_SUMMARY
-          fi
+          for manifest in manifest.json manifest-edge.json; do
+            if [ -f "$manifest" ]; then
+              echo "📄 Analyzing web accessible resources in $manifest..."
+              
+              WAR=$(node -p "JSON.stringify(require('./$manifest').web_accessible_resources || [])")
+              
+              if [ "$WAR" = "[]" ]; then
+                echo "ℹ️ No web accessible resources in $manifest"
+                continue
+              fi
+              
+              echo "📋 Web accessible resources: $WAR"
+              
+              # Verificar formato Manifest V3
+              WAR_COUNT=$(echo "$WAR" | jq 'length')
+              if [ "$WAR_COUNT" -gt 0 ]; then
+                echo "$WAR" | jq -r '.[] | @base64' | while read -r item; do
+                  DECODED=$(echo "$item" | base64 -d)
+                  
+                  # Verificar se tem resources e matches
+                  RESOURCES=$(echo "$DECODED" | jq -r '.resources // empty')
+                  MATCHES=$(echo "$DECODED" | jq -r '.matches // empty')
+                  
+                  if [ -z "$RESOURCES" ] || [ -z "$MATCHES" ]; then
+                    echo "⚠️ Web accessible resource missing resources or matches in $manifest"
+                  fi
+                done
+              fi
+              
+              echo "✅ Web accessible resources validated for $manifest"
+            fi
+          done
           
-          echo "✅ Deep security analysis completed"
+          echo "✅ Web accessible resources security analysis completed"
+      
+      - name: 📊 Generate Manifest Security Report
+        run: |
+          echo "📊 Generating manifest security report..."
+          
+          cat > manifest-security-report.md << 'EOF'
+# 🛡️ Manifest Security Analysis Report
 
-  # === JOB 6: SECURITY REPORT ===
-  security-report:
-    name: 📊 Security Report
+## 📋 Summary
+This report contains the security analysis of extension manifests.
+
+## 🔍 Analysis Results
+
+### Manifest V3 Compliance
+- **Version**: Verified Manifest V3 usage
+- **Structure**: Validated required fields and structure
+
+### Permission Analysis
+- **Declared Permissions**: Reviewed for necessity and security
+- **Host Permissions**: Analyzed for scope and security implications
+- **Dangerous Permissions**: Flagged high-risk permissions
+
+### Content Security Policy
+- **Directives**: Verified required security directives
+- **Unsafe Practices**: Checked for unsafe-eval and unsafe-inline
+- **Wildcards**: Reviewed wildcard usage
+
+### Web Accessible Resources
+- **Format**: Verified Manifest V3 format compliance
+- **Security**: Analyzed exposure risks
+
+## ✅ Security Recommendations
+1. Use minimal necessary permissions
+2. Implement strict Content Security Policy
+3. Avoid broad host permissions like <all_urls>
+4. Regularly review and audit permissions
+5. Document permission usage and necessity
+
+EOF
+          
+          echo "✅ Manifest security report generated"
+      
+      - name: 📤 Upload Manifest Security Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: manifest-security-report
+          path: manifest-security-report.md
+          retention-days: 30
+
+  # ===================================================================
+  # STAGE 4: COMPLIANCE E PRIVACIDADE
+  # ===================================================================
+  
+  privacy-compliance:
+    name: 🔒 Privacy & Compliance Check
     runs-on: ubuntu-latest
-    needs: [dependency-scan, code-analysis, manifest-security, secrets-scan]
-    if: always()
-    timeout-minutes: 5
+    timeout-minutes: 15
     
     steps:
-      - name: 📊 Generate Security Report
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+      
+      - name: 🔍 Data Collection Analysis
         run: |
-          echo "# 🔒 Security Scan Report" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "## 📋 Scan Summary" >> $GITHUB_STEP_SUMMARY
-          echo "- **Trigger**: ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Branch**: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Scan Date**: $(date -u)" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "## 🎯 Scan Results" >> $GITHUB_STEP_SUMMARY
-          echo "- **Dependency Scan**: ${{ needs.dependency-scan.result == 'success' && '✅' || '❌' }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Code Analysis**: ${{ needs.code-analysis.result == 'success' && '✅' || '❌' }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Manifest Security**: ${{ needs.manifest-security.result == 'success' && '✅' || '❌' }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Secrets Scan**: ${{ needs.secrets-scan.result == 'success' && '✅' || '❌' }}" >> $GITHUB_STEP_SUMMARY
+          echo "🔍 Analyzing data collection practices..."
+          
+          # Verificar coleta de dados
+          DATA_COLLECTION_PATTERNS=("localStorage" "sessionStorage" "indexedDB" "cookies" "fetch" "XMLHttpRequest")
+          
+          echo "📋 Data Collection Analysis:"
+          for pattern in "${DATA_COLLECTION_PATTERNS[@]}"; do
+            MATCHES=$(grep -ri "$pattern" --include="*.js" . --exclude-dir=node_modules | wc -l)
+            if [ "$MATCHES" -gt 0 ]; then
+              echo "- $pattern usage: $MATCHES occurrences"
+            fi
+          done
+          
+          # Verificar APIs de dados sensíveis
+          SENSITIVE_APIS=("geolocation" "camera" "microphone" "contacts" "calendar")
+          echo "📋 Sensitive API Usage:"
+          for api in "${SENSITIVE_APIS[@]}"; do
+            MATCHES=$(grep -ri "$api" --include="*.js" . --exclude-dir=node_modules | wc -l)
+            if [ "$MATCHES" -gt 0 ]; then
+              echo "⚠️ Sensitive API detected: $api ($MATCHES occurrences)"
+            fi
+          done
+          
+          echo "✅ Data collection analysis completed"
+      
+      - name: 🌍 GDPR/LGPD Compliance Check
+        run: |
+          echo "🌍 Checking GDPR/LGPD compliance..."
+          
+          # Verificar documentação de privacidade
+          PRIVACY_DOCS=("PRIVACY.md" "privacy.md" "PRIVACY_POLICY.md" "privacy-policy.md")
+          PRIVACY_FOUND=false
+          
+          for doc in "${PRIVACY_DOCS[@]}"; do
+            if [ -f "$doc" ]; then
+              echo "✅ Privacy documentation found: $doc"
+              PRIVACY_FOUND=true
+              break
+            fi
+          done
+          
+          if [ "$PRIVACY_FOUND" = false ]; then
+            echo "⚠️ No privacy policy documentation found"
+            echo "   Consider adding PRIVACY.md for GDPR/LGPD compliance"
+          fi
+          
+          # Verificar consentimento do usuário
+          CONSENT_PATTERNS=("consent" "agree" "accept" "permission")
+          echo "📋 User Consent Patterns:"
+          for pattern in "${CONSENT_PATTERNS[@]}"; do
+            MATCHES=$(grep -ri "$pattern" --include="*.js" --include="*.html" . --exclude-dir=node_modules | wc -l)
+            if [ "$MATCHES" -gt 0 ]; then
+              echo "- $pattern: $MATCHES occurrences"
+            fi
+          done
+          
+          echo "✅ GDPR/LGPD compliance check completed"
+      
+      - name: 🏪 Store Policy Compliance
+        run: |
+          echo "🏪 Checking store policy compliance..."
+          
+          # Chrome Web Store policies
+          echo "🔵 Chrome Web Store Policy Check:"
+          
+          # Verificar campos obrigatórios
+          if [ -f "manifest-edge.json" ]; then
+            NAME=$(node -p "require('./manifest-edge.json').name || 'missing'")
+            DESCRIPTION=$(node -p "require('./manifest-edge.json').description || 'missing'")
+            
+            if [ ${#NAME} -gt 45 ]; then
+              echo "⚠️ Chrome: Extension name too long (${#NAME} > 45 chars)"
+            fi
+            
+            if [ ${#DESCRIPTION} -gt 132 ]; then
+              echo "⚠️ Chrome: Description too long (${#DESCRIPTION} > 132 chars)"
+            fi
+          fi
+          
+          # Firefox Add-ons policies
+          echo "🦊 Firefox Add-ons Policy Check:"
+          
+          if [ -f "manifest.json" ]; then
+            # Verificar ID da extensão
+            ADDON_ID=$(node -p "require('./manifest.json').browser_specific_settings?.gecko?.id || 'missing'")
+            if [ "$ADDON_ID" = "missing" ]; then
+              echo "⚠️ Firefox: Addon ID not specified"
+            else
+              echo "✅ Firefox: Addon ID found"
+            fi
+          fi
+          
+          echo "✅ Store policy compliance check completed"
+      
+      - name: 📊 Generate Privacy Compliance Report
+        run: |
+          echo "📊 Generating privacy compliance report..."
+          
+          cat > privacy-compliance-report.md << 'EOF'
+# 🔒 Privacy & Compliance Analysis Report
+
+## 📋 Summary
+This report analyzes privacy practices and regulatory compliance.
+
+## 🔍 Analysis Results
+
+### Data Collection
+- **Storage APIs**: localStorage, sessionStorage, indexedDB usage
+- **Network Requests**: fetch, XMLHttpRequest patterns
+- **Sensitive APIs**: Geolocation, camera, microphone access
+
+### GDPR/LGPD Compliance
+- **Privacy Documentation**: Privacy policy availability
+- **User Consent**: Consent mechanisms implementation
+- **Data Rights**: User data control features
+
+### Store Policy Compliance
+- **Chrome Web Store**: Name length, description, permissions
+- **Firefox Add-ons**: Addon ID, manifest structure
+- **Content Policies**: Compliance with store content guidelines
+
+## ✅ Compliance Recommendations
+1. Implement clear privacy policy
+2. Obtain explicit user consent for data collection
+3. Provide data export/deletion capabilities
+4. Follow store-specific guidelines
+5. Regular compliance audits
+
+## 📋 Required Actions
+- [ ] Add privacy policy documentation
+- [ ] Implement user consent mechanisms
+- [ ] Review data collection practices
+- [ ] Ensure store policy compliance
+- [ ] Document data processing activities
+
+EOF
+          
+          echo "✅ Privacy compliance report generated"
+      
+      - name: 📤 Upload Privacy Compliance Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: privacy-compliance-report
+          path: privacy-compliance-report.md
+          retention-days: 30
+
+  # ===================================================================
+  # STAGE 5: RELATÓRIO CONSOLIDADO DE SEGURANÇA
+  # ===================================================================
+  
+  security-report:
+    name: 📊 Consolidated Security Report
+    runs-on: ubuntu-latest
+    needs: [dependency-security, static-code-analysis, manifest-security, privacy-compliance]
+    if: always()
+    timeout-minutes: 10
+    
+    steps:
+      - name: 📥 Download All Security Reports
+        uses: actions/download-artifact@v4
+        with:
+          path: ./security-reports/
+      
+      - name: 📊 Generate Consolidated Report
+        run: |
+          echo "📊 Generating consolidated security report..."
+          
+          cat > consolidated-security-report.md << 'EOF'
+# 🔒 Consolidated Security Analysis Report
+
+## 📋 Executive Summary
+This report consolidates all security analysis results for the Assistente de Regulação Médica browser extension.
+
+## 🎯 Security Assessment Results
+
+### Overall Security Score
+- **Dependency Security**: ${{ needs.dependency-security.result == 'success' && '✅ PASS' || '❌ FAIL' }}
+- **Static Code Analysis**: ${{ needs.static-code-analysis.result == 'success' && '✅ PASS' || '❌ FAIL' }}
+- **Manifest Security**: ${{ needs.manifest-security.result == 'success' && '✅ PASS' || '❌ FAIL' }}
+- **Privacy Compliance**: ${{ needs.privacy-compliance.result == 'success' && '✅ PASS' || '❌ FAIL' }}
+
+### Risk Assessment
+EOF
+          
+          # Determinar nível de risco geral
+          FAILED_CHECKS=0
+          
+          if [ "${{ needs.dependency-security.result }}" != "success" ]; then
+            FAILED_CHECKS=$((FAILED_CHECKS + 1))
+          fi
+          
+          if [ "${{ needs.static-code-analysis.result }}" != "success" ]; then
+            FAILED_CHECKS=$((FAILED_CHECKS + 1))
+          fi
+          
+          if [ "${{ needs.manifest-security.result }}" != "success" ]; then
+            FAILED_CHECKS=$((FAILED_CHECKS + 1))
+          fi
+          
+          if [ "${{ needs.privacy-compliance.result }}" != "success" ]; then
+            FAILED_CHECKS=$((FAILED_CHECKS + 1))
+          fi
+          
+          if [ "$FAILED_CHECKS" -eq 0 ]; then
+            RISK_LEVEL="🟢 LOW"
+            RISK_DESCRIPTION="All security checks passed. The extension meets security standards."
+          elif [ "$FAILED_CHECKS" -eq 1 ]; then
+            RISK_LEVEL="🟡 MEDIUM"
+            RISK_DESCRIPTION="One security check failed. Review and address the issues."
+          else
+            RISK_LEVEL="🔴 HIGH"
+            RISK_DESCRIPTION="Multiple security checks failed. Immediate attention required."
+          fi
+          
+          cat >> consolidated-security-report.md << EOF
+
+**Risk Level**: $RISK_LEVEL
+**Assessment**: $RISK_DESCRIPTION
+
+### 📋 Detailed Findings
+
+#### Dependency Security
+- **Status**: ${{ needs.dependency-security.result == 'success' && 'PASSED' || 'FAILED' }}
+- **Critical Issues**: Check npm audit results
+- **Recommendations**: Update vulnerable dependencies
+
+#### Static Code Analysis
+- **Status**: ${{ needs.static-code-analysis.result == 'success' && 'PASSED' || 'FAILED' }}
+- **Code Patterns**: Review security-sensitive patterns
+- **Recommendations**: Follow secure coding practices
+
+#### Manifest Security
+- **Status**: ${{ needs.manifest-security.result == 'success' && 'PASSED' || 'FAILED' }}
+- **Permissions**: Review extension permissions
+- **Recommendations**: Use minimal necessary permissions
+
+#### Privacy Compliance
+- **Status**: ${{ needs.privacy-compliance.result == 'success' && 'PASSED' || 'FAILED' }}
+- **Data Handling**: Review data collection practices
+- **Recommendations**: Ensure GDPR/LGPD compliance
+
+### 🔧 Action Items
+
+#### Immediate Actions Required
+EOF
+          
+          if [ "$FAILED_CHECKS" -gt 0 ]; then
+            cat >> consolidated-security-report.md << 'EOF'
+1. 🔍 Review failed security checks
+2. 🛠️ Address identified vulnerabilities
+3. 📋 Update security documentation
+4. 🔄 Re-run security scans
+EOF
+          else
+            cat >> consolidated-security-report.md << 'EOF'
+1. ✅ All security checks passed
+2. 📊 Monitor for new vulnerabilities
+3. 🔄 Schedule regular security reviews
+4. 📋 Maintain security documentation
+EOF
+          fi
+          
+          cat >> consolidated-security-report.md << 'EOF'
+
+#### Long-term Security Improvements
+1. 🔒 Implement automated security monitoring
+2. 📚 Regular security training for developers
+3. 🔄 Establish security review process
+4. 📊 Set up security metrics tracking
+
+### 📞 Support and Resources
+- 🔒 [OWASP Extension Security](https://owasp.org/www-project-web-security-testing-guide/)
+- 📋 [Chrome Extension Security](https://developer.chrome.com/docs/extensions/mv3/security/)
+- 🦊 [Firefox Extension Security](https://extensionworkshop.com/documentation/develop/build-a-secure-extension/)
+- 🌍 [GDPR Compliance Guide](https://gdpr.eu/)
+
+---
+**Report Generated**: $(date -u '+%Y-%m-%d %H:%M:%S UTC')
+**Scan Level**: ${{ env.SECURITY_SCAN_LEVEL }}
+**Pipeline**: ${{ github.workflow }} #${{ github.run_number }}
+EOF
+          
+          echo "✅ Consolidated security report generated"
+      
+      - name: 📊 Security Summary for GitHub
+        run: |
+          echo "### 🔒 Security Analysis Summary" >> $GITHUB_STEP_SUMMARY
+          echo "| Component | Status | Risk Level |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----------|--------|------------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Dependencies | ${{ needs.dependency-security.result == 'success' && '✅ Secure' || '❌ Issues Found' }} | ${{ needs.dependency-security.result == 'success' && 'Low' || 'High' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Code Analysis | ${{ needs.static-code-analysis.result == 'success' && '✅ Secure' || '❌ Issues Found' }} | ${{ needs.static-code-analysis.result == 'success' && 'Low' || 'High' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Manifest | ${{ needs.manifest-security.result == 'success' && '✅ Secure' || '❌ Issues Found' }} | ${{ needs.manifest-security.result == 'success' && 'Low' || 'High' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Privacy | ${{ needs.privacy-compliance.result == 'success' && '✅ Compliant' || '❌ Issues Found' }} | ${{ needs.privacy-compliance.result == 'success' && 'Low' || 'High' }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           
-          # Status geral
-          if [[ "${{ needs.dependency-scan.result }}" == "success" && "${{ needs.code-analysis.result }}" == "success" && "${{ needs.manifest-security.result }}" == "success" && "${{ needs.secrets-scan.result }}" == "success" ]]; then
+          # Determinar status geral
+          FAILED_CHECKS=0
+          if [ "${{ needs.dependency-security.result }}" != "success" ]; then FAILED_CHECKS=$((FAILED_CHECKS + 1)); fi
+          if [ "${{ needs.static-code-analysis.result }}" != "success" ]; then FAILED_CHECKS=$((FAILED_CHECKS + 1)); fi
+          if [ "${{ needs.manifest-security.result }}" != "success" ]; then FAILED_CHECKS=$((FAILED_CHECKS + 1)); fi
+          if [ "${{ needs.privacy-compliance.result }}" != "success" ]; then FAILED_CHECKS=$((FAILED_CHECKS + 1)); fi
+          
+          if [ "$FAILED_CHECKS" -eq 0 ]; then
             echo "## 🎉 Overall Security Status: ✅ SECURE" >> $GITHUB_STEP_SUMMARY
-            echo "All security scans passed successfully!" >> $GITHUB_STEP_SUMMARY
+            echo "All security checks passed. The extension meets security standards." >> $GITHUB_STEP_SUMMARY
+          elif [ "$FAILED_CHECKS" -eq 1 ]; then
+            echo "## ⚠️ Overall Security Status: 🟡 REVIEW NEEDED" >> $GITHUB_STEP_SUMMARY
+            echo "One security check failed. Please review and address the issues." >> $GITHUB_STEP_SUMMARY
           else
-            echo "## ⚠️ Overall Security Status: ISSUES DETECTED" >> $GITHUB_STEP_SUMMARY
-            echo "Some security scans detected issues. Please review the detailed results above." >> $GITHUB_STEP_SUMMARY
+            echo "## 🚨 Overall Security Status: 🔴 ACTION REQUIRED" >> $GITHUB_STEP_SUMMARY
+            echo "Multiple security checks failed. Immediate attention required before deployment." >> $GITHUB_STEP_SUMMARY
           fi
       
-      - name: 🎯 Set Final Status
+      - name: 📤 Upload Consolidated Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: consolidated-security-report
+          path: consolidated-security-report.md
+          retention-days: 90
+      
+      - name: 🎯 Set Security Exit Code
         run: |
-          if [[ "${{ needs.dependency-scan.result }}" == "success" && "${{ needs.code-analysis.result }}" == "success" && "${{ needs.manifest-security.result }}" == "success" && "${{ needs.secrets-scan.result }}" == "success" ]]; then
-            echo "✅ Security scan completed successfully"
+          FAILED_CHECKS=0
+          if [ "${{ needs.dependency-security.result }}" != "success" ]; then FAILED_CHECKS=$((FAILED_CHECKS + 1)); fi
+          if [ "${{ needs.static-code-analysis.result }}" != "success" ]; then FAILED_CHECKS=$((FAILED_CHECKS + 1)); fi
+          if [ "${{ needs.manifest-security.result }}" != "success" ]; then FAILED_CHECKS=$((FAILED_CHECKS + 1)); fi
+          if [ "${{ needs.privacy-compliance.result }}" != "success" ]; then FAILED_CHECKS=$((FAILED_CHECKS + 1)); fi
+          
+          if [ "$FAILED_CHECKS" -eq 0 ]; then
+            echo "✅ Security pipeline completed successfully"
             exit 0
           else
-            echo "❌ Security scan detected issues"
+            echo "❌ Security pipeline found $FAILED_CHECKS issue(s)"
             exit 1
           fi

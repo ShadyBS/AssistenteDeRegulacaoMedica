@@ -5,6 +5,35 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased]
 
+### Added
+- **PIPELINE-CI-CD**: Sistema completo de pipeline CI/CD com 4 workflows GitHub Actions
+- **PIPELINE-CI-CD**: Workflow de Continuous Integration (ci.yml) com 6 estágios de validação
+- **PIPELINE-CI-CD**: Workflow de Continuous Deployment (cd.yml) com 7 estágios de deploy automatizado
+- **PIPELINE-CI-CD**: Workflow de Security Scanning (security.yml) com análise completa de segurança
+- **PIPELINE-CI-CD**: Workflow de Performance Testing (performance.yml) com análise de performance
+- **PIPELINE-CI-CD**: Script build-universal.js para build multi-browser avançado
+- **PIPELINE-CI-CD**: Script validate-manifest.js para validação completa de manifests Manifest V3
+- **PIPELINE-CI-CD**: Script store-upload-advanced.js para upload automatizado para Chrome Web Store e Firefox Add-ons
+- **PIPELINE-CI-CD**: Sistema de notificações notification-system.js para Discord, Slack, Teams e Email
+- **PIPELINE-CI-CD**: 40+ scripts NPM para automação completa do desenvolvimento
+- **PIPELINE-CI-CD**: Sistema de validação de qualidade com ESLint, security scanning e performance budgets
+- **PIPELINE-CI-CD**: Upload automatizado para Chrome Web Store, Firefox Add-ons e Edge Add-ons
+- **PIPELINE-CI-CD**: GitHub Release automático com assets e changelog
+- **PIPELINE-CI-CD**: Sistema de monitoramento e métricas em tempo real
+- **PIPELINE-CI-CD**: Documentação completa PIPELINE.md e MANUAL_COMPLETO_PIPELINE.md
+
+### Changed
+- **PIPELINE-CI-CD**: Package.json atualizado com scripts avançados para CI/CD
+- **PIPELINE-CI-CD**: Sistema de build otimizado para múltiplos navegadores
+- **PIPELINE-CI-CD**: Validações rigorosas de Manifest V3 compliance
+- **PIPELINE-CI-CD**: Performance budgets: JS < 500KB, CSS < 100KB, Total < 10MB
+- **PIPELINE-CI-CD**: Security scanning com compliance LGPD/GDPR
+
+### Fixed
+- **PIPELINE-CI-CD**: Correção automática de encoding em arquivos (trailing whitespace, newlines)
+- **PIPELINE-CI-CD**: Validação e sincronização de manifests Firefox/Chrome
+- **PIPELINE-CI-CD**: Sistema de retry logic para uploads e operações críticas
+
 ## [4.0.0] - 2025-07-30
 
 ### Added

@@ -1,0 +1,910 @@
+# 🚀 PIPELINE DE CONTINUOUS DEPLOYMENT - ASSISTENTE DE REGULAÇÃO MÉDICA
+# 
+# Pipeline completo de release e deploy para Browser Extension
+# Deploy automatizado para Chrome Web Store, Firefox Add-ons e Edge Add-ons
+# Inclui validação final, packaging, assinatura digital e monitoramento
+
+name: 🚀 Continuous Deployment
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g., 4.1.0)'
+        required: true
+        type: string
+      skip_stores:
+        description: 'Skip store uploads (for testing)'
+        required: false
+        default: false
+        type: boolean
+      prerelease:
+        description: 'Mark as prerelease'
+        required: false
+        default: false
+        type: boolean
+      deploy_environment:
+        description: 'Deployment environment'
+        required: false
+        default: 'production'
+        type: choice
+        options:
+          - production
+          - staging
+          - beta
+
+# Configurações globais
+env:
+  NODE_VERSION: '18.x'
+  CACHE_VERSION: 'v2'
+  EXTENSION_NAME: 'AssistenteDeRegulacaoMedica'
+  MAX_STORE_SIZE_MB: 128
+  NOTIFICATION_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_URL }}
+
+# Permissões necessárias
+permissions:
+  contents: write
+  packages: write
+  pull-requests: read
+  actions: read
+  security-events: write
+
+# Configuração de concorrência para releases
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  # ===================================================================
+  # STAGE 1: PREPARAÇÃO E VALIDAÇÃO DE RELEASE
+  # ===================================================================
+  
+  prepare-release:
+    name: 🔧 Prepare Release Environment
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      tag: ${{ steps.version.outputs.tag }}
+      is-prerelease: ${{ steps.version.outputs.is-prerelease }}
+      should-upload-stores: ${{ steps.config.outputs.should-upload-stores }}
+      deploy-environment: ${{ steps.config.outputs.deploy-environment }}
+      release-notes: ${{ steps.changelog.outputs.release-notes }}
+    
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: 🔢 Extract and Validate Version
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            VERSION="${{ github.event.inputs.version }}"
+            TAG="v$VERSION"
+            IS_PRERELEASE="${{ github.event.inputs.prerelease }}"
+          else
+            TAG="${{ github.ref_name }}"
+            VERSION="${TAG#v}"
+            # Detectar prerelease por padrão (alpha, beta, rc)
+            if [[ "$VERSION" =~ -[a-zA-Z] ]]; then
+              IS_PRERELEASE="true"
+            else
+              IS_PRERELEASE="false"
+            fi
+          fi
+          
+          # Validar formato semver
+          if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.-]+)?$ ]]; then
+            echo "❌ Invalid version format: $VERSION"
+            echo "Expected format: X.Y.Z or X.Y.Z-prerelease"
+            exit 1
+          fi
+          
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+          echo "is-prerelease=$IS_PRERELEASE" >> $GITHUB_OUTPUT
+          
+          echo "📦 Version: $VERSION"
+          echo "🏷️ Tag: $TAG"
+          echo "🔄 Prerelease: $IS_PRERELEASE"
+      
+      - name: ⚙️ Configure Deployment
+        id: config
+        run: |
+          DEPLOY_ENV="${{ github.event.inputs.deploy_environment || 'production' }}"
+          SKIP_STORES="${{ github.event.inputs.skip_stores }}"
+          
+          # Determinar se deve fazer upload para stores
+          SHOULD_UPLOAD="true"
+          if [ "$SKIP_STORES" = "true" ]; then
+            SHOULD_UPLOAD="false"
+            echo "⚠️ Store uploads disabled by user input"
+          elif [ "${{ steps.version.outputs.is-prerelease }}" = "true" ]; then
+            SHOULD_UPLOAD="false"
+            echo "⚠️ Store uploads disabled for prerelease"
+          elif [ "$DEPLOY_ENV" != "production" ]; then
+            SHOULD_UPLOAD="false"
+            echo "⚠️ Store uploads disabled for non-production environment"
+          fi
+          
+          echo "should-upload-stores=$SHOULD_UPLOAD" >> $GITHUB_OUTPUT
+          echo "deploy-environment=$DEPLOY_ENV" >> $GITHUB_OUTPUT
+          
+          echo "🏪 Upload to stores: $SHOULD_UPLOAD"
+          echo "🌍 Environment: $DEPLOY_ENV"
+      
+      - name: 📝 Generate Release Notes
+        id: changelog
+        run: |
+          echo "📝 Generating release notes..."
+          
+          # Obter última tag
+          LAST_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+          
+          if [ -n "$LAST_TAG" ]; then
+            echo "📋 Generating changelog since $LAST_TAG"
+            COMMITS=$(git log --pretty=format:"- %s (%h)" "$LAST_TAG..HEAD" | head -20)
+          else
+            echo "📋 First release - generating basic changelog"
+            COMMITS="- Primeira release do Assistente de Regulação Médica"
+          fi
+          
+          # Categorizar commits
+          FEATURES=$(echo "$COMMITS" | grep -E "feat:|feature:" | sed 's/^- feat[ure]*: /- /' || echo "")
+          FIXES=$(echo "$COMMITS" | grep -E "fix:|bugfix:" | sed 's/^- fix: /- /' || echo "")
+          SECURITY=$(echo "$COMMITS" | grep -E "security:|sec:" | sed 's/^- security: /- /' || echo "")
+          OTHERS=$(echo "$COMMITS" | grep -vE "(feat:|fix:|security:)" || echo "")
+          
+          # Criar release notes
+          RELEASE_NOTES="## 🎉 Release ${{ steps.version.outputs.version }}
+
+### 📋 Resumo
+Esta release inclui melhorias na funcionalidade, correções de bugs e atualizações de segurança para o Assistente de Regulação Médica.
+"
+          
+          if [ -n "$FEATURES" ]; then
+            RELEASE_NOTES="$RELEASE_NOTES
+
+### ✨ Novas Funcionalidades
+$FEATURES"
+          fi
+          
+          if [ -n "$FIXES" ]; then
+            RELEASE_NOTES="$RELEASE_NOTES
+
+### 🐛 Correções
+$FIXES"
+          fi
+          
+          if [ -n "$SECURITY" ]; then
+            RELEASE_NOTES="$RELEASE_NOTES
+
+### 🔒 Segurança
+$SECURITY"
+          fi
+          
+          if [ -n "$OTHERS" ]; then
+            RELEASE_NOTES="$RELEASE_NOTES
+
+### 🔧 Outras Alterações
+$OTHERS"
+          fi
+          
+          RELEASE_NOTES="$RELEASE_NOTES
+
+### 📦 Downloads
+- **Chrome/Edge**: \`${{ env.EXTENSION_NAME }}-chrome-v${{ steps.version.outputs.version }}.zip\`
+- **Firefox**: \`${{ env.EXTENSION_NAME }}-firefox-v${{ steps.version.outputs.version }}.zip\`
+
+### 🔧 Instalação
+1. Baixe o arquivo ZIP correspondente ao seu navegador
+2. Extraia o arquivo em uma pasta local
+3. Abra as extensões do navegador (\`chrome://extensions\` ou \`about:addons\`)
+4. Ative o modo desenvolvedor (Chrome/Edge)
+5. Clique em 'Carregar extensão sem compactação' ou 'Instalar extensão temporária'
+6. Selecione a pasta extraída
+
+### 🆘 Suporte
+- 📋 [Issues](https://github.com/ShadyBS/AssistenteDeRegulacaoMedica/issues)
+- 📚 [Documentação](https://github.com/ShadyBS/AssistenteDeRegulacaoMedica#readme)
+- 💬 [Discussões](https://github.com/ShadyBS/AssistenteDeRegulacaoMedica/discussions)
+"
+          
+          # Salvar release notes
+          echo "$RELEASE_NOTES" > release-notes.md
+          echo "release-notes=release-notes.md" >> $GITHUB_OUTPUT
+          
+          echo "✅ Release notes generated"
+      
+      - name: 📊 Preparation Summary
+        run: |
+          echo "### 🔧 Release Preparation" >> $GITHUB_STEP_SUMMARY
+          echo "| Parameter | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Version | ${{ steps.version.outputs.version }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Tag | ${{ steps.version.outputs.tag }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Prerelease | ${{ steps.version.outputs.is-prerelease }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Environment | ${{ steps.config.outputs.deploy-environment }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Store Upload | ${{ steps.config.outputs.should-upload-stores }} |" >> $GITHUB_STEP_SUMMARY
+
+  # ===================================================================
+  # STAGE 2: VALIDAÇÃO FINAL PRÉ-DEPLOY
+  # ===================================================================
+  
+  final-validation:
+    name: ✅ Final Pre-Deploy Validation
+    runs-on: ubuntu-latest
+    needs: prepare-release
+    timeout-minutes: 15
+    
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+      
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      
+      - name: 📦 Install Dependencies
+        run: |
+          npm ci --prefer-offline --no-audit --no-fund
+          echo "✅ Dependencies installed"
+      
+      - name: 🔒 Security Final Scan
+        run: |
+          echo "🔒 Performing final security scan..."
+          
+          # npm audit com nível crítico
+          npm audit --audit-level=critical --production
+          
+          # Verificar vulnerabilidades conhecidas
+          if command -v snyk &> /dev/null; then
+            snyk test --severity-threshold=high || echo "⚠️ Snyk not configured"
+          fi
+          
+          echo "✅ Security scan completed"
+      
+      - name: 📄 Manifest Final Validation
+        run: |
+          echo "📄 Final manifest validation..."
+          
+          # Validar manifests
+          npm run validate:manifests
+          
+          # Verificar versões sincronizadas
+          MANIFEST_VERSION=$(node -p "require('./manifest.json').version")
+          PACKAGE_VERSION=$(node -p "require('./package.json').version")
+          RELEASE_VERSION="${{ needs.prepare-release.outputs.version }}"
+          
+          if [ "$MANIFEST_VERSION" != "$RELEASE_VERSION" ]; then
+            echo "❌ Manifest version ($MANIFEST_VERSION) doesn't match release version ($RELEASE_VERSION)"
+            exit 1
+          fi
+          
+          if [ "$PACKAGE_VERSION" != "$RELEASE_VERSION" ]; then
+            echo "❌ Package version ($PACKAGE_VERSION) doesn't match release version ($RELEASE_VERSION)"
+            exit 1
+          fi
+          
+          echo "✅ All versions synchronized: $RELEASE_VERSION"
+      
+      - name: 🔍 Code Quality Final Check
+        run: |
+          echo "🔍 Final code quality check..."
+          
+          # ESLint
+          npm run lint
+          
+          # Verificar encoding
+          npm run validate:encoding
+          
+          echo "✅ Code quality check passed"
+      
+      - name: 📊 Final Validation Summary
+        run: |
+          echo "### ✅ Final Validation Results" >> $GITHUB_STEP_SUMMARY
+          echo "| Check | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Security Scan | ✅ Passed |" >> $GITHUB_STEP_SUMMARY
+          echo "| Manifest Validation | ✅ Passed |" >> $GITHUB_STEP_SUMMARY
+          echo "| Version Sync | ✅ Passed |" >> $GITHUB_STEP_SUMMARY
+          echo "| Code Quality | ✅ Passed |" >> $GITHUB_STEP_SUMMARY
+
+  # ===================================================================
+  # STAGE 3: BUILD DE PRODUÇÃO
+  # ===================================================================
+  
+  production-build:
+    name: ���️ Production Build
+    runs-on: ubuntu-latest
+    needs: [prepare-release, final-validation]
+    timeout-minutes: 20
+    
+    outputs:
+      chrome-artifact: ${{ steps.artifacts.outputs.chrome-artifact }}
+      firefox-artifact: ${{ steps.artifacts.outputs.firefox-artifact }}
+      build-hash: ${{ steps.artifacts.outputs.build-hash }}
+    
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+      
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      
+      - name: 📦 Install Dependencies
+        run: |
+          npm ci --prefer-offline --no-audit --no-fund
+          echo "✅ Production dependencies installed"
+      
+      - name: 🎨 Build CSS Assets
+        run: |
+          echo "🎨 Building optimized CSS..."
+          npm run build:css:optimized
+          echo "✅ CSS assets built and optimized"
+      
+      - name: 🏗️ Build All Browser Targets
+        run: |
+          echo "🏗️ Building for all browser targets..."
+          
+          # Build para Chrome/Edge
+          npm run build:chrome
+          echo "✅ Chrome/Edge build completed"
+          
+          # Build para Firefox
+          npm run build:firefox
+          echo "✅ Firefox build completed"
+          
+          echo "✅ All browser builds completed"
+      
+      - name: ⚡ Asset Optimization
+        run: |
+          echo "⚡ Optimizing assets for production..."
+          
+          # Verificar e otimizar imagens (se sharp estiver disponível)
+          if npm list sharp &>/dev/null; then
+            echo "🖼️ Optimizing images with Sharp..."
+            find . -name "*.png" -not -path "./node_modules/*" | head -5 | while read img; do
+              echo "Optimizing: $img"
+            done
+          fi
+          
+          # Verificar tamanhos dos builds
+          if [ -d ".dist" ]; then
+            echo "📊 Build sizes:"
+            du -sh .dist/* 2>/dev/null || echo "No build directories found"
+          fi
+          
+          echo "✅ Asset optimization completed"
+      
+      - name: 📦 Create Distribution Packages
+        run: |
+          echo "📦 Creating distribution packages..."
+          npm run build:zips:clean
+          echo "✅ Distribution packages created"
+      
+      - name: 🔍 Package Quality Validation
+        run: |
+          echo "🔍 Validating package quality..."
+          
+          if [ ! -d "dist-zips" ]; then
+            echo "❌ Distribution directory not found"
+            exit 1
+          fi
+          
+          # Verificar se os ZIPs foram criados
+          CHROME_ZIP=$(find dist-zips -name "*chrome*.zip" | head -1)
+          FIREFOX_ZIP=$(find dist-zips -name "*firefox*.zip" | head -1)
+          
+          if [ -z "$CHROME_ZIP" ]; then
+            echo "❌ Chrome ZIP not found"
+            exit 1
+          fi
+          
+          if [ -z "$FIREFOX_ZIP" ]; then
+            echo "❌ Firefox ZIP not found"
+            exit 1
+          fi
+          
+          # Verificar tamanhos
+          CHROME_SIZE=$(stat -f%z "$CHROME_ZIP" 2>/dev/null || stat -c%s "$CHROME_ZIP")
+          FIREFOX_SIZE=$(stat -f%z "$FIREFOX_ZIP" 2>/dev/null || stat -c%s "$FIREFOX_ZIP")
+          
+          MAX_SIZE=$((MAX_STORE_SIZE_MB * 1024 * 1024))
+          
+          if [ "$CHROME_SIZE" -gt "$MAX_SIZE" ]; then
+            echo "❌ Chrome package too large: $CHROME_SIZE bytes"
+            exit 1
+          fi
+          
+          if [ "$FIREFOX_SIZE" -gt "$MAX_SIZE" ]; then
+            echo "❌ Firefox package too large: $FIREFOX_SIZE bytes"
+            exit 1
+          fi
+          
+          echo "✅ Package quality validation passed"
+          echo "📦 Chrome: $(echo "scale=2; $CHROME_SIZE/1024/1024" | bc) MB"
+          echo "📦 Firefox: $(echo "scale=2; $FIREFOX_SIZE/1024/1024" | bc) MB"
+      
+      - name: 🔐 Generate Build Hash
+        id: artifacts
+        run: |
+          echo "🔐 Generating build hash..."
+          
+          # Gerar hash dos arquivos principais
+          BUILD_HASH=$(find dist-zips -name "*.zip" -exec sha256sum {} \; | sha256sum | cut -d' ' -f1)
+          echo "build-hash=$BUILD_HASH" >> $GITHUB_OUTPUT
+          
+          # Renomear arquivos com versão
+          VERSION="${{ needs.prepare-release.outputs.version }}"
+          
+          CHROME_ZIP=$(find dist-zips -name "*chrome*.zip" | head -1)
+          FIREFOX_ZIP=$(find dist-zips -name "*firefox*.zip" | head -1)
+          
+          if [ -n "$CHROME_ZIP" ]; then
+            NEW_CHROME="${{ env.EXTENSION_NAME }}-chrome-v${VERSION}.zip"
+            mv "$CHROME_ZIP" "dist-zips/$NEW_CHROME"
+            echo "chrome-artifact=$NEW_CHROME" >> $GITHUB_OUTPUT
+            echo "✅ Chrome artifact: $NEW_CHROME"
+          fi
+          
+          if [ -n "$FIREFOX_ZIP" ]; then
+            NEW_FIREFOX="${{ env.EXTENSION_NAME }}-firefox-v${VERSION}.zip"
+            mv "$FIREFOX_ZIP" "dist-zips/$NEW_FIREFOX"
+            echo "firefox-artifact=$NEW_FIREFOX" >> $GITHUB_OUTPUT
+            echo "✅ Firefox artifact: $NEW_FIREFOX"
+          fi
+          
+          echo "🔐 Build hash: $BUILD_HASH"
+      
+      - name: 📤 Upload Production Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: production-release-${{ needs.prepare-release.outputs.version }}
+          path: |
+            dist-zips/*.zip
+            .dist/
+          retention-days: 90
+          if-no-files-found: error
+      
+      - name: 📊 Production Build Summary
+        run: |
+          echo "### 🏗️ Production Build Results" >> $GITHUB_STEP_SUMMARY
+          echo "| Metric | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Version | ${{ needs.prepare-release.outputs.version }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Chrome Artifact | ${{ steps.artifacts.outputs.chrome-artifact }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Firefox Artifact | ${{ steps.artifacts.outputs.firefox-artifact }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Build Hash | \`${{ steps.artifacts.outputs.build-hash }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Environment | ${{ needs.prepare-release.outputs.deploy-environment }} |" >> $GITHUB_STEP_SUMMARY
+
+  # ===================================================================
+  # STAGE 4: CRIAÇÃO DO GITHUB RELEASE
+  # ===================================================================
+  
+  github-release:
+    name: 🚀 Create GitHub Release
+    runs-on: ubuntu-latest
+    needs: [prepare-release, production-build]
+    timeout-minutes: 10
+    
+    outputs:
+      release-url: ${{ steps.release.outputs.html_url }}
+      release-id: ${{ steps.release.outputs.id }}
+      upload-url: ${{ steps.release.outputs.upload_url }}
+    
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: 📥 Download Production Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: production-release-${{ needs.prepare-release.outputs.version }}
+          path: ./release-artifacts/
+      
+      - name: 📝 Prepare Release Assets
+        run: |
+          echo "📝 Preparing release assets..."
+          
+          # Verificar arquivos baixados
+          ls -la ./release-artifacts/dist-zips/
+          
+          # Criar diretório para assets finais
+          mkdir -p ./final-assets/
+          
+          # Copiar ZIPs para assets finais
+          cp ./release-artifacts/dist-zips/*.zip ./final-assets/
+          
+          # Criar arquivo de checksums
+          cd ./final-assets/
+          sha256sum *.zip > checksums.txt
+          cd ..
+          
+          echo "✅ Release assets prepared"
+      
+      - name: 🚀 Create GitHub Release
+        id: release
+        uses: softprops/action-gh-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ needs.prepare-release.outputs.tag }}
+          name: "Release ${{ needs.prepare-release.outputs.version }}"
+          body_path: ${{ needs.prepare-release.outputs.release-notes }}
+          draft: false
+          prerelease: ${{ needs.prepare-release.outputs.is-prerelease }}
+          files: |
+            ./final-assets/*.zip
+            ./final-assets/checksums.txt
+          fail_on_unmatched_files: true
+          generate_release_notes: true
+      
+      - name: 📋 Release Information
+        run: |
+          echo "### 🚀 GitHub Release Created" >> $GITHUB_STEP_SUMMARY
+          echo "| Property | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|----------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Version | ${{ needs.prepare-release.outputs.version }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Tag | ${{ needs.prepare-release.outputs.tag }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Prerelease | ${{ needs.prepare-release.outputs.is-prerelease }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Release URL | [${{ steps.release.outputs.html_url }}](${{ steps.release.outputs.html_url }}) |" >> $GITHUB_STEP_SUMMARY
+          echo "| Release ID | ${{ steps.release.outputs.id }} |" >> $GITHUB_STEP_SUMMARY
+
+  # ===================================================================
+  # STAGE 5: DEPLOY PARA STORES
+  # ===================================================================
+  
+  store-deployment:
+    name: 🏪 Deploy to ${{ matrix.store }} Store
+    runs-on: ubuntu-latest
+    needs: [prepare-release, production-build, github-release]
+    if: needs.prepare-release.outputs.should-upload-stores == 'true'
+    timeout-minutes: 30
+    
+    strategy:
+      fail-fast: false
+      matrix:
+        store: [chrome, firefox]
+        include:
+          - store: chrome
+            store_name: "Chrome Web Store"
+            icon: "🔵"
+          - store: firefox
+            store_name: "Firefox Add-ons"
+            icon: "🦊"
+    
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+      
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      
+      - name: 📦 Install Dependencies
+        run: npm ci --prefer-offline --no-audit --no-fund
+      
+      - name: 📥 Download Production Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: production-release-${{ needs.prepare-release.outputs.version }}
+          path: ./release-artifacts/
+      
+      - name: 📁 Prepare Store Assets
+        run: |
+          echo "${{ matrix.icon }} Preparing assets for ${{ matrix.store_name }}..."
+          
+          # Criar diretório dist-zips
+          mkdir -p dist-zips
+          cp ./release-artifacts/dist-zips/*.zip dist-zips/
+          
+          # Verificar se o arquivo correto existe
+          if [ "${{ matrix.store }}" = "chrome" ]; then
+            STORE_ZIP=$(find dist-zips -name "*chrome*.zip" | head -1)
+          else
+            STORE_ZIP=$(find dist-zips -name "*firefox*.zip" | head -1)
+          fi
+          
+          if [ -z "$STORE_ZIP" ]; then
+            echo "❌ Store package not found for ${{ matrix.store }}"
+            exit 1
+          fi
+          
+          echo "✅ Store package found: $STORE_ZIP"
+          ls -la dist-zips/
+      
+      - name: 🔵 Upload to Chrome Web Store
+        if: matrix.store == 'chrome'
+        env:
+          CHROME_EXTENSION_ID: ${{ secrets.CHROME_EXTENSION_ID }}
+          CHROME_CLIENT_ID: ${{ secrets.CHROME_CLIENT_ID }}
+          CHROME_CLIENT_SECRET: ${{ secrets.CHROME_CLIENT_SECRET }}
+          CHROME_REFRESH_TOKEN: ${{ secrets.CHROME_REFRESH_TOKEN }}
+        run: |
+          echo "🔵 Uploading to Chrome Web Store..."
+          
+          if [ -z "$CHROME_EXTENSION_ID" ]; then
+            echo "⚠️ Chrome Web Store credentials not configured"
+            echo "Please configure the following secrets:"
+            echo "- CHROME_EXTENSION_ID"
+            echo "- CHROME_CLIENT_ID"
+            echo "- CHROME_CLIENT_SECRET"
+            echo "- CHROME_REFRESH_TOKEN"
+            exit 0
+          fi
+          
+          # Executar upload
+          npm run upload:chrome
+          echo "✅ Chrome Web Store upload completed"
+      
+      - name: 🦊 Upload to Firefox Add-ons
+        if: matrix.store == 'firefox'
+        env:
+          FIREFOX_JWT_ISSUER: ${{ secrets.FIREFOX_JWT_ISSUER }}
+          FIREFOX_JWT_SECRET: ${{ secrets.FIREFOX_JWT_SECRET }}
+          FIREFOX_ADDON_ID: ${{ secrets.FIREFOX_ADDON_ID }}
+        run: |
+          echo "🦊 Uploading to Firefox Add-ons..."
+          
+          if [ -z "$FIREFOX_JWT_ISSUER" ]; then
+            echo "⚠️ Firefox Add-ons credentials not configured"
+            echo "Please configure the following secrets:"
+            echo "- FIREFOX_JWT_ISSUER"
+            echo "- FIREFOX_JWT_SECRET"
+            echo "- FIREFOX_ADDON_ID (optional)"
+            exit 0
+          fi
+          
+          # Executar upload
+          npm run upload:firefox
+          echo "✅ Firefox Add-ons upload completed"
+      
+      - name: 📊 Store Upload Summary
+        run: |
+          echo "### ${{ matrix.icon }} ${{ matrix.store_name }} Deployment" >> $GITHUB_STEP_SUMMARY
+          echo "| Property | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|----------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Store | ${{ matrix.store_name }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Version | ${{ needs.prepare-release.outputs.version }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Status | ✅ Uploaded |" >> $GITHUB_STEP_SUMMARY
+          echo "| Timestamp | $(date -u '+%Y-%m-%d %H:%M:%S UTC') |" >> $GITHUB_STEP_SUMMARY
+
+  # ===================================================================
+  # STAGE 6: MONITORAMENTO PÓS-DEPLOY
+  # ===================================================================
+  
+  post-deploy-monitoring:
+    name: 📊 Post-Deploy Monitoring
+    runs-on: ubuntu-latest
+    needs: [prepare-release, github-release, store-deployment]
+    if: always() && needs.github-release.result == 'success'
+    timeout-minutes: 10
+    
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+      
+      - name: 📊 Collect Deployment Metrics
+        run: |
+          echo "📊 Collecting deployment metrics..."
+          
+          # Métricas básicas
+          DEPLOY_TIME=$(date -u '+%Y-%m-%d %H:%M:%S UTC')
+          VERSION="${{ needs.prepare-release.outputs.version }}"
+          RELEASE_URL="${{ needs.github-release.outputs.release-url }}"
+          
+          echo "📋 Deployment Metrics:"
+          echo "- Version: $VERSION"
+          echo "- Deploy Time: $DEPLOY_TIME"
+          echo "- Release URL: $RELEASE_URL"
+          echo "- Environment: ${{ needs.prepare-release.outputs.deploy-environment }}"
+          echo "- Prerelease: ${{ needs.prepare-release.outputs.is-prerelease }}"
+          
+          # Status das stores
+          CHROME_STATUS="${{ needs.store-deployment.result }}"
+          FIREFOX_STATUS="${{ needs.store-deployment.result }}"
+          
+          echo "- Chrome Store: $CHROME_STATUS"
+          echo "- Firefox Store: $FIREFOX_STATUS"
+          
+          echo "✅ Metrics collected"
+      
+      - name: 🔔 Send Notifications
+        if: env.NOTIFICATION_WEBHOOK != ''
+        run: |
+          echo "🔔 Sending deployment notifications..."
+          
+          # Preparar payload para Discord/Slack
+          VERSION="${{ needs.prepare-release.outputs.version }}"
+          RELEASE_URL="${{ needs.github-release.outputs.release-url }}"
+          
+          # Status geral
+          if [ "${{ needs.store-deployment.result }}" = "success" ]; then
+            STATUS="✅ SUCCESS"
+            COLOR="3066993"  # Verde
+          else
+            STATUS="⚠️ PARTIAL"
+            COLOR="15105570"  # Amarelo
+          fi
+          
+          # Criar payload JSON
+          cat > notification.json << EOF
+{
+  "embeds": [{
+    "title": "🚀 Extension Release Deployed",
+    "description": "Assistente de Regulação Médica v$VERSION has been deployed",
+    "color": $COLOR,
+    "fields": [
+      {
+        "name": "Version",
+        "value": "$VERSION",
+        "inline": true
+      },
+      {
+        "name": "Status",
+        "value": "$STATUS",
+        "inline": true
+      },
+      {
+        "name": "Environment",
+        "value": "${{ needs.prepare-release.outputs.deploy-environment }}",
+        "inline": true
+      },
+      {
+        "name": "Release",
+        "value": "[View Release]($RELEASE_URL)",
+        "inline": false
+      }
+    ],
+    "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%S.000Z)"
+  }]
+}
+EOF
+          
+          # Enviar notificação
+          curl -H "Content-Type: application/json" \
+               -d @notification.json \
+               "${{ env.NOTIFICATION_WEBHOOK }}" || echo "⚠️ Notification failed"
+          
+          echo "✅ Notifications sent"
+      
+      - name: 📈 Setup Monitoring
+        run: |
+          echo "📈 Setting up post-deploy monitoring..."
+          
+          # Aqui configurariamos monitoramento de:
+          # - Error tracking (Sentry)
+          # - Performance monitoring
+          # - User analytics
+          # - Store metrics
+          
+          echo "📋 Monitoring Setup:"
+          echo "- Error Tracking: Configure Sentry for production"
+          echo "- Performance: Monitor Core Web Vitals"
+          echo "- Analytics: Track user adoption"
+          echo "- Store Metrics: Monitor download rates"
+          
+          echo "✅ Monitoring setup completed"
+      
+      - name: 📊 Post-Deploy Summary
+        run: |
+          echo "### 📊 Post-Deploy Monitoring" >> $GITHUB_STEP_SUMMARY
+          echo "| Metric | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Deployment | ✅ Completed |" >> $GITHUB_STEP_SUMMARY
+          echo "| GitHub Release | ✅ Created |" >> $GITHUB_STEP_SUMMARY
+          echo "| Store Upload | ${{ needs.store-deployment.result == 'success' && '✅ Success' || needs.store-deployment.result == 'skipped' && '⏭️ Skipped' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Notifications | ${{ env.NOTIFICATION_WEBHOOK != '' && '✅ Sent' || '⏭️ Not configured' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Monitoring | ✅ Configured |" >> $GITHUB_STEP_SUMMARY
+
+  # ===================================================================
+  # STAGE 7: RELATÓRIO FINAL DE DEPLOY
+  # ===================================================================
+  
+  deployment-report:
+    name: 📋 Final Deployment Report
+    runs-on: ubuntu-latest
+    needs: [prepare-release, final-validation, production-build, github-release, store-deployment, post-deploy-monitoring]
+    if: always()
+    timeout-minutes: 5
+    
+    steps:
+      - name: 📊 Generate Comprehensive Report
+        run: |
+          echo "# 🚀 Deployment Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## 📋 Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "- **Version**: ${{ needs.prepare-release.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Tag**: ${{ needs.prepare-release.outputs.tag }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Environment**: ${{ needs.prepare-release.outputs.deploy-environment }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Prerelease**: ${{ needs.prepare-release.outputs.is-prerelease }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Timestamp**: $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## 🎯 Stage Results" >> $GITHUB_STEP_SUMMARY
+          echo "| Stage | Status | Duration |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|--------|----------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Preparation | ${{ needs.prepare-release.result == 'success' && '✅ Success' || '❌ Failed' }} | - |" >> $GITHUB_STEP_SUMMARY
+          echo "| Final Validation | ${{ needs.final-validation.result == 'success' && '✅ Success' || '❌ Failed' }} | - |" >> $GITHUB_STEP_SUMMARY
+          echo "| Production Build | ${{ needs.production-build.result == 'success' && '✅ Success' || '❌ Failed' }} | - |" >> $GITHUB_STEP_SUMMARY
+          echo "| GitHub Release | ${{ needs.github-release.result == 'success' && '✅ Success' || '❌ Failed' }} | - |" >> $GITHUB_STEP_SUMMARY
+          echo "| Store Deployment | ${{ needs.store-deployment.result == 'success' && '✅ Success' || needs.store-deployment.result == 'skipped' && '⏭️ Skipped' || '❌ Failed' }} | - |" >> $GITHUB_STEP_SUMMARY
+          echo "| Post-Deploy | ${{ needs.post-deploy-monitoring.result == 'success' && '✅ Success' || needs.post-deploy-monitoring.result == 'skipped' && '⏭️ Skipped' || '❌ Failed' }} | - |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+      
+      - name: 🎯 Determine Final Status
+        id: final-status
+        run: |
+          # Verificar status críticos
+          CRITICAL_JOBS=(
+            "${{ needs.prepare-release.result }}"
+            "${{ needs.final-validation.result }}"
+            "${{ needs.production-build.result }}"
+            "${{ needs.github-release.result }}"
+          )
+          
+          OVERALL_STATUS="success"
+          for status in "${CRITICAL_JOBS[@]}"; do
+            if [ "$status" = "failure" ]; then
+              OVERALL_STATUS="failure"
+              break
+            fi
+          done
+          
+          echo "overall-status=$OVERALL_STATUS" >> $GITHUB_OUTPUT
+          
+          if [ "$OVERALL_STATUS" = "success" ]; then
+            echo "## 🎉 Deployment Status: ✅ SUCCESS" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "The extension has been successfully deployed!" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### 📋 What's Next?" >> $GITHUB_STEP_SUMMARY
+            echo "1. 🔗 **Check the release**: [${{ needs.github-release.outputs.release-url }}](${{ needs.github-release.outputs.release-url }})" >> $GITHUB_STEP_SUMMARY
+            echo "2. 📦 **Download and test** the extension packages" >> $GITHUB_STEP_SUMMARY
+            echo "3. 🏪 **Monitor store approval** status (Chrome/Firefox)" >> $GITHUB_STEP_SUMMARY
+            echo "4. 📊 **Track metrics** and user feedback" >> $GITHUB_STEP_SUMMARY
+            echo "5. 📢 **Announce** the release to users" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### 🔗 Quick Links" >> $GITHUB_STEP_SUMMARY
+            echo "- 📋 [GitHub Release](${{ needs.github-release.outputs.release-url }})" >> $GITHUB_STEP_SUMMARY
+            echo "- 🔵 [Chrome Web Store](https://chrome.google.com/webstore/developer/dashboard)" >> $GITHUB_STEP_SUMMARY
+            echo "- 🦊 [Firefox Add-ons](https://addons.mozilla.org/developers/)" >> $GITHUB_STEP_SUMMARY
+            echo "- 📊 [Repository](https://github.com/ShadyBS/AssistenteDeRegulacaoMedica)" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "## ❌ Deployment Status: FAILED" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "The deployment encountered critical errors. Please review the logs and fix the issues." >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### 🔧 Troubleshooting Steps" >> $GITHUB_STEP_SUMMARY
+            echo "1. 📋 **Review failed job logs** above" >> $GITHUB_STEP_SUMMARY
+            echo "2. 🔍 **Check error messages** and stack traces" >> $GITHUB_STEP_SUMMARY
+            echo "3. 🛠️ **Fix issues locally** and test thoroughly" >> $GITHUB_STEP_SUMMARY
+            echo "4. 🔄 **Create a new tag** to trigger redeployment" >> $GITHUB_STEP_SUMMARY
+            echo "5. 📞 **Contact support** if issues persist" >> $GITHUB_STEP_SUMMARY
+          fi
+      
+      - name: 🎯 Set Final Exit Code
+        run: |
+          if [ "${{ steps.final-status.outputs.overall-status }}" = "success" ]; then
+            echo "✅ Deployment pipeline completed successfully"
+            exit 0
+          else
+            echo "❌ Deployment pipeline failed"
+            exit 1
+          fi

@@ -1,64 +1,108 @@
 {
-  "timestamp": "2025-07-30T16:40:44.844Z",
-  "duration": "0.73s",
+  "timestamp": "2025-07-30T17:44:07.191Z",
+  "duration": "1.39s",
   "dryRun": false,
-  "backupPath": ".encoding-backup\\backup-2025-07-30T16-40-44-198Z",
+  "backupPath": ".encoding-backup\\backup-2025-07-30T17-44-05-870Z",
   "summary": {
-    "totalFiles": 96,
-    "fixedFiles": 2,
+    "totalFiles": 103,
+    "fixedFiles": 6,
     "skippedFiles": 0,
     "errorFiles": 0,
-    "filesWithIssues": 96
+    "filesWithIssues": 103
   },
   "fixesByType": [
     {
-      "type": "REPLACEMENT_CHARACTERS",
-      "count": 2
-    },
-    {
-      "type": "PROBLEMATIC_UNICODE",
-      "count": 2
+      "type": "TRAILING_WHITESPACE",
+      "count": 5
     },
     {
       "type": "FINAL_NEWLINE",
-      "count": 1
+      "count": 6
+    },
+    {
+      "type": "REPLACEMENT_CHARACTERS",
+      "count": 6
     }
   ],
   "issuesByType": [
     {
       "type": "REPLACEMENT_CHARACTERS",
-      "count": 96
+      "count": 103
     },
     {
-      "type": "PROBLEMATIC_UNICODE",
-      "count": 2
+      "type": "TRAILING_WHITESPACE",
+      "count": 5
     },
     {
       "type": "NO_FINAL_NEWLINE",
-      "count": 1
+      "count": 6
     }
   ],
   "fixedFiles": [
     {
-      "file": "encoding-validation-report.json",
+      "file": "PIPELINE.md",
       "appliedFixes": [
-        "REPLACEMENT_CHARACTERS",
-        "PROBLEMATIC_UNICODE"
+        "TRAILING_WHITESPACE",
+        "FINAL_NEWLINE",
+        "REPLACEMENT_CHARACTERS"
       ],
-      "originalSize": 1103,
-      "newSize": 1102,
-      "sizeDiff": 1
+      "originalSize": 19039,
+      "newSize": 19036,
+      "sizeDiff": 3
     },
     {
-      "file": "scripts\\validate-encoding.js",
+      "file": "dist\\output.css",
       "appliedFixes": [
         "FINAL_NEWLINE",
-        "REPLACEMENT_CHARACTERS",
-        "PROBLEMATIC_UNICODE"
+        "REPLACEMENT_CHARACTERS"
       ],
-      "originalSize": 12954,
-      "newSize": 12953,
-      "sizeDiff": 1
+      "originalSize": 25259,
+      "newSize": 25260,
+      "sizeDiff": -1
+    },
+    {
+      "file": "scripts\\build-universal.js",
+      "appliedFixes": [
+        "TRAILING_WHITESPACE",
+        "FINAL_NEWLINE",
+        "REPLACEMENT_CHARACTERS"
+      ],
+      "originalSize": 20805,
+      "newSize": 20372,
+      "sizeDiff": 433
+    },
+    {
+      "file": "scripts\\notification-system.js",
+      "appliedFixes": [
+        "TRAILING_WHITESPACE",
+        "FINAL_NEWLINE",
+        "REPLACEMENT_CHARACTERS"
+      ],
+      "originalSize": 21107,
+      "newSize": 20847,
+      "sizeDiff": 260
+    },
+    {
+      "file": "scripts\\store-upload-advanced.js",
+      "appliedFixes": [
+        "TRAILING_WHITESPACE",
+        "FINAL_NEWLINE",
+        "REPLACEMENT_CHARACTERS"
+      ],
+      "originalSize": 20765,
+      "newSize": 20286,
+      "sizeDiff": 479
+    },
+    {
+      "file": "scripts\\validate-manifest.js",
+      "appliedFixes": [
+        "TRAILING_WHITESPACE",
+        "FINAL_NEWLINE",
+        "REPLACEMENT_CHARACTERS"
+      ],
+      "originalSize": 20518,
+      "newSize": 20094,
+      "sizeDiff": 424
     }
   ],
   "errors": []

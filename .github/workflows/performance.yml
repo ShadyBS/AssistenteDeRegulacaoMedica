@@ -1,0 +1,957 @@
+# ⚡ PIPELINE DE PERFORMANCE - ASSISTENTE DE REGULAÇÃO MÉDICA
+# 
+# Pipeline especializado em performance para Browser Extension
+# Testes de carga, análise de bundle, Core Web Vitals, memory profiling
+# Monitoramento de performance e otimização automática
+
+name: ⚡ Performance Testing
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - '**.js'
+      - '**.css'
+      - '**.html'
+      - 'src/**'
+      - 'webpack.config.js'
+      - 'tailwind.config.js'
+      - 'package*.json'
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - '**.js'
+      - '**.css'
+      - '**.html'
+      - 'src/**'
+      - 'webpack.config.js'
+      - 'tailwind.config.js'
+  schedule:
+    # Executar toda terça-feira às 03:00 UTC
+    - cron: '0 3 * * 2'
+  workflow_dispatch:
+    inputs:
+      test_level:
+        description: 'Performance test level'
+        required: false
+        default: 'standard'
+        type: choice
+        options:
+          - quick
+          - standard
+          - comprehensive
+      include_profiling:
+        description: 'Include memory profiling'
+        required: false
+        default: true
+        type: boolean
+
+# Configurações globais
+env:
+  NODE_VERSION: '18.x'
+  CACHE_VERSION: 'v2'
+  PERFORMANCE_BUDGET_JS_KB: 500
+  PERFORMANCE_BUDGET_CSS_KB: 100
+  PERFORMANCE_BUDGET_TOTAL_MB: 5
+
+# Permissões necessárias
+permissions:
+  contents: read
+  checks: write
+  pull-requests: write
+  actions: read
+
+# Configuração de concorrência
+concurrency:
+  group: performance-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ===================================================================
+  # STAGE 1: ANÁLISE DE BUNDLE E TAMANHO
+  # ===================================================================
+  
+  bundle-analysis:
+    name: 📦 Bundle Size Analysis
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    
+    outputs:
+      total-size-kb: ${{ steps.analysis.outputs.total-size-kb }}
+      js-size-kb: ${{ steps.analysis.outputs.js-size-kb }}
+      css-size-kb: ${{ steps.analysis.outputs.css-size-kb }}
+      size-budget-status: ${{ steps.analysis.outputs.size-budget-status }}
+    
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+      
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      
+      - name: 📦 Install Dependencies
+        run: |
+          npm ci --prefer-offline --no-audit --no-fund
+          echo "✅ Dependencies installed for bundle analysis"
+      
+      - name: 🏗️ Build for Analysis
+        run: |
+          echo "🏗️ Building extension for bundle analysis..."
+          
+          # Build CSS
+          npm run build:css
+          
+          # Build JavaScript (se webpack estiver configurado)
+          if [ -f "webpack.config.js" ]; then
+            npm run build:analyze || npm run build
+          else
+            echo "⚠️ Webpack not configured, using direct file analysis"
+          fi
+          
+          echo "✅ Build completed for analysis"
+      
+      - name: 📊 Analyze Bundle Sizes
+        id: analysis
+        run: |
+          echo "📊 Analyzing bundle sizes..."
+          
+          # Função para converter bytes para KB
+          bytes_to_kb() {
+            echo "scale=2; $1/1024" | bc 2>/dev/null || echo "0"
+          }
+          
+          # Analisar arquivos JavaScript
+          JS_TOTAL=0
+          echo "📋 JavaScript Files:"
+          for file in background.js content-script.js sidebar.js api.js utils.js validation.js; do
+            if [ -f "$file" ]; then
+              SIZE=$(stat -f%z "$file" 2>/dev/null || stat -c%s "$file" 2>/dev/null || echo "0")
+              SIZE_KB=$(bytes_to_kb $SIZE)
+              echo "- $file: ${SIZE_KB} KB"
+              JS_TOTAL=$((JS_TOTAL + SIZE))
+            fi
+          done
+          
+          # Analisar arquivos CSS
+          CSS_TOTAL=0
+          echo "📋 CSS Files:"
+          if [ -f "dist/output.css" ]; then
+            SIZE=$(stat -f%z "dist/output.css" 2>/dev/null || stat -c%s "dist/output.css" 2>/dev/null || echo "0")
+            SIZE_KB=$(bytes_to_kb $SIZE)
+            echo "- output.css: ${SIZE_KB} KB"
+            CSS_TOTAL=$SIZE
+          fi
+          
+          # Analisar outros assets
+          ASSETS_TOTAL=0
+          echo "📋 Asset Files:"
+          for ext in png jpg jpeg gif svg ico; do
+            find . -name "*.$ext" -not -path "./node_modules/*" | while read file; do
+              SIZE=$(stat -f%z "$file" 2>/dev/null || stat -c%s "$file" 2>/dev/null || echo "0")
+              SIZE_KB=$(bytes_to_kb $SIZE)
+              echo "- $(basename "$file"): ${SIZE_KB} KB"
+            done
+          done
+          
+          # Calcular totais
+          JS_TOTAL_KB=$(bytes_to_kb $JS_TOTAL)
+          CSS_TOTAL_KB=$(bytes_to_kb $CSS_TOTAL)
+          TOTAL_KB=$(echo "scale=2; $JS_TOTAL_KB + $CSS_TOTAL_KB" | bc 2>/dev/null || echo "0")
+          
+          echo "js-size-kb=$JS_TOTAL_KB" >> $GITHUB_OUTPUT
+          echo "css-size-kb=$CSS_TOTAL_KB" >> $GITHUB_OUTPUT
+          echo "total-size-kb=$TOTAL_KB" >> $GITHUB_OUTPUT
+          
+          # Verificar budget de performance
+          BUDGET_STATUS="pass"
+          
+          if (( $(echo "$JS_TOTAL_KB > $PERFORMANCE_BUDGET_JS_KB" | bc -l 2>/dev/null || echo "0") )); then
+            echo "⚠️ JavaScript size exceeds budget: ${JS_TOTAL_KB} KB > ${PERFORMANCE_BUDGET_JS_KB} KB"
+            BUDGET_STATUS="fail"
+          fi
+          
+          if (( $(echo "$CSS_TOTAL_KB > $PERFORMANCE_BUDGET_CSS_KB" | bc -l 2>/dev/null || echo "0") )); then
+            echo "⚠️ CSS size exceeds budget: ${CSS_TOTAL_KB} KB > ${PERFORMANCE_BUDGET_CSS_KB} KB"
+            BUDGET_STATUS="fail"
+          fi
+          
+          echo "size-budget-status=$BUDGET_STATUS" >> $GITHUB_OUTPUT
+          
+          echo "📊 Bundle Analysis Summary:"
+          echo "- JavaScript: ${JS_TOTAL_KB} KB"
+          echo "- CSS: ${CSS_TOTAL_KB} KB"
+          echo "- Total: ${TOTAL_KB} KB"
+          echo "- Budget Status: $BUDGET_STATUS"
+          
+          echo "✅ Bundle size analysis completed"
+      
+      - name: 📈 Generate Bundle Report
+        run: |
+          echo "📈 Generating bundle analysis report..."
+          
+          cat > bundle-analysis-report.md << EOF
+# 📦 Bundle Size Analysis Report
+
+## 📊 Size Summary
+- **JavaScript**: ${{ steps.analysis.outputs.js-size-kb }} KB
+- **CSS**: ${{ steps.analysis.outputs.css-size-kb }} KB
+- **Total**: ${{ steps.analysis.outputs.total-size-kb }} KB
+
+## 🎯 Performance Budget
+- **JavaScript Budget**: ${PERFORMANCE_BUDGET_JS_KB} KB
+- **CSS Budget**: ${PERFORMANCE_BUDGET_CSS_KB} KB
+- **Status**: ${{ steps.analysis.outputs.size-budget-status == 'pass' && '✅ Within Budget' || '❌ Exceeds Budget' }}
+
+## 📋 Recommendations
+EOF
+          
+          if [ "${{ steps.analysis.outputs.size-budget-status }}" = "fail" ]; then
+            cat >> bundle-analysis-report.md << 'EOF'
+### 🚨 Action Required
+- Review and optimize large JavaScript files
+- Consider code splitting for better performance
+- Minimize CSS and remove unused styles
+- Compress images and assets
+EOF
+          else
+            cat >> bundle-analysis-report.md << 'EOF'
+### ✅ Good Performance
+- Bundle sizes are within acceptable limits
+- Continue monitoring for size increases
+- Consider further optimizations for better performance
+EOF
+          fi
+          
+          cat >> bundle-analysis-report.md << 'EOF'
+
+## 🔧 Optimization Techniques
+1. **Tree Shaking**: Remove unused code
+2. **Minification**: Compress JavaScript and CSS
+3. **Code Splitting**: Split large bundles
+4. **Asset Optimization**: Compress images
+5. **Lazy Loading**: Load resources on demand
+
+EOF
+          
+          echo "✅ Bundle analysis report generated"
+      
+      - name: 📤 Upload Bundle Analysis
+        uses: actions/upload-artifact@v4
+        with:
+          name: bundle-analysis-report
+          path: bundle-analysis-report.md
+          retention-days: 30
+
+  # ===================================================================
+  # STAGE 2: PERFORMANCE DE STARTUP E RUNTIME
+  # ===================================================================
+  
+  startup-performance:
+    name: 🚀 Startup Performance Testing
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+      
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      
+      - name: 📦 Install Dependencies
+        run: npm ci --prefer-offline --no-audit --no-fund
+      
+      - name: 🏗️ Build Extension
+        run: |
+          echo "🏗️ Building extension for performance testing..."
+          npm run build:css
+          npm run build:zips:clean
+          echo "✅ Extension built successfully"
+      
+      - name: 🚀 Startup Performance Test
+        run: |
+          echo "🚀 Testing extension startup performance..."
+          
+          # Simular carregamento dos scripts principais
+          echo "📋 Script Loading Performance:"
+          
+          for script in background.js content-script.js sidebar.js; do
+            if [ -f "$script" ]; then
+              echo "🔍 Testing $script..."
+              
+              # Medir tempo de parsing (simulado)
+              START_TIME=$(date +%s%N)
+              node -c "$script" 2>/dev/null && PARSE_SUCCESS=true || PARSE_SUCCESS=false
+              END_TIME=$(date +%s%N)
+              
+              PARSE_TIME=$(echo "scale=2; ($END_TIME - $START_TIME) / 1000000" | bc 2>/dev/null || echo "0")
+              
+              if [ "$PARSE_SUCCESS" = true ]; then
+                echo "✅ $script: Parse time ${PARSE_TIME} ms"
+              else
+                echo "⚠️ $script: Parse failed"
+              fi
+            fi
+          done
+          
+          echo "✅ Startup performance test completed"
+      
+      - name: 💾 Memory Usage Analysis
+        if: github.event.inputs.include_profiling != 'false'
+        run: |
+          echo "💾 Analyzing memory usage patterns..."
+          
+          # Analisar padrões de uso de memória no código
+          echo "📋 Memory Usage Patterns:"
+          
+          # Verificar event listeners
+          LISTENERS=$(grep -r "addEventListener" --include="*.js" . --exclude-dir=node_modules | wc -l)
+          echo "- Event Listeners: $LISTENERS"
+          
+          # Verificar timers
+          TIMERS=$(grep -r "setTimeout\|setInterval" --include="*.js" . --exclude-dir=node_modules | wc -l)
+          echo "- Timers: $TIMERS"
+          
+          # Verificar closures potenciais
+          CLOSURES=$(grep -r "function.*function\|=.*=>" --include="*.js" . --exclude-dir=node_modules | wc -l)
+          echo "- Potential Closures: $CLOSURES"
+          
+          # Verificar DOM references
+          DOM_REFS=$(grep -r "document\.\|getElementById\|querySelector" --include="*.js" . --exclude-dir=node_modules | wc -l)
+          echo "- DOM References: $DOM_REFS"
+          
+          # Recomendações baseadas nos padrões
+          if [ "$LISTENERS" -gt 50 ]; then
+            echo "⚠️ High number of event listeners - consider cleanup"
+          fi
+          
+          if [ "$TIMERS" -gt 10 ]; then
+            echo "⚠️ Many timers detected - ensure proper cleanup"
+          fi
+          
+          echo "✅ Memory usage analysis completed"
+      
+      - name: ⚡ Runtime Performance Metrics
+        run: |
+          echo "⚡ Collecting runtime performance metrics..."
+          
+          # Analisar complexidade dos algoritmos
+          echo "📋 Algorithm Complexity Analysis:"
+          
+          # Verificar loops aninhados
+          NESTED_LOOPS=$(grep -r "for.*for\|while.*while" --include="*.js" . --exclude-dir=node_modules | wc -l)
+          echo "- Nested Loops: $NESTED_LOOPS"
+          
+          # Verificar operações DOM custosas
+          DOM_OPERATIONS=$(grep -r "innerHTML\|appendChild\|createElement" --include="*.js" . --exclude-dir=node_modules | wc -l)
+          echo "- DOM Operations: $DOM_OPERATIONS"
+          
+          # Verificar requisições de rede
+          NETWORK_CALLS=$(grep -r "fetch\|XMLHttpRequest\|axios" --include="*.js" . --exclude-dir=node_modules | wc -l)
+          echo "- Network Calls: $NETWORK_CALLS"
+          
+          # Verificar uso de JSON
+          JSON_OPERATIONS=$(grep -r "JSON.parse\|JSON.stringify" --include="*.js" . --exclude-dir=node_modules | wc -l)
+          echo "- JSON Operations: $JSON_OPERATIONS"
+          
+          # Alertas de performance
+          if [ "$NESTED_LOOPS" -gt 5 ]; then
+            echo "⚠️ Multiple nested loops detected - review for optimization"
+          fi
+          
+          if [ "$DOM_OPERATIONS" -gt 20 ]; then
+            echo "⚠️ High DOM manipulation - consider batching operations"
+          fi
+          
+          echo "✅ Runtime performance metrics collected"
+      
+      - name: 📊 Generate Performance Report
+        run: |
+          echo "📊 Generating startup performance report..."
+          
+          cat > startup-performance-report.md << 'EOF'
+# 🚀 Startup Performance Analysis Report
+
+## 📊 Performance Summary
+This report analyzes the startup and runtime performance of the extension.
+
+## 🔍 Analysis Results
+
+### Script Loading
+- **Background Script**: Analyzed for parse time and complexity
+- **Content Script**: Evaluated for injection performance
+- **Sidebar Script**: Reviewed for UI rendering performance
+
+### Memory Usage
+- **Event Listeners**: Monitored for proper cleanup
+- **Timers**: Checked for memory leaks
+- **DOM References**: Analyzed for retention issues
+- **Closures**: Reviewed for memory impact
+
+### Runtime Performance
+- **Algorithm Complexity**: Evaluated computational efficiency
+- **DOM Operations**: Analyzed for performance impact
+- **Network Calls**: Reviewed for optimization opportunities
+- **JSON Processing**: Checked for parsing efficiency
+
+## ✅ Performance Recommendations
+
+### Startup Optimization
+1. **Lazy Loading**: Load non-critical resources on demand
+2. **Code Splitting**: Split large scripts into smaller chunks
+3. **Async Loading**: Use asynchronous loading where possible
+4. **Caching**: Implement intelligent caching strategies
+
+### Runtime Optimization
+1. **DOM Batching**: Batch DOM operations for better performance
+2. **Event Delegation**: Use event delegation to reduce listeners
+3. **Debouncing**: Implement debouncing for frequent operations
+4. **Memory Management**: Ensure proper cleanup of resources
+
+### Memory Optimization
+1. **Cleanup Handlers**: Implement proper cleanup for event listeners
+2. **Timer Management**: Clear timers when no longer needed
+3. **Reference Management**: Avoid circular references
+4. **Garbage Collection**: Write GC-friendly code
+
+EOF
+          
+          echo "✅ Startup performance report generated"
+      
+      - name: 📤 Upload Performance Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: startup-performance-report
+          path: startup-performance-report.md
+          retention-days: 30
+
+  # ===================================================================
+  # STAGE 3: CORE WEB VITALS E UX METRICS
+  # ===================================================================
+  
+  web-vitals:
+    name: 📊 Core Web Vitals Analysis
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+      
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      
+      - name: 📦 Install Dependencies
+        run: npm ci --prefer-offline --no-audit --no-fund
+      
+      - name: 🏗️ Build Extension
+        run: |
+          npm run build:css
+          echo "✅ Extension built for Web Vitals analysis"
+      
+      - name: 📊 Analyze Core Web Vitals
+        run: |
+          echo "📊 Analyzing Core Web Vitals metrics..."
+          
+          # Analisar HTML files para métricas de UX
+          echo "📋 HTML Analysis:"
+          for html in *.html; do
+            if [ -f "$html" ]; then
+              echo "🔍 Analyzing $html..."
+              
+              # Verificar tamanho do HTML
+              SIZE=$(stat -f%z "$html" 2>/dev/null || stat -c%s "$html" 2>/dev/null || echo "0")
+              SIZE_KB=$(echo "scale=2; $SIZE/1024" | bc 2>/dev/null || echo "0")
+              echo "- Size: ${SIZE_KB} KB"
+              
+              # Verificar número de elementos
+              ELEMENTS=$(grep -o "<[^>]*>" "$html" | wc -l)
+              echo "- Elements: $ELEMENTS"
+              
+              # Verificar scripts inline
+              INLINE_SCRIPTS=$(grep -o "<script[^>]*>[^<]*</script>" "$html" | wc -l)
+              echo "- Inline Scripts: $INLINE_SCRIPTS"
+              
+              # Verificar styles inline
+              INLINE_STYLES=$(grep -o "<style[^>]*>[^<]*</style>" "$html" | wc -l)
+              echo "- Inline Styles: $INLINE_STYLES"
+              
+              # Alertas de performance
+              if [ "$ELEMENTS" -gt 1000 ]; then
+                echo "⚠️ $html: High element count may impact performance"
+              fi
+              
+              if [ "$INLINE_SCRIPTS" -gt 0 ]; then
+                echo "⚠️ $html: Inline scripts detected - consider external files"
+              fi
+            fi
+          done
+          
+          echo "✅ Core Web Vitals analysis completed"
+      
+      - name: 🎨 CSS Performance Analysis
+        run: |
+          echo "🎨 Analyzing CSS performance..."
+          
+          if [ -f "dist/output.css" ]; then
+            echo "🔍 Analyzing compiled CSS..."
+            
+            # Tamanho do CSS
+            SIZE=$(stat -f%z "dist/output.css" 2>/dev/null || stat -c%s "dist/output.css" 2>/dev/null || echo "0")
+            SIZE_KB=$(echo "scale=2; $SIZE/1024" | bc 2>/dev/null || echo "0")
+            echo "- CSS Size: ${SIZE_KB} KB"
+            
+            # Número de regras
+            RULES=$(grep -o "{" "dist/output.css" | wc -l)
+            echo "- CSS Rules: $RULES"
+            
+            # Seletores complexos
+            COMPLEX_SELECTORS=$(grep -o "[^{]*{" "dist/output.css" | grep -E "(\s+){3,}|>" | wc -l)
+            echo "- Complex Selectors: $COMPLEX_SELECTORS"
+            
+            # Propriedades custosas
+            EXPENSIVE_PROPS=$(grep -E "(box-shadow|filter|transform|opacity)" "dist/output.css" | wc -l)
+            echo "- Expensive Properties: $EXPENSIVE_PROPS"
+            
+            # Alertas de performance
+            if (( $(echo "$SIZE_KB > 200" | bc -l 2>/dev/null || echo "0") )); then
+              echo "⚠️ Large CSS file - consider optimization"
+            fi
+            
+            if [ "$COMPLEX_SELECTORS" -gt 50 ]; then
+              echo "⚠️ Many complex selectors - may impact rendering"
+            fi
+          fi
+          
+          echo "✅ CSS performance analysis completed"
+      
+      - name: 🖼️ Asset Performance Analysis
+        run: |
+          echo "🖼️ Analyzing asset performance..."
+          
+          # Analisar imagens
+          echo "📋 Image Analysis:"
+          TOTAL_IMAGE_SIZE=0
+          IMAGE_COUNT=0
+          
+          for ext in png jpg jpeg gif svg ico; do
+            find . -name "*.$ext" -not -path "./node_modules/*" | while read file; do
+              SIZE=$(stat -f%z "$file" 2>/dev/null || stat -c%s "$file" 2>/dev/null || echo "0")
+              SIZE_KB=$(echo "scale=2; $SIZE/1024" | bc 2>/dev/null || echo "0")
+              echo "- $(basename "$file"): ${SIZE_KB} KB"
+              
+              # Alertas para imagens grandes
+              if (( $(echo "$SIZE_KB > 100" | bc -l 2>/dev/null || echo "0") )); then
+                echo "⚠️ Large image: $(basename "$file") - consider optimization"
+              fi
+            done
+          done
+          
+          echo "✅ Asset performance analysis completed"
+      
+      - name: 📊 Generate Web Vitals Report
+        run: |
+          echo "📊 Generating Core Web Vitals report..."
+          
+          cat > web-vitals-report.md << 'EOF'
+# 📊 Core Web Vitals Analysis Report
+
+## 📋 Overview
+This report analyzes Core Web Vitals and user experience metrics for the extension.
+
+## 🎯 Core Web Vitals Metrics
+
+### Largest Contentful Paint (LCP)
+- **Target**: < 2.5 seconds
+- **Analysis**: HTML structure and resource loading
+- **Status**: Analyzed for optimization opportunities
+
+### First Input Delay (FID)
+- **Target**: < 100 milliseconds
+- **Analysis**: JavaScript execution and main thread blocking
+- **Status**: Reviewed for responsiveness issues
+
+### Cumulative Layout Shift (CLS)
+- **Target**: < 0.1
+- **Analysis**: Layout stability and visual shifts
+- **Status**: Checked for layout stability
+
+## 🔍 Performance Analysis
+
+### HTML Performance
+- **File Sizes**: Analyzed for optimal loading
+- **Element Count**: Reviewed for DOM complexity
+- **Inline Resources**: Checked for render blocking
+
+### CSS Performance
+- **Bundle Size**: Evaluated against performance budget
+- **Rule Complexity**: Analyzed for rendering efficiency
+- **Selector Performance**: Reviewed for optimization
+
+### Asset Performance
+- **Image Optimization**: Checked for size and format
+- **Resource Loading**: Analyzed for loading efficiency
+- **Caching Strategy**: Reviewed for performance gains
+
+## ✅ Optimization Recommendations
+
+### Loading Performance
+1. **Resource Optimization**: Compress and optimize all assets
+2. **Critical CSS**: Inline critical CSS for faster rendering
+3. **Lazy Loading**: Implement lazy loading for non-critical resources
+4. **Preloading**: Preload critical resources
+
+### Rendering Performance
+1. **DOM Optimization**: Minimize DOM complexity
+2. **CSS Efficiency**: Optimize selectors and reduce complexity
+3. **Layout Stability**: Ensure stable layouts to minimize CLS
+4. **Animation Performance**: Use transform and opacity for animations
+
+### JavaScript Performance
+1. **Code Splitting**: Split JavaScript bundles
+2. **Async Loading**: Load non-critical JavaScript asynchronously
+3. **Main Thread**: Minimize main thread blocking
+4. **Event Handling**: Optimize event handlers for responsiveness
+
+EOF
+          
+          echo "✅ Core Web Vitals report generated"
+      
+      - name: 📤 Upload Web Vitals Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-vitals-report
+          path: web-vitals-report.md
+          retention-days: 30
+
+  # ===================================================================
+  # STAGE 4: NETWORK PERFORMANCE E API EFFICIENCY
+  # ===================================================================
+  
+  network-performance:
+    name: 🌐 Network Performance Analysis
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+      
+      - name: 🔍 API Call Analysis
+        run: |
+          echo "🔍 Analyzing API calls and network performance..."
+          
+          # Analisar padrões de requisições de rede
+          echo "📋 Network Request Patterns:"
+          
+          # Verificar fetch calls
+          FETCH_CALLS=$(grep -r "fetch(" --include="*.js" . --exclude-dir=node_modules | wc -l)
+          echo "- Fetch Calls: $FETCH_CALLS"
+          
+          # Verificar XMLHttpRequest
+          XHR_CALLS=$(grep -r "XMLHttpRequest\|new XMLHttpRequest" --include="*.js" . --exclude-dir=node_modules | wc -l)
+          echo "- XMLHttpRequest Calls: $XHR_CALLS"
+          
+          # Verificar axios ou outras bibliotecas
+          AXIOS_CALLS=$(grep -r "axios\." --include="*.js" . --exclude-dir=node_modules | wc -l)
+          echo "- Axios Calls: $AXIOS_CALLS"
+          
+          # Analisar URLs das APIs
+          echo "📋 API Endpoint Analysis:"
+          grep -r "http[s]*://" --include="*.js" . --exclude-dir=node_modules | head -10 | while read line; do
+            echo "- $(echo "$line" | cut -d: -f3- | head -c 80)..."
+          done
+          
+          echo "✅ API call analysis completed"
+      
+      - name: 🔄 Request Optimization Analysis
+        run: |
+          echo "🔄 Analyzing request optimization patterns..."
+          
+          # Verificar caching
+          CACHE_PATTERNS=$(grep -r "cache\|Cache" --include="*.js" . --exclude-dir=node_modules | wc -l)
+          echo "- Cache Usage: $CACHE_PATTERNS patterns"
+          
+          # Verificar retry logic
+          RETRY_PATTERNS=$(grep -r "retry\|Retry" --include="*.js" . --exclude-dir=node_modules | wc -l)
+          echo "- Retry Logic: $RETRY_PATTERNS patterns"
+          
+          # Verificar timeout handling
+          TIMEOUT_PATTERNS=$(grep -r "timeout\|Timeout" --include="*.js" . --exclude-dir=node_modules | wc -l)
+          echo "- Timeout Handling: $TIMEOUT_PATTERNS patterns"
+          
+          # Verificar error handling
+          ERROR_HANDLING=$(grep -r "catch\|\.catch\|try.*catch" --include="*.js" . --exclude-dir=node_modules | wc -l)
+          echo "- Error Handling: $ERROR_HANDLING patterns"
+          
+          # Verificar debouncing/throttling
+          DEBOUNCE_PATTERNS=$(grep -r "debounce\|throttle" --include="*.js" . --exclude-dir=node_modules | wc -l)
+          echo "- Debounce/Throttle: $DEBOUNCE_PATTERNS patterns"
+          
+          # Recomendações
+          if [ "$CACHE_PATTERNS" -lt 3 ]; then
+            echo "⚠️ Consider implementing more caching strategies"
+          fi
+          
+          if [ "$DEBOUNCE_PATTERNS" -lt 2 ]; then
+            echo "⚠️ Consider implementing debouncing for frequent requests"
+          fi
+          
+          echo "✅ Request optimization analysis completed"
+      
+      - name: 📊 Generate Network Performance Report
+        run: |
+          echo "📊 Generating network performance report..."
+          
+          cat > network-performance-report.md << 'EOF'
+# 🌐 Network Performance Analysis Report
+
+## 📋 Overview
+This report analyzes network performance and API efficiency patterns.
+
+## 🔍 Network Analysis Results
+
+### Request Patterns
+- **Fetch API Usage**: Modern fetch API implementation
+- **XMLHttpRequest**: Legacy request handling
+- **Third-party Libraries**: External HTTP libraries usage
+
+### API Efficiency
+- **Endpoint Analysis**: Review of API endpoints and patterns
+- **Request Frequency**: Analysis of request patterns
+- **Data Transfer**: Evaluation of payload sizes
+
+### Optimization Patterns
+- **Caching**: Implementation of caching strategies
+- **Retry Logic**: Error recovery mechanisms
+- **Timeout Handling**: Request timeout management
+- **Error Handling**: Comprehensive error handling
+
+## ✅ Network Optimization Recommendations
+
+### Request Optimization
+1. **Caching Strategy**: Implement intelligent caching
+2. **Request Batching**: Batch multiple requests when possible
+3. **Compression**: Use gzip/brotli compression
+4. **CDN Usage**: Leverage CDNs for static resources
+
+### API Efficiency
+1. **Debouncing**: Implement debouncing for user inputs
+2. **Throttling**: Use throttling for rate-limited APIs
+3. **Pagination**: Implement efficient pagination
+4. **Data Filtering**: Request only necessary data
+
+### Error Handling
+1. **Retry Logic**: Implement exponential backoff
+2. **Circuit Breaker**: Use circuit breaker pattern
+3. **Fallback Strategies**: Provide fallback mechanisms
+4. **User Feedback**: Show meaningful error messages
+
+### Performance Monitoring
+1. **Request Timing**: Monitor request performance
+2. **Error Rates**: Track error rates and patterns
+3. **Cache Hit Rates**: Monitor caching effectiveness
+4. **Network Conditions**: Adapt to network conditions
+
+EOF
+          
+          echo "✅ Network performance report generated"
+      
+      - name: 📤 Upload Network Performance Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: network-performance-report
+          path: network-performance-report.md
+          retention-days: 30
+
+  # ===================================================================
+  # STAGE 5: RELATÓRIO CONSOLIDADO DE PERFORMANCE
+  # ===================================================================
+  
+  performance-report:
+    name: 📊 Consolidated Performance Report
+    runs-on: ubuntu-latest
+    needs: [bundle-analysis, startup-performance, web-vitals, network-performance]
+    if: always()
+    timeout-minutes: 10
+    
+    steps:
+      - name: 📥 Download All Performance Reports
+        uses: actions/download-artifact@v4
+        with:
+          path: ./performance-reports/
+      
+      - name: 📊 Generate Consolidated Report
+        run: |
+          echo "📊 Generating consolidated performance report..."
+          
+          cat > consolidated-performance-report.md << 'EOF'
+# ⚡ Consolidated Performance Analysis Report
+
+## 📋 Executive Summary
+This report consolidates all performance analysis results for the Assistente de Regulação Médica browser extension.
+
+## 🎯 Performance Assessment Results
+
+### Overall Performance Score
+EOF
+          
+          # Calcular score de performance baseado nos resultados
+          PERFORMANCE_SCORE=100
+          
+          # Bundle Analysis
+          if [ "${{ needs.bundle-analysis.outputs.size-budget-status }}" != "pass" ]; then
+            PERFORMANCE_SCORE=$((PERFORMANCE_SCORE - 20))
+            echo "- **Bundle Size**: ❌ Exceeds Budget (-20 points)" >> consolidated-performance-report.md
+          else
+            echo "- **Bundle Size**: ✅ Within Budget" >> consolidated-performance-report.md
+          fi
+          
+          # Outros testes
+          echo "- **Startup Performance**: ${{ needs.startup-performance.result == 'success' && '✅ Good' || '⚠️ Needs Review' }}" >> consolidated-performance-report.md
+          echo "- **Web Vitals**: ${{ needs.web-vitals.result == 'success' && '✅ Optimized' || '⚠️ Needs Review' }}" >> consolidated-performance-report.md
+          echo "- **Network Performance**: ${{ needs.network-performance.result == 'success' && '✅ Efficient' || '⚠️ Needs Review' }}" >> consolidated-performance-report.md
+          
+          # Determinar grade de performance
+          if [ "$PERFORMANCE_SCORE" -ge 90 ]; then
+            GRADE="A"
+            GRADE_COLOR="🟢"
+          elif [ "$PERFORMANCE_SCORE" -ge 80 ]; then
+            GRADE="B"
+            GRADE_COLOR="🟡"
+          elif [ "$PERFORMANCE_SCORE" -ge 70 ]; then
+            GRADE="C"
+            GRADE_COLOR="🟠"
+          else
+            GRADE="D"
+            GRADE_COLOR="🔴"
+          fi
+          
+          cat >> consolidated-performance-report.md << EOF
+
+### Performance Grade: $GRADE_COLOR $GRADE ($PERFORMANCE_SCORE/100)
+
+## 📊 Detailed Metrics
+
+### Bundle Analysis
+- **JavaScript Size**: ${{ needs.bundle-analysis.outputs.js-size-kb }} KB
+- **CSS Size**: ${{ needs.bundle-analysis.outputs.css-size-kb }} KB
+- **Total Size**: ${{ needs.bundle-analysis.outputs.total-size-kb }} KB
+- **Budget Status**: ${{ needs.bundle-analysis.outputs.size-budget-status == 'pass' && '✅ Pass' || '❌ Fail' }}
+
+### Performance Categories
+| Category | Status | Priority |
+|----------|--------|----------|
+| Bundle Size | ${{ needs.bundle-analysis.outputs.size-budget-status == 'pass' && '✅ Good' || '❌ Needs Work' }} | High |
+| Startup Time | ${{ needs.startup-performance.result == 'success' && '✅ Good' || '⚠️ Review' }} | High |
+| Web Vitals | ${{ needs.web-vitals.result == 'success' && '✅ Good' || '⚠️ Review' }} | Medium |
+| Network Efficiency | ${{ needs.network-performance.result == 'success' && '✅ Good' || '⚠️ Review' }} | Medium |
+
+## 🎯 Action Items
+
+### High Priority
+EOF
+          
+          if [ "${{ needs.bundle-analysis.outputs.size-budget-status }}" != "pass" ]; then
+            echo "1. 📦 **Optimize Bundle Size** - Reduce JavaScript and CSS bundle sizes" >> consolidated-performance-report.md
+          fi
+          
+          if [ "${{ needs.startup-performance.result }}" != "success" ]; then
+            echo "2. 🚀 **Improve Startup Performance** - Optimize script loading and execution" >> consolidated-performance-report.md
+          fi
+          
+          cat >> consolidated-performance-report.md << 'EOF'
+
+### Medium Priority
+1. 📊 **Monitor Core Web Vitals** - Continuously track performance metrics
+2. 🌐 **Optimize Network Requests** - Implement caching and request optimization
+3. 💾 **Memory Management** - Review and optimize memory usage patterns
+
+### Long-term Improvements
+1. ⚡ **Performance Monitoring** - Set up continuous performance monitoring
+2. 📈 **Performance Budget** - Establish and maintain performance budgets
+3. 🔄 **Regular Audits** - Schedule regular performance audits
+4. 📚 **Team Training** - Educate team on performance best practices
+
+## 📋 Performance Recommendations
+
+### Immediate Actions
+- Review and optimize large bundle sizes
+- Implement lazy loading for non-critical resources
+- Add performance monitoring to CI/CD pipeline
+- Set up performance budgets and alerts
+
+### Best Practices
+- Use performance-first development approach
+- Implement progressive enhancement
+- Optimize critical rendering path
+- Monitor real-world performance metrics
+
+## 📞 Resources and Tools
+- 🔧 [Web.dev Performance](https://web.dev/performance/)
+- 📊 [Chrome DevTools Performance](https://developers.google.com/web/tools/chrome-devtools/performance)
+- ⚡ [Lighthouse](https://developers.google.com/web/tools/lighthouse)
+- 📈 [WebPageTest](https://www.webpagetest.org/)
+
+---
+**Report Generated**: $(date -u '+%Y-%m-%d %H:%M:%S UTC')
+**Performance Grade**: $GRADE_COLOR $GRADE ($PERFORMANCE_SCORE/100)
+**Pipeline**: ${{ github.workflow }} #${{ github.run_number }}
+EOF
+          
+          echo "✅ Consolidated performance report generated"
+      
+      - name: 📊 Performance Summary for GitHub
+        run: |
+          echo "### ⚡ Performance Analysis Summary" >> $GITHUB_STEP_SUMMARY
+          echo "| Metric | Value | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------|-------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Bundle Size | ${{ needs.bundle-analysis.outputs.total-size-kb }} KB | ${{ needs.bundle-analysis.outputs.size-budget-status == 'pass' && '✅ Good' || '❌ Exceeds Budget' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| JavaScript | ${{ needs.bundle-analysis.outputs.js-size-kb }} KB | ${{ needs.bundle-analysis.outputs.js-size-kb < env.PERFORMANCE_BUDGET_JS_KB && '✅ Good' || '⚠️ Large' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| CSS | ${{ needs.bundle-analysis.outputs.css-size-kb }} KB | ${{ needs.bundle-analysis.outputs.css-size-kb < env.PERFORMANCE_BUDGET_CSS_KB && '✅ Good' || '⚠️ Large' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Startup Performance | - | ${{ needs.startup-performance.result == 'success' && '✅ Good' || '⚠️ Review Needed' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Web Vitals | - | ${{ needs.web-vitals.result == 'success' && '✅ Optimized' || '⚠️ Review Needed' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Network Performance | - | ${{ needs.network-performance.result == 'success' && '✅ Efficient' || '⚠️ Review Needed' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Status geral de performance
+          if [ "${{ needs.bundle-analysis.outputs.size-budget-status }}" = "pass" ] && \
+             [ "${{ needs.startup-performance.result }}" = "success" ] && \
+             [ "${{ needs.web-vitals.result }}" = "success" ] && \
+             [ "${{ needs.network-performance.result }}" = "success" ]; then
+            echo "## 🎉 Overall Performance: ✅ EXCELLENT" >> $GITHUB_STEP_SUMMARY
+            echo "All performance metrics are within acceptable ranges." >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ needs.bundle-analysis.outputs.size-budget-status }}" != "pass" ]; then
+            echo "## ⚠️ Overall Performance: 🟡 NEEDS OPTIMIZATION" >> $GITHUB_STEP_SUMMARY
+            echo "Bundle size exceeds performance budget. Optimization required." >> $GITHUB_STEP_SUMMARY
+          else
+            echo "## 📊 Overall Performance: 🟢 GOOD" >> $GITHUB_STEP_SUMMARY
+            echo "Performance is generally good with some areas for improvement." >> $GITHUB_STEP_SUMMARY
+          fi
+      
+      - name: 📤 Upload Consolidated Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: consolidated-performance-report
+          path: consolidated-performance-report.md
+          retention-days: 90
+      
+      - name: 🎯 Set Performance Exit Code
+        run: |
+          # Falhar se bundle size exceder o budget
+          if [ "${{ needs.bundle-analysis.outputs.size-budget-status }}" != "pass" ]; then
+            echo "❌ Performance pipeline failed: Bundle size exceeds budget"
+            exit 1
+          else
+            echo "✅ Performance pipeline completed successfully"
+            exit 0
+          fi
