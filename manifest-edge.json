@@ -50,5 +50,11 @@
       "js": ["browser-polyfill.js", "content-script.js"],
       "all_frames": true
     }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["content-script.js", "logger.js"],
+      "matches": ["*://*/sigss/*"]
+    }
   ]
 }

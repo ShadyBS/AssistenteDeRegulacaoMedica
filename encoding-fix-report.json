@@ -1,130 +1,96 @@
 {
-  "timestamp": "2025-07-28T01:50:36.274Z",
-  "duration": "1.08s",
+  "timestamp": "2025-07-30T14:04:38.300Z",
+  "duration": "0.56s",
   "dryRun": false,
-  "backupPath": ".encoding-backup\\backup-2025-07-28T01-50-35-552Z",
+  "backupPath": ".encoding-backup\\backup-2025-07-30T14-04-38-049Z",
   "summary": {
-    "totalFiles": 89,
-    "fixedFiles": 11,
-    "skippedFiles": 74,
+    "totalFiles": 93,
+    "fixedFiles": 6,
+    "skippedFiles": 83,
     "errorFiles": 0,
-    "filesWithIssues": 15
+    "filesWithIssues": 10
   },
   "fixesByType": [
     {
-      "type": "LINE_ENDINGS",
-      "count": 11
+      "type": "TRAILING_WHITESPACE",
+      "count": 4
+    },
+    {
+      "type": "FINAL_NEWLINE",
+      "count": 5
     }
   ],
   "issuesByType": [
     {
-      "type": "REPLACEMENT_CHARACTERS",
-      "count": 8
+      "type": "TRAILING_WHITESPACE",
+      "count": 4
     },
     {
-      "type": "CRLF_LINE_ENDINGS",
-      "count": 11
+      "type": "NO_FINAL_NEWLINE",
+      "count": 5
+    },
+    {
+      "type": "REPLACEMENT_CHARACTERS",
+      "count": 4
     }
   ],
   "fixedFiles": [
     {
-      "file": "scripts\\build-optimized.js",
+      "file": "EXTENSION_FIXES.md",
       "appliedFixes": [
-        "LINE_ENDINGS"
+        "TRAILING_WHITESPACE",
+        "FINAL_NEWLINE"
       ],
-      "originalSize": 17843,
-      "newSize": 17842,
-      "sizeDiff": 1
+      "originalSize": 9286,
+      "newSize": 9254,
+      "sizeDiff": 32
     },
     {
-      "file": "scripts\\build.js",
+      "file": "LOCK_CLEANUP_IMPLEMENTATION.md",
       "appliedFixes": [
-        "LINE_ENDINGS"
+        "TRAILING_WHITESPACE",
+        "FINAL_NEWLINE"
       ],
-      "originalSize": 24737,
-      "newSize": 24736,
-      "sizeDiff": 1
+      "originalSize": 8616,
+      "newSize": 8613,
+      "sizeDiff": 3
     },
     {
-      "file": "scripts\\bundle-analyzer.js",
+      "file": "LOCK_CLEANUP_USAGE.md",
       "appliedFixes": [
-        "LINE_ENDINGS"
+        "FINAL_NEWLINE"
       ],
-      "originalSize": 19064,
-      "newSize": 19063,
-      "sizeDiff": 1
+      "originalSize": 6618,
+      "newSize": 6619,
+      "sizeDiff": -1
     },
     {
-      "file": "scripts\\fix-encoding.js",
+      "file": "api.js",
       "appliedFixes": [
-        "LINE_ENDINGS"
+        "TRAILING_WHITESPACE"
       ],
-      "originalSize": 14218,
-      "newSize": 14217,
-      "sizeDiff": 1
+      "originalSize": 65966,
+      "newSize": 65948,
+      "sizeDiff": 18
     },
     {
-      "file": "scripts\\optimize-deps.js",
+      "file": "build-zips-clean.js",
       "appliedFixes": [
-        "LINE_ENDINGS"
+        "FINAL_NEWLINE"
       ],
-      "originalSize": 12583,
-      "newSize": 12582,
-      "sizeDiff": 1
+      "originalSize": 12589,
+      "newSize": 12590,
+      "sizeDiff": -1
     },
     {
-      "file": "scripts\\release.js",
+      "file": "test-lock-cleanup.js",
       "appliedFixes": [
-        "LINE_ENDINGS"
+        "TRAILING_WHITESPACE",
+        "FINAL_NEWLINE"
       ],
-      "originalSize": 22479,
-      "newSize": 22478,
-      "sizeDiff": 1
-    },
-    {
-      "file": "scripts\\store-upload.js",
-      "appliedFixes": [
-        "LINE_ENDINGS"
-      ],
-      "originalSize": 15209,
-      "newSize": 15208,
-      "sizeDiff": 1
-    },
-    {
-      "file": "scripts\\validate-encoding.js",
-      "appliedFixes": [
-        "LINE_ENDINGS"
-      ],
-      "originalSize": 12925,
-      "newSize": 12924,
-      "sizeDiff": 1
-    },
-    {
-      "file": "scripts\\validate-old.js",
-      "appliedFixes": [
-        "LINE_ENDINGS"
-      ],
-      "originalSize": 18842,
-      "newSize": 18841,
-      "sizeDiff": 1
-    },
-    {
-      "file": "scripts\\validate.js",
-      "appliedFixes": [
-        "LINE_ENDINGS"
-      ],
-      "originalSize": 15120,
-      "newSize": 15119,
-      "sizeDiff": 1
-    },
-    {
-      "file": "scripts\\version.js",
-      "appliedFixes": [
-        "LINE_ENDINGS"
-      ],
-      "originalSize": 15462,
-      "newSize": 15461,
-      "sizeDiff": 1
+      "originalSize": 5776,
+      "newSize": 5681,
+      "sizeDiff": 95
     }
   ],
   "errors": []

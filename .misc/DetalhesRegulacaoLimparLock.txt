@@ -1,0 +1,174 @@
+{
+  "log": {
+    "version": "1.2",
+    "creator": {
+      "name": "Firefox",
+      "version": "141.0"
+    },
+    "browser": {
+      "name": "Firefox",
+      "version": "141.0"
+    },
+    "pages": [
+      {
+        "id": "page_2",
+        "pageTimings": {
+          "onContentLoad": -5194,
+          "onLoad": -4513
+        },
+        "startedDateTime": "2025-07-30T10:28:09.794-03:00",
+        "title": "http://saudehml.farroupilha.rs.gov.br/sigss/regulacaoRegulador.jsp"
+      }
+    ],
+    "entries": [
+      {
+        "startedDateTime": "2025-07-30T10:28:09.794-03:00",
+        "request": {
+          "bodySize": 10,
+          "method": "POST",
+          "url": "http://saudehml.farroupilha.rs.gov.br/sigss/regulacao/limparLock",
+          "httpVersion": "HTTP/1.1",
+          "headers": [
+            {
+              "name": "Host",
+              "value": "saudehml.farroupilha.rs.gov.br"
+            },
+            {
+              "name": "User-Agent",
+              "value": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:141.0) Gecko/20100101 Firefox/141.0"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json, text/javascript, */*; q=0.01"
+            },
+            {
+              "name": "Accept-Language",
+              "value": "pt-BR,pt;q=0.8,en-US;q=0.5,en;q=0.3"
+            },
+            {
+              "name": "Accept-Encoding",
+              "value": "gzip, deflate"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/x-www-form-urlencoded; charset=UTF-8"
+            },
+            {
+              "name": "X-Requested-With",
+              "value": "XMLHttpRequest"
+            },
+            {
+              "name": "Content-Length",
+              "value": "10"
+            },
+            {
+              "name": "Origin",
+              "value": "http://saudehml.farroupilha.rs.gov.br"
+            },
+            {
+              "name": "Sec-GPC",
+              "value": "1"
+            },
+            {
+              "name": "Connection",
+              "value": "keep-alive"
+            },
+            {
+              "name": "Referer",
+              "value": "http://saudehml.farroupilha.rs.gov.br/sigss/regulacaoRegulador.jsp"
+            },
+            {
+              "name": "Cookie",
+              "value": "JSESSIONID=F232229C9B53531E1414B3EF29C7A8F5.worker_28080; pac4jCsrfToken=3d87cd07-c05d-4650-a731-3968351826a4"
+            },
+            {
+              "name": "Priority",
+              "value": "u=0"
+            }
+          ],
+          "cookies": [
+            {
+              "name": "JSESSIONID",
+              "value": "F232229C9B53531E1414B3EF29C7A8F5.worker_28080"
+            },
+            {
+              "name": "pac4jCsrfToken",
+              "value": "3d87cd07-c05d-4650-a731-3968351826a4"
+            }
+          ],
+          "queryString": [],
+          "headersSize": 731,
+          "postData": {
+            "mimeType": "application/x-www-form-urlencoded",
+            "params": [
+              {
+                "name": "lock",
+                "value": "818-1"
+              }
+            ],
+            "text": "lock=818-1"
+          }
+        },
+        "response": {
+          "status": 200,
+          "statusText": "",
+          "httpVersion": "HTTP/1.1",
+          "headers": [
+            {
+              "name": "Server",
+              "value": "nginx/1.20.2"
+            },
+            {
+              "name": "Date",
+              "value": "Wed, 30 Jul 2025 13:28:10 GMT"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json;charset=UTF-8"
+            },
+            {
+              "name": "Transfer-Encoding",
+              "value": "chunked"
+            },
+            {
+              "name": "Connection",
+              "value": "keep-alive"
+            },
+            {
+              "name": "Cache-Control",
+              "value": "max-age=0"
+            },
+            {
+              "name": "Expires",
+              "value": "Wed, 30 Jul 2025 13:28:10 GMT"
+            }
+          ],
+          "cookies": [],
+          "content": {
+            "mimeType": "application/json; charset=UTF-8",
+            "size": 13,
+            "text": "{\"string\":\"\"}"
+          },
+          "redirectURL": "",
+          "headersSize": 240,
+          "bodySize": 253
+        },
+        "cache": {},
+        "timings": {
+          "blocked": 0,
+          "dns": 0,
+          "connect": 0,
+          "ssl": 0,
+          "send": 0,
+          "wait": 80,
+          "receive": 0
+        },
+        "time": 80,
+        "_securityState": "insecure",
+        "serverIPAddress": "150.230.89.212",
+        "connection": "80",
+        "pageref": "page_2"
+      }
+    ]
+  }
+}

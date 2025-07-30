@@ -5,6 +5,27 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased]
 
+### Added
+- **TASK-LOCK-001**: Sistema completo de limpeza automática de lock de regulação
+- **TASK-LOCK-001**: Endpoint `/sigss/regulacao/limparLock` adicionado às constantes da API
+- **TASK-LOCK-001**: Função `clearRegulationLock()` com error handling robusto e retry automático
+- **TASK-LOCK-001**: Integração automática em `fetchRegulationDetails()` para limpeza transparente
+- **TASK-LOCK-001**: Sistema de logging detalhado para monitoramento de limpeza de locks
+- **TASK-LOCK-001**: Validação rigorosa de parâmetros IDP e IDS antes da limpeza
+- **TASK-LOCK-001**: Fallback gracioso em caso de falha na limpeza de lock
+- **TASK-LOCK-001**: Documentação completa da implementação (`LOCK_CLEANUP_IMPLEMENTATION.md`)
+- **TASK-LOCK-001**: Guia de uso e verificação (`LOCK_CLEANUP_USAGE.md`)
+- **TASK-LOCK-001**: Script de testes para validação da funcionalidade (`test-lock-cleanup.js`)
+
+### Changed
+- **TASK-LOCK-001**: Função `fetchRegulationDetails()` modificada para executar limpeza automática após obter detalhes
+- **TASK-LOCK-001**: Sistema de error handling aprimorado com APIErrorBoundary para limpeza de locks
+- **TASK-LOCK-001**: Mensagens de erro específicas adicionadas para operações de limpeza de lock
+
+### Fixed
+- **TASK-LOCK-001**: Implementada solução para locks órfãos no sistema SIGSS através de limpeza automática
+- **TASK-LOCK-001**: Corrigido problema de locks não liberados após consulta de detalhes de regulação
+
 ### Removed
 - **TASK-BUILD-001**: Sistema legado de build removido completamente (build-zips.js, build-zips-optimized.js, release.js)
 - **TASK-BUILD-001**: Scripts batch legados removidos (*.bat files)

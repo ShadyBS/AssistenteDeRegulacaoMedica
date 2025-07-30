@@ -12,7 +12,15 @@
  */
 
 (function () {
-  logger.info(
+  // ✅ TASK-001 FIX: Logger local para content scripts
+  const contentLogger = {
+    info: (msg, data) => console.info(`[Assistente Content] ${msg}`, data || ''),
+    error: (msg, data) => console.error(`[Assistente Content] ${msg}`, data || ''),
+    warn: (msg, data) => console.warn(`[Assistente Content] ${msg}`, data || ''),
+    debug: (msg, data) => console.debug(`[Assistente Content] ${msg}`, data || '')
+  };
+
+  contentLogger.info(
     "[Assistente de Regulação] Script de controle v18 (Performance Otimizada) ativo."
   );
 
@@ -20,7 +28,7 @@
   const api = globalThis.browser || globalThis.chrome;
 
   if (!api) {
-    logger.error('[Assistente] API de extensão não disponível');
+    contentLogger.error('[Assistente] API de extensão não disponível');
     return;
   }
 
@@ -94,7 +102,7 @@
     performanceMetrics.lastCheckTime = duration;
 
     if (duration > 50) { // Log se demorar mais que 50ms
-      logger.warn(`[Assistente Performance] ${name} demorou ${duration.toFixed(2)}ms`);
+      contentLogger.warn(`[Assistente Performance] ${name} demorou ${duration.toFixed(2)}ms`);
     }
 
     return result;
@@ -123,7 +131,7 @@
             lastProcessedReguId = currentReguId;
             const payload = { reguIdp, reguIds };
 
-            logger.info(
+            contentLogger.info(
               "[Assistente] Aba Manutenção aberta. Enviando IDs para o background script:",
               payload
             );
@@ -132,7 +140,7 @@
             try {
               api.runtime.sendMessage({ type: "SAVE_REGULATION_DATA", payload });
             } catch (e) {
-              logger.error(
+              contentLogger.error(
                 "[Assistente] Falha ao enviar mensagem para o background script:",
                 e
               );
@@ -149,7 +157,7 @@
   const throttledCheckMaintenanceTab = () => {
     // Verifica se não excedeu o limite de mutações por segundo
     if (mutationCount >= MAX_MUTATIONS_PER_SECOND) {
-      logger.warn('[Assistente] Limite de mutações atingido, ignorando verificação');
+      contentLogger.warn('[Assistente] Limite de mutações atingido, ignorando verificação');
       return;
     }
 
@@ -209,7 +217,7 @@
   // ✅ TASK-A-001: Função para reportar métricas de performance
   const reportPerformanceMetrics = () => {
     if (performanceMetrics.checkCount > 0) {
-      logger.info('[Assistente Performance]', {
+      contentLogger.info('[Assistente Performance]', {
         totalChecks: performanceMetrics.checkCount,
         averageTime: performanceMetrics.averageTime.toFixed(2) + 'ms',
         lastCheckTime: performanceMetrics.lastCheckTime.toFixed(2) + 'ms',
@@ -243,7 +251,7 @@
 
     lastProcessedReguId = null;
     mutationCount = 0;
-    logger.info("[Assistente] Recursos limpos e observers desconectados.");
+    contentLogger.info("[Assistente] Recursos limpos e observers desconectados.");
   };
 
   // Inicializa o MutationObserver
@@ -307,7 +315,7 @@
       clearTimeout(inactivityTimer);
     }
     inactivityTimer = setTimeout(() => {
-      logger.info("[Assistente] Limpeza automática por inatividade.");
+      contentLogger.info("[Assistente] Limpeza automática por inatividade.");
       cleanup();
     }, 30 * 60 * 1000); // 30 minutos
   };

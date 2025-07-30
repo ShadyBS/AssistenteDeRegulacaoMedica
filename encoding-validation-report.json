@@ -1,25 +1,21 @@
 {
-  "timestamp": "2025-07-28T01:51:07.058Z",
-  "duration": "2.22s",
+  "timestamp": "2025-07-30T14:04:46.805Z",
+  "duration": "0.10s",
   "summary": {
-    "totalFiles": 89,
-    "filesWithIssues": 8,
-    "totalIssues": 8,
-    "errors": 8,
+    "totalFiles": 93,
+    "filesWithIssues": 4,
+    "totalIssues": 4,
+    "errors": 4,
     "warnings": 0
   },
   "issuesByType": [
     {
       "type": "REPLACEMENT_CHARACTERS",
-      "count": 8,
+      "count": 4,
       "severity": "error",
       "files": [
         "WHITELIST_PROBLEM_RESOLUTION.md",
-        "agents.md",
         "encoding-validation-report.json",
-        "field-config.js",
-        "scripts\\build-optimized.js",
-        "scripts\\build.js",
         "scripts\\fix-encoding.js",
         "scripts\\validate-encoding.js"
       ]
@@ -39,55 +35,7 @@
       ]
     },
     {
-      "file": "agents.md",
-      "issueCount": 1,
-      "issues": [
-        {
-          "type": "REPLACEMENT_CHARACTERS",
-          "severity": "error",
-          "message": "Arquivo contém caracteres de replacement (�)",
-          "fix": "Corrigir encoding ou dados corrompidos"
-        }
-      ]
-    },
-    {
       "file": "encoding-validation-report.json",
-      "issueCount": 1,
-      "issues": [
-        {
-          "type": "REPLACEMENT_CHARACTERS",
-          "severity": "error",
-          "message": "Arquivo contém caracteres de replacement (�)",
-          "fix": "Corrigir encoding ou dados corrompidos"
-        }
-      ]
-    },
-    {
-      "file": "field-config.js",
-      "issueCount": 1,
-      "issues": [
-        {
-          "type": "REPLACEMENT_CHARACTERS",
-          "severity": "error",
-          "message": "Arquivo contém caracteres de replacement (�)",
-          "fix": "Corrigir encoding ou dados corrompidos"
-        }
-      ]
-    },
-    {
-      "file": "scripts\\build-optimized.js",
-      "issueCount": 1,
-      "issues": [
-        {
-          "type": "REPLACEMENT_CHARACTERS",
-          "severity": "error",
-          "message": "Arquivo contém caracteres de replacement (�)",
-          "fix": "Corrigir encoding ou dados corrompidos"
-        }
-      ]
-    },
-    {
-      "file": "scripts\\build.js",
       "issueCount": 1,
       "issues": [
         {

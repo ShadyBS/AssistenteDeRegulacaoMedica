@@ -9,6 +9,7 @@ export const API_ENDPOINTS = {
   // Configuração e sistema
   REGULATION_PRIORITIES: "/sigss/configuracaoGravidade/loadConfiguracaoRegra",
   REGULATION_DETAILS: "/sigss/regulacaoControleSolicitacao/visualiza",
+  REGULATION_CLEAR_LOCK: "/sigss/regulacao/limparLock",
   SYSTEM_DATETIME: "/sigss/common/dataHora",
   PARAM_HASH: "/sigss/common/queryStrToParamHash",
 
@@ -213,6 +214,8 @@ export const API_ERROR_MESSAGES = {
   KEEP_ALIVE_FAILED: "Keep-alive falhou",
   KEEP_ALIVE_INVALID_RESPONSE: "Keep-alive: resposta JSON inválida ou vazia",
   KEEP_ALIVE_NOT_JSON: "Keep-alive: resposta não é JSON, possível redirecionamento para login",
+  REGULATION_LOCK_CLEAR_FAILED: "Falha ao limpar o lock da regulação",
+  REGULATION_LOCK_CLEAR_INVALID_RESPONSE: "Resposta inválida ao limpar lock da regulação",
 };
 
 // Códigos de status HTTP relevantes

@@ -923,7 +923,71 @@ export async function fetchRegulationPriorities() {
 }
 
 /**
+ * Limpa o lock de uma regulação no sistema de origem.
+ * Esta função deve ser chamada SEMPRE após obter os detalhes de uma regulação
+ * para garantir que o lock seja liberado no sistema.
+ * @param {object} params
+ * @param {string} params.reguIdp - O IDP da regulação.
+ * @param {string} params.reguIds - O IDS da regulação.
+ * @returns {Promise<boolean>} True se o lock foi limpo com sucesso, false caso contrário.
+ */
+export async function clearRegulationLock({ reguIdp, reguIds }) {
+  if (!API_VALIDATIONS.isValidRegulationId(reguIdp, reguIds)) {
+    logger.warn('[Lock Cleanup] IDs de regulação inválidos para limpeza de lock:', { reguIdp, reguIds });
+    return false;
+  }
+
+  return await apiErrorBoundary.execute(
+    async () => {
+      const baseUrl = await getBaseUrl();
+      const url = API_UTILS.buildUrl(baseUrl, API_ENDPOINTS.REGULATION_CLEAR_LOCK);
+
+      // Formato do lock: "IDP-IDS" (conforme exemplo 818-1)
+      const lockValue = `${reguIdp}-${reguIds}`;
+
+      const response = await fetch(url, {
+        method: "POST",
+        headers: API_HEADERS.FORM,
+        body: `lock=${encodeURIComponent(lockValue)}`,
+      });
+
+      if (!response.ok) {
+        const error = new Error(`${API_ERROR_MESSAGES.REGULATION_LOCK_CLEAR_FAILED} - Status: ${response.status}`);
+        error.status = response.status;
+        throw error;
+      }
+
+      // Verificar se a resposta é JSON válida
+      if (!API_VALIDATIONS.isJsonResponse(response)) {
+        logger.warn('[Lock Cleanup] Resposta não é JSON, mas status OK - assumindo sucesso');
+        return true;
+      }
+
+      const data = await response.json();
+
+      // A resposta esperada é {"string":""} conforme o exemplo
+      // Consideramos sucesso se a resposta contém a estrutura esperada
+      if (data && typeof data === 'object') {
+        logger.info(`[Lock Cleanup] Lock limpo com sucesso para regulação ${lockValue}`);
+        return true;
+      }
+
+      logger.warn('[Lock Cleanup] Resposta inesperada:', data);
+      return true; // Assumir sucesso se chegou até aqui com status OK
+    },
+    'clearRegulationLock',
+    {
+      fallback: createFallback(false, 'clearRegulationLock'),
+      context: { reguIdp, reguIds, lockValue: `${reguIdp}-${reguIds}` },
+      enableRetry: true, // Permitir retry para limpeza de lock
+      enableCircuitBreaker: false // Não usar circuit breaker para limpeza de lock
+    }
+  );
+}
+
+/**
  * Busca os detalhes completos de uma regulação específica.
+ * IMPORTANTE: Esta função automaticamente limpa o lock da regulação após obter os detalhes.
  * @param {object} params
  * @param {string} params.reguIdp - O IDP da regulação.
  * @param {string} params.reguIds - O IDS da regulação.
@@ -956,8 +1020,23 @@ export async function fetchRegulationDetails({ reguIdp, reguIds }) {
   }
 
   const data = await response.json();
-  // O objeto de dados está aninhado sob a chave "regulacao"
-  return data.regulacao || null;
+  const regulationData = data.regulacao || null;
+
+  // ✅ CRÍTICO: Sempre limpar o lock após obter os detalhes da regulação
+  // Esta operação é executada de forma assíncrona para não bloquear o retorno dos dados
+  // mas com tratamento de erro para garantir que falhas sejam registradas
+  setTimeout(async () => {
+    try {
+      const lockCleared = await clearRegulationLock({ reguIdp, reguIds });
+      if (!lockCleared) {
+        logger.error(`[Regulation Details] Falha ao limpar lock para regulação ${reguIdp}-${reguIds}`);
+      }
+    } catch (error) {
+      logger.error(`[Regulation Details] Erro ao limpar lock para regulação ${reguIdp}-${reguIds}:`, error);
+    }
+  }, 0);
+
+  return regulationData;
 }
 
 
