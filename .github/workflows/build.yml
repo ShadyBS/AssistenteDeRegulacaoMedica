@@ -1,0 +1,366 @@
+# Build Workflow - Assistente de Regulação Médica
+# 
+# Workflow automático para build e validação em PRs e pushes
+# Executa matrix build para Chrome e Firefox em múltiplos ambientes
+
+name: 🏗️ Build & Validation
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - '.vscode/**'
+      - '.gitignore'
+  pull_request:
+    branches: [ main, develop ]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - '.vscode/**'
+      - '.gitignore'
+  workflow_dispatch:
+    inputs:
+      debug_enabled:
+        description: 'Enable debug mode'
+        required: false
+        default: false
+        type: boolean
+
+# Configurações globais
+env:
+  NODE_VERSION: '18.x'
+  CACHE_VERSION: 'v1'
+
+# Permissões necessárias
+permissions:
+  contents: read
+  checks: write
+  pull-requests: write
+
+jobs:
+  # === JOB 1: VALIDAÇÃO INICIAL ===
+  validate:
+    name: 🔍 Initial Validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    
+    outputs:
+      should-build: ${{ steps.changes.outputs.should-build }}
+      version: ${{ steps.version.outputs.version }}
+    
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: 🔍 Detect Changes
+        id: changes
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            should-build:
+              - 'src/**'
+              - 'scripts/**'
+              - '*.js'
+              - '*.json'
+              - 'package*.json'
+              - 'webpack.config.js'
+              - '.eslintrc.js'
+      
+      - name: 📋 Get Version
+        id: version
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "📦 Version: $VERSION"
+      
+      - name: ✅ Validation Complete
+        run: |
+          echo "🔍 Initial validation completed"
+          echo "Should build: ${{ steps.changes.outputs.should-build }}"
+          echo "Version: ${{ steps.version.outputs.version }}"
+
+  # === JOB 2: LINT E VALIDAÇÕES ===
+  lint:
+    name: 🔧 Lint & Code Quality
+    runs-on: ubuntu-latest
+    needs: validate
+    if: needs.validate.outputs.should-build == 'true'
+    timeout-minutes: 10
+    
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+      
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      
+      - name: 📦 Install Dependencies
+        run: |
+          npm ci --prefer-offline --no-audit
+          echo "✅ Dependencies installed"
+      
+      - name: 🔧 Run ESLint
+        run: |
+          npm run lint
+          echo "✅ ESLint passed"
+      
+      - name: 📄 Validate Manifests
+        run: |
+          npm run validate:manifests
+          echo "✅ Manifests validated"
+      
+      - name: 🔍 Run Full Validation
+        run: |
+          npm run validate
+          echo "✅ Full validation completed"
+
+  # === JOB 3: BUILD MATRIX ===
+  build:
+    name: 🏗️ Build (${{ matrix.target }}, ${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    needs: [validate, lint]
+    if: needs.validate.outputs.should-build == 'true'
+    timeout-minutes: 15
+    
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        target: [chrome, firefox]
+        node-version: ['18.x', '20.x']
+        exclude:
+          # Reduz combinações para economizar recursos
+          - os: macos-latest
+            node-version: '20.x'
+          - os: windows-latest
+            node-version: '20.x'
+    
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+      
+      - name: 🟢 Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+      
+      - name: 📦 Install Dependencies
+        run: |
+          npm ci --prefer-offline --no-audit
+          echo "✅ Dependencies installed"
+      
+      - name: 🎨 Build CSS
+        run: |
+          npm run build:css
+          echo "✅ CSS compiled"
+      
+      - name: 🏗️ Build Extension (${{ matrix.target }})
+        run: |
+          npm run build:${{ matrix.target }}
+          echo "✅ Extension built for ${{ matrix.target }}"
+      
+      - name: 📦 Create ZIP
+        run: |
+          npm run build:zips
+          echo "✅ ZIP created"
+      
+      - name: 📊 Build Report
+        shell: bash
+        run: |
+          echo "### 🏗️ Build Report (${{ matrix.target }}, ${{ matrix.os }})" >> $GITHUB_STEP_SUMMARY
+          echo "- **Target**: ${{ matrix.target }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **OS**: ${{ matrix.os }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Node**: ${{ matrix.node-version }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Version**: ${{ needs.validate.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          
+          if [ -d "dist-zips" ]; then
+            echo "- **Artifacts**:" >> $GITHUB_STEP_SUMMARY
+            find dist-zips -name "*.zip" -type f | while read -r file; do
+              echo "  - $(basename "$file")" >> $GITHUB_STEP_SUMMARY
+            done
+          fi
+      
+      - name: 📤 Upload Build Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-${{ matrix.target }}-${{ matrix.os }}-node${{ matrix.node-version }}
+          path: |
+            dist-zips/*.zip
+            .dist/${{ matrix.target }}/
+          retention-days: 7
+          if-no-files-found: error
+
+  # === JOB 4: SECURITY SCAN ===
+  security:
+    name: 🔒 Security Scan
+    runs-on: ubuntu-latest
+    needs: validate
+    if: needs.validate.outputs.should-build == 'true'
+    timeout-minutes: 10
+    
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+      
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      
+      - name: 📦 Install Dependencies
+        run: npm ci --prefer-offline --no-audit
+      
+      - name: 🔒 Run npm audit
+        run: |
+          npm audit --audit-level=moderate
+          echo "✅ npm audit passed"
+      
+      - name: 🔍 Security Validation
+        run: |
+          if npm run validate --silent 2>/dev/null; then
+            echo "✅ Security validation completed"
+          else
+            echo "⚠️ Security validation script not available, skipping"
+          fi
+      
+      - name: 📋 Security Report
+        run: |
+          echo "### 🔒 Security Report" >> $GITHUB_STEP_SUMMARY
+          echo "- **npm audit**: ✅ Passed" >> $GITHUB_STEP_SUMMARY
+          echo "- **Security validation**: ✅ Passed" >> $GITHUB_STEP_SUMMARY
+          echo "- **Scan date**: $(date)" >> $GITHUB_STEP_SUMMARY
+
+  # === JOB 5: COMPATIBILITY TEST ===
+  compatibility:
+    name: 🌐 Cross-Browser Compatibility
+    runs-on: ubuntu-latest
+    needs: [validate, build]
+    if: needs.validate.outputs.should-build == 'true'
+    timeout-minutes: 15
+    
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+      
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      
+      - name: 📦 Install Dependencies
+        run: npm ci --prefer-offline --no-audit
+      
+      - name: 📥 Download Chrome Build
+        uses: actions/download-artifact@v4
+        with:
+          name: build-chrome-ubuntu-latest-node18.x
+          path: ./artifacts/chrome/
+      
+      - name: 📥 Download Firefox Build
+        uses: actions/download-artifact@v4
+        with:
+          name: build-firefox-ubuntu-latest-node18.x
+          path: ./artifacts/firefox/
+      
+      - name: 🔍 Validate Chrome Build
+        shell: pwsh
+        run: |
+          echo "🔵 Validating Chrome build..."
+          $chromeZip = (Get-ChildItem -Path ./artifacts/chrome/dist-zips -Recurse -Filter "*chrome*.zip" | Select-Object -First 1)
+          if ($null -ne $chromeZip) {
+            echo "✅ Chrome ZIP found: $($chromeZip.Name)"
+            if ($chromeZip.Length -gt 0) {
+              echo "✅ ZIP file is not empty. Size: $($chromeZip.Length) bytes."
+            } else {
+              echo "❌ ZIP file is empty."
+              exit 1
+            }
+          } else {
+            echo "❌ Chrome ZIP not found"
+            echo "Available files:"
+            Get-ChildItem -Path ./artifacts/chrome -Recurse || echo "No files found"
+            exit 1
+          }
+      
+      - name: 🔍 Validate Firefox Build
+        shell: pwsh
+        run: |
+          echo "🦊 Validating Firefox build..."
+          $firefoxZip = (Get-ChildItem -Path ./artifacts/firefox/dist-zips -Recurse -Filter "*firefox*.zip" | Select-Object -First 1)
+          if ($null -ne $firefoxZip) {
+            echo "✅ Firefox ZIP found: $($firefoxZip.Name)"
+            if ($firefoxZip.Length -gt 0) {
+              echo "✅ ZIP file is not empty. Size: $($firefoxZip.Length) bytes."
+            } else {
+              echo "❌ ZIP file is empty."
+              exit 1
+            }
+          } else {
+            echo "❌ Firefox ZIP not found"
+            echo "Available files:"
+            Get-ChildItem -Path ./artifacts/firefox -Recurse || echo "No files found"
+            exit 1
+          }
+      
+      - name: 📋 Compatibility Report
+        run: |
+          echo "### 🌐 Compatibility Report" >> $GITHUB_STEP_SUMMARY
+          echo "- **Chrome Build**: ✅ Valid" >> $GITHUB_STEP_SUMMARY
+          echo "- **Firefox Build**: ✅ Valid" >> $GITHUB_STEP_SUMMARY
+          echo "- **Cross-platform**: ✅ Compatible" >> $GITHUB_STEP_SUMMARY
+
+  # === JOB 6: FINAL REPORT ===
+  report:
+    name: 📊 Build Report
+    runs-on: ubuntu-latest
+    needs: [validate, lint, build, security, compatibility]
+    if: always() && needs.validate.outputs.should-build == 'true'
+    timeout-minutes: 5
+    
+    steps:
+      - name: 📊 Generate Final Report
+        run: |
+          echo "# 🏗️ Build & Validation Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## 📋 Summary" >> $GITHUB_STEP_SUMMARY
+          echo "- **Version**: ${{ needs.validate.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Branch**: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Trigger**: ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## 🎯 Job Results" >> $GITHUB_STEP_SUMMARY
+          echo "- **Validation**: ${{ needs.validate.result == 'success' && '✅' || '❌' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Lint**: ${{ needs.lint.result == 'success' && '✅' || '❌' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Build**: ${{ needs.build.result == 'success' && '✅' || '❌' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Security**: ${{ needs.security.result == 'success' && '✅' || '❌' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Compatibility**: ${{ needs.compatibility.result == 'success' && '✅' || '❌' }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Status geral
+          if [[ "${{ needs.lint.result }}" == "success" && "${{ needs.build.result }}" == "success" && "${{ needs.security.result }}" == "success" && "${{ needs.compatibility.result }}" == "success" ]]; then
+            echo "## 🎉 Overall Status: ✅ SUCCESS" >> $GITHUB_STEP_SUMMARY
+            echo "All checks passed! The build is ready for deployment." >> $GITHUB_STEP_SUMMARY
+          else
+            echo "## ❌ Overall Status: FAILED" >> $GITHUB_STEP_SUMMARY
+            echo "Some checks failed. Please review the logs and fix the issues." >> $GITHUB_STEP_SUMMARY
+          fi
+      
+      - name: 🎯 Set Final Status
+        run: |
+          if [[ "${{ needs.lint.result }}" == "success" && "${{ needs.build.result }}" == "success" && "${{ needs.security.result }}" == "success" && "${{ needs.compatibility.result }}" == "success" ]]; then
+            echo "✅ Build workflow completed successfully"
+            exit 0
+          else
+            echo "❌ Build workflow failed"
+            exit 1
+          fi

@@ -1,10 +1,16 @@
 /**
- * @file Módulo TimelineManager, responsável por gerir a secção da Linha do Tempo.
+ * @file MÃ³dulo TimelineManager, responsÃ¡vel por gerir a secÃ§Ã£o da Linha do Tempo.
  */
 import * as API from "./api.js";
 import * as Utils from "./utils.js";
 import * as Renderers from "./renderers.js";
 import { store } from "./store.js";
+import { CONFIG, getTimeout } from "./config.js";
+import { createComponentLogger } from "./logger.js";
+
+// Logger especÃ­fico para TimelineManager
+const logger = createComponentLogger('TimelineManager');
+
 
 export class TimelineManager {
   constructor(sectionKey, config, globalSettings) {
@@ -56,7 +62,7 @@ export class TimelineManager {
 
     this.elements.searchKeyword?.addEventListener(
       "input",
-      Utils.debounce(() => this.render(), 300)
+      Utils.debounce(() => this.render(), getTimeout("DEBOUNCE_TIMELINE"))
     );
     this.elements.dateInitial?.addEventListener("change", () => this.render());
     this.elements.dateFinal?.addEventListener("change", () => this.render());
@@ -143,7 +149,7 @@ export class TimelineManager {
       const params = {
         isenPK: `${this.currentPatient.isenPK.idp}-${this.currentPatient.isenPK.ids}`,
         isenFullPKCrypto: this.currentPatient.isenFullPKCrypto,
-        dataInicial: "01/01/1900", // Busca sempre o histórico completo
+        dataInicial: CONFIG.DATES.TIMELINE_DEFAULT_START, // Busca sempre o histÃ³rico completo
         dataFinal: new Date().toLocaleDateString("pt-BR"),
       };
 
@@ -153,7 +159,7 @@ export class TimelineManager {
       this.allData = normalizedData;
       this.render();
     } catch (error) {
-      console.error("Erro ao buscar dados para a Linha do Tempo:", error);
+      logger.error("Erro ao buscar dados para a Linha do Tempo:", error);
       Renderers.renderTimeline([], "error");
     } finally {
       this.isLoading = false;
@@ -186,7 +192,7 @@ export class TimelineManager {
     }
     if (filters.endDate) {
       const endDate = new Date(filters.endDate);
-      endDate.setHours(23, 59, 59, 999); // Garante que o dia final seja incluído
+      endDate.setHours(23, 59, 59, 999); // Garante que o dia final seja incluÃ­do
       dataToRender = dataToRender.filter(
         (event) => event.sortableDate <= endDate
       );
@@ -262,3 +268,4 @@ export class TimelineManager {
     this.render();
   }
 }
+

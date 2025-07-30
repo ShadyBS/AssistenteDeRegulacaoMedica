@@ -3,48 +3,51 @@
  * Usa a API de alarmes para garantir funcionamento em Manifest V3
  */
 import * as API from "./api.js";
+import { getBrowserAPIInstance } from "./BrowserAPI.js";
+import { createComponentLogger } from "./logger.js";
+
+// Logger específico para KeepAliveManager
+const logger = createComponentLogger('KeepAliveManager');
+
 
 export class KeepAliveManager {
   constructor() {
     this.isActive = false;
     this.intervalMinutes = 10; // Padrão: 10 minutos
     this.alarmName = "keepSessionAlive";
-    
+    this.api = getBrowserAPIInstance();
+
     this.init();
   }
 
   async init() {
     // Carrega as configurações salvas
     await this.loadSettings();
-    
+
     // Configura listener para alarmes
     this.setupAlarmListener();
-    
+
     // Escuta mudanças nas configurações
-    if (typeof browser !== "undefined") {
-      browser.storage.onChanged.addListener((changes, areaName) => {
-        if (areaName === "sync" && changes.keepSessionAliveInterval) {
-          this.updateInterval(changes.keepSessionAliveInterval.newValue);
-        }
-      });
-    }
+    this.api.storage.onChanged.addListener((changes, areaName) => {
+      if (areaName === "sync" && changes.keepSessionAliveInterval) {
+        this.updateInterval(changes.keepSessionAliveInterval.newValue);
+      }
+    });
   }
 
   setupAlarmListener() {
-    const api = typeof browser !== "undefined" ? browser : chrome;
-    
-    if (api.alarms) {
-      api.alarms.onAlarm.addListener(async (alarm) => {
+    if (this.api.alarms) {
+      this.api.alarms.onAlarm.addListener(async (alarm) => {
         if (alarm.name === this.alarmName) {
           try {
             const success = await API.keepSessionAlive();
             if (success) {
-              console.log(`Keep-alive executado com sucesso (${new Date().toLocaleTimeString()})`);
+              logger.info(`[KeepAlive] Executado com sucesso (${new Date().toLocaleTimeString()})`);
             } else {
-              console.warn(`Keep-alive falhou (${new Date().toLocaleTimeString()})`);
+              logger.warn(`[KeepAlive] Falhou (${new Date().toLocaleTimeString()})`);
             }
           } catch (error) {
-            console.error("Erro no keep-alive:", error);
+            logger.error("[KeepAlive] Erro durante execução:", error);
           }
         }
       });
@@ -53,25 +56,24 @@ export class KeepAliveManager {
 
   async loadSettings() {
     try {
-      const api = typeof browser !== "undefined" ? browser : chrome;
-      const result = await api.storage.sync.get({
+      const result = await this.api.storage.sync.get({
         keepSessionAliveInterval: 10
       });
-      
+
       this.updateInterval(result.keepSessionAliveInterval);
     } catch (error) {
-      console.error("Erro ao carregar configurações do keep-alive:", error);
+      logger.error("[KeepAlive] Erro ao carregar configurações:", error);
     }
   }
 
   updateInterval(minutes) {
     const newMinutes = parseInt(minutes, 10) || 0;
-    
+
     this.intervalMinutes = newMinutes;
-    
+
     // Para o alarme atual
     this.stop();
-    
+
     // Inicia novo alarme se o valor for maior que 0
     if (this.intervalMinutes > 0) {
       this.start();
@@ -80,79 +82,82 @@ export class KeepAliveManager {
 
   async start() {
     if (this.intervalMinutes <= 0) {
-      console.log("Keep-alive desativado (intervalo = 0)");
+      logger.info("[KeepAlive] Desativado (intervalo = 0)");
       return;
     }
 
     if (this.isActive) {
-      console.log("Keep-alive já está ativo");
+      logger.info("[KeepAlive] Já está ativo");
       return;
     }
 
-    const api = typeof browser !== "undefined" ? browser : chrome;
-    
-    if (!api.alarms) {
-      console.error("API de alarmes não disponível - keep-alive não funcionará");
+    if (!this.api.alarms) {
+      logger.error("[KeepAlive] API de alarmes não disponível - keep-alive não funcionará");
       return;
     }
 
     try {
       // Cria um alarme periódico
-      await api.alarms.create(this.alarmName, {
+      await this.api.alarms.create(this.alarmName, {
         delayInMinutes: this.intervalMinutes,
         periodInMinutes: this.intervalMinutes
       });
 
       this.isActive = true;
-      console.log(`Keep-alive iniciado: ${this.intervalMinutes} minutos usando alarmes`);
-      
-      // Executa imediatamente uma vez para testar
+      logger.info(`[KeepAlive] Iniciado: ${this.intervalMinutes} minutos usando alarmes`);
+
+      // Executa imediatamente uma vez para testar, mas apenas se a URL base estiver configurada
       try {
+        // Verifica se a URL base está disponível antes de tentar a chamada
+        await API.getBaseUrl();
+
         const success = await API.keepSessionAlive();
         if (success) {
-          console.log(`Keep-alive inicial executado com sucesso (${new Date().toLocaleTimeString()})`);
+          logger.info(`[KeepAlive] Execução inicial bem-sucedida (${new Date().toLocaleTimeString()})`);
         } else {
-          console.warn(`Keep-alive inicial falhou (${new Date().toLocaleTimeString()})`);
+          logger.warn(`[KeepAlive] Execução inicial falhou, mas o alarme está agendado. (${new Date().toLocaleTimeString()})`);
         }
       } catch (error) {
-        console.error("Erro no keep-alive inicial:", error);
+        // Se o erro for a URL não configurada, é um comportamento esperado.
+        if (error.message === 'URL_BASE_NOT_CONFIGURED') {
+          logger.warn("[KeepAlive] URL base não configurada. A execução inicial foi pulada, mas o alarme está agendado para tentativas futuras.");
+        } else {
+          logger.error("[KeepAlive] Erro na execução inicial:", error);
+        }
       }
-      
+
     } catch (error) {
-      console.error("Erro ao criar alarme para keep-alive:", error);
+      logger.error("[KeepAlive] Erro ao criar alarme:", error);
     }
   }
 
   async stop() {
-    const api = typeof browser !== "undefined" ? browser : chrome;
-    
-    if (api.alarms) {
+    if (this.api.alarms) {
       try {
-        await api.alarms.clear(this.alarmName);
+        await this.api.alarms.clear(this.alarmName);
       } catch (error) {
-        console.error("Erro ao limpar alarme:", error);
+        logger.error("[KeepAlive] Erro ao limpar alarme:", error);
       }
     }
-    
+
     this.isActive = false;
-    console.log("Keep-alive parado");
+    logger.info("[KeepAlive] Parado");
   }
 
   async getStatus() {
-    const api = typeof browser !== "undefined" ? browser : chrome;
     let nextExecution = null;
-    
-    if (this.isActive && api.alarms) {
+
+    if (this.isActive && this.api.alarms) {
       try {
-        const alarm = await api.alarms.get(this.alarmName);
+        const alarm = await this.api.alarms.get(this.alarmName);
         if (alarm && alarm.scheduledTime) {
           nextExecution = new Date(alarm.scheduledTime);
         }
       } catch (error) {
-        console.error("Erro ao obter status do alarme:", error);
+        logger.error("[KeepAlive] Erro ao obter status do alarme:", error);
       }
     }
-    
+
     return {
       isActive: this.isActive,
       intervalMinutes: this.intervalMinutes,

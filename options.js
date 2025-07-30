@@ -1,8 +1,23 @@
+import * as API from "./api.js"; // Importa a API para buscar prioridades
 import "./browser-polyfill.js";
+import { getBrowserAPIInstance } from "./BrowserAPI.js";
+import { getCSSClass, getTimeout } from "./config.js";
 import { defaultFieldConfig } from "./field-config.js";
 import { filterConfig } from "./filter-config.js";
+import {
+  clearLogs,
+  createComponentLogger,
+  exportLogs,
+  getLogger,
+  getLogStats,
+  setLogLevel
+} from "./logger.js";
+import { testLoggingSystem } from "./test-logger.js";
 import * as Utils from "./utils.js";
-import * as API from "./api.js"; // Importa a API para buscar prioridades
+
+// Logger específico para Options
+const logger = createComponentLogger('Options');
+
 
 // --- Constantes ---
 const CONFIG_VERSION = "1.3"; // Versão da estrutura de configuração
@@ -11,6 +26,9 @@ const CONFIG_VERSION = "1.3"; // Versão da estrutura de configuração
 let automationRules = [];
 let currentlyEditingRuleId = null;
 let draggedTab = null; // Variável para a aba arrastada
+
+// Instância global da API do browser
+const browserAPI = getBrowserAPIInstance();
 
 // --- Elementos do DOM ---
 const saveButton = document.getElementById("saveButton");
@@ -51,9 +69,8 @@ function createDraggableField(field) {
   div.draggable = true;
 
   div.innerHTML = `
-    <span class="drag-handle">⠿</span>
-    <input type="checkbox" class="field-enabled-checkbox" ${
-      field.enabled ? "checked" : ""
+    <span class="drag-handle">⣿</span>
+    <input type="checkbox" class="field-enabled-checkbox" ${field.enabled ? "checked" : ""
     }>
     <input type="text" class="field-label-input" value="${field.label}">
   `;
@@ -104,30 +121,29 @@ function createDraggableFilter(filter, priorities = []) {
         defaultValueControl = `<select class="filter-default-value-input w-full">${optionsHtml}</select>`;
         break;
       case "checkbox":
-        defaultValueControl = `<input type="checkbox" class="filter-default-value-input h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500">`;
+        defaultValueControl = `<input type="checkbox" class="filter-default-value-input ${getCSSClass('INPUT_CHECKBOX')}">`;
         break;
     }
   }
 
   div.innerHTML = `
-    <span class="drag-handle">⠿</span>
+    <span class="drag-handle">⣿</span>
     <div class="flex-grow flex flex-col gap-2">
         <div class="flex justify-between items-center">
             <span class="font-medium text-sm">${filter.label}</span>
             <span class="text-xs text-slate-400 p-1 bg-slate-100 rounded">${displayType}</span>
         </div>
-        ${
-          defaultValueControl
-            ? `
+        ${defaultValueControl
+      ? `
         <div class="flex items-center gap-2 text-xs text-slate-500">
             <label for="default-${filter.id}">Padrão:</label>
             ${defaultValueControl.replace(
-              'class="',
-              `id="default-${filter.id}" class="`
-            )}
+        'class="',
+        `id="default-${filter.id}" class="`
+      )}
         </div>`
-            : ""
-        }
+      : ""
+    }
     </div>
   `;
 
@@ -169,12 +185,19 @@ async function renderFilterLayout(layout) {
   let priorities = [];
 
   try {
-    const baseUrl = await API.getBaseUrl();
-    if (baseUrl) {
-      priorities = await API.fetchRegulationPriorities();
-    }
+    // A funÃ§Ã£o getBaseUrl jÃ¡ trata o erro de URL nÃ£o configurada,
+    // entÃ£o podemos chamar fetchRegulationPriorities diretamente.
+    priorities = await API.fetchRegulationPriorities();
   } catch (error) {
-    console.error("Não foi possível carregar prioridades:", error);
+    logger.error("NÃ£o foi possÃ­vel carregar prioridades de regulaÃ§Ã£o:", error);
+    // Se o erro for a falta da URL base, exibe uma mensagem para o usuÃ¡rio.
+    if (error.message === 'URL_BASE_NOT_CONFIGURED') {
+      Utils.showMessage(
+        "A URL base do SIGSS nÃ£o estÃ¡ configurada. As prioridades de regulaÃ§Ã£o nÃ£o puderam ser carregadas. Por favor, configure a URL na seÃ§Ã£o 'Geral'.",
+        "warning",
+        10000 // Mostra a mensagem por 10 segundos
+      );
+    }
   }
 
   Object.keys(filterConfig).forEach((section) => {
@@ -253,7 +276,7 @@ function applyTabOrder(order) {
  * Carrega a configuração salva e renderiza a página.
  */
 async function restoreOptions() {
-  const syncItems = await browser.storage.sync.get({
+  const syncItems = await browserAPI.storage.sync.get({
     baseUrl: "",
     autoLoadExams: false,
     autoLoadConsultations: false,
@@ -269,7 +292,7 @@ async function restoreOptions() {
     sectionHeaderStyles: {},
   });
 
-  const localItems = await browser.storage.local.get({
+  const localItems = await browserAPI.storage.local.get({
     automationRules: [],
   });
 
@@ -304,7 +327,7 @@ async function restoreOptions() {
   try {
     await renderFilterLayout(syncItems.filterLayout);
   } catch (error) {
-    console.error("Erro ao renderizar filtros:", error);
+    logger.error("Erro ao renderizar filtros:", error);
   }
 
   const sections = [
@@ -494,7 +517,8 @@ async function saveOptions() {
     ...document.querySelectorAll(".tabs .tab-button"),
   ].map((btn) => btn.dataset.tab);
 
-  await browser.storage.sync.set({
+  // Usa StorageManager para salvar configurações (SYNC com fallback para local)
+  const success = await storageManager.set({
     baseUrl: baseUrl.endsWith("/") ? baseUrl.slice(0, -1) : baseUrl,
     enableAutomaticDetection,
     keepSessionAliveInterval,
@@ -509,6 +533,12 @@ async function saveOptions() {
     sidebarSectionOrder,
     sectionHeaderStyles,
   });
+
+  if (!success) {
+    logger.error('Falha ao salvar configurações usando StorageManager');
+    Utils.showMessage("Erro ao salvar configurações. Tente novamente.", "error");
+    return;
+  }
 
   Utils.showMessage(
     "Configurações salvas! As alterações serão aplicadas ao recarregar o assistente.",
@@ -646,7 +676,7 @@ async function handleRestoreDefaults() {
     "Tem certeza de que deseja restaurar todas as configurações de layout e valores padrão? Isto também restaurará a ordem das seções e os estilos dos cabeçalhos. Esta ação não pode ser desfeita."
   );
   if (confirmation) {
-    await browser.storage.sync.remove([
+    await browserAPI.storage.sync.remove([
       "patientFields",
       "filterLayout",
       "dateRangeDefaults",
@@ -663,7 +693,7 @@ async function handleRestoreDefaults() {
 // --- Lógica de Exportação e Importação ---
 async function handleExport() {
   try {
-    const settingsToExport = await browser.storage.sync.get(null);
+    const settingsToExport = await browserAPI.storage.sync.get(null);
     settingsToExport.configVersion = CONFIG_VERSION;
     const settingsString = JSON.stringify(settingsToExport, null, 2);
     const blob = new Blob([settingsString], { type: "application/json" });
@@ -678,12 +708,12 @@ async function handleExport() {
     URL.revokeObjectURL(url);
     Utils.showMessage("Configurações exportadas com sucesso!", "success");
   } catch (error) {
-    console.error("Erro ao exportar configurações:", error);
+    logger.error("Erro ao exportar configurações:", error);
     Utils.showMessage("Erro ao exportar configurações.", "error");
   } finally {
     setTimeout(() => {
       statusMessage.textContent = "";
-    }, 3000);
+    }, getTimeout("MESSAGE_DISPLAY"));
   }
 }
 
@@ -706,15 +736,15 @@ function handleImport(event) {
         );
         if (!goOn) return;
       }
-      await browser.storage.sync.clear();
-      await browser.storage.sync.set(importedSettings);
+      await browserAPI.storage.sync.clear();
+      await browserAPI.storage.sync.set(importedSettings);
       restoreOptions();
       Utils.showMessage(
         "Configurações importadas e aplicadas com sucesso!",
         "success"
       );
     } catch (error) {
-      console.error("Erro ao importar configurações:", error);
+      logger.error("Erro ao importar configurações:", error);
       Utils.showMessage(`Erro ao importar: ${error.message}`, "error");
     } finally {
       importFileInput.value = "";
@@ -745,18 +775,16 @@ function renderAutomationRules() {
     ruleElement.innerHTML = `
             <div class="flex items-center justify-between">
               <div class="flex items-center gap-3">
-                <span class="drag-handle cursor-grab text-slate-400">⠿</span>
+                <span class="drag-handle cursor-grab text-slate-400">⣿</span>
                 <div>
                   <p class="font-semibold text-slate-800">${rule.name}</p>
-                  <p class="text-xs text-slate-500" title="${keywords}">Gatilhos: ${
-      keywords.length > 50 ? keywords.substring(0, 50) + "..." : keywords
-    }</p>
+                  <p class="text-xs text-slate-500" title="${keywords}">Gatilhos: ${keywords.length > 50 ? keywords.substring(0, 50) + "..." : keywords
+      }</p>
                 </div>
               </div>
               <div class="flex items-center gap-4">
-                <label class="relative inline-flex items-center cursor-pointer" title="${
-                  rule.isActive ? "Regra Ativa" : "Regra Inativa"
-                }">
+                <label class="relative inline-flex items-center cursor-pointer" title="${rule.isActive ? "Regra Ativa" : "Regra Inativa"
+      }">
                   <input type="checkbox" class="sr-only peer rule-toggle-active" ${checked}>
                   <div class="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
                 </label>
@@ -792,7 +820,7 @@ function renderAutomationRules() {
  * Salva o array de regras de automação no storage local.
  */
 async function saveAutomationRules() {
-  await browser.storage.local.set({ automationRules });
+  await browserAPI.storage.local.set({ automationRules });
   Utils.showMessage("Regras de automação salvas.", "success");
   setTimeout(() => {
     statusMessage.textContent = "";
@@ -1047,7 +1075,7 @@ async function populateRuleEditorFilters() {
       priorities = await API.fetchRegulationPriorities();
     }
   } catch (error) {
-    console.error("Não foi possível carregar prioridades:", error);
+    logger.error("Não foi possível carregar prioridades:", error);
   }
 
   const sections = [
@@ -1107,9 +1135,8 @@ function createFilterElementForRuleEditor(filter, sectionKey, priorities) {
 
   switch (filter.type) {
     case "text":
-      elementHtml += `<input type="text" id="${elementId}" placeholder="${
-        filter.placeholder || ""
-      }" class="w-full px-2 py-1 border border-slate-300 rounded-md">`;
+      elementHtml += `<input type="text" id="${elementId}" placeholder="${filter.placeholder || ""
+        }" class="w-full px-2 py-1 border border-slate-300 rounded-md">`;
       break;
     case "select":
     case "selectGroup":
@@ -1189,7 +1216,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   automationRulesList.addEventListener("dragover", handleDragOver);
   automationRulesList.addEventListener("drop", handleDrop);
 
-  browser.storage.onChanged.addListener((changes, areaName) => {
+  browserAPI.storage.onChanged.addListener((changes, areaName) => {
     if (areaName === "sync" && changes.enableAutomaticDetection) {
       const toggle = document.getElementById("enableAutomaticDetection");
       if (toggle) {
@@ -1210,4 +1237,237 @@ importFileInput.addEventListener("change", handleImport);
 allDropZones.forEach((zone) => {
   zone.addEventListener("dragover", handleDragOver);
   zone.addEventListener("drop", handleDrop);
+});
+
+// --- SISTEMA DE LOGGING ---
+
+/**
+ * Carrega as configurações de logging salvas
+ */
+async function loadLoggingSettings() {
+  try {
+    const loggerInstance = getLogger();
+    const currentConfig = loggerInstance.config;
+
+    // Carrega configurações salvas do storage
+    const savedSettings = await browserAPI.storage.local.get({
+      logLevel: 'INFO',
+      enableConsoleLogging: true,
+      enableStorageLogging: true
+    });
+
+    // Aplica as configurações no logger
+    setLogLevel(savedSettings.logLevel);
+    loggerInstance.config.enableConsole = savedSettings.enableConsoleLogging;
+    loggerInstance.config.enableStorage = savedSettings.enableStorageLogging;
+
+    // Atualiza a interface
+    const logLevelSelect = document.getElementById('logLevel');
+    const enableConsoleCheckbox = document.getElementById('enableConsoleLogging');
+    const enableStorageCheckbox = document.getElementById('enableStorageLogging');
+
+    if (logLevelSelect) logLevelSelect.value = savedSettings.logLevel;
+    if (enableConsoleCheckbox) enableConsoleCheckbox.checked = savedSettings.enableConsoleLogging;
+    if (enableStorageCheckbox) enableStorageCheckbox.checked = savedSettings.enableStorageLogging;
+
+    // Carrega estatísticas iniciais
+    await updateLogStats();
+
+    logger.info('Configurações de logging carregadas', {
+      level: savedSettings.logLevel,
+      console: savedSettings.enableConsoleLogging,
+      storage: savedSettings.enableStorageLogging
+    });
+
+  } catch (error) {
+    logger.error('Erro ao carregar configurações de logging:', error);
+  }
+}
+
+/**
+ * Salva as configurações de logging
+ */
+async function saveLoggingSettings() {
+  try {
+    const logLevelSelect = document.getElementById('logLevel');
+    const enableConsoleCheckbox = document.getElementById('enableConsoleLogging');
+    const enableStorageCheckbox = document.getElementById('enableStorageLogging');
+
+    const settings = {
+      logLevel: logLevelSelect.value,
+      enableConsoleLogging: enableConsoleCheckbox.checked,
+      enableStorageLogging: enableStorageCheckbox.checked
+    };
+
+    // Salva no storage
+    await browserAPI.storage.local.set(settings);
+
+    // Aplica as configurações no logger
+    const loggerInstance = getLogger();
+    setLogLevel(settings.logLevel);
+    loggerInstance.config.enableConsole = settings.enableConsoleLogging;
+    loggerInstance.config.enableStorage = settings.enableStorageLogging;
+
+    logger.info('Configurações de logging salvas', settings);
+
+    Utils.showMessage('Configurações de logging salvas!', 'success');
+
+  } catch (error) {
+    logger.error('Erro ao salvar configurações de logging:', error);
+    Utils.showMessage('Erro ao salvar configurações de logging.', 'error');
+  }
+}
+
+/**
+ * Atualiza as estatísticas de logs na interface
+ */
+async function updateLogStats() {
+  try {
+    const stats = await getLogStats();
+
+    document.getElementById('totalLogs').textContent = stats.total || '0';
+    document.getElementById('errorLogs').textContent = stats.byLevel.ERROR || '0';
+    document.getElementById('warnLogs').textContent = stats.byLevel.WARN || '0';
+    document.getElementById('infoLogs').textContent = stats.byLevel.INFO || '0';
+    document.getElementById('debugLogs').textContent = stats.byLevel.DEBUG || '0';
+
+  } catch (error) {
+    logger.error('Erro ao atualizar estatísticas de logs:', error);
+
+    // Valores padrão em caso de erro
+    document.getElementById('totalLogs').textContent = 'Erro';
+    document.getElementById('errorLogs').textContent = '-';
+    document.getElementById('warnLogs').textContent = '-';
+    document.getElementById('infoLogs').textContent = '-';
+    document.getElementById('debugLogs').textContent = '-';
+  }
+}
+
+/**
+ * Exporta logs para arquivo
+ */
+async function handleExportLogs() {
+  try {
+    const logs = await exportLogs('json');
+
+    if (!logs || logs === '[]') {
+      Utils.showMessage('Nenhum log disponível para exportar.', 'warning');
+      return;
+    }
+
+    const blob = new Blob([logs], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    a.download = `assistente-regulacao-logs-${timestamp}.json`;
+
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    logger.info('Logs exportados para arquivo', { timestamp });
+    Utils.showMessage('Logs exportados com sucesso!', 'success');
+
+  } catch (error) {
+    logger.error('Erro ao exportar logs:', error);
+    Utils.showMessage('Erro ao exportar logs.', 'error');
+  }
+}
+
+/**
+ * Limpa todos os logs
+ */
+async function handleClearLogs() {
+  try {
+    const confirmation = confirm(
+      'Tem certeza que deseja limpar todos os logs? Esta ação não pode ser desfeita.'
+    );
+
+    if (!confirmation) return;
+
+    await clearLogs();
+    await updateLogStats();
+
+    logger.info('Logs limpos pelo usuário');
+    Utils.showMessage('Todos os logs foram limpos.', 'success');
+
+  } catch (error) {
+    logger.error('Erro ao limpar logs:', error);
+    Utils.showMessage('Erro ao limpar logs.', 'error');
+  }
+}
+
+/**
+ * Executa teste do sistema de logging
+ */
+async function handleTestLogging() {
+  try {
+    Utils.showMessage('Executando teste do sistema de logging...', 'info');
+
+    // Executa os testes
+    const result = await testLoggingSystem();
+
+    if (result.success) {
+      Utils.showMessage('Teste do sistema de logging concluído com sucesso!', 'success');
+      logger.info('Teste do sistema de logging executado', result);
+    } else {
+      Utils.showMessage('Teste do sistema de logging falhou.', 'error');
+      logger.error('Falha no teste do sistema de logging', result);
+    }
+
+    // Atualiza estatísticas após o teste
+    setTimeout(async () => {
+      await updateLogStats();
+    }, 1000);
+
+  } catch (error) {
+    logger.error('Erro ao executar teste de logging:', error);
+    Utils.showMessage('Erro ao executar teste de logging.', 'error');
+  }
+}
+
+// Event listeners para o sistema de logging
+document.addEventListener('DOMContentLoaded', async () => {
+  // Carrega configurações de logging
+  await loadLoggingSettings();
+
+  // Event listeners para controles de logging
+  const logLevelSelect = document.getElementById('logLevel');
+  const enableConsoleCheckbox = document.getElementById('enableConsoleLogging');
+  const enableStorageCheckbox = document.getElementById('enableStorageLogging');
+  const refreshLogStatsBtn = document.getElementById('refreshLogStats');
+  const exportLogsBtn = document.getElementById('exportLogsBtn');
+  const clearLogsBtn = document.getElementById('clearLogsBtn');
+  const testLoggingBtn = document.getElementById('testLoggingBtn');
+
+  if (logLevelSelect) {
+    logLevelSelect.addEventListener('change', saveLoggingSettings);
+  }
+
+  if (enableConsoleCheckbox) {
+    enableConsoleCheckbox.addEventListener('change', saveLoggingSettings);
+  }
+
+  if (enableStorageCheckbox) {
+    enableStorageCheckbox.addEventListener('change', saveLoggingSettings);
+  }
+
+  if (refreshLogStatsBtn) {
+    refreshLogStatsBtn.addEventListener('click', updateLogStats);
+  }
+
+  if (exportLogsBtn) {
+    exportLogsBtn.addEventListener('click', handleExportLogs);
+  }
+
+  if (clearLogsBtn) {
+    clearLogsBtn.addEventListener('click', handleClearLogs);
+  }
+
+  if (testLoggingBtn) {
+    testLoggingBtn.addEventListener('click', handleTestLogging);
+  }
 });

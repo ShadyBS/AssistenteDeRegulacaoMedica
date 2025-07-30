@@ -2,13 +2,19 @@
  * @file Contém funções utilitárias compartilhadas em toda a extensão.
  */
 
+import { CONFIG, getTimeout, getCSSClass, getUIConfig } from "./config.js";
+import { createComponentLogger } from "./logger.js";
+
+// Logger específico para utilitários
+const logger = createComponentLogger('Utils');
+
 /**
  * Atraso na execução de uma função após o utilizador parar de digitar.
  * @param {Function} func A função a ser executada.
  * @param {number} [delay=500] O tempo de espera em milissegundos.
  * @returns {Function} A função com debounce.
  */
-export function debounce(func, delay = 500) {
+export function debounce(func, delay = CONFIG.TIMEOUTS.DEBOUNCE_DEFAULT) {
   let timeoutId;
   return (...args) => {
     clearTimeout(timeoutId);
@@ -39,9 +45,9 @@ export function showMessage(text, type = "error") {
   if (messageArea) {
     messageArea.textContent = text;
     const typeClasses = {
-      error: "bg-red-100 text-red-700",
-      success: "bg-green-100 text-green-700",
-      info: "bg-blue-100 text-blue-700",
+      error: getCSSClass("MESSAGE_ERROR"),
+      success: getCSSClass("MESSAGE_SUCCESS"),
+      info: getCSSClass("MESSAGE_INFO"),
     };
     messageArea.className = `p-3 rounded-md text-sm ${
       typeClasses[type] || typeClasses.error
@@ -89,8 +95,8 @@ export function parseDate(dateString) {
   if (isNaN(year) || isNaN(month) || isNaN(day)) return null;
 
   // Lida com anos de 2 dígitos (ex: '24' -> 2024)
-  if (year >= 0 && year < 100) {
-    year += 2000;
+  if (year >= 0 && year < getUIConfig("TWO_DIGIT_YEAR_THRESHOLD")) {
+    year += getUIConfig("YEAR_BASE");
   }
 
   const date = new Date(Date.UTC(year, month - 1, day));
@@ -119,15 +125,15 @@ export const getNestedValue = (obj, path) => {
 };
 
 /**
- * Calcula uma data relativa à data atual com base num desvio em meses.
- * @param {number} offsetInMonths - O número de meses a adicionar ou subtrair.
- * @returns {Date} O objeto Date resultante.
- */
+* Calcula uma data relativa à data atual com base num desvio em meses.
+* @param {number} offsetInMonths - O número de meses a adicionar ou subtrair.
+* @returns {Date} O objeto Date resultante.
+*/
 export function calculateRelativeDate(offsetInMonths) {
-  const date = new Date();
-  // setMonth lida corretamente com transições de ano e dias do mês
-  date.setMonth(date.getMonth() + offsetInMonths);
-  return date;
+const date = new Date();
+// setMonth lida corretamente com transições de ano e dias do mês
+date.setMonth(date.getMonth() + offsetInMonths);
+return date;
 }
 
 /**
@@ -140,8 +146,8 @@ export function getContrastYIQ(hexcolor) {
   var r = parseInt(hexcolor.substr(0, 2), 16);
   var g = parseInt(hexcolor.substr(2, 2), 16);
   var b = parseInt(hexcolor.substr(4, 2), 16);
-  var yiq = (r * 299 + g * 587 + b * 114) / 1000;
-  return yiq >= 128 ? "black" : "white";
+  var yiq = (r * getUIConfig("YIQ_FORMULA").RED_WEIGHT + g * getUIConfig("YIQ_FORMULA").GREEN_WEIGHT + b * getUIConfig("YIQ_FORMULA").BLUE_WEIGHT) / getUIConfig("YIQ_FORMULA").DIVISOR;
+  return yiq >= getUIConfig("YIQ_THRESHOLD") ? "black" : "white";
 }
 
 /**
@@ -184,146 +190,254 @@ export function setupTabs(container) {
 
 /**
  * Normalizes data from various sources into a single, sorted timeline event list.
+ * Optimized for memory efficiency with large datasets using streaming approach.
  * @param {object} apiData - An object containing arrays of consultations, exams, etc.
+ * @param {object} options - Processing options for memory optimization
  * @returns {Array<object>} A sorted array of timeline event objects.
  */
-export function normalizeTimelineData(apiData) {
-  const events = [];
+export function normalizeTimelineData(apiData, options = {}) {
+  const {
+    maxEvents = CONFIG.PERFORMANCE.MAX_TIMELINE_EVENTS || 1000,
+    batchSize = CONFIG.PERFORMANCE.BATCH_SIZE || 100,
+    enableGC = true
+  } = options;
 
-  // Normalize Consultations
-  try {
-    (apiData.consultations || []).forEach((c) => {
-      if (!c || !c.date) return;
-      const searchText = normalizeString(
-        [
-          c.specialty,
-          c.professional,
-          c.unit,
-          ...c.details.map((d) => d.value),
-        ].join(" ")
-      );
-      events.push({
-        type: "consultation",
-        date: parseDate(c.date.split("\n")[0]),
-        sortableDate: c.sortableDate || parseDate(c.date),
-        title: `Consulta: ${c.specialty || "Especialidade não informada"}`,
-        summary: `com ${c.professional || "Profissional não informado"}`,
-        details: c,
-        subDetails: c.details || [],
-        searchText,
-      });
-    });
-  } catch (e) {
-    console.error("Failed to normalize consultation data for timeline:", e);
+  // Use a priority queue-like approach to maintain only the most recent events
+  const eventHeap = [];
+  let processedCount = 0;
+  let rejectedCount = 0;
+
+  // Helper function to insert event maintaining sorted order and size limit
+  const insertEvent = (event) => {
+    if (!event || !event.sortableDate || isNaN(event.sortableDate)) {
+      rejectedCount++;
+      return;
+    }
+
+    if (eventHeap.length < maxEvents) {
+      // If we haven't reached the limit, just add and maintain sort
+      eventHeap.push(event);
+      if (eventHeap.length % 100 === 0) {
+        // Re-sort periodically to maintain order
+        eventHeap.sort((a, b) => b.sortableDate - a.sortableDate);
+      }
+    } else {
+      // If at limit, only add if event is more recent than the oldest
+      const oldestEvent = eventHeap[eventHeap.length - 1];
+      if (event.sortableDate > oldestEvent.sortableDate) {
+        eventHeap.pop(); // Remove oldest
+        eventHeap.push(event);
+        // Keep sorted - find correct position and insert
+        let insertPos = eventHeap.length - 1;
+        while (insertPos > 0 && eventHeap[insertPos].sortableDate > eventHeap[insertPos - 1].sortableDate) {
+          [eventHeap[insertPos], eventHeap[insertPos - 1]] = [eventHeap[insertPos - 1], eventHeap[insertPos]];
+          insertPos--;
+        }
+      } else {
+        rejectedCount++;
+      }
+    }
+  };
+
+  // Streaming processor for memory efficiency
+  const processStream = (items, normalizer, typeName) => {
+    if (!Array.isArray(items) || items.length === 0) return;
+
+    let batchBuffer = [];
+    const processBatch = () => {
+      if (batchBuffer.length === 0) return;
+
+      for (const item of batchBuffer) {
+        try {
+          const event = normalizer(item);
+          if (event) {
+            insertEvent(event);
+            processedCount++;
+          }
+        } catch (itemError) {
+          logger.warn(`Failed to process ${typeName} item:`, itemError);
+          rejectedCount++;
+        }
+      }
+
+      // Clear batch buffer to free memory
+      batchBuffer = [];
+
+      // Trigger garbage collection hint periodically
+      if (enableGC && processedCount % 500 === 0) {
+        // Force garbage collection by removing references
+        // No ambiente de browser extension, não temos acesso ao global.gc()
+        // Apenas fazemos limpeza manual de referências
+        if (typeof window !== 'undefined' && window.gc) {
+          window.gc();
+        }
+      }
+    };
+
+    // Process items in streaming fashion
+    for (let i = 0; i < items.length; i++) {
+      batchBuffer.push(items[i]);
+
+      if (batchBuffer.length >= batchSize) {
+        processBatch();
+      }
+    }
+
+    // Process remaining items
+    processBatch();
+  };
+
+  // Consultation normalizer with memory optimization
+  const normalizeConsultation = (c) => {
+    if (!c?.date) return null;
+
+    const searchText = normalizeString(
+      [
+        c.specialty,
+        c.professional,
+        c.unit,
+        ...(c.details || []).map((d) => d.value || ''),
+      ].filter(Boolean).join(" ")
+    );
+
+    return {
+      type: "consultation",
+      date: parseDate(c.date.split("\n")[0]),
+      sortableDate: c.sortableDate || parseDate(c.date),
+      title: `Consulta: ${c.specialty || "Especialidade não informada"}`,
+      summary: `com ${c.professional || "Profissional não informado"}`,
+      details: c,
+      subDetails: c.details || [],
+      searchText,
+    };
+  };
+
+  // Exam normalizer with validation
+  const normalizeExam = (e) => {
+    if (!e?.date) return null;
+
+    const eventDate = parseDate(e.date);
+    if (!eventDate) return null;
+
+    const searchText = normalizeString(
+      [e.examName, e.professional, e.specialty].filter(Boolean).join(" ")
+    );
+
+    return {
+      type: "exam",
+      date: eventDate,
+      sortableDate: eventDate,
+      title: `Exame Solicitado: ${e.examName || "Nome não informado"}`,
+      summary: `Solicitado por ${e.professional || "Não informado"}`,
+      details: e,
+      subDetails: [
+        {
+          label: "Resultado",
+          value: e.hasResult ? "Disponível" : "Pendente",
+        },
+      ],
+      searchText,
+    };
+  };
+
+  // Appointment normalizer
+  const normalizeAppointment = (a) => {
+    if (!a?.date) return null;
+
+    const searchText = normalizeString(
+      [a.specialty, a.description, a.location, a.professional].filter(Boolean).join(" ")
+    );
+
+    return {
+      type: "appointment",
+      date: parseDate(a.date),
+      sortableDate: parseDate(a.date),
+      title: `Agendamento: ${a.specialty || a.description || "Não descrito"}`,
+      summary: a.location || "Local não informado",
+      details: a,
+      subDetails: [
+        { label: "Status", value: a.status || "N/A" },
+        { label: "Hora", value: a.time || "N/A" },
+      ],
+      searchText,
+    };
+  };
+
+  // Regulation normalizer
+  const normalizeRegulation = (r) => {
+    if (!r?.date) return null;
+
+    const searchText = normalizeString(
+      [r.procedure, r.requester, r.provider, r.cid].filter(Boolean).join(" ")
+    );
+
+    return {
+      type: "regulation",
+      date: parseDate(r.date),
+      sortableDate: parseDate(r.date),
+      title: `Regulação: ${r.procedure || "Procedimento não informado"}`,
+      summary: `Solicitante: ${r.requester || "Não informado"}`,
+      details: r,
+      subDetails: [
+        { label: "Status", value: r.status || "N/A" },
+        { label: "Prioridade", value: r.priority || "N/A" },
+      ],
+      searchText,
+    };
+  };
+
+  // Document normalizer
+  const normalizeDocument = (doc) => {
+    if (!doc?.date) return null;
+
+    const searchText = normalizeString(doc.description || "");
+
+    return {
+      type: "document",
+      date: parseDate(doc.date),
+      sortableDate: parseDate(doc.date),
+      title: `Documento: ${doc.description || "Sem descrição"}`,
+      summary: `Tipo: ${(doc.fileType || '').toUpperCase()}`,
+      details: doc,
+      subDetails: [],
+      searchText,
+    };
+  };
+
+  // Process each data type with streaming processing
+  processStream(apiData.consultations, normalizeConsultation, "consultations");
+  processStream(apiData.exams, normalizeExam, "exams");
+  processStream(apiData.appointments, normalizeAppointment, "appointments");
+  processStream(apiData.regulations, normalizeRegulation, "regulations");
+  processStream(apiData.documents, normalizeDocument, "documents");
+
+  // Final sort to ensure correct order
+  eventHeap.sort((a, b) => b.sortableDate - a.sortableDate);
+
+  // Log processing statistics usando sistema estruturado
+  logger.info('Timeline processing completed', {
+    operation: 'normalizeTimelineData',
+    processedCount,
+    rejectedCount,
+    finalTimelineLength: eventHeap.length,
+    maxEvents,
+    batchSize,
+    enableGC
+  });
+
+  // Final cleanup and memory optimization
+  if (enableGC) {
+    // Clear references to help garbage collection
+    apiData = null;
+
+    // Trigger garbage collection if available
+    // No ambiente de browser extension, não temos acesso ao global.gc()
+    if (typeof window !== 'undefined' && window.gc) {
+      window.gc();
+    }
   }
 
-  // Normalize Exams
-  try {
-    (apiData.exams || []).forEach((e) => {
-      const eventDate = parseDate(e.date);
-      if (!e || !eventDate) return;
-      const searchText = normalizeString(
-        [e.examName, e.professional, e.specialty].filter(Boolean).join(" ")
-      );
-      events.push({
-        type: "exam",
-        date: eventDate,
-        sortableDate: eventDate,
-        title: `Exame Solicitado: ${e.examName || "Nome não informado"}`,
-        summary: `Solicitado por ${e.professional || "Não informado"}`,
-        details: e,
-        subDetails: [
-          {
-            label: "Resultado",
-            value: e.hasResult ? "Disponível" : "Pendente",
-          },
-        ],
-        searchText,
-      });
-    });
-  } catch (e) {
-    console.error("Failed to normalize exam data for timeline:", e);
-  }
-
-  // Normalize Appointments
-  try {
-    (apiData.appointments || []).forEach((a) => {
-      if (!a || !a.date) return;
-      const searchText = normalizeString(
-        [a.specialty, a.description, a.location, a.professional].join(" ")
-      );
-      events.push({
-        type: "appointment",
-        date: parseDate(a.date),
-        sortableDate: parseDate(a.date),
-        title: `Agendamento: ${a.specialty || a.description || "Não descrito"}`,
-        summary: a.location || "Local não informado",
-        details: a,
-        subDetails: [
-          { label: "Status", value: a.status || "N/A" },
-          { label: "Hora", value: a.time || "N/A" },
-        ],
-        searchText,
-      });
-    });
-  } catch (e) {
-    console.error("Failed to normalize appointment data for timeline:", e);
-  }
-
-  // Normalize Regulations
-  try {
-    (apiData.regulations || []).forEach((r) => {
-      if (!r || !r.date) return;
-      const searchText = normalizeString(
-        [r.procedure, r.requester, r.provider, r.cid].join(" ")
-      );
-      events.push({
-        type: "regulation",
-        date: parseDate(r.date),
-        sortableDate: parseDate(r.date),
-        title: `Regulação: ${r.procedure || "Procedimento não informado"}`,
-        summary: `Solicitante: ${r.requester || "Não informado"}`,
-        details: r,
-        subDetails: [
-          { label: "Status", value: r.status || "N/A" },
-          { label: "Prioridade", value: r.priority || "N/A" },
-        ],
-        searchText,
-      });
-    });
-  } catch (e) {
-    console.error("Failed to normalize regulation data for timeline:", e);
-  }
-
-  // --- INÍCIO DA MODIFICAÇÃO ---
-  // Normalize Documents
-  try {
-    (apiData.documents || []).forEach((doc) => {
-      if (!doc || !doc.date) return;
-      const searchText = normalizeString(doc.description || "");
-      events.push({
-        type: "document",
-        date: parseDate(doc.date),
-        sortableDate: parseDate(doc.date),
-        title: `Documento: ${doc.description || "Sem descrição"}`,
-        summary: `Tipo: ${doc.fileType.toUpperCase()}`,
-        details: doc,
-        subDetails: [],
-        searchText,
-      });
-    });
-  } catch (e) {
-    console.error("Failed to normalize document data for timeline:", e);
-  }
-  // --- FIM DA MODIFICAÇÃO ---
-
-  // Filter out events with invalid dates and sort all events by date, newest first.
-  return events
-    .filter(
-      (event) =>
-        event.sortableDate instanceof Date && !isNaN(event.sortableDate)
-    )
-    .sort((a, b) => b.sortableDate - a.sortableDate);
+  return eventHeap;
 }
 
 /**
@@ -418,7 +532,7 @@ export function filterTimelineEvents(events, automationFilters) {
           return true;
       }
     } catch (e) {
-      console.warn(
+      logger.warn(
         "Error filtering timeline event, it will be included by default:",
         event,
         e
@@ -427,3 +541,4 @@ export function filterTimelineEvents(events, automationFilters) {
     }
   });
 }
+

@@ -1,3 +1,128 @@
 {
-  "codium.codeCompletion.enable": false
+  "codium.codeCompletion.enable": false,
+
+  // === EDITOR SETTINGS ===
+  "editor.tabSize": 2,
+  "editor.insertSpaces": true,
+  "editor.detectIndentation": false,
+  "editor.trimAutoWhitespace": true,
+  "editor.formatOnSave": true,
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit",
+    "source.organizeImports": "explicit"
+  },
+  "editor.rulers": [80, 120],
+  "editor.wordWrap": "bounded",
+  "editor.wordWrapColumn": 120,
+
+  // === FILES SETTINGS ===
+  "files.eol": "\n",
+  "files.trimTrailingWhitespace": true,
+  "files.insertFinalNewline": true,
+  "files.trimFinalNewlines": true,
+  "files.encoding": "utf8",
+  "files.autoSave": "onFocusChange",
+
+  // === SEARCH SETTINGS ===
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/dist": true,
+    "**/dist-zips": true,
+    "**/.dist": true,
+    "**/.vscode/chrome-debug-profile": true,
+    "**/.vscode/firefox-debug-profile": true,
+    "**/coverage": true,
+    "**/*.log": true
+  },
+  "files.exclude": {
+    "**/node_modules": true,
+    "**/.git": true,
+    "**/.DS_Store": true,
+    "**/Thumbs.db": true,
+    "**/*.log": true
+  },
+
+  // === EXTENSION SPECIFIC ===
+  "eslint.enable": true,
+  "eslint.validate": ["javascript"],
+  "eslint.format.enable": true,
+  "javascript.preferences.quoteStyle": "single",
+  "javascript.format.semicolons": "insert",
+  "javascript.suggest.autoImports": true,
+  "javascript.updateImportsOnFileMove.enabled": "always",
+
+  // === JSON SCHEMAS ===
+  "json.format.enable": true,
+  "json.schemas": [
+    {
+      "fileMatch": ["manifest.json", "manifest-*.json"],
+      "url": "https://json.schemastore.org/chrome-manifest"
+    },
+    {
+      "fileMatch": ["package.json"],
+      "url": "https://json.schemastore.org/package"
+    }
+  ],
+
+  // === CSS/TAILWIND ===
+  "css.validate": true,
+  "css.lint.unknownAtRules": "ignore",
+  "tailwindCSS.includeLanguages": {
+    "html": "html",
+    "javascript": "javascript"
+  },
+
+  // === TERMINAL SETTINGS ===
+  "terminal.integrated.defaultProfile.windows": "PowerShell",
+
+  // === DEBUGGING SETTINGS ===
+  "debug.console.fontSize": 12,
+  "debug.inlineValues": "auto",
+  "debug.showBreakpointsInOverviewRuler": true,
+
+  // === GIT SETTINGS ===
+  "git.enableSmartCommit": true,
+  "git.confirmSync": false,
+  "git.autofetch": true,
+
+  // === LANGUAGE SPECIFIC ===
+  "[javascript]": {
+    "editor.defaultFormatter": "vscode.typescript-language-features",
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+      "source.fixAll.eslint": "explicit"
+    }
+  },
+  "[json]": {
+    "editor.defaultFormatter": "vscode.json-language-features",
+    "editor.formatOnSave": true
+  },
+  "[css]": {
+    "editor.defaultFormatter": "vscode.css-language-features",
+    "editor.formatOnSave": true
+  },
+  "[html]": {
+    "editor.defaultFormatter": "vscode.html-language-features",
+    "editor.formatOnSave": true
+  },
+  "[markdown]": {
+    "editor.wordWrap": "on",
+    "editor.formatOnSave": false
+  },
+
+  // === PROJECT SPECIFIC ===
+  "files.associations": {
+    "*.json": "jsonc",
+    "manifest*.json": "json",
+    "*config.js": "javascript",
+    "*Config.js": "javascript"
+  },
+
+  // === PERFORMANCE ===
+  "telemetry.telemetryLevel": "off",
+  "npm.enableScriptExplorer": true,
+  "task.autoDetect": "on",
+  "task.showDecorations": true,
+  "problems.decorations.enabled": true,
+  "problems.showCurrentInStatus": true
 }

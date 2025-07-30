@@ -1,0 +1,314 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    // === BROWSER EXTENSION DEBUGGING ===
+    {
+      "name": "🔵 Debug: Chrome Extension",
+      "type": "chrome",
+      "request": "launch",
+      "url": "chrome://extensions/",
+      "webRoot": "${workspaceFolder}",
+      "userDataDir": "${workspaceFolder}/.vscode/chrome-debug-profile",
+      "runtimeArgs": [
+        "--load-extension=${workspaceFolder}/.dist/chrome",
+        "--disable-extensions-except=${workspaceFolder}/.dist/chrome",
+        "--disable-web-security",
+        "--disable-features=TranslateUI",
+        "--no-first-run"
+      ],
+      "preLaunchTask": "🔵 Build: Chrome Only",
+      "presentation": {
+        "group": "extension",
+        "order": 1
+      },
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen"
+    },
+    {
+      "name": "🦊 Debug: Firefox Extension",
+      "type": "firefox",
+      "request": "launch",
+      "url": "about:debugging#/runtime/this-firefox",
+      "webRoot": "${workspaceFolder}",
+      "firefoxExecutable": "firefox",
+      "profileDir": "${workspaceFolder}/.vscode/firefox-debug-profile",
+      "firefoxArgs": [
+        "--start-debugger-server=6000"
+      ],
+      "preLaunchTask": "🦊 Build: Firefox Only",
+      "presentation": {
+        "group": "extension",
+        "order": 2
+      },
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen"
+    },
+
+    // === SPECIFIC SCRIPT DEBUGGING ===
+    {
+      "name": "🔧 Debug: Background Script",
+      "type": "chrome",
+      "request": "attach",
+      "port": 9222,
+      "webRoot": "${workspaceFolder}",
+      "urlFilter": "chrome-extension://*",
+      "presentation": {
+        "group": "scripts",
+        "order": 1
+      }
+    },
+    {
+      "name": "📄 Debug: Content Script",
+      "type": "chrome",
+      "request": "attach",
+      "port": 9222,
+      "webRoot": "${workspaceFolder}",
+      "urlFilter": "*sigss*",
+      "presentation": {
+        "group": "scripts",
+        "order": 2
+      }
+    },
+    {
+      "name": "🎨 Debug: Popup/Sidebar",
+      "type": "chrome",
+      "request": "attach",
+      "port": 9222,
+      "webRoot": "${workspaceFolder}",
+      "urlFilter": "chrome-extension://*/sidebar.html",
+      "presentation": {
+        "group": "scripts",
+        "order": 3
+      }
+    },
+
+    // === NODE.JS SCRIPT DEBUGGING ===
+    {
+      "name": "🏗️ Debug: Build Script",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/scripts/build.js",
+      "args": ["--verbose"],
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "presentation": {
+        "group": "node-scripts",
+        "order": 1
+      }
+    },
+    {
+      "name": "🔍 Debug: Validation Script",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/scripts/validate.js",
+      "args": ["--verbose"],
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "presentation": {
+        "group": "node-scripts",
+        "order": 2
+      }
+    },
+    {
+      "name": "🔢 Debug: Version Script",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/scripts/version.js",
+      "args": ["patch", "--dry-run", "--verbose"],
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "presentation": {
+        "group": "node-scripts",
+        "order": 3
+      }
+    },
+    {
+      "name": "🚀 Debug: Release Script",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/scripts/release.js",
+      "args": ["--dry-run", "--verbose"],
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "env": {
+        "DEBUG": "true"
+      },
+      "presentation": {
+        "group": "node-scripts",
+        "order": 4
+      }
+    },
+    {
+      "name": "🏪 Debug: Store Upload Script",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/scripts/store-upload.js",
+      "args": ["--target=chrome", "--dry-run", "--verbose"],
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "presentation": {
+        "group": "node-scripts",
+        "order": 5
+      }
+    },
+
+    // === LEGACY SCRIPT DEBUGGING ===
+    {
+      "name": "📦 Debug: Legacy Build ZIPs",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/build-zips.js",
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "presentation": {
+        "group": "legacy",
+        "order": 1
+      }
+    },
+    {
+      "name": "🚀 Debug: Legacy Release",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/release.js",
+      "args": ["1.0.0"],
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "env": {
+        "DEBUG": "true"
+      },
+      "presentation": {
+        "group": "legacy",
+        "order": 2
+      }
+    },
+
+    // === TESTING AND UTILITIES ===
+    {
+      "name": "🧪 Debug: Jest Tests",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/node_modules/.bin/jest",
+      "args": ["--runInBand", "--no-cache"],
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "presentation": {
+        "group": "testing",
+        "order": 1
+      }
+    },
+    {
+      "name": "🔧 Debug: ESLint",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/node_modules/.bin/eslint",
+      "args": [".", "--ext", ".js", "--format", "compact"],
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "presentation": {
+        "group": "testing",
+        "order": 2
+      }
+    },
+
+    // === ATTACH CONFIGURATIONS ===
+    {
+      "name": "🔗 Attach: Chrome DevTools",
+      "type": "chrome",
+      "request": "attach",
+      "port": 9222,
+      "webRoot": "${workspaceFolder}",
+      "presentation": {
+        "group": "attach",
+        "order": 1
+      }
+    },
+    {
+      "name": "🔗 Attach: Node Process",
+      "type": "node",
+      "request": "attach",
+      "port": 9229,
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "presentation": {
+        "group": "attach",
+        "order": 2
+      }
+    },
+
+    // === COMPOUND CONFIGURATIONS ===
+    {
+      "name": "🎯 Debug: Full Extension (Chrome)",
+      "type": "chrome",
+      "request": "launch",
+      "url": "https://sigss.saude.gov.br/",
+      "webRoot": "${workspaceFolder}",
+      "userDataDir": "${workspaceFolder}/.vscode/chrome-debug-profile",
+      "runtimeArgs": [
+        "--load-extension=${workspaceFolder}/.dist/chrome",
+        "--disable-extensions-except=${workspaceFolder}/.dist/chrome",
+        "--auto-open-devtools-for-tabs"
+      ],
+      "preLaunchTask": "🔵 Build: Chrome Only",
+      "presentation": {
+        "group": "full-debug",
+        "order": 1
+      },
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen"
+    }
+  ],
+
+  // Compound configurations para debug simultâneo
+  "compounds": [
+    {
+      "name": "🎯 Debug: Extension + Scripts",
+      "configurations": [
+        "🔵 Debug: Chrome Extension",
+        "🔧 Debug: Background Script"
+      ],
+      "presentation": {
+        "group": "compound",
+        "order": 1
+      }
+    },
+    {
+      "name": "🔄 Debug: Build Pipeline",
+      "configurations": [
+        "🔍 Debug: Validation Script",
+        "🏗️ Debug: Build Script"
+      ],
+      "presentation": {
+        "group": "compound",
+        "order": 2
+      }
+    }
+  ]
+}

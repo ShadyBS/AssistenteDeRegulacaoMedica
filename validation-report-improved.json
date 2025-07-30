@@ -1,0 +1,16 @@
+{
+  "timestamp": "2025-07-27T22:01:14.202Z",
+  "summary": {
+    "errors": 0,
+    "warnings": 1,
+    "fixes": 0,
+    "status": "PASS"
+  },
+  "details": {
+    "errors": [],
+    "warnings": [
+      "Problemas encontrados no código JavaScript"
+    ],
+    "fixes": []
+  }
+}
