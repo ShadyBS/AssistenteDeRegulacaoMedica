@@ -5,17 +5,78 @@
 
 import { CONFIG } from './config.js';
 
-// Regex patterns para validação
+// ✅ TASK-M-002: Padrões de validação fortalecidos com detecção avançada
 const PATTERNS = {
   CPF: /^\d{3}\.?\d{3}\.?\d{3}-?\d{2}$/,
   CNS: /^\d{15}$/,
   SEARCH_TERM: /^[a-zA-ZÀ-ÿ0-9\s\.\-\_]{1,100}$/,
-  SQL_INJECTION: /(\b(SELECT|INSERT|UPDATE|DELETE|DROP|CREATE|ALTER|EXEC|UNION|SCRIPT)\b|[';\"\\])/i,
-  XSS: /[<>\"'&]/,
+  
+  // ✅ TASK-M-002: SQL Injection expandido com mais padrões
+  SQL_INJECTION: /(\b(SELECT|INSERT|UPDATE|DELETE|DROP|CREATE|ALTER|EXEC|UNION|SCRIPT|DECLARE|CAST|CONVERT|SUBSTRING|CHAR|ASCII|WAITFOR|DELAY|BENCHMARK|SLEEP|LOAD_FILE|INTO\s+OUTFILE|INTO\s+DUMPFILE)\b|[';\"\\]|--|\*\/|\*\*|\/\*|0x[0-9a-f]+|@@|INFORMATION_SCHEMA|SYSOBJECTS|SYSCOLUMNS)/i,
+  
+  // ✅ TASK-M-002: XSS expandido com mais vetores de ataque
+  XSS: /[<>\"'&]|javascript:|data:|vbscript:|on\w+\s*=|expression\s*\(|@import|<\s*script|<\s*iframe|<\s*object|<\s*embed|<\s*link|<\s*meta|<\s*style/i,
+  
+  // ✅ TASK-M-002: Detecção de Path Traversal
+  PATH_TRAVERSAL: /(\.\.[\/\\]|\.\.%2f|\.\.%5c|%2e%2e[\/\\]|%252e%252e)/i,
+  
+  // ✅ TASK-M-002: Detecção de Command Injection
+  COMMAND_INJECTION: /[;&|`$(){}[\]\\]|(\b(cat|ls|dir|type|copy|move|del|rm|chmod|chown|ps|kill|wget|curl|nc|netcat|ping|nslookup|whoami|id|uname|pwd|cd|echo|eval|exec|system|shell_exec|passthru|proc_open)\b)/i,
+  
+  // ✅ TASK-M-002: Detecção de LDAP Injection
+  LDAP_INJECTION: /[()=*!&|]|(\b(objectClass|cn|uid|ou|dc|mail|sn|givenName)\b)/i,
+  
   NUMERIC_ONLY: /^\d+$/,
   DATE_BR: /^\d{2}\/\d{2}\/\d{4}$/,
-  NAME: /^[a-zA-ZÀ-ÿ\s\.\-']{2,100}$/
+  
+  // ✅ TASK-M-002: Validação de nome mais rigorosa
+  NAME: /^[a-zA-ZÀ-ÿ\s\.\-']{2,100}$/,
+  
+  // ✅ TASK-M-002: Novos padrões para validações específicas
+  EMAIL: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
+  PHONE_BR: /^(\+55\s?)?(\(?\d{2}\)?\s?)?\d{4,5}-?\d{4}$/,
+  CEP: /^\d{5}-?\d{3}$/,
+  
+  // ✅ TASK-M-002: Detecção de caracteres de controle maliciosos
+  CONTROL_CHARS: /[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/,
+  
+  // ✅ TASK-M-002: Detecção de encoding malicioso
+  MALICIOUS_ENCODING: /%[0-2][0-9a-f]|%[3-9a-f][0-9a-f]|&#x?[0-9a-f]+;/i
 };
+
+// ✅ TASK-M-002: Lista de palavras-chave suspeitas expandida
+const SUSPICIOUS_KEYWORDS = [
+  // SQL Keywords
+  'SELECT', 'INSERT', 'UPDATE', 'DELETE', 'DROP', 'CREATE', 'ALTER', 'EXEC', 'UNION', 'SCRIPT',
+  'DECLARE', 'CAST', 'CONVERT', 'SUBSTRING', 'CHAR', 'ASCII', 'WAITFOR', 'DELAY', 'BENCHMARK',
+  'SLEEP', 'LOAD_FILE', 'INTO OUTFILE', 'INTO DUMPFILE', 'INFORMATION_SCHEMA', 'SYSOBJECTS',
+  
+  // XSS Keywords
+  'javascript:', 'data:', 'vbscript:', 'expression(', '@import', 'eval(', 'setTimeout(',
+  'setInterval(', 'Function(', 'constructor', 'prototype',
+  
+  // Command Injection
+  'cat', 'ls', 'dir', 'type', 'copy', 'move', 'del', 'rm', 'chmod', 'chown', 'ps', 'kill',
+  'wget', 'curl', 'nc', 'netcat', 'ping', 'nslookup', 'whoami', 'id', 'uname', 'pwd',
+  
+  // Path Traversal
+  '../', '..\\', '%2e%2e', '%252e%252e'
+];
+
+// ✅ TASK-M-002: Configurações de segurança
+const SECURITY_CONFIG = {
+  MAX_INPUT_LENGTH: 1000,
+  MAX_SEARCH_LENGTH: 100,
+  MAX_NAME_LENGTH: 100,
+  MIN_NAME_LENGTH: 2,
+  MAX_VALIDATION_ATTEMPTS: 5,
+  VALIDATION_COOLDOWN: 60000, // 1 minuto
+  SUSPICIOUS_THRESHOLD: 3 // Número de tentativas suspeitas antes de bloquear
+};
+
+// ✅ TASK-M-002: Rate limiting para validações
+const validationAttempts = new Map();
+const suspiciousAttempts = new Map();
 
 // Weights para validação de CPF (algoritmo oficial)
 const CPF_WEIGHTS_1 = [10, 9, 8, 7, 6, 5, 4, 3, 2];
@@ -499,6 +560,413 @@ export function clearValidationErrors(container) {
   errors.forEach(error => error.remove());
 }
 
+// ✅ TASK-M-002: Funções de validação avançada
+
+/**
+ * Verifica rate limiting para validações
+ * @param {string} identifier - Identificador único (IP, session, etc.)
+ * @returns {object} { allowed: boolean, remaining: number, resetTime: number }
+ */
+function checkValidationRateLimit(identifier) {
+  const now = Date.now();
+  const key = identifier || 'anonymous';
+  
+  // Limpa entradas expiradas
+  for (const [id, data] of validationAttempts.entries()) {
+    if (now - data.firstAttempt > SECURITY_CONFIG.VALIDATION_COOLDOWN) {
+      validationAttempts.delete(id);
+    }
+  }
+  
+  const attempts = validationAttempts.get(key);
+  
+  if (!attempts) {
+    validationAttempts.set(key, {
+      count: 1,
+      firstAttempt: now,
+      lastAttempt: now
+    });
+    return { 
+      allowed: true, 
+      remaining: SECURITY_CONFIG.MAX_VALIDATION_ATTEMPTS - 1,
+      resetTime: now + SECURITY_CONFIG.VALIDATION_COOLDOWN
+    };
+  }
+  
+  if (attempts.count >= SECURITY_CONFIG.MAX_VALIDATION_ATTEMPTS) {
+    return { 
+      allowed: false, 
+      remaining: 0,
+      resetTime: attempts.firstAttempt + SECURITY_CONFIG.VALIDATION_COOLDOWN
+    };
+  }
+  
+  attempts.count++;
+  attempts.lastAttempt = now;
+  
+  return { 
+    allowed: true, 
+    remaining: SECURITY_CONFIG.MAX_VALIDATION_ATTEMPTS - attempts.count,
+    resetTime: attempts.firstAttempt + SECURITY_CONFIG.VALIDATION_COOLDOWN
+  };
+}
+
+/**
+ * Detecta tentativas suspeitas de validação
+ * @param {string} input - Input a ser analisado
+ * @param {string} identifier - Identificador único
+ * @returns {object} { suspicious: boolean, reasons: string[], severity: string }
+ */
+function detectSuspiciousInput(input, identifier = 'anonymous') {
+  if (!input || typeof input !== 'string') {
+    return { suspicious: false, reasons: [], severity: 'low' };
+  }
+  
+  const reasons = [];
+  let severity = 'low';
+  
+  // Verifica padrões maliciosos
+  if (PATTERNS.SQL_INJECTION.test(input)) {
+    reasons.push('Possível SQL Injection detectada');
+    severity = 'high';
+  }
+  
+  if (PATTERNS.XSS.test(input)) {
+    reasons.push('Possível XSS detectado');
+    severity = 'high';
+  }
+  
+  if (PATTERNS.PATH_TRAVERSAL.test(input)) {
+    reasons.push('Possível Path Traversal detectado');
+    severity = 'medium';
+  }
+  
+  if (PATTERNS.COMMAND_INJECTION.test(input)) {
+    reasons.push('Possível Command Injection detectado');
+    severity = 'high';
+  }
+  
+  if (PATTERNS.LDAP_INJECTION.test(input)) {
+    reasons.push('Possível LDAP Injection detectado');
+    severity = 'medium';
+  }
+  
+  if (PATTERNS.CONTROL_CHARS.test(input)) {
+    reasons.push('Caracteres de controle maliciosos detectados');
+    severity = 'medium';
+  }
+  
+  if (PATTERNS.MALICIOUS_ENCODING.test(input)) {
+    reasons.push('Encoding malicioso detectado');
+    severity = 'medium';
+  }
+  
+  // Verifica palavras-chave suspeitas
+  const upperInput = input.toUpperCase();
+  const suspiciousKeywords = SUSPICIOUS_KEYWORDS.filter(keyword => 
+    upperInput.includes(keyword.toUpperCase())
+  );
+  
+  if (suspiciousKeywords.length > 0) {
+    reasons.push(`Palavras-chave suspeitas: ${suspiciousKeywords.join(', ')}`);
+    if (severity === 'low') severity = 'medium';
+  }
+  
+  // Verifica tamanho excessivo
+  if (input.length > SECURITY_CONFIG.MAX_INPUT_LENGTH) {
+    reasons.push('Input excessivamente longo');
+    if (severity === 'low') severity = 'medium';
+  }
+  
+  // Registra tentativas suspeitas
+  if (reasons.length > 0) {
+    const now = Date.now();
+    const suspiciousData = suspiciousAttempts.get(identifier) || { count: 0, firstAttempt: now };
+    
+    suspiciousData.count++;
+    suspiciousData.lastAttempt = now;
+    suspiciousData.lastInput = input.substring(0, 100); // Armazena apenas os primeiros 100 chars
+    
+    suspiciousAttempts.set(identifier, suspiciousData);
+    
+    // Aumenta severidade se há múltiplas tentativas suspeitas
+    if (suspiciousData.count >= SECURITY_CONFIG.SUSPICIOUS_THRESHOLD) {
+      severity = 'critical';
+      reasons.push('Múltiplas tentativas suspeitas detectadas');
+    }
+  }
+  
+  return {
+    suspicious: reasons.length > 0,
+    reasons,
+    severity
+  };
+}
+
+/**
+ * Validação avançada com detecção de ameaças
+ * @param {string} input - Input a ser validado
+ * @param {string} type - Tipo de validação ('search', 'name', 'general')
+ * @param {string} identifier - Identificador único para rate limiting
+ * @returns {object} Resultado da validação com informações de segurança
+ */
+export function validateInputAdvanced(input, type = 'general', identifier = 'anonymous') {
+  // Verifica rate limiting
+  const rateLimit = checkValidationRateLimit(identifier);
+  if (!rateLimit.allowed) {
+    return {
+      valid: false,
+      message: 'Muitas tentativas de validação. Tente novamente mais tarde.',
+      security: {
+        rateLimited: true,
+        resetTime: rateLimit.resetTime
+      }
+    };
+  }
+  
+  // Detecta tentativas suspeitas
+  const suspiciousAnalysis = detectSuspiciousInput(input, identifier);
+  
+  if (suspiciousAnalysis.suspicious && suspiciousAnalysis.severity === 'critical') {
+    return {
+      valid: false,
+      message: 'Input rejeitado por motivos de segurança.',
+      security: {
+        suspicious: true,
+        severity: suspiciousAnalysis.severity,
+        reasons: suspiciousAnalysis.reasons,
+        blocked: true
+      }
+    };
+  }
+  
+  // Validação básica por tipo
+  let basicValidation;
+  switch (type) {
+    case 'search':
+      basicValidation = validateSearchTerm(input);
+      break;
+    case 'name':
+      basicValidation = validateName(input);
+      break;
+    case 'cpf':
+      basicValidation = validateCPF(input);
+      break;
+    case 'cns':
+      basicValidation = validateCNS(input);
+      break;
+    case 'date':
+      basicValidation = validateBrazilianDate(input);
+      break;
+    default:
+      basicValidation = validateGeneral(input);
+  }
+  
+  // Combina resultado da validação básica com análise de segurança
+  return {
+    ...basicValidation,
+    security: {
+      suspicious: suspiciousAnalysis.suspicious,
+      severity: suspiciousAnalysis.severity,
+      reasons: suspiciousAnalysis.reasons,
+      rateLimit: {
+        remaining: rateLimit.remaining,
+        resetTime: rateLimit.resetTime
+      }
+    }
+  };
+}
+
+/**
+ * Validação geral para inputs não específicos
+ * @param {string} input - Input a ser validado
+ * @returns {object} { valid: boolean, message?: string, sanitized?: string }
+ */
+export function validateGeneral(input) {
+  if (!input || typeof input !== 'string') {
+    return { valid: false, message: 'Input é obrigatório' };
+  }
+  
+  const trimmed = input.trim();
+  
+  if (trimmed.length === 0) {
+    return { valid: false, message: 'Input não pode estar vazio' };
+  }
+  
+  if (trimmed.length > SECURITY_CONFIG.MAX_INPUT_LENGTH) {
+    return { valid: false, message: `Input muito longo (máximo ${SECURITY_CONFIG.MAX_INPUT_LENGTH} caracteres)` };
+  }
+  
+  // Verifica caracteres de controle
+  if (PATTERNS.CONTROL_CHARS.test(trimmed)) {
+    return { valid: false, message: 'Input contém caracteres de controle inválidos' };
+  }
+  
+  return {
+    valid: true,
+    sanitized: sanitizeInput(trimmed)
+  };
+}
+
+/**
+ * Validação de email
+ * @param {string} email - Email a ser validado
+ * @returns {object} { valid: boolean, message?: string }
+ */
+export function validateEmail(email) {
+  if (!email || typeof email !== 'string') {
+    return { valid: false, message: 'Email é obrigatório' };
+  }
+  
+  const trimmed = email.trim().toLowerCase();
+  
+  if (!PATTERNS.EMAIL.test(trimmed)) {
+    return { valid: false, message: 'Formato de email inválido' };
+  }
+  
+  if (trimmed.length > 254) { // RFC 5321 limit
+    return { valid: false, message: 'Email muito longo' };
+  }
+  
+  return { valid: true };
+}
+
+/**
+ * Validação de telefone brasileiro
+ * @param {string} phone - Telefone a ser validado
+ * @returns {object} { valid: boolean, message?: string }
+ */
+export function validatePhoneBR(phone) {
+  if (!phone || typeof phone !== 'string') {
+    return { valid: false, message: 'Telefone é obrigatório' };
+  }
+  
+  const cleaned = phone.replace(/\D/g, '');
+  
+  if (!PATTERNS.PHONE_BR.test(phone)) {
+    return { valid: false, message: 'Formato de telefone inválido' };
+  }
+  
+  // Verifica se tem o número correto de dígitos
+  if (cleaned.length < 10 || cleaned.length > 13) {
+    return { valid: false, message: 'Número de telefone deve ter entre 10 e 13 dígitos' };
+  }
+  
+  return { valid: true };
+}
+
+/**
+ * Validação de CEP
+ * @param {string} cep - CEP a ser validado
+ * @returns {object} { valid: boolean, message?: string }
+ */
+export function validateCEP(cep) {
+  if (!cep || typeof cep !== 'string') {
+    return { valid: false, message: 'CEP é obrigatório' };
+  }
+  
+  const cleaned = cep.replace(/\D/g, '');
+  
+  if (!PATTERNS.CEP.test(cep)) {
+    return { valid: false, message: 'Formato de CEP inválido (xxxxx-xxx)' };
+  }
+  
+  if (cleaned.length !== 8) {
+    return { valid: false, message: 'CEP deve ter 8 dígitos' };
+  }
+  
+  // Verifica se não é um CEP obviamente inválido
+  if (/^0{8}$/.test(cleaned) || /^(\d)\1{7}$/.test(cleaned)) {
+    return { valid: false, message: 'CEP inválido' };
+  }
+  
+  return { valid: true };
+}
+
+/**
+ * Sanitização avançada com múltiplas camadas
+ * @param {string} input - Input a ser sanitizado
+ * @param {object} options - Opções de sanitização
+ * @returns {string} Input sanitizado
+ */
+export function sanitizeAdvanced(input, options = {}) {
+  if (!input || typeof input !== 'string') return '';
+  
+  const {
+    allowHTML = false,
+    allowScripts = false,
+    maxLength = SECURITY_CONFIG.MAX_INPUT_LENGTH,
+    preserveLineBreaks = false
+  } = options;
+  
+  let sanitized = input.trim();
+  
+  // Remove caracteres de controle
+  sanitized = sanitized.replace(PATTERNS.CONTROL_CHARS, '');
+  
+  // Remove encoding malicioso
+  sanitized = sanitized.replace(PATTERNS.MALICIOUS_ENCODING, '');
+  
+  if (!allowHTML) {
+    // Remove tags HTML
+    sanitized = sanitized.replace(/<[^>]*>/g, '');
+    // Remove caracteres XSS
+    sanitized = sanitized.replace(/[<>\"'&]/g, '');
+  }
+  
+  if (!allowScripts) {
+    // Remove javascript: e outros protocolos perigosos
+    sanitized = sanitized.replace(/javascript:|data:|vbscript:/gi, '');
+    // Remove event handlers
+    sanitized = sanitized.replace(/on\w+\s*=/gi, '');
+  }
+  
+  if (!preserveLineBreaks) {
+    // Substitui quebras de linha por espaços
+    sanitized = sanitized.replace(/[\r\n\t]/g, ' ');
+  }
+  
+  // Normaliza espaços múltiplos
+  sanitized = sanitized.replace(/\s+/g, ' ');
+  
+  // Limita tamanho
+  if (maxLength > 0) {
+    sanitized = sanitized.substring(0, maxLength);
+  }
+  
+  return sanitized;
+}
+
+/**
+ * Obtém estatísticas de segurança
+ * @returns {object} Estatísticas de tentativas suspeitas e rate limiting
+ */
+export function getSecurityStats() {
+  const now = Date.now();
+  
+  // Limpa dados expirados
+  for (const [id, data] of validationAttempts.entries()) {
+    if (now - data.firstAttempt > SECURITY_CONFIG.VALIDATION_COOLDOWN) {
+      validationAttempts.delete(id);
+    }
+  }
+  
+  for (const [id, data] of suspiciousAttempts.entries()) {
+    if (now - data.firstAttempt > SECURITY_CONFIG.VALIDATION_COOLDOWN * 2) {
+      suspiciousAttempts.delete(id);
+    }
+  }
+  
+  return {
+    activeValidationSessions: validationAttempts.size,
+    suspiciousAttempts: suspiciousAttempts.size,
+    totalSuspiciousCount: Array.from(suspiciousAttempts.values())
+      .reduce((sum, data) => sum + data.count, 0),
+    criticalThreats: Array.from(suspiciousAttempts.values())
+      .filter(data => data.count >= SECURITY_CONFIG.SUSPICIOUS_THRESHOLD).length
+  };
+}
+
 // Função utilitária para validação rápida de formulários
 export function validateForm(formData, rules) {
   const errors = {};
@@ -525,8 +993,17 @@ export function validateForm(formData, rules) {
       case 'date':
         result = validateBrazilianDate(value);
         break;
+      case 'email':
+        result = validateEmail(value);
+        break;
+      case 'phone':
+        result = validatePhoneBR(value);
+        break;
+      case 'cep':
+        result = validateCEP(value);
+        break;
       default:
-        continue;
+        result = validateGeneral(value);
     }
 
     if (!result.valid) {
