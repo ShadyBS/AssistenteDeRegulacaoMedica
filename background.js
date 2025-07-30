@@ -258,16 +258,89 @@ api.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
   return false;
 });
 
-// Função para abrir sidebar
+// Função para abrir sidebar com detecção robusta de browser
 async function openSidebar(tab) {
   try {
-    if (api.sidePanel) {
+    // Detectar browser baseado na disponibilidade de APIs específicas
+    const isFirefox = typeof globalThis.browser !== 'undefined' && !globalThis.chrome;
+    const isChrome = typeof globalThis.chrome !== 'undefined';
+
+    logger.info('Tentando abrir sidebar/sidePanel', {
+      operation: 'openSidebar',
+      browser: isFirefox ? 'Firefox' : isChrome ? 'Chrome/Edge' : 'Unknown',
+      hasSidePanel: !!api.sidePanel,
+      hasSidebarAction: !!api.sidebarAction,
+      tabId: tab?.id,
+      windowId: tab?.windowId
+    });
+
+    // Chrome/Edge: usar sidePanel API
+    if (api.sidePanel && typeof api.sidePanel.open === 'function') {
+      logger.debug('Usando Chrome sidePanel API');
       await api.sidePanel.open({ windowId: tab.windowId });
-    } else if (api.sidebarAction) {
-      await api.sidebarAction.toggle();
+      logger.info('SidePanel aberto com sucesso no Chrome/Edge');
+      return;
     }
+
+    // Firefox: usar sidebarAction API
+    if (api.sidebarAction && typeof api.sidebarAction.open === 'function') {
+      logger.debug('Usando Firefox sidebarAction.open API');
+      await api.sidebarAction.open();
+      logger.info('Sidebar aberto com sucesso no Firefox');
+      return;
+    }
+
+    // Fallback para Firefox: toggle se open não estiver disponível
+    if (api.sidebarAction && typeof api.sidebarAction.toggle === 'function') {
+      logger.debug('Usando Firefox sidebarAction.toggle API como fallback');
+      await api.sidebarAction.toggle();
+      logger.info('Sidebar alternado com sucesso no Firefox (fallback)');
+      return;
+    }
+
+    // Se nenhuma API estiver disponível, tentar abrir como popup
+    if (api.windows && api.windows.create) {
+      logger.warn('Nenhuma API de sidebar disponível, abrindo como popup');
+      await api.windows.create({
+        url: api.runtime.getURL('sidebar.html'),
+        type: 'popup',
+        width: 400,
+        height: 600,
+        focused: true
+      });
+      logger.info('Sidebar aberto como popup (fallback final)');
+      return;
+    }
+
+    // Se chegou até aqui, nenhuma opção funcionou
+    throw new Error('Nenhuma API de sidebar/sidePanel disponível');
+
   } catch (error) {
-    logger.error('Erro ao abrir sidebar:', error);
+    logger.error('Erro ao abrir sidebar/sidePanel:', {
+      error: error.message,
+      stack: error.stack,
+      tabId: tab?.id,
+      windowId: tab?.windowId,
+      availableAPIs: {
+        sidePanel: !!api.sidePanel,
+        sidebarAction: !!api.sidebarAction,
+        windows: !!api.windows
+      }
+    });
+
+    // Tentar fallback final se ainda não tentou
+    try {
+      if (api.tabs && api.tabs.create) {
+        logger.warn('Tentando fallback final: abrir sidebar como nova aba');
+        await api.tabs.create({
+          url: api.runtime.getURL('sidebar.html'),
+          active: true
+        });
+        logger.info('Sidebar aberto como nova aba (fallback de emergência)');
+      }
+    } catch (fallbackError) {
+      logger.error('Fallback final também falhou:', fallbackError);
+    }
   }
 }
 

@@ -5,6 +5,13 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased]
 
+### Fixed
+- **TASK-C-001**: Corrigida incompatibilidade de Manifest entre Firefox e Chrome para APIs de sidebar/sidePanel
+- **TASK-C-001**: Implementada detecção robusta de browser baseada na disponibilidade de APIs específicas
+- **TASK-C-001**: Adicionados fallbacks múltiplos para abertura de sidebar (sidePanel → sidebarAction → popup → nova aba)
+- **TASK-C-001**: Implementado logging detalhado para debugging de problemas de abertura de sidebar
+- **TASK-C-001**: Corrigida função openSidebar para tratar adequadamente diferenças entre Firefox e Chrome/Edge
+
 ### Added
 - **TASK-LOCK-001**: Sistema completo de limpeza automática de lock de regulação
 - **TASK-LOCK-001**: Endpoint `/sigss/regulacao/limparLock` adicionado às constantes da API
