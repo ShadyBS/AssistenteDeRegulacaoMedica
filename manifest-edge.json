@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Assistente de Regulação Médica",
-  "version": "3.3.15",
+  "version": "4.0.0",
   "description": "Fornece informações para auxiliar médicos reguladores a analisar solicitações e a aderência de pacientes.",
   "permissions": [
     "storage",
@@ -63,13 +63,19 @@
         "http://localhost/sigss/*",
         "http://127.0.0.1/sigss/*"
       ],
-      "js": ["browser-polyfill.js", "content-script.js"],
+      "js": [
+        "browser-polyfill.js",
+        "content-script.js"
+      ],
       "all_frames": true
     }
   ],
   "web_accessible_resources": [
     {
-      "resources": ["content-script.js", "logger.js"],
+      "resources": [
+        "content-script.js",
+        "logger.js"
+      ],
       "matches": [
         "*://*.gov.br/sigss/*",
         "*://*.mv.com.br/sigss/*",

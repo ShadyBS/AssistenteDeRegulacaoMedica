@@ -5,6 +5,17 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased]
 
+## [4.0.0] - 2025-07-30
+
+### Added
+- Nova versão 4.0.0
+
+### Changed
+- Atualizações diversas
+
+### Fixed
+- Correções de bugs
+
 ### Added
 - **REVISAO-FUNCIONAL-002**: Revisão funcional completa de segundo passe realizada
 - **REVISAO-FUNCIONAL-002**: Validação de production readiness confirmada
