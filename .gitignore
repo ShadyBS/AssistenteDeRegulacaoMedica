@@ -34,6 +34,14 @@ build/
 .out/
 .storybook-out/
 
+# Encoding backup directories
+.encoding-backup/
+
+# Build and validation reports
+*-report.json
+encoding-validation-report.json
+encoding-fix-report.json
+
 # Development and temporary files
 *.log
 *.tmp

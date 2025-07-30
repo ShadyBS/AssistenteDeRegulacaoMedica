@@ -12,7 +12,7 @@
   ],
   "host_permissions": [
     "*://*.gov.br/sigss/*",
-    "*://*.mv.com.br/sigss/*", 
+    "*://*.mv.com.br/sigss/*",
     "*://*.cloudmv.com.br/sigss/*",
     "http://localhost:*/sigss/*",
     "http://127.0.0.1:*/sigss/*"

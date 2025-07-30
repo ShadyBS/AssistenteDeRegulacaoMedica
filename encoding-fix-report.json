@@ -1,96 +1,113 @@
 {
-  "timestamp": "2025-07-30T14:04:38.300Z",
-  "duration": "0.56s",
+  "timestamp": "2025-07-30T15:54:29.465Z",
+  "duration": "0.19s",
   "dryRun": false,
-  "backupPath": ".encoding-backup\\backup-2025-07-30T14-04-38-049Z",
+  "backupPath": ".encoding-backup\\backup-2025-07-30T15-54-29-306Z",
   "summary": {
-    "totalFiles": 93,
-    "fixedFiles": 6,
+    "totalFiles": 96,
+    "fixedFiles": 8,
     "skippedFiles": 83,
     "errorFiles": 0,
-    "filesWithIssues": 10
+    "filesWithIssues": 13
   },
   "fixesByType": [
     {
       "type": "TRAILING_WHITESPACE",
-      "count": 4
+      "count": 7
     },
     {
       "type": "FINAL_NEWLINE",
-      "count": 5
+      "count": 3
     }
   ],
   "issuesByType": [
     {
-      "type": "TRAILING_WHITESPACE",
-      "count": 4
-    },
-    {
-      "type": "NO_FINAL_NEWLINE",
+      "type": "REPLACEMENT_CHARACTERS",
       "count": 5
     },
     {
-      "type": "REPLACEMENT_CHARACTERS",
-      "count": 4
+      "type": "TRAILING_WHITESPACE",
+      "count": 7
+    },
+    {
+      "type": "NO_FINAL_NEWLINE",
+      "count": 3
     }
   ],
   "fixedFiles": [
     {
-      "file": "EXTENSION_FIXES.md",
+      "file": "REVISAO_FUNCIONAL_SEGUNDO_PASSE.md",
       "appliedFixes": [
         "TRAILING_WHITESPACE",
         "FINAL_NEWLINE"
       ],
-      "originalSize": 9286,
-      "newSize": 9254,
-      "sizeDiff": 32
+      "originalSize": 14840,
+      "newSize": 14819,
+      "sizeDiff": 21
     },
     {
-      "file": "LOCK_CLEANUP_IMPLEMENTATION.md",
+      "file": "TASK-LOCK-001-COMPLETION-REPORT.md",
       "appliedFixes": [
         "TRAILING_WHITESPACE",
         "FINAL_NEWLINE"
       ],
-      "originalSize": 8616,
-      "newSize": 8613,
-      "sizeDiff": 3
+      "originalSize": 9075,
+      "newSize": 9068,
+      "sizeDiff": 7
     },
     {
-      "file": "LOCK_CLEANUP_USAGE.md",
-      "appliedFixes": [
-        "FINAL_NEWLINE"
-      ],
-      "originalSize": 6618,
-      "newSize": 6619,
-      "sizeDiff": -1
-    },
-    {
-      "file": "api.js",
+      "file": "background.js",
       "appliedFixes": [
         "TRAILING_WHITESPACE"
       ],
-      "originalSize": 65966,
-      "newSize": 65948,
-      "sizeDiff": 18
+      "originalSize": 24929,
+      "newSize": 24896,
+      "sizeDiff": 33
     },
     {
-      "file": "build-zips-clean.js",
+      "file": "dist\\output.css",
       "appliedFixes": [
         "FINAL_NEWLINE"
       ],
-      "originalSize": 12589,
-      "newSize": 12590,
+      "originalSize": 25257,
+      "newSize": 25258,
       "sizeDiff": -1
     },
     {
-      "file": "test-lock-cleanup.js",
+      "file": "manifest-edge.json",
       "appliedFixes": [
-        "TRAILING_WHITESPACE",
-        "FINAL_NEWLINE"
+        "TRAILING_WHITESPACE"
       ],
-      "originalSize": 5776,
-      "newSize": 5681,
-      "sizeDiff": 95
+      "originalSize": 3048,
+      "newSize": 3047,
+      "sizeDiff": 1
+    },
+    {
+      "file": "manifest.json",
+      "appliedFixes": [
+        "TRAILING_WHITESPACE"
+      ],
+      "originalSize": 3345,
+      "newSize": 3344,
+      "sizeDiff": 1
+    },
+    {
+      "file": "sidebar.js",
+      "appliedFixes": [
+        "TRAILING_WHITESPACE"
+      ],
+      "originalSize": 62031,
+      "newSize": 61973,
+      "sizeDiff": 58
+    },
+    {
+      "file": "validation.js",
+      "appliedFixes": [
+        "TRAILING_WHITESPACE"
+      ],
+      "originalSize": 31351,
+      "newSize": 31198,
+      "sizeDiff": 153
     }
   ],
   "errors": []

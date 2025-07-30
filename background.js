@@ -9,7 +9,7 @@ const browserInfo = {
   isFirefox: typeof globalThis.browser !== 'undefined' && !globalThis.chrome,
   isChrome: typeof globalThis.chrome !== 'undefined' && typeof globalThis.browser === 'undefined',
   isEdge: typeof globalThis.chrome !== 'undefined' && navigator.userAgent.includes('Edg'),
-  
+
   // Verificação de APIs específicas
   capabilities: {
     sidePanel: !!(api.sidePanel && typeof api.sidePanel.open === 'function'),
@@ -26,10 +26,10 @@ const browserInfo = {
 
 // ✅ TASK-A-004: Log de informações do browser na inicialização
 function logBrowserInfo() {
-  const browserName = browserInfo.isFirefox ? 'Firefox' : 
-                     browserInfo.isEdge ? 'Edge' : 
+  const browserName = browserInfo.isFirefox ? 'Firefox' :
+                     browserInfo.isEdge ? 'Edge' :
                      browserInfo.isChrome ? 'Chrome' : 'Unknown';
-  
+
   console.log(`[Background] Browser detectado: ${browserName}`, {
     userAgent: navigator.userAgent,
     capabilities: browserInfo.capabilities
@@ -51,7 +51,7 @@ const MAX_MESSAGES_PER_WINDOW = 100; // máximo 100 mensagens por minuto por ori
 async function loadModules(retryCount = 0) {
   const MAX_RETRIES = 3;
   const RETRY_DELAY = 1000; // 1 segundo
-  
+
   // Logger ainda não está disponível, então o console.log é aceitável aqui.
   console.log(`[Background] Carregando módulos... (tentativa ${retryCount + 1}/${MAX_RETRIES + 1})`);
 
@@ -173,7 +173,7 @@ async function loadModules(retryCount = 0) {
 
     if (failedCriticalModules.length > 0) {
       const errorMessage = `Módulos críticos falharam: ${failedCriticalModules.join(', ')}`;
-      
+
       if (retryCount < MAX_RETRIES) {
         console.warn(`[Background] ${errorMessage}. Tentando novamente em ${RETRY_DELAY}ms...`);
         await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
@@ -209,7 +209,7 @@ async function loadModules(retryCount = 0) {
 
   } catch (error) {
     const errorMessage = `Erro geral no carregamento de módulos: ${error.message}`;
-    
+
     if (retryCount < MAX_RETRIES) {
       console.warn(`[Background] ${errorMessage}. Tentando novamente em ${RETRY_DELAY}ms...`);
       await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
@@ -234,7 +234,7 @@ function setupModuleFallbacks(failedModules, moduleLoadResults) {
 
   failedModules.forEach(moduleName => {
     const moduleResult = moduleLoadResults[moduleName];
-    
+
     switch (moduleName) {
       case 'keepAlive':
         // Fallback: KeepAlive não é crítico, pode funcionar sem ele
@@ -368,7 +368,7 @@ api.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
     // Mensagens de content scripts devem vir de páginas SIGSS autorizadas
     // Usar validação baseada em sufixos de domínio em vez de lista hardcoded
     const senderUrl = sender.tab.url || sender.url || '';
-    
+
     let isAuthorized = false;
     let rejectionReason = '';
 
@@ -379,7 +379,7 @@ api.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
       // Domínios autorizados baseados em sufixos
       const authorizedSuffixes = [
         'gov.br',           // Qualquer *.gov.br
-        'mv.com.br',        // Qualquer *.mv.com.br  
+        'mv.com.br',        // Qualquer *.mv.com.br
         'cloudmv.com.br'    // Qualquer *.cloudmv.com.br
       ];
 
@@ -411,7 +411,7 @@ api.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
     }
 
     if (!isAuthorized) {
-      logger.warn('Mensagem rejeitada - origem não autorizada:', { 
+      logger.warn('Mensagem rejeitada - origem não autorizada:', {
         senderUrl,
         rejectionReason,
         operation: 'validateMessageOrigin'
@@ -518,11 +518,11 @@ api.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
 // ✅ TASK-A-004: Função para abrir sidebar com detecção robusta de browser e fallbacks múltiplos
 async function openSidebar(tab) {
   const log = logger || console;
-  
+
   try {
     // ✅ TASK-A-004: Usar informações de browser detectadas
-    const browserName = browserInfo.isFirefox ? 'Firefox' : 
-                       browserInfo.isEdge ? 'Edge' : 
+    const browserName = browserInfo.isFirefox ? 'Firefox' :
+                       browserInfo.isEdge ? 'Edge' :
                        browserInfo.isChrome ? 'Chrome' : 'Unknown';
 
     log.info('Tentando abrir sidebar/sidePanel', {

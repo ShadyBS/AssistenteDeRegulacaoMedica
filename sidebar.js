@@ -494,7 +494,7 @@ async function executePatientSelection(patientInfo, forceRefresh = false) {
     // ✅ TASK-A-002: Executar requisições com timeout e cancelamento
     const selectionPromise = (async () => {
       const ficha = await API.fetchVisualizaUsuario(patientInfo);
-      
+
       // Verificar se ainda não foi cancelado após primeira requisição
       if (currentPatientSelectionController.signal.aborted) {
         throw new Error('Seleção cancelada após buscar ficha do paciente');
@@ -557,7 +557,7 @@ async function executePatientSelection(patientInfo, forceRefresh = false) {
   } finally {
     Utils.toggleLoader(false);
     patientSelectionInProgress = false;
-    
+
     // ✅ TASK-A-002: Limpar controller apenas se for o atual
     if (currentPatientSelectionController && !currentPatientSelectionController.signal.aborted) {
       currentPatientSelectionController = null;
@@ -696,7 +696,7 @@ async function loadConfigAndData() {
       // Verifica se os dados estão criptografados (string) ou não (array)
       if (typeof localData.recentPatients === 'string') {
         logger.info('[Sidebar] Tentando descriptografar pacientes recentes...');
-        
+
         // ✅ TASK-A-003: Múltiplas tentativas de descriptografia
         let decryptedPatients = null;
         let attempts = 0;
@@ -712,7 +712,7 @@ async function loadConfigAndData() {
             }
           } catch (decryptError) {
             logger.warn(`[Sidebar] Tentativa ${attempts} de descriptografia falhou:`, decryptError.message);
-            
+
             // ✅ TASK-A-003: Delay progressivo entre tentativas
             if (attempts < maxAttempts) {
               await new Promise(resolve => setTimeout(resolve, attempts * 500));
@@ -733,11 +733,11 @@ async function loadConfigAndData() {
         } else {
           logger.warn('[Sidebar] Falha na descriptografia após todas as tentativas');
           decryptionFailed = true;
-          
+
           // ✅ TASK-A-003: Backup de dados não criptografados como fallback
           const backupKey = 'recentPatientsBackup';
           const backupData = await browserAPI.storage.local.get(backupKey);
-          
+
           if (backupData[backupKey] && Array.isArray(backupData[backupKey])) {
             logger.info('[Sidebar] Usando backup não criptografado como fallback');
             recentPatients = backupData[backupKey];
@@ -788,7 +788,7 @@ async function loadConfigAndData() {
     } catch (error) {
       logger.error('[Sidebar] Erro crítico ao processar pacientes recentes:', error);
       decryptionFailed = true;
-      
+
       // ✅ TASK-A-003: Recuperação automática de dados corrompidos
       try {
         // Tentar recuperar backup
@@ -825,7 +825,7 @@ async function loadConfigAndData() {
   if (migrationPerformed) {
     logger.info(`[Sidebar] Migração concluída: ${recentPatients.length} pacientes migrados`);
   }
-  
+
   if (decryptionFailed) {
     logger.info(`[Sidebar] Recuperação de dados: ${recentPatients.length} pacientes recuperados do backup`);
   }
