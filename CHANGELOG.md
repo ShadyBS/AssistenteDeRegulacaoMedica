@@ -11,6 +11,11 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 - **REVISAO-FUNCIONAL-002**: Relatório detalhado de status PRODUCTION READY gerado
 
 ### Fixed
+- **MANIFEST-VALIDATION**: Corrigidos padrões de URL no manifest-edge.json para conformidade com Chrome Web Store
+- **MANIFEST-VALIDATION**: Removidos wildcards de porta (*) em URLs localhost para atender validação do Chrome
+- **MANIFEST-VALIDATION**: Ajustados padrões de content_scripts para usar formato válido de URL patterns
+- **MANIFEST-VALIDATION**: Corrigidos host_permissions e web_accessible_resources para usar padrões válidos
+- **MANIFEST-VALIDATION**: Adicionadas quebras de linha finais nos arquivos manifest.json e manifest-edge.json
 - **TASK-C-001**: Corrigida incompatibilidade de Manifest entre Firefox e Chrome para APIs de sidebar/sidePanel
 - **TASK-C-001**: Implementada detecção robusta de browser baseada na disponibilidade de APIs específicas
 - **TASK-C-001**: Adicionados fallbacks múltiplos para abertura de sidebar (sidePanel → sidebarAction → popup → nova aba)
