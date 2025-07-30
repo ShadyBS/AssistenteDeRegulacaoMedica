@@ -686,26 +686,83 @@ async function loadConfigAndData() {
     automationRules: [],
   });
 
-  // ✅ SEGURANÇA: Descriptografar dados de pacientes recentes se estiverem criptografados
+  // ✅ TASK-A-003: Sistema robusto de descriptografia com notificação ao usuário
   let recentPatients = [];
+  let decryptionFailed = false;
+  let migrationPerformed = false;
+
   if (localData.recentPatients) {
     try {
       // Verifica se os dados estão criptografados (string) ou não (array)
       if (typeof localData.recentPatients === 'string') {
-        // Dados criptografados - descriptografar
-        const decryptedPatients = await decryptFromStorage(localData.recentPatients);
+        logger.info('[Sidebar] Tentando descriptografar pacientes recentes...');
+        
+        // ✅ TASK-A-003: Múltiplas tentativas de descriptografia
+        let decryptedPatients = null;
+        let attempts = 0;
+        const maxAttempts = 3;
+
+        while (attempts < maxAttempts && decryptedPatients === null) {
+          attempts++;
+          try {
+            decryptedPatients = await decryptFromStorage(localData.recentPatients);
+            if (decryptedPatients !== null) {
+              logger.info(`[Sidebar] Pacientes recentes descriptografados com sucesso na tentativa ${attempts}`);
+              break;
+            }
+          } catch (decryptError) {
+            logger.warn(`[Sidebar] Tentativa ${attempts} de descriptografia falhou:`, decryptError.message);
+            
+            // ✅ TASK-A-003: Delay progressivo entre tentativas
+            if (attempts < maxAttempts) {
+              await new Promise(resolve => setTimeout(resolve, attempts * 500));
+            }
+          }
+        }
+
         if (decryptedPatients !== null) {
-          recentPatients = decryptedPatients;
-          logger.info('[Sidebar] Pacientes recentes descriptografados com sucesso');
+          // ✅ TASK-A-003: Validação de integridade dos dados descriptografados
+          if (Array.isArray(decryptedPatients) && decryptedPatients.every(p => p && p.ficha && p.ficha.isenPK)) {
+            recentPatients = decryptedPatients;
+            logger.info('[Sidebar] Dados de pacientes recentes validados com sucesso');
+          } else {
+            logger.error('[Sidebar] Dados descriptografados são inválidos ou corrompidos');
+            decryptionFailed = true;
+            recentPatients = []; // Usar array vazio como fallback
+          }
         } else {
-          logger.warn('[Sidebar] Dados de pacientes recentes expiraram ou são inválidos');
-          // Remove dados expirados/inválidos
+          logger.warn('[Sidebar] Falha na descriptografia após todas as tentativas');
+          decryptionFailed = true;
+          
+          // ✅ TASK-A-003: Backup de dados não criptografados como fallback
+          const backupKey = 'recentPatientsBackup';
+          const backupData = await browserAPI.storage.local.get(backupKey);
+          
+          if (backupData[backupKey] && Array.isArray(backupData[backupKey])) {
+            logger.info('[Sidebar] Usando backup não criptografado como fallback');
+            recentPatients = backupData[backupKey];
+          } else {
+            recentPatients = []; // Fallback final
+          }
+
+          // Remove dados corrompidos/expirados
           await browserAPI.storage.local.remove(['recentPatients', 'recentPatientsTimestamp']);
         }
       } else if (Array.isArray(localData.recentPatients)) {
-        // Dados não criptografados (formato antigo) - migrar para formato criptografado
+        // ✅ TASK-A-003: Migração melhorada com backup
         recentPatients = localData.recentPatients;
         logger.info('[Sidebar] Migrando pacientes recentes para formato criptografado');
+
+        // Criar backup antes da migração
+        try {
+          await browserAPI.storage.local.set({
+            recentPatientsBackup: recentPatients,
+            recentPatientsBackupTimestamp: Date.now()
+          });
+          logger.info('[Sidebar] Backup criado antes da migração');
+        } catch (backupError) {
+          logger.warn('[Sidebar] Falha ao criar backup:', backupError);
+        }
 
         // Criptografar e salvar no novo formato
         if (recentPatients.length > 0) {
@@ -720,17 +777,57 @@ async function loadConfigAndData() {
               recentPatientsTimestamp: Date.now()
             });
 
+            migrationPerformed = true;
             logger.info('[Sidebar] Migração para formato criptografado concluída');
           } catch (error) {
             logger.error('[Sidebar] Erro na migração para formato criptografado:', error);
+            // Manter dados não criptografados se a migração falhar
           }
         }
       }
     } catch (error) {
-      logger.error('[Sidebar] Erro ao descriptografar pacientes recentes:', error);
-      // Em caso de erro, remove dados corrompidos
-      await browserAPI.storage.local.remove(['recentPatients', 'recentPatientsTimestamp']);
+      logger.error('[Sidebar] Erro crítico ao processar pacientes recentes:', error);
+      decryptionFailed = true;
+      
+      // ✅ TASK-A-003: Recuperação automática de dados corrompidos
+      try {
+        // Tentar recuperar backup
+        const backupData = await browserAPI.storage.local.get('recentPatientsBackup');
+        if (backupData.recentPatientsBackup && Array.isArray(backupData.recentPatientsBackup)) {
+          recentPatients = backupData.recentPatientsBackup;
+          logger.info('[Sidebar] Dados recuperados do backup após erro crítico');
+        } else {
+          recentPatients = [];
+        }
+
+        // Remove dados corrompidos
+        await browserAPI.storage.local.remove(['recentPatients', 'recentPatientsTimestamp']);
+      } catch (recoveryError) {
+        logger.error('[Sidebar] Falha na recuperação automática:', recoveryError);
+        recentPatients = [];
+      }
     }
+  }
+
+  // ✅ TASK-A-003: Notificação ao usuário sobre problemas de descriptografia
+  if (decryptionFailed) {
+    // Mostrar notificação discreta ao usuário
+    setTimeout(() => {
+      Utils.showMessage(
+        'Alguns dados de pacientes recentes não puderam ser recuperados. Isso não afeta o funcionamento da extensão.',
+        'warning',
+        5000 // 5 segundos
+      );
+    }, 2000); // Delay para não interferir com a inicialização
+  }
+
+  // ✅ TASK-A-003: Log de estatísticas de recuperação
+  if (migrationPerformed) {
+    logger.info(`[Sidebar] Migração concluída: ${recentPatients.length} pacientes migrados`);
+  }
+  
+  if (decryptionFailed) {
+    logger.info(`[Sidebar] Recuperação de dados: ${recentPatients.length} pacientes recuperados do backup`);
   }
 
   store.setRecentPatients(recentPatients);
