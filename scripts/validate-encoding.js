@@ -198,12 +198,12 @@ class EncodingValidator {
         });
       }
 
-      // Verifica caracteres de replacement
-      if (content.includes('�')) {
+      // Verifica caracteres de replacement (usando Unicode code point)
+      if (content.includes('\uFFFD')) {
         issues.push({
           type: 'REPLACEMENT_CHARACTERS',
           severity: 'error',
-          message: 'Arquivo contém caracteres de replacement (�)',
+          message: 'Arquivo contém caracteres de replacement ()',
           fix: 'Corrigir encoding ou dados corrompidos'
         });
       }
@@ -445,7 +445,7 @@ Verifica:
   • Line endings inconsistentes (CRLF/CR)
   • Trailing whitespace
   • Ausência de final newline
-  • Caracteres de replacement (�)
+  • Caracteres de replacement ()
   • Possível double encoding
   • BOM embedded no meio do arquivo
 
@@ -470,5 +470,3 @@ if (require.main === module) {
 }
 
 module.exports = { EncodingValidator };
-
-

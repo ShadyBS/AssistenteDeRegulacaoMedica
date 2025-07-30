@@ -86,7 +86,7 @@ Você é um **especialista em revisão funcional de extensões de navegador** co
 
 ### **❌ NÃO ANALISAR (Fora do escopo):**
 
-- Qualidade do código ou padrões de programaç��o
+- Qualidade do código ou padrões de programaç✅o
 - Performance ou otimizações (exceto se causar crashes)
 - Segurança (exceto se quebrar funcionalidade)
 - UX/UI design ou usabilidade

@@ -154,12 +154,17 @@ class EncodingFixer {
     }
 
     // Verifica caracteres problemáticos
-    if (content.includes('�')) {
+    if (content.includes('')) {
       issues.push('REPLACEMENT_CHARACTERS');
     }
 
     if (content.includes('\uFEFF')) {
       issues.push('EMBEDDED_BOM');
+    }
+
+    // Verifica caracteres Unicode problemáticos
+    if (/[\uFFFD\uFEFF\u200B-\u200D\u2060]/.test(content)) {
+      issues.push('PROBLEMATIC_UNICODE');
     }
 
     return { issues, content };
@@ -214,6 +219,34 @@ class EncodingFixer {
       if (issues.includes('NO_FINAL_NEWLINE')) {
         fixedContent += '\n';
         appliedFixes.push('FINAL_NEWLINE');
+      }
+
+      // Corrige caracteres de replacement
+      if (issues.includes('REPLACEMENT_CHARACTERS')) {
+        // Substitui caracteres de replacement por equivalentes apropriados
+        const replacements = {
+          '✅': '✅', // Substitui duplo replacement por checkmark
+          '⚠️': '⚠️', // Substitui por warning emoji
+          '': '', // Remove caracteres de replacement genéricos
+        };
+
+        let hasReplacements = false;
+        for (const [search, replace] of Object.entries(replacements)) {
+          if (fixedContent.includes(search)) {
+            fixedContent = fixedContent.replace(new RegExp(search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'), replace);
+            hasReplacements = true;
+          }
+        }
+
+        if (hasReplacements) {
+          appliedFixes.push('REPLACEMENT_CHARACTERS');
+        }
+      }
+
+      // Corrige caracteres Unicode problemáticos
+      if (issues.includes('PROBLEMATIC_UNICODE')) {
+        fixedContent = fixedContent.replace(/[\uFFFD\u200B-\u200D\u2060]/g, '');
+        appliedFixes.push('PROBLEMATIC_UNICODE');
       }
 
       // Verifica se houve mudanças
@@ -503,6 +536,7 @@ Correções aplicadas:
   • Remove trailing whitespace
   • Adiciona final newline
   • Remove BOM embedded no meio do arquivo
+  • Corrige caracteres de replacement ()
 
 Backup:
   Cria backup automático antes das correções (exceto em --dry-run)
@@ -530,5 +564,3 @@ if (require.main === module) {
 }
 
 module.exports = { EncodingFixer };
-
-
