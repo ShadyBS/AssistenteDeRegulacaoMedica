@@ -10,7 +10,13 @@
     "clipboardWrite",
     "alarms"
   ],
-  "host_permissions": ["*://*/sigss/*"],
+  "host_permissions": [
+    "*://*.gov.br/sigss/*",
+    "*://*.mv.com.br/sigss/*", 
+    "*://*.cloudmv.com.br/sigss/*",
+    "http://localhost:*/sigss/*",
+    "http://127.0.0.1:*/sigss/*"
+  ],
   "content_security_policy": {
     "extension_pages": "script-src 'self'; object-src 'none'; connect-src 'self' https://*.gov.br https://*.mv.com.br https://*.cloudmv.com.br http://*.gov.br http://*.mv.com.br http://*.cloudmv.com.br http://localhost:* http://127.0.0.1:*; base-uri 'self'; frame-ancestors 'none';"
   },
@@ -48,10 +54,26 @@
   "content_scripts": [
     {
       "matches": [
-        "*://*/sigss/regulacaoRegulador*",
-        "*://*/sigss/regulacaoRegulador/*",
-        "*://*/sigss/regulacaoControleSolicitacao/*",
-        "*://*/sigss/regulacaoControleSolicitacao*"
+        "*://*.gov.br/sigss/regulacaoRegulador*",
+        "*://*.gov.br/sigss/regulacaoRegulador/*",
+        "*://*.gov.br/sigss/regulacaoControleSolicitacao/*",
+        "*://*.gov.br/sigss/regulacaoControleSolicitacao*",
+        "*://*.mv.com.br/sigss/regulacaoRegulador*",
+        "*://*.mv.com.br/sigss/regulacaoRegulador/*",
+        "*://*.mv.com.br/sigss/regulacaoControleSolicitacao/*",
+        "*://*.mv.com.br/sigss/regulacaoControleSolicitacao*",
+        "*://*.cloudmv.com.br/sigss/regulacaoRegulador*",
+        "*://*.cloudmv.com.br/sigss/regulacaoRegulador/*",
+        "*://*.cloudmv.com.br/sigss/regulacaoControleSolicitacao/*",
+        "*://*.cloudmv.com.br/sigss/regulacaoControleSolicitacao*",
+        "http://localhost:*/sigss/regulacaoRegulador*",
+        "http://localhost:*/sigss/regulacaoRegulador/*",
+        "http://localhost:*/sigss/regulacaoControleSolicitacao/*",
+        "http://localhost:*/sigss/regulacaoControleSolicitacao*",
+        "http://127.0.0.1:*/sigss/regulacaoRegulador*",
+        "http://127.0.0.1:*/sigss/regulacaoRegulador/*",
+        "http://127.0.0.1:*/sigss/regulacaoControleSolicitacao/*",
+        "http://127.0.0.1:*/sigss/regulacaoControleSolicitacao*"
       ],
       "js": ["browser-polyfill.js", "content-script.js"],
       "all_frames": true
@@ -60,7 +82,13 @@
   "web_accessible_resources": [
     {
       "resources": ["content-script.js", "logger.js"],
-      "matches": ["*://*/sigss/*"]
+      "matches": [
+        "*://*.gov.br/sigss/*",
+        "*://*.mv.com.br/sigss/*",
+        "*://*.cloudmv.com.br/sigss/*",
+        "http://localhost:*/sigss/*",
+        "http://127.0.0.1:*/sigss/*"
+      ]
     }
   ],
   "browser_specific_settings": {

@@ -144,30 +144,65 @@ api.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
     }
   } else {
     // Mensagens de content scripts devem vir de páginas SIGSS autorizadas
-    const allowedOrigins = [
-      'sigss.saude.gov.br',
-      'sigss-hom.saude.gov.br',
-      'sigss.mv.com.br',
-      'sigss.cloudmv.com.br',
-      'localhost:3000',
-      'localhost:8080',
-      '127.0.0.1'
-    ];
-
+    // Usar validação baseada em sufixos de domínio em vez de lista hardcoded
     const senderUrl = sender.tab.url || sender.url || '';
-    const senderOrigin = new URL(senderUrl).origin;
+    
+    let isAuthorized = false;
+    let rejectionReason = '';
 
-    const isAuthorized = allowedOrigins.some(domain => {
-      if (domain.startsWith('http')) {
-        return senderOrigin === domain;
+    try {
+      const urlObj = new URL(senderUrl);
+      const hostname = urlObj.hostname.toLowerCase();
+
+      // Domínios autorizados baseados em sufixos
+      const authorizedSuffixes = [
+        'gov.br',           // Qualquer *.gov.br
+        'mv.com.br',        // Qualquer *.mv.com.br  
+        'cloudmv.com.br'    // Qualquer *.cloudmv.com.br
+      ];
+
+      // Localhost para desenvolvimento
+      const localhostPatterns = [
+        'localhost',
+        '127.0.0.1'
+      ];
+
+      // Verificar sufixos autorizados
+      isAuthorized = authorizedSuffixes.some(suffix => {
+        return hostname === suffix || hostname.endsWith('.' + suffix);
+      });
+
+      // Verificar localhost para desenvolvimento
+      if (!isAuthorized) {
+        isAuthorized = localhostPatterns.some(pattern => {
+          return hostname === pattern || hostname.startsWith(pattern + ':');
+        });
       }
-      return senderUrl.includes(domain);
-    });
+
+      if (!isAuthorized) {
+        rejectionReason = `Domínio '${hostname}' não termina com sufixos autorizados: ${authorizedSuffixes.join(', ')} ou localhost/127.0.0.1`;
+      }
+
+    } catch (urlError) {
+      isAuthorized = false;
+      rejectionReason = `URL inválida: ${urlError.message}`;
+    }
 
     if (!isAuthorized) {
-      logger.warn('Mensagem rejeitada - origem não autorizada:', { senderUrl });
+      logger.warn('Mensagem rejeitada - origem não autorizada:', { 
+        senderUrl,
+        rejectionReason,
+        operation: 'validateMessageOrigin'
+      });
       return false;
     }
+
+    // Log de origem autorizada para debugging
+    logger.debug('Origem autorizada validada:', {
+      senderUrl,
+      hostname: new URL(senderUrl).hostname,
+      operation: 'validateMessageOrigin'
+    });
   }
 
   // Validar estrutura da mensagem
