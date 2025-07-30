@@ -43,6 +43,7 @@ const browserAPI = getBrowserAPIInstance();
 let patientSelectionInProgress = false;
 let pendingPatientSelection = null;
 let patientSelectionTimeout = null;
+let currentPatientSelectionController = null; // AbortController para cancelar requisições pendentes
 
 /**
  * Sistema de limpeza de recursos para mudança de paciente
@@ -453,37 +454,114 @@ async function executePatientSelection(patientInfo, forceRefresh = false) {
 
   patientSelectionInProgress = true;
 
+  // ✅ TASK-A-002: Cancelar requisições pendentes da seleção anterior
+  if (currentPatientSelectionController) {
+    currentPatientSelectionController.abort();
+    logger.info('[Patient Selection] Cancelando requisições da seleção anterior');
+  }
+
+  // ✅ TASK-A-002: Criar novo AbortController para esta seleção
+  currentPatientSelectionController = new AbortController();
+  const selectionId = `${patientInfo.idp}-${Date.now()}`; // ID único para esta seleção
+
   try {
     Utils.toggleLoader(true);
     Utils.clearMessage();
     store.setPatientUpdating();
 
-    const ficha = await API.fetchVisualizaUsuario(patientInfo);
-    const cadsus = await API.fetchCadsusData({
-      cpf: Utils.getNestedValue(ficha, "entidadeFisica.entfCPF"),
-      cns: ficha.isenNumCadSus,
-      skipValidation: true // Pular validação quando carregando dados do paciente selecionado
+    logger.info(`[Patient Selection] Iniciando seleção ${selectionId}`);
+
+    // ✅ TASK-A-002: Validar estado antes de continuar
+    if (currentPatientSelectionController.signal.aborted) {
+      logger.info(`[Patient Selection] Seleção ${selectionId} cancelada antes de iniciar requisições`);
+      return;
+    }
+
+    // ✅ TASK-A-002: Timeout para operações de seleção (30 segundos)
+    const selectionTimeout = 30000;
+    const timeoutPromise = new Promise((_, reject) => {
+      const timeoutId = setTimeout(() => {
+        reject(new Error(`Timeout na seleção de paciente após ${selectionTimeout}ms`));
+      }, selectionTimeout);
+
+      // Cancelar timeout se a operação for abortada
+      currentPatientSelectionController.signal.addEventListener('abort', () => {
+        clearTimeout(timeoutId);
+        reject(new Error('Seleção de paciente cancelada'));
+      });
     });
 
+    // ✅ TASK-A-002: Executar requisições com timeout e cancelamento
+    const selectionPromise = (async () => {
+      const ficha = await API.fetchVisualizaUsuario(patientInfo);
+      
+      // Verificar se ainda não foi cancelado após primeira requisição
+      if (currentPatientSelectionController.signal.aborted) {
+        throw new Error('Seleção cancelada após buscar ficha do paciente');
+      }
+
+      const cadsus = await API.fetchCadsusData({
+        cpf: Utils.getNestedValue(ficha, "entidadeFisica.entfCPF"),
+        cns: ficha.isenNumCadSus,
+        skipValidation: true // Pular validação quando carregando dados do paciente selecionado
+      });
+
+      // Verificar se ainda não foi cancelado após segunda requisição
+      if (currentPatientSelectionController.signal.aborted) {
+        throw new Error('Seleção cancelada após buscar dados CADSUS');
+      }
+
+      return { ficha, cadsus };
+    })();
+
+    // ✅ TASK-A-002: Race entre operação e timeout
+    const { ficha, cadsus } = await Promise.race([selectionPromise, timeoutPromise]);
+
+    // ✅ TASK-A-002: Validação final de estado antes de aplicar mudanças
+    if (currentPatientSelectionController.signal.aborted) {
+      logger.info(`[Patient Selection] Seleção ${selectionId} cancelada antes de aplicar dados`);
+      return;
+    }
+
+    // ✅ TASK-A-002: Limpar automação de forma segura
     Object.values(sectionManagers).forEach((manager) => {
-      if (typeof manager.clearAutomationFeedbackAndFilters === "function") {
-        manager.clearAutomationFeedbackAndFilters(false);
-      } else if (typeof manager.clearAutomation === "function") {
-        manager.clearAutomation();
+      try {
+        if (typeof manager.clearAutomationFeedbackAndFilters === "function") {
+          manager.clearAutomationFeedbackAndFilters(false);
+        } else if (typeof manager.clearAutomation === "function") {
+          manager.clearAutomation();
+        }
+      } catch (error) {
+        logger.warn(`[Patient Selection] Erro ao limpar automação do manager:`, error);
       }
     });
 
-    store.setPatient(ficha, cadsus);
-    await updateRecentPatients(store.getPatient());
+    // ✅ TASK-A-002: Aplicar dados apenas se não foi cancelado
+    if (!currentPatientSelectionController.signal.aborted) {
+      store.setPatient(ficha, cadsus);
+      await updateRecentPatients(store.getPatient());
+      logger.info(`[Patient Selection] Seleção ${selectionId} concluída com sucesso`);
+    } else {
+      logger.info(`[Patient Selection] Seleção ${selectionId} cancelada antes de finalizar`);
+    }
 
-    logger.info("Seleção de paciente concluída com sucesso:", patientInfo.idp);
   } catch (error) {
-    Utils.showMessage(error.message, "error");
-    logger.error("Erro na seleção de paciente:", error);
-    store.clearPatient();
+    // ✅ TASK-A-002: Não mostrar erro se foi cancelamento intencional
+    if (error.message.includes('cancelada') || error.message.includes('aborted')) {
+      logger.info(`[Patient Selection] Seleção ${selectionId} cancelada:`, error.message);
+    } else {
+      Utils.showMessage(error.message, "error");
+      logger.error(`[Patient Selection] Erro na seleção ${selectionId}:`, error);
+      store.clearPatient();
+    }
   } finally {
     Utils.toggleLoader(false);
     patientSelectionInProgress = false;
+    
+    // ✅ TASK-A-002: Limpar controller apenas se for o atual
+    if (currentPatientSelectionController && !currentPatientSelectionController.signal.aborted) {
+      currentPatientSelectionController = null;
+    }
   }
 }
 
