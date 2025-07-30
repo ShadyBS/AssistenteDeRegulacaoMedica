@@ -17,6 +17,12 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 - **TASK-C-002**: Atualizadas permissões nos manifests para usar wildcards adequados (*://*.gov.br/sigss/*)
 - **TASK-C-002**: Corrigidos content_scripts e web_accessible_resources para cobrir todos os domínios autorizados
 - **TASK-C-002**: Mantido suporte para localhost e 127.0.0.1 para desenvolvimento
+- **TASK-A-001**: Corrigida falha na inicialização de módulos dinâmicos com retry logic robusto
+- **TASK-A-001**: Implementado sistema de retry com até 3 tentativas e delay de 1 segundo
+- **TASK-A-001**: Adicionada validação individual de cada função importada antes do uso
+- **TASK-A-001**: Implementados fallbacks para módulos não críticos (KeepAlive, BrowserAPI, Crypto)
+- **TASK-A-001**: Criado sistema de logging detalhado para falhas de importação de módulos
+- **TASK-A-001**: Separados módulos críticos (API, Logger) de não críticos com tratamento diferenciado
 
 ### Added
 - **TASK-LOCK-001**: Sistema completo de limpeza automática de lock de regulação

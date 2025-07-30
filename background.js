@@ -15,41 +15,231 @@ const messageRateLimit = new Map();
 const RATE_LIMIT_WINDOW = 60000; // 1 minuto
 const MAX_MESSAGES_PER_WINDOW = 100; // máximo 100 mensagens por minuto por origem
 
-// Função para carregar módulos dinamicamente
-async function loadModules() {
+// Função para carregar módulos dinamicamente com retry logic e validação
+async function loadModules(retryCount = 0) {
+  const MAX_RETRIES = 3;
+  const RETRY_DELAY = 1000; // 1 segundo
+  
   // Logger ainda não está disponível, então o console.log é aceitável aqui.
-  console.log('[Background] Carregando módulos...');
+  console.log(`[Background] Carregando módulos... (tentativa ${retryCount + 1}/${MAX_RETRIES + 1})`);
+
+  const moduleLoadResults = {
+    api: { loaded: false, error: null, functions: [] },
+    keepAlive: { loaded: false, error: null, functions: [] },
+    browserAPI: { loaded: false, error: null, functions: [] },
+    crypto: { loaded: false, error: null, functions: [] },
+    logger: { loaded: false, error: null, functions: [] }
+  };
 
   try {
-    const apiModule = await import("./api.js");
-    fetchRegulationDetails = apiModule.fetchRegulationDetails;
+    // Carregar módulo API
+    try {
+      const apiModule = await import("./api.js");
+      if (apiModule.fetchRegulationDetails && typeof apiModule.fetchRegulationDetails === 'function') {
+        fetchRegulationDetails = apiModule.fetchRegulationDetails;
+        moduleLoadResults.api.loaded = true;
+        moduleLoadResults.api.functions.push('fetchRegulationDetails');
+      } else {
+        throw new Error('fetchRegulationDetails não encontrada ou não é uma função');
+      }
+    } catch (error) {
+      moduleLoadResults.api.error = error.message;
+      console.error('[Background] Falha ao carregar módulo API:', error);
+    }
 
-    const keepAliveModule = await import("./KeepAliveManager.js");
-    KeepAliveManager = keepAliveModule.KeepAliveManager;
+    // Carregar módulo KeepAlive
+    try {
+      const keepAliveModule = await import("./KeepAliveManager.js");
+      if (keepAliveModule.KeepAliveManager && typeof keepAliveModule.KeepAliveManager === 'function') {
+        KeepAliveManager = keepAliveModule.KeepAliveManager;
+        moduleLoadResults.keepAlive.loaded = true;
+        moduleLoadResults.keepAlive.functions.push('KeepAliveManager');
+      } else {
+        throw new Error('KeepAliveManager não encontrada ou não é uma função');
+      }
+    } catch (error) {
+      moduleLoadResults.keepAlive.error = error.message;
+      console.error('[Background] Falha ao carregar módulo KeepAlive:', error);
+    }
 
-    const browserAPIModule = await import("./BrowserAPI.js");
-    getBrowserAPIInstance = browserAPIModule.getBrowserAPIInstance;
+    // Carregar módulo BrowserAPI
+    try {
+      const browserAPIModule = await import("./BrowserAPI.js");
+      if (browserAPIModule.getBrowserAPIInstance && typeof browserAPIModule.getBrowserAPIInstance === 'function') {
+        getBrowserAPIInstance = browserAPIModule.getBrowserAPIInstance;
+        moduleLoadResults.browserAPI.loaded = true;
+        moduleLoadResults.browserAPI.functions.push('getBrowserAPIInstance');
+      } else {
+        throw new Error('getBrowserAPIInstance não encontrada ou não é uma função');
+      }
+    } catch (error) {
+      moduleLoadResults.browserAPI.error = error.message;
+      console.error('[Background] Falha ao carregar módulo BrowserAPI:', error);
+    }
 
-    const cryptoModule = await import("./crypto-utils.js");
-    encryptForStorage = cryptoModule.encryptForStorage;
-    decryptFromStorage = cryptoModule.decryptFromStorage;
-    cleanupExpiredData = cryptoModule.cleanupExpiredData;
-    MEDICAL_DATA_CONFIG = cryptoModule.MEDICAL_DATA_CONFIG;
+    // Carregar módulo Crypto
+    try {
+      const cryptoModule = await import("./crypto-utils.js");
+      const requiredCryptoFunctions = ['encryptForStorage', 'decryptFromStorage', 'cleanupExpiredData', 'MEDICAL_DATA_CONFIG'];
+      let cryptoFunctionsLoaded = 0;
 
-    const loggerModule = await import("./logger.js");
-    createComponentLogger = loggerModule.createComponentLogger;
+      if (cryptoModule.encryptForStorage && typeof cryptoModule.encryptForStorage === 'function') {
+        encryptForStorage = cryptoModule.encryptForStorage;
+        moduleLoadResults.crypto.functions.push('encryptForStorage');
+        cryptoFunctionsLoaded++;
+      }
 
-    // Inicializar logger após carregamento
-    logger = createComponentLogger('Background');
+      if (cryptoModule.decryptFromStorage && typeof cryptoModule.decryptFromStorage === 'function') {
+        decryptFromStorage = cryptoModule.decryptFromStorage;
+        moduleLoadResults.crypto.functions.push('decryptFromStorage');
+        cryptoFunctionsLoaded++;
+      }
 
-    logger.info('Módulos carregados com sucesso');
+      if (cryptoModule.cleanupExpiredData && typeof cryptoModule.cleanupExpiredData === 'function') {
+        cleanupExpiredData = cryptoModule.cleanupExpiredData;
+        moduleLoadResults.crypto.functions.push('cleanupExpiredData');
+        cryptoFunctionsLoaded++;
+      }
+
+      if (cryptoModule.MEDICAL_DATA_CONFIG && typeof cryptoModule.MEDICAL_DATA_CONFIG === 'object') {
+        MEDICAL_DATA_CONFIG = cryptoModule.MEDICAL_DATA_CONFIG;
+        moduleLoadResults.crypto.functions.push('MEDICAL_DATA_CONFIG');
+        cryptoFunctionsLoaded++;
+      }
+
+      if (cryptoFunctionsLoaded === requiredCryptoFunctions.length) {
+        moduleLoadResults.crypto.loaded = true;
+      } else {
+        throw new Error(`Apenas ${cryptoFunctionsLoaded}/${requiredCryptoFunctions.length} funções crypto carregadas`);
+      }
+    } catch (error) {
+      moduleLoadResults.crypto.error = error.message;
+      console.error('[Background] Falha ao carregar módulo Crypto:', error);
+    }
+
+    // Carregar módulo Logger (crítico)
+    try {
+      const loggerModule = await import("./logger.js");
+      if (loggerModule.createComponentLogger && typeof loggerModule.createComponentLogger === 'function') {
+        createComponentLogger = loggerModule.createComponentLogger;
+        moduleLoadResults.logger.loaded = true;
+        moduleLoadResults.logger.functions.push('createComponentLogger');
+
+        // Inicializar logger após carregamento bem-sucedido
+        logger = createComponentLogger('Background');
+      } else {
+        throw new Error('createComponentLogger não encontrada ou não é uma função');
+      }
+    } catch (error) {
+      moduleLoadResults.logger.error = error.message;
+      console.error('[Background] Falha ao carregar módulo Logger:', error);
+    }
+
+    // Verificar módulos críticos
+    const criticalModules = ['api', 'logger'];
+    const failedCriticalModules = criticalModules.filter(module => !moduleLoadResults[module].loaded);
+
+    if (failedCriticalModules.length > 0) {
+      const errorMessage = `Módulos críticos falharam: ${failedCriticalModules.join(', ')}`;
+      
+      if (retryCount < MAX_RETRIES) {
+        console.warn(`[Background] ${errorMessage}. Tentando novamente em ${RETRY_DELAY}ms...`);
+        await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
+        return await loadModules(retryCount + 1);
+      } else {
+        console.error(`[Background] ${errorMessage}. Máximo de tentativas excedido.`);
+        return false;
+      }
+    }
+
+    // Log de sucesso com detalhes
+    const loadedModules = Object.keys(moduleLoadResults).filter(module => moduleLoadResults[module].loaded);
+    const failedModules = Object.keys(moduleLoadResults).filter(module => !moduleLoadResults[module].loaded);
+
+    if (logger) {
+      logger.info('Módulos carregados com sucesso', {
+        operation: 'loadModules',
+        loadedModules,
+        failedModules,
+        retryCount,
+        moduleDetails: moduleLoadResults
+      });
+    } else {
+      console.log('[Background] Módulos carregados:', { loadedModules, failedModules });
+    }
+
+    // Configurar fallbacks para módulos não críticos que falharam
+    if (failedModules.length > 0) {
+      setupModuleFallbacks(failedModules, moduleLoadResults);
+    }
+
     return true;
+
   } catch (error) {
-    // O logger pode não ter sido inicializado, então use console.error como fallback
-    const log = logger || console;
-    log.error('Erro ao carregar módulos:', error);
-    return false;
+    const errorMessage = `Erro geral no carregamento de módulos: ${error.message}`;
+    
+    if (retryCount < MAX_RETRIES) {
+      console.warn(`[Background] ${errorMessage}. Tentando novamente em ${RETRY_DELAY}ms...`);
+      await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
+      return await loadModules(retryCount + 1);
+    } else {
+      console.error(`[Background] ${errorMessage}. Máximo de tentativas excedido.`);
+      const log = logger || console;
+      log.error('Falha completa no carregamento de módulos:', {
+        error: error.message,
+        stack: error.stack,
+        retryCount,
+        moduleResults: moduleLoadResults
+      });
+      return false;
+    }
   }
+}
+
+// Configurar fallbacks para módulos não críticos
+function setupModuleFallbacks(failedModules, moduleLoadResults) {
+  const log = logger || console;
+
+  failedModules.forEach(moduleName => {
+    const moduleResult = moduleLoadResults[moduleName];
+    
+    switch (moduleName) {
+      case 'keepAlive':
+        // Fallback: KeepAlive não é crítico, pode funcionar sem ele
+        log.warn('KeepAlive não disponível - funcionalidade de keep-alive desabilitada', {
+          error: moduleResult.error,
+          operation: 'setupModuleFallbacks'
+        });
+        break;
+
+      case 'browserAPI':
+        // Fallback: usar API nativa diretamente
+        getBrowserAPIInstance = () => api;
+        log.warn('BrowserAPI não disponível - usando API nativa como fallback', {
+          error: moduleResult.error,
+          operation: 'setupModuleFallbacks'
+        });
+        break;
+
+      case 'crypto':
+        // Fallback: desabilitar criptografia (dados não criptografados)
+        encryptForStorage = async (data) => data;
+        decryptFromStorage = async (data) => data;
+        cleanupExpiredData = async () => {};
+        MEDICAL_DATA_CONFIG = { SENSITIVE_TTL_MINUTES: 30 };
+        log.warn('Crypto não disponível - dados médicos não serão criptografados', {
+          error: moduleResult.error,
+          operation: 'setupModuleFallbacks'
+        });
+        break;
+
+      default:
+        log.warn(`Módulo ${moduleName} falhou - sem fallback disponível`, {
+          error: moduleResult.error,
+          operation: 'setupModuleFallbacks'
+        });
+    }
+  });
 }
 
 // Rate limiting check
