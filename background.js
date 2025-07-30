@@ -1,8 +1,40 @@
 // Background script compatível com Firefox
 // Usa API básica do browser para máxima compatibilidade
 
-// API básica compatível com Firefox e Chrome
+// ✅ TASK-A-004: API compatível com verificação robusta de funcionalidades
 const api = globalThis.browser || globalThis.chrome;
+
+// ✅ TASK-A-004: Detecção de browser e capacidades
+const browserInfo = {
+  isFirefox: typeof globalThis.browser !== 'undefined' && !globalThis.chrome,
+  isChrome: typeof globalThis.chrome !== 'undefined' && typeof globalThis.browser === 'undefined',
+  isEdge: typeof globalThis.chrome !== 'undefined' && navigator.userAgent.includes('Edg'),
+  
+  // Verificação de APIs específicas
+  capabilities: {
+    sidePanel: !!(api.sidePanel && typeof api.sidePanel.open === 'function'),
+    sidebarAction: !!(api.sidebarAction),
+    storageSession: !!(api.storage && api.storage.session),
+    alarms: !!(api.alarms),
+    contextMenus: !!(api.contextMenus),
+    action: !!(api.action),
+    tabs: !!(api.tabs),
+    windows: !!(api.windows),
+    runtime: !!(api.runtime)
+  }
+};
+
+// ✅ TASK-A-004: Log de informações do browser na inicialização
+function logBrowserInfo() {
+  const browserName = browserInfo.isFirefox ? 'Firefox' : 
+                     browserInfo.isEdge ? 'Edge' : 
+                     browserInfo.isChrome ? 'Chrome' : 'Unknown';
+  
+  console.log(`[Background] Browser detectado: ${browserName}`, {
+    userAgent: navigator.userAgent,
+    capabilities: browserInfo.capabilities
+  });
+}
 
 // Variáveis globais para módulos carregados dinamicamente
 let fetchRegulationDetails, KeepAliveManager, getBrowserAPIInstance;
@@ -483,88 +515,123 @@ api.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
   return false;
 });
 
-// Função para abrir sidebar com detecção robusta de browser
+// ✅ TASK-A-004: Função para abrir sidebar com detecção robusta de browser e fallbacks múltiplos
 async function openSidebar(tab) {
+  const log = logger || console;
+  
   try {
-    // Detectar browser baseado na disponibilidade de APIs específicas
-    const isFirefox = typeof globalThis.browser !== 'undefined' && !globalThis.chrome;
-    const isChrome = typeof globalThis.chrome !== 'undefined';
+    // ✅ TASK-A-004: Usar informações de browser detectadas
+    const browserName = browserInfo.isFirefox ? 'Firefox' : 
+                       browserInfo.isEdge ? 'Edge' : 
+                       browserInfo.isChrome ? 'Chrome' : 'Unknown';
 
-    logger.info('Tentando abrir sidebar/sidePanel', {
+    log.info('Tentando abrir sidebar/sidePanel', {
       operation: 'openSidebar',
-      browser: isFirefox ? 'Firefox' : isChrome ? 'Chrome/Edge' : 'Unknown',
-      hasSidePanel: !!api.sidePanel,
-      hasSidebarAction: !!api.sidebarAction,
+      browser: browserName,
+      capabilities: browserInfo.capabilities,
       tabId: tab?.id,
       windowId: tab?.windowId
     });
 
-    // Chrome/Edge: usar sidePanel API
-    if (api.sidePanel && typeof api.sidePanel.open === 'function') {
-      logger.debug('Usando Chrome sidePanel API');
-      await api.sidePanel.open({ windowId: tab.windowId });
-      logger.info('SidePanel aberto com sucesso no Chrome/Edge');
-      return;
-    }
-
-    // Firefox: usar sidebarAction API
-    if (api.sidebarAction && typeof api.sidebarAction.open === 'function') {
-      logger.debug('Usando Firefox sidebarAction.open API');
-      await api.sidebarAction.open();
-      logger.info('Sidebar aberto com sucesso no Firefox');
-      return;
-    }
-
-    // Fallback para Firefox: toggle se open não estiver disponível
-    if (api.sidebarAction && typeof api.sidebarAction.toggle === 'function') {
-      logger.debug('Usando Firefox sidebarAction.toggle API como fallback');
-      await api.sidebarAction.toggle();
-      logger.info('Sidebar alternado com sucesso no Firefox (fallback)');
-      return;
-    }
-
-    // Se nenhuma API estiver disponível, tentar abrir como popup
-    if (api.windows && api.windows.create) {
-      logger.warn('Nenhuma API de sidebar disponível, abrindo como popup');
-      await api.windows.create({
-        url: api.runtime.getURL('sidebar.html'),
-        type: 'popup',
-        width: 400,
-        height: 600,
-        focused: true
-      });
-      logger.info('Sidebar aberto como popup (fallback final)');
-      return;
-    }
-
-    // Se chegou até aqui, nenhuma opção funcionou
-    throw new Error('Nenhuma API de sidebar/sidePanel disponível');
-
-  } catch (error) {
-    logger.error('Erro ao abrir sidebar/sidePanel:', {
-      error: error.message,
-      stack: error.stack,
-      tabId: tab?.id,
-      windowId: tab?.windowId,
-      availableAPIs: {
-        sidePanel: !!api.sidePanel,
-        sidebarAction: !!api.sidebarAction,
-        windows: !!api.windows
+    // ✅ TASK-A-004: Estratégia 1 - Chrome/Edge sidePanel API
+    if (browserInfo.capabilities.sidePanel && tab?.windowId) {
+      try {
+        log.debug('Tentativa 1: Chrome sidePanel API');
+        await api.sidePanel.open({ windowId: tab.windowId });
+        log.info('SidePanel aberto com sucesso no Chrome/Edge');
+        return;
+      } catch (sidePanelError) {
+        log.warn('Falha no sidePanel API:', sidePanelError.message);
       }
-    });
+    }
 
-    // Tentar fallback final se ainda não tentou
-    try {
-      if (api.tabs && api.tabs.create) {
-        logger.warn('Tentando fallback final: abrir sidebar como nova aba');
+    // ✅ TASK-A-004: Estratégia 2 - Firefox sidebarAction.open API
+    if (browserInfo.capabilities.sidebarAction && api.sidebarAction.open) {
+      try {
+        log.debug('Tentativa 2: Firefox sidebarAction.open API');
+        await api.sidebarAction.open();
+        log.info('Sidebar aberto com sucesso no Firefox (open)');
+        return;
+      } catch (sidebarOpenError) {
+        log.warn('Falha no sidebarAction.open:', sidebarOpenError.message);
+      }
+    }
+
+    // ✅ TASK-A-004: Estratégia 3 - Firefox sidebarAction.toggle API
+    if (browserInfo.capabilities.sidebarAction && api.sidebarAction.toggle) {
+      try {
+        log.debug('Tentativa 3: Firefox sidebarAction.toggle API');
+        await api.sidebarAction.toggle();
+        log.info('Sidebar alternado com sucesso no Firefox (toggle)');
+        return;
+      } catch (sidebarToggleError) {
+        log.warn('Falha no sidebarAction.toggle:', sidebarToggleError.message);
+      }
+    }
+
+    // ✅ TASK-A-004: Estratégia 4 - Popup window
+    if (browserInfo.capabilities.windows) {
+      try {
+        log.debug('Tentativa 4: Abrindo como popup window');
+        await api.windows.create({
+          url: api.runtime.getURL('sidebar.html'),
+          type: 'popup',
+          width: 400,
+          height: 600,
+          focused: true
+        });
+        log.info('Sidebar aberto como popup window');
+        return;
+      } catch (windowError) {
+        log.warn('Falha ao abrir popup window:', windowError.message);
+      }
+    }
+
+    // ✅ TASK-A-004: Estratégia 5 - Nova aba (fallback final)
+    if (browserInfo.capabilities.tabs) {
+      try {
+        log.debug('Tentativa 5: Abrindo como nova aba (fallback final)');
         await api.tabs.create({
           url: api.runtime.getURL('sidebar.html'),
           active: true
         });
-        logger.info('Sidebar aberto como nova aba (fallback de emergência)');
+        log.info('Sidebar aberto como nova aba (fallback de emergência)');
+        return;
+      } catch (tabError) {
+        log.warn('Falha ao abrir nova aba:', tabError.message);
       }
-    } catch (fallbackError) {
-      logger.error('Fallback final também falhou:', fallbackError);
+    }
+
+    // ✅ TASK-A-004: Se chegou até aqui, nenhuma estratégia funcionou
+    throw new Error('Todas as estratégias de abertura de sidebar falharam');
+
+  } catch (error) {
+    log.error('Erro crítico ao abrir sidebar/sidePanel:', {
+      error: error.message,
+      stack: error.stack,
+      tabId: tab?.id,
+      windowId: tab?.windowId,
+      browserInfo,
+      availableAPIs: {
+        sidePanel: !!api.sidePanel,
+        sidebarAction: !!api.sidebarAction,
+        windows: !!api.windows,
+        tabs: !!api.tabs
+      }
+    });
+
+    // ✅ TASK-A-004: Notificar usuário sobre falha
+    try {
+      if (api.notifications && api.notifications.create) {
+        await api.notifications.create({
+          type: 'basic',
+          iconUrl: 'icons/icon-48.png',
+          title: 'Assistente de Regulação',
+          message: 'Não foi possível abrir o assistente. Tente recarregar a página.'
+        });
+      }
+    } catch (notificationError) {
+      log.warn('Falha ao mostrar notificação:', notificationError.message);
     }
   }
 }
@@ -627,6 +694,9 @@ async function initializeExtension() {
   // Usar console.log aqui é aceitável, pois o logger pode não estar pronto.
   console.log('[Background] Iniciando extensão...');
 
+  // ✅ TASK-A-004: Log de informações do browser na inicialização
+  logBrowserInfo();
+
   try {
     // Carregar módulos
     const modulesLoaded = await loadModules();
@@ -636,14 +706,28 @@ async function initializeExtension() {
       initializeKeepAlive();
       await setupDataCleanup();
 
-      logger.info('[Background] Inicialização completa');
+      // ✅ TASK-A-004: Log detalhado após inicialização completa
+      logger.info('[Background] Inicialização completa', {
+        operation: 'initializeExtension',
+        browserInfo,
+        modulesLoaded: true
+      });
     } else {
       const log = logger || console;
-      log.error('Falha ao carregar módulos - extensão pode não funcionar corretamente');
+      log.error('Falha ao carregar módulos - extensão pode não funcionar corretamente', {
+        operation: 'initializeExtension',
+        browserInfo,
+        modulesLoaded: false
+      });
     }
   } catch (error) {
     const log = logger || console;
-    log.error('Erro na inicialização:', error);
+    log.error('Erro na inicialização:', {
+      error: error.message,
+      stack: error.stack,
+      operation: 'initializeExtension',
+      browserInfo
+    });
   }
 }
 
