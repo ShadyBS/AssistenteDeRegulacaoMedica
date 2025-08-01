@@ -344,10 +344,20 @@ async function init() {
       if (urlWarning) urlWarning.classList.remove('hidden');
 
       if (openOptions) {
-        openOptions.addEventListener('click', () => api.runtime.openOptionsPage());
+        // Remove antes de adicionar
+        openOptions.removeEventListener('click', onOpenOptionsClick);
+        openOptions.addEventListener('click', onOpenOptionsClick);
       }
       if (reloadSidebar) {
-        reloadSidebar.addEventListener('click', () => location.reload());
+        reloadSidebar.removeEventListener('click', onReloadSidebarClick);
+        reloadSidebar.addEventListener('click', onReloadSidebarClick);
+      }
+      // Funções nomeadas para listeners de init
+      function onOpenOptionsClick() {
+        api.runtime.openOptionsPage();
+      }
+      function onReloadSidebarClick() {
+        location.reload();
       }
 
       // **não retornamos mais aqui**, apenas marcamos que deu “fallback”
@@ -537,11 +547,15 @@ function setupAutoModeToggle() {
     label.textContent = settings.enableAutomaticDetection ? 'Auto' : 'Manual';
   });
 
-  toggle.addEventListener('change', (event) => {
+  // Remove antes de adicionar
+  toggle.removeEventListener('change', onAutoModeToggleChange);
+  toggle.addEventListener('change', onAutoModeToggleChange);
+
+  function onAutoModeToggleChange(event) {
     const isEnabled = event.target.checked;
     api.storage.sync.set({ enableAutomaticDetection: isEnabled });
     label.textContent = isEnabled ? 'Auto' : 'Manual';
-  });
+  }
 }
 
 async function handleRegulationLoaded(regulationData) {
@@ -626,8 +640,7 @@ function handleShowRegulationInfo() {
   infoModal.classList.remove('hidden');
 }
 
-
-// Funções nomeadas para listeners
+// Funções nomeadas para listeners globais
 function onReloadBtnClick() {
   const patient = store.getPatient();
   if (patient && patient.ficha) {
