@@ -1077,4 +1077,5 @@ globalListeners.onDOMContentLoaded = init;
 document.addEventListener('DOMContentLoaded', globalListeners.onDOMContentLoaded);
 
 // Adiciona o listener de limpeza para quando a página da sidebar for descarregada
+// eslint-disable-next-line no-restricted-globals
 window.addEventListener('pagehide', cleanupEventListeners);
