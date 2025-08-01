@@ -1,0 +1,331 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "🚀 Dev: Start Development",
+      "type": "shell",
+      "command": "npm",
+      "args": ["run", "dev"],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "new",
+        "showReuseMessage": true,
+        "clear": false
+      },
+      "isBackground": true,
+      "problemMatcher": ["$eslint-stylish"],
+      "runOptions": {
+        "runOn": "folderOpen"
+      },
+      "detail": "Inicia desenvolvimento com hot reload"
+    },
+    
+    {
+      "label": "🏗️ Build: All Browsers",
+      "type": "shell",
+      "command": "npm",
+      "args": ["run", "build:all"],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared",
+        "showReuseMessage": true,
+        "clear": true
+      },
+      "problemMatcher": ["$eslint-stylish"],
+      "detail": "Build para Chrome, Firefox e Edge"
+    },
+    
+    {
+      "label": "🔍 Validate: Complete",
+      "type": "shell",
+      "command": "npm",
+      "args": ["run", "validate"],
+      "group": "test",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared",
+        "showReuseMessage": true,
+        "clear": true
+      },
+      "problemMatcher": ["$eslint-stylish"],
+      "detail": "Validação completa: manifest, segurança, performance"
+    },
+    
+    {
+      "label": "🧪 Test: All Tests",
+      "type": "shell",
+      "command": "npm",
+      "args": ["run", "test"],
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "dedicated",
+        "showReuseMessage": true,
+        "clear": true
+      },
+      "problemMatcher": ["$eslint-stylish"],
+      "detail": "Executa todos os testes (unit, integration, e2e)"
+    },
+    
+    {
+      "label": "🧪 Test: Unit Only",
+      "type": "shell",
+      "command": "npm",
+      "args": ["run", "test:unit"],
+      "group": "test",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared",
+        "showReuseMessage": true,
+        "clear": true
+      },
+      "problemMatcher": ["$eslint-stylish"],
+      "detail": "Executa apenas testes unitários"
+    },
+    
+    {
+      "label": "🧪 Test: Watch Mode",
+      "type": "shell",
+      "command": "npm",
+      "args": ["run", "test:watch"],
+      "group": "test",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "new",
+        "showReuseMessage": true,
+        "clear": false
+      },
+      "isBackground": true,
+      "problemMatcher": ["$eslint-stylish"],
+      "detail": "Testes em modo watch (re-executa ao salvar)"
+    },
+    
+    {
+      "label": "📊 Test: Coverage Report",
+      "type": "shell",
+      "command": "npm",
+      "args": ["run", "test:coverage"],
+      "group": "test",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": true,
+        "panel": "dedicated",
+        "showReuseMessage": true,
+        "clear": true
+      },
+      "problemMatcher": ["$eslint-stylish"],
+      "detail": "Gera relatório de cobertura de testes"
+    },
+    
+    {
+      "label": "🔧 Lint: Fix All",
+      "type": "shell",
+      "command": "npm",
+      "args": ["run", "lint:fix"],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared",
+        "showReuseMessage": true,
+        "clear": true
+      },
+      "problemMatcher": ["$eslint-stylish"],
+      "detail": "Corrige automaticamente problemas de lint"
+    },
+    
+    {
+      "label": "🎨 Build: CSS Only",
+      "type": "shell",
+      "command": "npm",
+      "args": ["run", "build:css"],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "silent",
+        "focus": false,
+        "panel": "shared",
+        "showReuseMessage": false,
+        "clear": false
+      },
+      "detail": "Compila apenas o TailwindCSS"
+    },
+    
+    {
+      "label": "📦 Package: All Stores",
+      "type": "shell",
+      "command": "npm",
+      "args": ["run", "package:all"],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": true,
+        "panel": "dedicated",
+        "showReuseMessage": true,
+        "clear": true
+      },
+      "problemMatcher": ["$eslint-stylish"],
+      "detail": "Gera packages para todas as web stores"
+    },
+    
+    {
+      "label": "🚀 Release: Patch",
+      "type": "shell",
+      "command": "npm",
+      "args": ["run", "release:patch"],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": true,
+        "panel": "dedicated",
+        "showReuseMessage": true,
+        "clear": true
+      },
+      "detail": "Release patch version (bug fixes)"
+    },
+    
+    {
+      "label": "🚀 Release: Minor",
+      "type": "shell",
+      "command": "npm",
+      "args": ["run", "release:minor"],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": true,
+        "panel": "dedicated",
+        "showReuseMessage": true,
+        "clear": true
+      },
+      "detail": "Release minor version (new features)"
+    },
+    
+    {
+      "label": "🔒 Security: Scan",
+      "type": "shell",
+      "command": "npm",
+      "args": ["run", "security:scan"],
+      "group": "test",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": true,
+        "panel": "dedicated",
+        "showReuseMessage": true,
+        "clear": true
+      },
+      "detail": "Scan de segurança e vulnerabilidades"
+    },
+    
+    {
+      "label": "🧹 Clean: All",
+      "type": "shell",
+      "command": "npm",
+      "args": ["run", "clean"],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "silent",
+        "focus": false,
+        "panel": "shared",
+        "showReuseMessage": false,
+        "clear": false
+      },
+      "detail": "Limpa todos os arquivos de build"
+    },
+    
+    {
+      "label": "🌐 Serve: Firefox",
+      "type": "shell",
+      "command": "npm",
+      "args": ["run", "serve"],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "new",
+        "showReuseMessage": true,
+        "clear": false
+      },
+      "isBackground": true,
+      "detail": "Serve extensão no Firefox para teste"
+    },
+    
+    {
+      "label": "📋 Docs: Generate",
+      "type": "shell",
+      "command": "npm",
+      "args": ["run", "docs:generate"],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared",
+        "showReuseMessage": true,
+        "clear": true
+      },
+      "detail": "Gera documentação JSDoc"
+    },
+    
+    {
+      "label": "🏥 Medical: Compliance Check",
+      "type": "shell",
+      "command": "npm",
+      "args": ["run", "validate:security"],
+      "group": "test",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": true,
+        "panel": "dedicated",
+        "showReuseMessage": true,
+        "clear": true
+      },
+      "detail": "Verifica compliance médico (GDPR/LGPD)"
+    },
+    
+    {
+      "label": "⚡ Quick: Pre-commit",
+      "type": "shell",
+      "command": "npm",
+      "args": ["run", "ci:validate"],
+      "group": "test",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": true,
+        "panel": "dedicated",
+        "showReuseMessage": true,
+        "clear": true
+      },
+      "detail": "Validação rápida antes do commit"
+    }
+  ]
+}

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-"use strict";
+'use strict';
 
-if (typeof browser === "undefined" && typeof chrome !== "undefined") {
+if (typeof browser === 'undefined' && typeof chrome !== 'undefined') {
   var browser = chrome;
 }

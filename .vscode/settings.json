@@ -1,3 +1,208 @@
 {
+  // 🏥 Assistente de Regulação Médica - VS Code Settings
+  
+  // 📁 Arquivos e Pastas
+  "files.exclude": {
+    "**/node_modules": true,
+    "**/dist": false,
+    "**/.git": true,
+    "**/coverage": true,
+    "**/.nyc_output": true,
+    "**/dist-zips": false,
+    "**/dist-packages": false
+  },
+  
+  // 🔍 Busca
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/dist": true,
+    "**/coverage": true,
+    "**/.git": true,
+    "**/dist-zips": true
+  },
+  
+  // 👀 Watcher de Arquivos
+  "files.watcherExclude": {
+    "**/node_modules/**": true,
+    "**/dist/**": true,
+    "**/coverage/**": true,
+    "**/.git/**": true
+  },
+  
+  // 💾 Auto Save
+  "files.autoSave": "onFocusChange",
+  "files.autoSaveDelay": 1000,
+  
+  // 📝 Editor
+  "editor.formatOnSave": true,
+  "editor.formatOnPaste": true,
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit",
+    "source.fixAll.stylelint": "explicit",
+    "source.organizeImports": "explicit"
+  },
+  
+  // 📏 Indentação e Formatação
+  "editor.tabSize": 2,
+  "editor.insertSpaces": true,
+  "editor.detectIndentation": false,
+  "editor.trimAutoWhitespace": true,
+  "files.trimTrailingWhitespace": true,
+  "files.insertFinalNewline": true,
+  "files.trimFinalNewlines": true,
+  
+  // 🎨 CSS/TailwindCSS
+  "css.validate": false,
+  "tailwindCSS.includeLanguages": {
+    "html": "html",
+    "javascript": "javascript",
+    "typescript": "typescript"
+  },
+  "tailwindCSS.files.exclude": [
+    "**/.git/**",
+    "**/node_modules/**",
+    "**/dist/**"
+  ],
+  
+  // 🔧 ESLint
+  "eslint.enable": true,
+  "eslint.validate": [
+    "javascript",
+    "typescript",
+    "javascriptreact",
+    "typescriptreact"
+  ],
+  "eslint.workingDirectories": [
+    "."
+  ],
+  "eslint.codeActionsOnSave.mode": "all",
+  
+  // 🎯 TypeScript/JavaScript
+  "typescript.preferences.importModuleSpecifier": "relative",
+  "javascript.preferences.importModuleSpecifier": "relative",
+  "typescript.suggest.autoImports": true,
+  "javascript.suggest.autoImports": true,
+  
+  // 🧪 Jest
+  "jest.jestCommandLine": "npm test",
+  "jest.autoRun": {
+    "watch": false,
+    "onSave": "test-src-file"
+  },
+  
+  // 🌐 Browser Extension Development
+  "emmet.includeLanguages": {
+    "javascript": "javascriptreact"
+  },
+  
+  // 📋 Specific File Associations
+  "files.associations": {
+    "*.json": "jsonc",
+    "manifest.json": "json",
+    "manifest-*.json": "json",
+    ".eslintrc*": "jsonc",
+    ".stylelintrc*": "jsonc"
+  },
+  
+  // 🔒 Medical Data Protection
+  "git.ignoreLimitWarning": true,
+  "editor.quickSuggestions": {
+    "strings": false
+  },
+  
+  // 📊 Coverage
+  "coverage-gutters.coverageFileNames": [
+    "lcov.info",
+    "cov.xml",
+    "coverage.xml",
+    "jacoco.xml"
+  ],
+  
+  // 🚀 Terminal
+  "terminal.integrated.defaultProfile.windows": "Git Bash",
+  "terminal.integrated.profiles.windows": {
+    "Git Bash": {
+      "path": "C:\\Program Files\\Git\\bin\\bash.exe",
+      "args": ["--login"]
+    }
+  },
+  
+  // 📁 Explorer
+  "explorer.fileNesting.enabled": true,
+  "explorer.fileNesting.patterns": {
+    "package.json": "package-lock.json, npm-shrinkwrap.json, yarn.lock",
+    "*.js": "${capture}.js.map, ${capture}.min.js, ${capture}.d.ts",
+    "*.ts": "${capture}.js, ${capture}.js.map, ${capture}.d.ts",
+    "manifest.json": "manifest-*.json",
+    "webpack.*.js": "webpack.config.js",
+    ".eslintrc.js": ".eslintignore",
+    ".stylelintrc.js": ".stylelintignore",
+    "jest.config.js": "jest.setup.js",
+    "README.md": "CHANGELOG.md, CONTRIBUTING.md, LICENSE*",
+    ".gitignore": ".gitattributes, .gitmodules"
+  },
+  
+  // 🎨 Tema e Interface
+  "workbench.colorTheme": "Dark+",
+  "workbench.iconTheme": "vs-seti",
+  "breadcrumbs.enabled": true,
+  "workbench.tree.indent": 20,
+  
+  // 📝 Specific Language Settings
+  "[javascript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.codeActionsOnSave": {
+      "source.fixAll.eslint": "explicit"
+    }
+  },
+  
+  "[typescript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.codeActionsOnSave": {
+      "source.fixAll.eslint": "explicit"
+    }
+  },
+  
+  "[css]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.codeActionsOnSave": {
+      "source.fixAll.stylelint": "explicit"
+    }
+  },
+  
+  "[html]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  
+  "[json]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  
+  "[jsonc]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  
+  "[markdown]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.wordWrap": "on"
+  },
+  
+  // 🔧 Debug
+  "debug.allowBreakpointsEverywhere": true,
+  "debug.javascript.autoAttachFilter": "onlyWithFlag",
+  
+  // 🚫 Disable problematic features for medical extension
+  "telemetry.telemetryLevel": "off",
+  "update.enableWindowsBackgroundUpdates": false,
+  "extensions.autoUpdate": false,
+  
+  // 📱 Mobile/Responsive
+  "emmet.triggerExpansionOnTab": true,
+  
+  // 🎯 IntelliSense
+  "typescript.suggest.includeCompletionsForImportStatements": true,
+  "javascript.suggest.includeCompletionsForImportStatements": true,
+  
+  // 🔒 Security & Privacy (Medical Extension)
   "codium.codeCompletion.enable": false
 }

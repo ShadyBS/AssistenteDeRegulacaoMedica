@@ -1,0 +1,73 @@
+{
+  "recommendations": [
+    // 🔧 Essenciais para Desenvolvimento
+    "esbenp.prettier-vscode",
+    "dbaeumer.vscode-eslint",
+    "stylelint.vscode-stylelint",
+    "ms-vscode.vscode-json",
+    "bradlc.vscode-tailwindcss",
+    
+    // 🌐 Browser Extension Development
+    "firefox-devtools.vscode-firefox-debug",
+    "msjsdiag.debugger-for-chrome",
+    "ms-vscode.js-debug",
+    "ms-vscode.vscode-typescript-next",
+    
+    // 🧪 Testing & Quality
+    "orta.vscode-jest",
+    "ms-vscode.test-adapter-converter",
+    "hbenl.vscode-test-explorer",
+    "ryanluker.vscode-coverage-gutters",
+    
+    // 📝 Documentation & Markdown
+    "yzhang.markdown-all-in-one",
+    "davidanson.vscode-markdownlint",
+    "bierner.jsdoc-markdown-highlighting",
+    "crystal-lang-tools.crystal-lang",
+    
+    // 🎨 UI/UX Development
+    "zignd.html-css-class-completion",
+    "ecmel.vscode-html-css",
+    "ms-vscode.live-server",
+    "ritwickdey.liveserver",
+    
+    // 🔒 Security & Medical Compliance
+    "ms-vscode.vscode-security-scanning",
+    "snyk-security.snyk-vulnerability-scanner",
+    "ms-vscode.vscode-github-issue-notebooks",
+    
+    // 📦 Package Management
+    "eg2.vscode-npm-script",
+    "christian-kohler.npm-intellisense",
+    "ms-vscode.vscode-npm-dependency-links",
+    
+    // 🔧 DevOps & Automation
+    "ms-vscode.github-browser",
+    "github.vscode-github-actions",
+    "ms-vscode.remote-repositories",
+    "github.copilot",
+    "github.copilot-chat",
+    
+    // 🏥 Medical Domain Specific
+    "redhat.vscode-yaml",
+    "ms-vscode.vscode-json-languageservice",
+    "ms-vscode.hexeditor",
+    
+    // 🎯 Productivity
+    "alefragnani.bookmarks",
+    "gruntfuggly.todo-tree",
+    "streetsidesoftware.code-spell-checker",
+    "ms-vscode.vscode-speech",
+    
+    // 🌍 Internationalization
+    "ms-ceintl.vscode-language-pack-pt-br",
+    "streetsidesoftware.code-spell-checker-portuguese-brazil"
+  ],
+  "unwantedRecommendations": [
+    "ms-vscode.vscode-typescript",
+    "hookyqr.beautify",
+    "bradlc.vscode-css-peek",
+    "formulahendry.auto-rename-tag",
+    "ms-vscode.vscode-html-languageservice"
+  ]
+}

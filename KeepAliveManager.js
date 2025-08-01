@@ -1,7 +1,7 @@
 /**
  * @file Gerenciador de Keep-Alive para manter a sessão ativa
  */
-import * as API from "./api.js";
+import * as API from './api.js';
 
 export class KeepAliveManager {
   constructor() {
@@ -17,9 +17,9 @@ export class KeepAliveManager {
     await this.loadSettings();
     
     // Escuta mudanças nas configurações
-    if (typeof browser !== "undefined") {
+    if (typeof browser !== 'undefined') {
       browser.storage.onChanged.addListener((changes, areaName) => {
-        if (areaName === "sync" && changes.keepSessionAliveInterval) {
+        if (areaName === 'sync' && changes.keepSessionAliveInterval) {
           this.updateInterval(changes.keepSessionAliveInterval.newValue);
         }
       });
@@ -28,14 +28,14 @@ export class KeepAliveManager {
 
   async loadSettings() {
     try {
-      const api = typeof browser !== "undefined" ? browser : chrome;
+      const api = typeof browser !== 'undefined' ? browser : chrome;
       const result = await api.storage.sync.get({
         keepSessionAliveInterval: 10
       });
       
       this.updateInterval(result.keepSessionAliveInterval);
     } catch (error) {
-      console.error("Erro ao carregar configurações do keep-alive:", error);
+      console.error('Erro ao carregar configurações do keep-alive:', error);
     }
   }
 
@@ -55,12 +55,12 @@ export class KeepAliveManager {
 
   start() {
     if (this.intervalMinutes <= 0) {
-      console.log("Keep-alive desativado (intervalo = 0)");
+      console.log('Keep-alive desativado (intervalo = 0)');
       return;
     }
 
     if (this.isActive) {
-      console.log("Keep-alive já está ativo");
+      console.log('Keep-alive já está ativo');
       return;
     }
 
@@ -75,7 +75,7 @@ export class KeepAliveManager {
           console.warn(`Keep-alive falhou (${new Date().toLocaleTimeString()})`);
         }
       } catch (error) {
-        console.error("Erro no keep-alive:", error);
+        console.error('Erro no keep-alive:', error);
       }
     }, intervalMs);
 
@@ -90,7 +90,7 @@ export class KeepAliveManager {
     }
     
     this.isActive = false;
-    console.log("Keep-alive parado");
+    console.log('Keep-alive parado');
   }
 
   getStatus() {

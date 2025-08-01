@@ -2,10 +2,10 @@
  * @file Módulo SectionManager, responsável por gerir uma secção inteira da sidebar.
  */
 
-import { filterConfig } from "./filter-config.js";
-import * as Utils from "./utils.js";
-import * as API from "./api.js";
-import { store } from "./store.js";
+import { filterConfig } from './filter-config.js';
+import * as Utils from './utils.js';
+import * as API from './api.js';
+import { store } from './store.js';
 
 /**
  * Gera o HTML para o indicador de ordenação (seta para cima/baixo).
@@ -14,8 +14,8 @@ import { store } from "./store.js";
  * @returns {string} O caractere da seta ou uma string vazia.
  */
 export function getSortIndicator(key, state) {
-  if (state.key !== key) return "";
-  return state.order === "asc" ? "▲" : "▼";
+  if (state.key !== key) return '';
+  return state.order === 'asc' ? '▲' : '▼';
 }
 
 export class SectionManager {
@@ -37,7 +37,7 @@ export class SectionManager {
     this.currentPatient = null;
     this.isLoading = false;
     this.sortState = { ...config.initialSortState };
-    this.fetchType = "all";
+    this.fetchType = 'all';
 
     this.elements = {};
 
@@ -46,11 +46,11 @@ export class SectionManager {
 
   getPrefix(sectionKey) {
     const map = {
-      consultations: "consultation",
-      exams: "exam",
-      appointments: "appointment",
-      regulations: "regulation",
-      documents: "document",
+      consultations: 'consultation',
+      exams: 'exam',
+      appointments: 'appointment',
+      regulations: 'regulation',
+      documents: 'document',
     };
     return map[sectionKey] || sectionKey;
   }
@@ -94,28 +94,28 @@ export class SectionManager {
   }
 
   addEventListeners() {
-    this.elements.fetchBtn?.addEventListener("click", () => this.fetchData());
-    this.elements.toggleBtn?.addEventListener("click", () =>
+    this.elements.fetchBtn?.addEventListener('click', () => this.fetchData());
+    this.elements.toggleBtn?.addEventListener('click', () =>
       this.toggleSection()
     );
-    this.elements.toggleMoreBtn?.addEventListener("click", () =>
+    this.elements.toggleMoreBtn?.addEventListener('click', () =>
       this.toggleMoreFilters()
     );
-    this.elements.clearBtn?.addEventListener("click", () =>
+    this.elements.clearBtn?.addEventListener('click', () =>
       this.clearFilters()
     );
 
     this.elements.section?.addEventListener(
-      "input",
+      'input',
       Utils.debounce((e) => {
         if (e.target.matches("input[type='text'], input[type='date']"))
           this.applyFiltersAndRender();
       }, 300)
     );
 
-    this.elements.section?.addEventListener("change", (e) => {
+    this.elements.section?.addEventListener('change', (e) => {
       if (e.target.matches("select, input[type='checkbox']")) {
-        if (e.target.closest(".filter-select-group")) {
+        if (e.target.closest('.filter-select-group')) {
           this.handleFetchTypeChange(e.target);
         } else {
           this.applyFiltersAndRender();
@@ -125,16 +125,16 @@ export class SectionManager {
         this.loadFilterSet();
     });
 
-    this.elements.section?.addEventListener("click", (e) => {
+    this.elements.section?.addEventListener('click', (e) => {
       const target = e.target;
-      const sortHeader = target.closest(".sort-header");
+      const sortHeader = target.closest('.sort-header');
       if (sortHeader) this.handleSort(sortHeader.dataset.sortKey);
 
       if (target.closest(`#${this.prefix}-save-filter-btn`))
         this.saveFilterSet();
       if (target.closest(`#${this.prefix}-delete-filter-btn`))
         this.deleteFilterSet();
-      if (target.closest(".clear-automation-btn")) {
+      if (target.closest('.clear-automation-btn')) {
         this.clearAutomationFeedbackAndFilters(true);
       }
     });
@@ -148,7 +148,7 @@ export class SectionManager {
     this.applyFiltersAndRender();
 
     if (this.elements.section) {
-      this.elements.section.style.display = patient ? "block" : "none";
+      this.elements.section.style.display = patient ? 'block' : 'none';
     }
 
     if (
@@ -165,8 +165,8 @@ export class SectionManager {
 
   async fetchData() {
     if (!this.currentPatient) {
-      if (this.elements.section.style.display !== "none")
-        Utils.showMessage("Nenhum paciente selecionado.");
+      if (this.elements.section.style.display !== 'none')
+        Utils.showMessage('Nenhum paciente selecionado.');
       return;
     }
     if (this.isLoading) return;
@@ -194,19 +194,19 @@ export class SectionManager {
         isenPK: `${this.currentPatient.isenPK.idp}-${this.currentPatient.isenPK.ids}`,
         isenFullPKCrypto: this.currentPatient.isenFullPKCrypto,
         dataInicial: dataInicialValue
-          ? new Date(dataInicialValue).toLocaleDateString("pt-BR")
-          : "01/01/1900",
+          ? new Date(dataInicialValue).toLocaleDateString('pt-BR')
+          : '01/01/1900',
         dataFinal: dataFinalValue
-          ? new Date(dataFinalValue).toLocaleDateString("pt-BR")
-          : new Date().toLocaleDateString("pt-BR"),
+          ? new Date(dataFinalValue).toLocaleDateString('pt-BR')
+          : new Date().toLocaleDateString('pt-BR'),
         type: this.fetchType,
       };
 
-      if (this.sectionKey === "exams") {
+      if (this.sectionKey === 'exams') {
         params.comResultado =
-          this.fetchType === "withResult" || this.fetchType === "all";
+          this.fetchType === 'withResult' || this.fetchType === 'all';
         params.semResultado =
-          this.fetchType === "withoutResult" || this.fetchType === "all";
+          this.fetchType === 'withoutResult' || this.fetchType === 'all';
       }
 
       const result = await this.config.fetchFunction(params);
@@ -214,11 +214,11 @@ export class SectionManager {
     } catch (error) {
       console.error(`Erro ao buscar dados para ${this.sectionKey}:`, error);
       const sectionNameMap = {
-        consultations: "consultas",
-        exams: "exames",
-        appointments: "agendamentos",
-        regulations: "regulações",
-        documents: "documentos",
+        consultations: 'consultas',
+        exams: 'exames',
+        appointments: 'agendamentos',
+        regulations: 'regulações',
+        documents: 'documentos',
       };
       const friendlyName = sectionNameMap[this.sectionKey] || this.sectionKey;
       Utils.showMessage(
@@ -249,15 +249,15 @@ export class SectionManager {
     const { key, order } = this.sortState;
     return [...data].sort((a, b) => {
       let valA, valB;
-      if (key === "date" || key === "sortableDate") {
+      if (key === 'date' || key === 'sortableDate') {
         valA = a.sortableDate || Utils.parseDate(a.date);
         valB = b.sortableDate || Utils.parseDate(b.date);
       } else {
-        valA = (a[key] || "").toString().toLowerCase();
-        valB = (b[key] || "").toString().toLowerCase();
+        valA = (a[key] || '').toString().toLowerCase();
+        valB = (b[key] || '').toString().toLowerCase();
       }
-      if (valA < valB) return order === "asc" ? -1 : 1;
-      if (valA > valB) return order === "asc" ? 1 : -1;
+      if (valA < valB) return order === 'asc' ? -1 : 1;
+      if (valA > valB) return order === 'asc' ? 1 : -1;
       return 0;
     });
   }
@@ -266,29 +266,29 @@ export class SectionManager {
     const values = {};
     const filters = filterConfig[this.sectionKey] || [];
     filters.forEach((filter) => {
-      if (filter.type === "component") return;
+      if (filter.type === 'component') return;
 
       const el = document.getElementById(filter.id);
       if (el) {
-        values[filter.id] = el.type === "checkbox" ? el.checked : el.value;
+        values[filter.id] = el.type === 'checkbox' ? el.checked : el.value;
       }
     });
     return values;
   }
 
   toggleSection() {
-    this.elements.wrapper?.classList.toggle("show");
+    this.elements.wrapper?.classList.toggle('show');
     this.elements.toggleBtn.textContent =
-      this.elements.wrapper.classList.contains("show")
-        ? "Recolher"
-        : "Expandir";
+      this.elements.wrapper.classList.contains('show')
+        ? 'Recolher'
+        : 'Expandir';
   }
 
   toggleMoreFilters() {
-    const shouldShow = !this.elements.moreFilters.classList.contains("show");
-    this.elements.moreFilters.classList.toggle("show", shouldShow);
-    this.elements.toggleMoreBtn.querySelector(".button-text").textContent =
-      shouldShow ? "Menos filtros" : "Mais filtros";
+    const shouldShow = !this.elements.moreFilters.classList.contains('show');
+    this.elements.moreFilters.classList.toggle('show', shouldShow);
+    this.elements.toggleMoreBtn.querySelector('.button-text').textContent =
+      shouldShow ? 'Menos filtros' : 'Mais filtros';
     this.updateActiveFiltersIndicator();
   }
 
@@ -321,7 +321,7 @@ export class SectionManager {
     // --- FIM DA CORREÇÃO ---
 
     (filterConfig[this.sectionKey] || []).forEach((filter) => {
-      if (filter.type === "component") return;
+      if (filter.type === 'component') return;
 
       const el = document.getElementById(filter.id);
       if (el) {
@@ -336,16 +336,16 @@ export class SectionManager {
         } else {
           defaultValue =
             filter.defaultChecked ??
-            (filter.options ? filter.options[0].value : "");
+            (filter.options ? filter.options[0].value : '');
         }
 
-        if (el.type === "checkbox") {
+        if (el.type === 'checkbox') {
           el.checked = defaultValue;
         } else {
           el.value = defaultValue;
         }
 
-        if (el.classList.contains("filter-select-group")) {
+        if (el.classList.contains('filter-select-group')) {
           this.handleFetchTypeChange(el);
         }
       }
@@ -357,10 +357,10 @@ export class SectionManager {
 
   handleSort(sortKey) {
     if (this.sortState.key === sortKey) {
-      this.sortState.order = this.sortState.order === "asc" ? "desc" : "asc";
+      this.sortState.order = this.sortState.order === 'asc' ? 'desc' : 'asc';
     } else {
       this.sortState.key = sortKey;
-      this.sortState.order = "desc";
+      this.sortState.order = 'desc';
     }
     this.applyFiltersAndRender();
   }
@@ -372,37 +372,37 @@ export class SectionManager {
 
   updateActiveFiltersIndicator() {
     const indicator = this.elements.toggleMoreBtn?.querySelector(
-      "span:not(.button-text)"
+      'span:not(.button-text)'
     );
     if (!indicator || !this.elements.moreFilters) return;
-    const isShown = this.elements.moreFilters.classList.contains("show");
+    const isShown = this.elements.moreFilters.classList.contains('show');
     let activeCount = 0;
     const filterElements =
-      this.elements.moreFilters.querySelectorAll("input, select");
+      this.elements.moreFilters.querySelectorAll('input, select');
     filterElements.forEach((el) => {
       if (
-        (el.type === "select-one" || el.type === "select") &&
-        el.value !== "todos" &&
-        el.value !== "todas" &&
-        el.value !== "" &&
-        el.value !== "all"
+        (el.type === 'select-one' || el.type === 'select') &&
+        el.value !== 'todos' &&
+        el.value !== 'todas' &&
+        el.value !== '' &&
+        el.value !== 'all'
       )
         activeCount++;
-      else if (el.type === "text" && el.value.trim() !== "") activeCount++;
-      else if (el.type === "checkbox" && el.checked) activeCount++;
+      else if (el.type === 'text' && el.value.trim() !== '') activeCount++;
+      else if (el.type === 'checkbox' && el.checked) activeCount++;
     });
     if (activeCount > 0 && !isShown) {
       indicator.textContent = activeCount;
-      indicator.classList.remove("hidden");
+      indicator.classList.remove('hidden');
     } else {
-      indicator.classList.add("hidden");
+      indicator.classList.add('hidden');
     }
   }
 
   saveFilterSet() {
-    const name = window.prompt("Digite um nome para o conjunto de filtros:");
-    if (!name || name.trim() === "") {
-      Utils.showMessage("Nome inválido. O filtro não foi salvo.");
+    const name = window.prompt('Digite um nome para o conjunto de filtros:');
+    if (!name || name.trim() === '') {
+      Utils.showMessage('Nome inválido. O filtro não foi salvo.');
       return;
     }
 
@@ -422,7 +422,7 @@ export class SectionManager {
     }
     browser.storage.local.set({ savedFilterSets: savedSets });
     store.setSavedFilterSets(savedSets);
-    Utils.showMessage(`Filtro "${name}" salvo com sucesso.`, "success");
+    Utils.showMessage(`Filtro "${name}" salvo com sucesso.`, 'success');
   }
 
   loadFilterSet() {
@@ -438,10 +438,10 @@ export class SectionManager {
     Object.entries(set.values).forEach(([id, value]) => {
       const el = document.getElementById(id);
       if (el) {
-        if (el.type === "checkbox") el.checked = value;
+        if (el.type === 'checkbox') el.checked = value;
         else el.value = value;
 
-        if (el.classList.contains("filter-select-group")) {
+        if (el.classList.contains('filter-select-group')) {
           this.handleFetchTypeChange(el);
         }
       }
@@ -455,7 +455,7 @@ export class SectionManager {
     );
     const name = select.value;
     if (!name) {
-      Utils.showMessage("Selecione um filtro para apagar.");
+      Utils.showMessage('Selecione um filtro para apagar.');
       return;
     }
 
@@ -470,7 +470,7 @@ export class SectionManager {
     );
     browser.storage.local.set({ savedFilterSets: savedSets });
     store.setSavedFilterSets(savedSets);
-    Utils.showMessage(`Filtro "${name}" apagado.`, "success");
+    Utils.showMessage(`Filtro "${name}" apagado.`, 'success');
   }
 
   populateSavedFilterDropdown() {
@@ -482,7 +482,7 @@ export class SectionManager {
     select.innerHTML = '<option value="">Carregar filtro...</option>';
     const sets = store.getSavedFilterSets()[this.sectionKey] || [];
     sets.forEach((set) => {
-      const option = document.createElement("option");
+      const option = document.createElement('option');
       option.value = set.name;
       option.textContent = set.name;
       select.appendChild(option);
@@ -503,20 +503,20 @@ export class SectionManager {
         return orderA - orderB;
       });
 
-      if (this.elements.mainFilters) this.elements.mainFilters.innerHTML = "";
-      if (this.elements.moreFilters) this.elements.moreFilters.innerHTML = "";
+      if (this.elements.mainFilters) this.elements.mainFilters.innerHTML = '';
+      if (this.elements.moreFilters) this.elements.moreFilters.innerHTML = '';
 
       sortedItems.forEach((item) => {
         const location =
           layoutMap.get(item.id)?.location || item.defaultLocation;
         const container =
-          location === "main"
+          location === 'main'
             ? this.elements.mainFilters
             : this.elements.moreFilters;
 
         if (container) {
           let element;
-          if (item.type === "component") {
+          if (item.type === 'component') {
             element = this.createUiComponent(item.componentName);
           } else {
             element = this.createFilterElement(item);
@@ -533,18 +533,18 @@ export class SectionManager {
 
   createUiComponent(componentName) {
     switch (componentName) {
-      case "date-range":
-        return this.renderDateRangeComponent();
-      case "saved-filters":
-        return this.renderSavedFiltersComponent();
-      default:
-        return null;
+    case 'date-range':
+      return this.renderDateRangeComponent();
+    case 'saved-filters':
+      return this.renderSavedFiltersComponent();
+    default:
+      return null;
     }
   }
 
   renderDateRangeComponent() {
-    const container = document.createElement("div");
-    container.className = "grid grid-cols-2 gap-4 text-sm";
+    const container = document.createElement('div');
+    container.className = 'grid grid-cols-2 gap-4 text-sm';
     container.innerHTML = `
         <div>
             <label for="${this.prefix}-date-initial" class="block font-medium">Data Inicial</label>
@@ -565,8 +565,8 @@ export class SectionManager {
   }
 
   renderSavedFiltersComponent() {
-    const container = document.createElement("div");
-    container.className = "mt-4 pt-4 border-t";
+    const container = document.createElement('div');
+    container.className = 'mt-4 pt-4 border-t';
     container.id = `${this.prefix}-saved-filters-container`;
     container.innerHTML = `
         <h3 class="text-sm font-semibold text-slate-600 mt-3 mb-2">Filtros Salvos</h3>
@@ -588,41 +588,41 @@ export class SectionManager {
   }
 
   createFilterElement(filter) {
-    const container = document.createElement("div");
-    let elementHtml = "";
-    if (filter.type !== "checkbox") {
+    const container = document.createElement('div');
+    let elementHtml = '';
+    if (filter.type !== 'checkbox') {
       elementHtml += `<label for="${filter.id}" class="block font-medium mb-1 text-sm">${filter.label}</label>`;
     }
     switch (filter.type) {
-      case "text":
-        elementHtml += `<input type="text" id="${filter.id}" placeholder="${
-          filter.placeholder || ""
-        }" class="w-full px-2 py-1 border border-slate-300 rounded-md">`;
-        break;
-      case "select":
-      case "selectGroup":
-        elementHtml += `<select id="${filter.id}" class="w-full px-2 py-1 border border-slate-300 rounded-md bg-white">`;
+    case 'text':
+      elementHtml += `<input type="text" id="${filter.id}" placeholder="${
+        filter.placeholder || ''
+      }" class="w-full px-2 py-1 border border-slate-300 rounded-md">`;
+      break;
+    case 'select':
+    case 'selectGroup':
+      elementHtml += `<select id="${filter.id}" class="w-full px-2 py-1 border border-slate-300 rounded-md bg-white">`;
 
-        if (
-          filter.id === "regulation-filter-priority" &&
+      if (
+        filter.id === 'regulation-filter-priority' &&
           this.globalSettings.regulationPriorities
-        ) {
-          elementHtml += `<option value="todas">Todas</option>`;
-          this.globalSettings.regulationPriorities.forEach((prio) => {
-            elementHtml += `<option value="${prio.coreDescricao}">${prio.coreDescricao}</option>`;
-          });
-        } else {
-          (filter.options || []).forEach((opt) => {
-            elementHtml += `<option value="${opt.value}">${opt.text}</option>`;
-          });
-        }
-        elementHtml += `</select>`;
-        break;
-      case "checkbox":
-        container.className = "flex items-center";
-        elementHtml += `<input id="${filter.id}" type="checkbox" class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+      ) {
+        elementHtml += '<option value="todas">Todas</option>';
+        this.globalSettings.regulationPriorities.forEach((prio) => {
+          elementHtml += `<option value="${prio.coreDescricao}">${prio.coreDescricao}</option>`;
+        });
+      } else {
+        (filter.options || []).forEach((opt) => {
+          elementHtml += `<option value="${opt.value}">${opt.text}</option>`;
+        });
+      }
+      elementHtml += '</select>';
+      break;
+    case 'checkbox':
+      container.className = 'flex items-center';
+      elementHtml += `<input id="${filter.id}" type="checkbox" class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
                           <label for="${filter.id}" class="ml-2 block text-sm text-slate-700">${filter.label}</label>`;
-        break;
+      break;
     }
     container.innerHTML = elementHtml;
     return container;
@@ -647,11 +647,11 @@ export class SectionManager {
 
     Object.entries(filterSettings).forEach(([filterId, value]) => {
       // Pula a propriedade dateRange que já foi tratada
-      if (filterId === "dateRange") return;
+      if (filterId === 'dateRange') return;
 
       const el = document.getElementById(filterId);
       if (el) {
-        if (el.type === "checkbox") {
+        if (el.type === 'checkbox') {
           el.checked = value;
         } else {
           el.value = value;
@@ -668,17 +668,17 @@ export class SectionManager {
                 <button class="clear-automation-btn text-blue-800 hover:text-blue-900 font-bold" title="Limpar filtro automático">&times;</button>
             </div>
         `;
-      this.elements.automationFeedback.classList.remove("hidden");
+      this.elements.automationFeedback.classList.remove('hidden');
     }
   }
 
   clearAutomationFeedbackAndFilters(shouldRender = true) {
     if (
       this.elements.automationFeedback &&
-      !this.elements.automationFeedback.classList.contains("hidden")
+      !this.elements.automationFeedback.classList.contains('hidden')
     ) {
-      this.elements.automationFeedback.classList.add("hidden");
-      this.elements.automationFeedback.innerHTML = "";
+      this.elements.automationFeedback.classList.add('hidden');
+      this.elements.automationFeedback.innerHTML = '';
       this.clearFilters(false);
     }
     if (shouldRender) {

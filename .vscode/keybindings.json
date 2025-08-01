@@ -1,0 +1,201 @@
+[
+  // 🚀 Build & Development
+  {
+    "key": "ctrl+shift+b",
+    "command": "workbench.action.tasks.runTask",
+    "args": "🚀 Dev: Start Development"
+  },
+  {
+    "key": "ctrl+alt+b",
+    "command": "workbench.action.tasks.runTask",
+    "args": "🏗️ Build: All Browsers"
+  },
+  {
+    "key": "ctrl+shift+p ctrl+shift+b",
+    "command": "workbench.action.tasks.runTask",
+    "args": "🎨 Build: CSS Only"
+  },
+  
+  // 🧪 Testing
+  {
+    "key": "ctrl+shift+t",
+    "command": "workbench.action.tasks.runTask",
+    "args": "🧪 Test: All Tests"
+  },
+  {
+    "key": "ctrl+alt+t",
+    "command": "workbench.action.tasks.runTask",
+    "args": "🧪 Test: Unit Only"
+  },
+  {
+    "key": "ctrl+shift+w",
+    "command": "workbench.action.tasks.runTask",
+    "args": "🧪 Test: Watch Mode"
+  },
+  {
+    "key": "ctrl+shift+c",
+    "command": "workbench.action.tasks.runTask",
+    "args": "📊 Test: Coverage Report"
+  },
+  
+  // 🔍 Validation & Linting
+  {
+    "key": "ctrl+shift+v",
+    "command": "workbench.action.tasks.runTask",
+    "args": "🔍 Validate: Complete"
+  },
+  {
+    "key": "ctrl+shift+l",
+    "command": "workbench.action.tasks.runTask",
+    "args": "🔧 Lint: Fix All"
+  },
+  
+  // 🔒 Security & Medical
+  {
+    "key": "ctrl+shift+s ctrl+shift+c",
+    "command": "workbench.action.tasks.runTask",
+    "args": "🔒 Security: Scan"
+  },
+  {
+    "key": "ctrl+shift+m ctrl+shift+c",
+    "command": "workbench.action.tasks.runTask",
+    "args": "🏥 Medical: Compliance Check"
+  },
+  
+  // 📦 Package & Release
+  {
+    "key": "ctrl+shift+p ctrl+shift+a",
+    "command": "workbench.action.tasks.runTask",
+    "args": "📦 Package: All Stores"
+  },
+  {
+    "key": "ctrl+shift+r ctrl+shift+p",
+    "command": "workbench.action.tasks.runTask",
+    "args": "🚀 Release: Patch"
+  },
+  {
+    "key": "ctrl+shift+r ctrl+shift+m",
+    "command": "workbench.action.tasks.runTask",
+    "args": "🚀 Release: Minor"
+  },
+  
+  // 🧹 Utilities
+  {
+    "key": "ctrl+shift+x ctrl+shift+c",
+    "command": "workbench.action.tasks.runTask",
+    "args": "🧹 Clean: All"
+  },
+  {
+    "key": "ctrl+shift+q ctrl+shift+p",
+    "command": "workbench.action.tasks.runTask",
+    "args": "⚡ Quick: Pre-commit"
+  },
+  
+  // 📝 Documentation
+  {
+    "key": "ctrl+shift+d ctrl+shift+g",
+    "command": "workbench.action.tasks.runTask",
+    "args": "📋 Docs: Generate"
+  },
+  
+  // 🌐 Browser Specific
+  {
+    "key": "ctrl+shift+f ctrl+shift+s",
+    "command": "workbench.action.tasks.runTask",
+    "args": "🌐 Serve: Firefox"
+  },
+  
+  // 🎯 Debug Shortcuts
+  {
+    "key": "f5",
+    "command": "workbench.action.debug.start",
+    "when": "!inDebugMode"
+  },
+  {
+    "key": "ctrl+f5",
+    "command": "workbench.action.debug.run",
+    "when": "!inDebugMode"
+  },
+  {
+    "key": "shift+f5",
+    "command": "workbench.action.debug.stop",
+    "when": "inDebugMode"
+  },
+  {
+    "key": "ctrl+shift+f5",
+    "command": "workbench.action.debug.restart",
+    "when": "inDebugMode"
+  },
+  
+  // 📁 File Navigation for Extension Development
+  {
+    "key": "ctrl+shift+m",
+    "command": "workbench.action.quickOpen",
+    "args": "manifest.json"
+  },
+  {
+    "key": "ctrl+shift+s ctrl+shift+j",
+    "command": "workbench.action.quickOpen",
+    "args": "sidebar.js"
+  },
+  {
+    "key": "ctrl+shift+c ctrl+shift+j",
+    "command": "workbench.action.quickOpen",
+    "args": "content-script.js"
+  },
+  {
+    "key": "ctrl+shift+b ctrl+shift+j",
+    "command": "workbench.action.quickOpen",
+    "args": "background.js"
+  },
+  
+  // 🔍 Search Specific to Medical Extension
+  {
+    "key": "ctrl+shift+f ctrl+shift+m",
+    "command": "workbench.action.findInFiles",
+    "args": {
+      "query": "// 🏥",
+      "filesToInclude": "**/*.js",
+      "isRegex": false
+    }
+  },
+  {
+    "key": "ctrl+shift+f ctrl+shift+s",
+    "command": "workbench.action.findInFiles",
+    "args": {
+      "query": "// 🔒",
+      "filesToInclude": "**/*.js",
+      "isRegex": false
+    }
+  },
+  
+  // 📋 Code Snippets
+  {
+    "key": "ctrl+shift+i ctrl+shift+c",
+    "command": "editor.action.insertSnippet",
+    "args": {
+      "name": "Browser Extension: Content Script"
+    }
+  },
+  {
+    "key": "ctrl+shift+i ctrl+shift+b",
+    "command": "editor.action.insertSnippet",
+    "args": {
+      "name": "Browser Extension: Background Script"
+    }
+  },
+  {
+    "key": "ctrl+shift+i ctrl+shift+a",
+    "command": "editor.action.insertSnippet",
+    "args": {
+      "name": "Medical API Call"
+    }
+  },
+  {
+    "key": "ctrl+shift+i ctrl+shift+t",
+    "command": "editor.action.insertSnippet",
+    "args": {
+      "name": "Jest Test for Extension"
+    }
+  }
+]

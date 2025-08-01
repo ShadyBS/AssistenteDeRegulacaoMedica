@@ -1,6 +1,6 @@
-import "./browser-polyfill.js";
+import './browser-polyfill.js';
 
-const api = typeof browser !== "undefined" ? browser : chrome;
+const api = typeof browser !== 'undefined' ? browser : chrome;
 
 /**
  * Obtém a URL base do sistema a partir das configurações salvas pelo usuário.
@@ -9,9 +9,9 @@ const api = typeof browser !== "undefined" ? browser : chrome;
 export async function getBaseUrl() {
   let data;
   try {
-    data = await api.storage.sync.get("baseUrl");
+    data = await api.storage.sync.get('baseUrl');
   } catch (e) {
-    console.error("Erro ao obter a URL base do storage:", e);
+    console.error('Erro ao obter a URL base do storage:', e);
     throw e;
   }
 
@@ -20,7 +20,7 @@ export async function getBaseUrl() {
   }
 
   console.error("URL base não configurada. Vá em 'Opções' para configurá-la.");
-  throw new Error("URL_BASE_NOT_CONFIGURED");
+  throw new Error('URL_BASE_NOT_CONFIGURED');
 }
 
 /**
@@ -31,7 +31,7 @@ function handleFetchError(response) {
   console.error(
     `Erro na requisição: ${response.status} ${response.statusText}`
   );
-  throw new Error("Falha na comunicação com o servidor.");
+  throw new Error('Falha na comunicação com o servidor.');
 }
 
 /**
@@ -40,10 +40,10 @@ function handleFetchError(response) {
  * @returns {string} O texto extraído.
  */
 function getTextFromHTML(htmlString) {
-  if (!htmlString) return "";
+  if (!htmlString) return '';
   const parser = new DOMParser();
-  const doc = parser.parseFromString(htmlString, "text/html");
-  return doc.body.textContent || "";
+  const doc = parser.parseFromString(htmlString, 'text/html');
+  return doc.body.textContent || '';
 }
 
 /**
@@ -59,16 +59,16 @@ export async function fetchRegulationPriorities() {
   try {
     const response = await fetch(url);
     if (!response.ok) {
-      console.error("Não foi possível buscar as prioridades de regulação.");
+      console.error('Não foi possível buscar as prioridades de regulação.');
       return [];
     }
     const data = await response.json();
     // Filtra apenas as ativas e ordena pela ordem de exibição definida no sistema
     return data
-      .filter((p) => p.coreIsAtivo === "t")
+      .filter((p) => p.coreIsAtivo === 't')
       .sort((a, b) => a.coreOrdemExibicao - b.coreOrdemExibicao);
   } catch (error) {
-    console.error("Erro de rede ao buscar prioridades:", error);
+    console.error('Erro de rede ao buscar prioridades:', error);
     return []; // Retorna lista vazia em caso de falha de rede
   }
 }
@@ -82,7 +82,7 @@ export async function fetchRegulationPriorities() {
  */
 export async function fetchRegulationDetails({ reguIdp, reguIds }) {
   if (!reguIdp || !reguIds) {
-    throw new Error("IDs da regulação são necessários.");
+    throw new Error('IDs da regulação são necessários.');
   }
   const baseUrl = await getBaseUrl();
   // Este é o endpoint que vimos no arquivo HAR.
@@ -90,15 +90,15 @@ export async function fetchRegulationDetails({ reguIdp, reguIds }) {
     `${baseUrl}/sigss/regulacaoControleSolicitacao/visualiza`
   );
   url.search = new URLSearchParams({
-    "reguPK.idp": reguIdp,
-    "reguPK.ids": reguIds,
+    'reguPK.idp': reguIdp,
+    'reguPK.ids': reguIds,
   }).toString();
 
   const response = await fetch(url, {
-    method: "GET",
+    method: 'GET',
     headers: {
-      Accept: "application/json, text/javascript, */*; q=0.01",
-      "X-Requested-With": "XMLHttpRequest",
+      Accept: 'application/json, text/javascript, */*; q=0.01',
+      'X-Requested-With': 'XMLHttpRequest',
     },
   });
 
@@ -107,38 +107,38 @@ export async function fetchRegulationDetails({ reguIdp, reguIds }) {
     return null;
   }
 
-  const contentType = response.headers.get("content-type");
-  if (contentType && contentType.includes("application/json")) {
+  const contentType = response.headers.get('content-type');
+  if (contentType && contentType.includes('application/json')) {
     const data = await response.json();
     // O objeto de dados está aninhado sob a chave "regulacao"
     return data.regulacao || null;
   } else {
     throw new Error(
-      "A resposta do servidor não foi JSON. A sessão pode ter expirado."
+      'A resposta do servidor não foi JSON. A sessão pode ter expirado.'
     );
   }
 }
 
 function parseConsultasHTML(htmlString) {
   const parser = new DOMParser();
-  const doc = parser.parseFromString(htmlString, "text/html");
-  const rows = Array.from(doc.querySelectorAll("tbody > tr"));
+  const doc = parser.parseFromString(htmlString, 'text/html');
+  const rows = Array.from(doc.querySelectorAll('tbody > tr'));
   const consultations = [];
   const getFormattedText = (element) => {
-    if (!element) return "";
+    if (!element) return '';
     const clone = element.cloneNode(true);
     clone
-      .querySelectorAll("br")
+      .querySelectorAll('br')
       .forEach((br) =>
-        br.parentNode.replaceChild(document.createTextNode("\n"), br)
+        br.parentNode.replaceChild(document.createTextNode('\n'), br)
       );
-    return clone.textContent || "";
+    return clone.textContent || '';
   };
   const parseDateForSorting = (dateString) => {
     const datePart = (
-      dateString.split("\n").find((p) => p.startsWith("At")) || dateString
+      dateString.split('\n').find((p) => p.startsWith('At')) || dateString
     )
-      .replace("At", "")
+      .replace('At', '')
       .trim();
     const match = datePart.match(
       /(\d{2})\/(\d{2})\/(\d{4})(?: (\d{2}):(\d{2}):(\d{2}))?/
@@ -150,113 +150,113 @@ function parseConsultasHTML(htmlString) {
   let i = 0;
   while (i < rows.length) {
     const mainRow = rows[i];
-    const mainCells = mainRow.querySelectorAll("td");
-    if (mainCells.length < 5 || !mainCells[0].className.includes("width10")) {
+    const mainCells = mainRow.querySelectorAll('td');
+    if (mainCells.length < 5 || !mainCells[0].className.includes('width10')) {
       i++;
       continue;
     }
-    const dateText = mainCells[1].textContent.trim().replace(/\s+/g, " ");
+    const dateText = mainCells[1].textContent.trim().replace(/\s+/g, ' ');
     const consultation = {
       priority: mainCells[0].textContent.trim(),
-      date: dateText.replace("At", "\nAt"),
+      date: dateText.replace('At', '\nAt'),
       sortableDate: parseDateForSorting(dateText),
       unit: mainCells[2].textContent.trim(),
       specialty: mainCells[3].textContent.trim(),
       professional: mainCells[4].textContent
         .trim()
-        .replace(/Insc\.: \d+/, "")
+        .replace(/Insc\.: \d+/, '')
         .trim(),
       details: [],
-      isNoShow: mainRow.textContent.includes("FALTOU A CONSULTA"),
+      isNoShow: mainRow.textContent.includes('FALTOU A CONSULTA'),
     };
     let endIndex = rows.findIndex(
       (row, index) =>
         index > i &&
-        row.querySelectorAll("td").length > 5 &&
-        row.querySelectorAll("td")[0].className.includes("width10")
+        row.querySelectorAll('td').length > 5 &&
+        row.querySelectorAll('td')[0].className.includes('width10')
     );
     if (endIndex === -1) endIndex = rows.length;
     const blockRows = rows.slice(i + 1, endIndex);
     const isSoapNote = blockRows.some((row) =>
-      row.textContent.includes("SOAP -")
+      row.textContent.includes('SOAP -')
     );
     if (isSoapNote) {
-      const soapSections = ["SUBJETIVO", "OBJETIVO", "AVALIAÇÃO", "PLANO"];
+      const soapSections = ['SUBJETIVO', 'OBJETIVO', 'AVALIAÇÃO', 'PLANO'];
       soapSections.forEach((sectionName) => {
         const headerRowIndex = blockRows.findIndex((row) =>
           row.textContent.includes(`SOAP - ${sectionName}`)
         );
         if (headerRowIndex === -1) return;
-        let content = "",
-          ciapCid = "",
-          obsNota = "";
+        let content = '',
+          ciapCid = '',
+          obsNota = '';
         const contentEndIndex = blockRows.findIndex(
           (row, index) =>
-            index > headerRowIndex && row.textContent.includes("SOAP -")
+            index > headerRowIndex && row.textContent.includes('SOAP -')
         );
         const sectionRows = blockRows.slice(
           headerRowIndex + 1,
           contentEndIndex !== -1 ? contentEndIndex : blockRows.length
         );
         sectionRows.forEach((row) => {
-          const diagCell = Array.from(row.querySelectorAll("td")).find(
+          const diagCell = Array.from(row.querySelectorAll('td')).find(
             (cell) =>
-              cell.textContent.includes("CID -") ||
-              cell.textContent.includes("CIAP -")
+              cell.textContent.includes('CID -') ||
+              cell.textContent.includes('CIAP -')
           );
           if (diagCell) {
             ciapCid = diagCell.textContent.trim();
             if (diagCell.nextElementSibling)
               ciapCid += ` - ${diagCell.nextElementSibling.textContent.trim()}`;
           }
-          const descDiv = row.querySelector(".divHpdnObs");
+          const descDiv = row.querySelector('.divHpdnObs');
           if (descDiv) content += getFormattedText(descDiv);
-          const obsCell = Array.from(row.querySelectorAll("td")).find((cell) =>
-            cell.textContent.trim().startsWith("OBS./NOTA:")
+          const obsCell = Array.from(row.querySelectorAll('td')).find((cell) =>
+            cell.textContent.trim().startsWith('OBS./NOTA:')
           );
           if (obsCell)
-            obsNota = obsCell.textContent.replace("OBS./NOTA:", "").trim();
+            obsNota = obsCell.textContent.replace('OBS./NOTA:', '').trim();
         });
-        let finalValue = "";
+        let finalValue = '';
         if (ciapCid) finalValue += ciapCid.trim();
         if (obsNota)
-          finalValue += (finalValue ? "\n" : "") + `Obs.: ${obsNota.trim()}`;
+          finalValue += (finalValue ? '\n' : '') + `Obs.: ${obsNota.trim()}`;
         if (content)
           finalValue +=
-            (finalValue ? "\n" : "") + `Descrição: ${content.trim()}`;
+            (finalValue ? '\n' : '') + `Descrição: ${content.trim()}`;
         if (finalValue.trim())
           consultation.details.push({ label: sectionName, value: finalValue });
       });
     } else {
       blockRows.forEach((row) => {
-        const cidCell = Array.from(row.querySelectorAll("td")).find((cell) =>
-          cell.textContent.includes("CID -")
+        const cidCell = Array.from(row.querySelectorAll('td')).find((cell) =>
+          cell.textContent.includes('CID -')
         );
         if (cidCell) {
           const descCell = cidCell.nextElementSibling;
           if (descCell)
             consultation.details.push({
-              label: "Hipótese Diagnóstica",
+              label: 'Hipótese Diagnóstica',
               value: `${cidCell.textContent.trim()} - ${descCell.textContent.trim()}`,
             });
         }
         const rowText = row.textContent.trim();
-        if (rowText.includes("DESCRIÇÃO DA CONSULTA")) {
+        if (rowText.includes('DESCRIÇÃO DA CONSULTA')) {
           const nextRow = row.nextElementSibling;
-          const descDiv = nextRow?.querySelector(".divHpdnObs");
+          const descDiv = nextRow?.querySelector('.divHpdnObs');
           if (descDiv)
             consultation.details.push({
-              label: "Descrição da Consulta",
+              label: 'Descrição da Consulta',
               value: getFormattedText(descDiv).trim(),
             });
         }
-        if (rowText.includes("OBSERVAÇÃO DE ENFERMAGEM:")) {
-          const obsCell = row.querySelector("td[colspan]");
+        if (rowText.includes('OBSERVAÇÃO DE ENFERMAGEM:')) {
+          const obsCell = row.querySelector('td[colspan]');
           if (obsCell)
             consultation.details.push({
-              label: "Observação de Enfermagem",
+              label: 'Observação de Enfermagem',
               value: getFormattedText(obsCell)
-                .replace("OBSERVAÇÃO DE ENFERMAGEM:", "")
+                .replace('OBSERVAÇÃO DE ENFERMAGEM:', '')
                 .trim(),
             });
         }
@@ -275,21 +275,21 @@ export async function searchPatients(term) {
   url.search = new URLSearchParams({ searchString: term });
   const response = await fetch(url, {
     headers: {
-      Accept: "application/json, text/javascript, */*; q=0.01",
-      "X-Requested-With": "XMLHttpRequest",
+      Accept: 'application/json, text/javascript, */*; q=0.01',
+      'X-Requested-With': 'XMLHttpRequest',
     },
   });
   if (!response.ok) handleFetchError(response);
   const data = await response.json();
   return Array.isArray(data)
     ? data.map((p) => ({
-        idp: p[0],
-        ids: p[1],
-        value: p[5],
-        cns: p[6],
-        dataNascimento: p[7],
-        cpf: p[15],
-      }))
+      idp: p[0],
+      ids: p[1],
+      value: p[5],
+      cns: p[6],
+      dataNascimento: p[7],
+      cpf: p[15],
+    }))
     : [];
 }
 
@@ -302,26 +302,26 @@ export async function fetchVisualizaUsuario({ idp, ids }) {
     idp
   )}&isenPK.ids=${encodeURIComponent(ids)}`;
   const response = await fetch(url, {
-    method: "POST",
+    method: 'POST',
     headers: {
-      "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
-      "X-Requested-With": "XMLHttpRequest",
-      Accept: "application/json, text/javascript, */*; q=0.01",
+      'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+      'X-Requested-With': 'XMLHttpRequest',
+      Accept: 'application/json, text/javascript, */*; q=0.01',
     },
     body,
   });
   if (!response.ok) handleFetchError(response);
 
-  const contentType = response.headers.get("content-type");
-  if (contentType && contentType.indexOf("application/json") !== -1) {
+  const contentType = response.headers.get('content-type');
+  if (contentType && contentType.indexOf('application/json') !== -1) {
     const patientData = await response.json();
     return patientData?.usuarioServico || {};
   } else {
     console.error(
-      "A resposta do servidor não foi JSON. Provável expiração de sessão."
+      'A resposta do servidor não foi JSON. Provável expiração de sessão.'
     );
     throw new Error(
-      "A sessão pode ter expirado. Por favor, faça login no sistema novamente."
+      'A sessão pode ter expirado. Por favor, faça login no sistema novamente.'
     );
   }
 }
@@ -335,17 +335,17 @@ export async function fetchProntuarioHash({
   const url = `${baseUrl}/sigss/common/queryStrToParamHash`;
   const rawParamString = `isenFullPKCrypto=${isenFullPKCrypto}&moip_idp=4&moip_ids=1&dataInicial=${dataInicial}&dataFinal=${dataFinal}&ppdc=t&consulta_basica=t&obs_enfermagem=t&encaminhamento=t&consulta_especializada=t&consulta_odonto=t&exame_solicitado=t&exame=t&triagem=t&procedimento=t&vacina=t&proc_odonto=t&medicamento_receitado=t&demais_orientacoes=t&medicamento_retirado=t&aih=t&acs=t&lista_espera=t&beneficio=f&internacao=t&apac=t&procedimento_coletivo=t&justificativa=&responsavelNome=&responsavelCPF=&isOdonto=t&isSoOdonto=f`;
   const response = await fetch(url, {
-    method: "POST",
+    method: 'POST',
     headers: {
-      "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+      'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
     },
     body: `paramString=${encodeURIComponent(rawParamString)}`,
   });
   if (!response.ok)
-    throw new Error("Não foi possível gerar o passe de acesso.");
+    throw new Error('Não foi possível gerar o passe de acesso.');
   const data = await response.json();
   if (data?.string) return data.string;
-  throw new Error(data.mensagem || "Resposta não continha o hash.");
+  throw new Error(data.mensagem || 'Resposta não continha o hash.');
 }
 
 export async function fetchConsultasEspecializadas({
@@ -353,7 +353,7 @@ export async function fetchConsultasEspecializadas({
   dataInicial,
   dataFinal,
 }) {
-  if (!isenFullPKCrypto) throw new Error("ID criptografado necessário.");
+  if (!isenFullPKCrypto) throw new Error('ID criptografado necessário.');
   const baseUrl = await getBaseUrl();
   const url = new URL(
     `${baseUrl}/sigss/prontuarioAmbulatorial2/buscaDadosConsultaEspecializadas_HTML`
@@ -365,15 +365,15 @@ export async function fetchConsultasEspecializadas({
   });
   const response = await fetch(url, {
     headers: {
-      Accept: "application/json, text/javascript, */*; q=0.01",
-      "X-Requested-With": "XMLHttpRequest",
+      Accept: 'application/json, text/javascript, */*; q=0.01',
+      'X-Requested-With': 'XMLHttpRequest',
     },
   });
   if (!response.ok) handleFetchError(response);
   const data = await response.json();
   return {
-    htmlData: data?.tabela || "",
-    jsonData: parseConsultasHTML(data?.tabela || ""),
+    htmlData: data?.tabela || '',
+    jsonData: parseConsultasHTML(data?.tabela || ''),
   };
 }
 
@@ -382,7 +382,7 @@ export async function fetchConsultasBasicas({
   dataInicial,
   dataFinal,
 }) {
-  if (!isenFullPKCrypto) throw new Error("ID criptografado necessário.");
+  if (!isenFullPKCrypto) throw new Error('ID criptografado necessário.');
   const baseUrl = await getBaseUrl();
   const url = new URL(
     `${baseUrl}/sigss/prontuarioAmbulatorial2/buscaDadosConsulta_HTML`
@@ -394,15 +394,15 @@ export async function fetchConsultasBasicas({
   });
   const response = await fetch(url, {
     headers: {
-      Accept: "application/json, text/javascript, */*; q=0.01",
-      "X-Requested-With": "XMLHttpRequest",
+      Accept: 'application/json, text/javascript, */*; q=0.01',
+      'X-Requested-With': 'XMLHttpRequest',
     },
   });
   if (!response.ok) handleFetchError(response);
   const data = await response.json();
   return {
-    htmlData: data?.tabela || "",
-    jsonData: parseConsultasHTML(data?.tabela || ""),
+    htmlData: data?.tabela || '',
+    jsonData: parseConsultasHTML(data?.tabela || ''),
   };
 }
 
@@ -430,30 +430,30 @@ export async function fetchExamesSolicitados({
   comResultado,
   semResultado,
 }) {
-  if (!isenPK) throw new Error("ID (isenPK) do paciente é necessário.");
+  if (!isenPK) throw new Error('ID (isenPK) do paciente é necessário.');
   const baseUrl = await getBaseUrl();
   const url = new URL(`${baseUrl}/sigss/exameRequisitado/findAllReex`);
   const params = {
-    "filters[0]": `dataInicial:${dataInicial}`,
-    "filters[1]": `dataFinal:${dataFinal}`,
-    "filters[2]": `isenPK:${isenPK}`,
-    exameSolicitadoMin: "true",
-    exameSolicitadoOutro: "true",
+    'filters[0]': `dataInicial:${dataInicial}`,
+    'filters[1]': `dataFinal:${dataFinal}`,
+    'filters[2]': `isenPK:${isenPK}`,
+    exameSolicitadoMin: 'true',
+    exameSolicitadoOutro: 'true',
     exameComResultado: comResultado,
     exameSemResultado: semResultado,
-    tipoBusca: "reex",
-    _search: "false",
+    tipoBusca: 'reex',
+    _search: 'false',
     nd: Date.now(),
-    rows: "1000",
-    page: "1",
-    sidx: "reex.reexData",
-    sord: "asc",
+    rows: '1000',
+    page: '1',
+    sidx: 'reex.reexData',
+    sord: 'asc',
   };
   url.search = new URLSearchParams(params).toString();
   const response = await fetch(url, {
     headers: {
-      Accept: "application/json, text/javascript, */*; q=0.01",
-      "X-Requested-With": "XMLHttpRequest",
+      Accept: 'application/json, text/javascript, */*; q=0.01',
+      'X-Requested-With': 'XMLHttpRequest',
     },
   });
   if (!response.ok) handleFetchError(response);
@@ -461,31 +461,31 @@ export async function fetchExamesSolicitados({
   return (data?.rows || []).map((row) => {
     const cell = row.cell || [];
     return {
-      id: row.id || "",
-      date: cell[2] || "",
-      examName: (cell[5] || "").trim(),
-      hasResult: (cell[6] || "") === "SIM",
-      professional: cell[8] || "",
-      specialty: cell[9] || "",
-      resultIdp: cell[13] != null ? String(cell[13]) : "",
-      resultIds: cell[14] != null ? String(cell[14]) : "",
+      id: row.id || '',
+      date: cell[2] || '',
+      examName: (cell[5] || '').trim(),
+      hasResult: (cell[6] || '') === 'SIM',
+      professional: cell[8] || '',
+      specialty: cell[9] || '',
+      resultIdp: cell[13] != null ? String(cell[13]) : '',
+      resultIds: cell[14] != null ? String(cell[14]) : '',
     };
   });
 }
 
 export async function fetchResultadoExame({ idp, ids }) {
   if (!idp || !ids)
-    throw new Error("IDs do resultado do exame são necessários.");
+    throw new Error('IDs do resultado do exame são necessários.');
   const baseUrl = await getBaseUrl();
   const url = new URL(`${baseUrl}/sigss/resultadoExame/visualizaImagem`);
   url.search = new URLSearchParams({
-    "iterPK.idp": idp,
-    "iterPK.ids": ids,
+    'iterPK.idp': idp,
+    'iterPK.ids': ids,
   }).toString();
   const response = await fetch(url, {
     headers: {
-      Accept: "application/json, text/javascript, */*; q=0.01",
-      "X-Requested-With": "XMLHttpRequest",
+      Accept: 'application/json, text/javascript, */*; q=0.01',
+      'X-Requested-With': 'XMLHttpRequest',
     },
   });
   if (!response.ok) handleFetchError(response);
@@ -504,35 +504,35 @@ export async function fetchCadsusData({ cpf, cns }) {
   );
 
   const params = new URLSearchParams({
-    _search: "false",
-    rows: "50",
-    page: "1",
-    sidx: "nome",
-    sord: "asc",
-    "pdq.cartaoNacionalSus": "",
-    "pdq.cpf": "",
-    "pdq.rg": "",
-    "pdq.nome": "",
-    "pdq.dataNascimento": "",
-    "pdq.sexo": "",
-    "pdq.nomeMae": "",
+    _search: 'false',
+    rows: '50',
+    page: '1',
+    sidx: 'nome',
+    sord: 'asc',
+    'pdq.cartaoNacionalSus': '',
+    'pdq.cpf': '',
+    'pdq.rg': '',
+    'pdq.nome': '',
+    'pdq.dataNascimento': '',
+    'pdq.sexo': '',
+    'pdq.nomeMae': '',
   });
 
   if (cpf) {
     const formattedCpf = String(cpf)
-      .replace(/\D/g, "")
-      .replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
-    params.set("pdq.cpf", formattedCpf);
+      .replace(/\D/g, '')
+      .replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+    params.set('pdq.cpf', formattedCpf);
   } else if (cns) {
-    params.set("pdq.cartaoNacionalSus", cns);
+    params.set('pdq.cartaoNacionalSus', cns);
   }
 
   url.search = params.toString();
 
   const response = await fetch(url, {
     headers: {
-      Accept: "application/json, text/javascript, */*; q=0.01",
-      "X-Requested-With": "XMLHttpRequest",
+      Accept: 'application/json, text/javascript, */*; q=0.01',
+      'X-Requested-With': 'XMLHttpRequest',
     },
   });
 
@@ -551,18 +551,18 @@ export async function fetchCadsusData({ cpf, cns }) {
 }
 
 export async function fetchAppointmentDetails({ idp, ids }) {
-  if (!idp || !ids) throw new Error("ID do agendamento é necessário.");
+  if (!idp || !ids) throw new Error('ID do agendamento é necessário.');
   const baseUrl = await getBaseUrl();
   const url = new URL(`${baseUrl}/sigss/agendamentoConsulta/visualiza`);
   url.search = new URLSearchParams({
-    "agcoPK.idp": idp,
-    "agcoPK.ids": ids,
+    'agcoPK.idp': idp,
+    'agcoPK.ids': ids,
   }).toString();
 
   const response = await fetch(url, {
     headers: {
-      Accept: "application/json, text/javascript, */*; q=0.01",
-      "X-Requested-With": "XMLHttpRequest",
+      Accept: 'application/json, text/javascript, */*; q=0.01',
+      'X-Requested-With': 'XMLHttpRequest',
     },
   });
 
@@ -582,18 +582,18 @@ export async function fetchAppointmentDetails({ idp, ids }) {
  * @returns {Promise<object>} O objeto com os dados do agendamento de exame.
  */
 export async function fetchExamAppointmentDetails({ idp, ids }) {
-  if (!idp || !ids) throw new Error("ID do agendamento de exame é necessário.");
+  if (!idp || !ids) throw new Error('ID do agendamento de exame é necessário.');
   const baseUrl = await getBaseUrl();
   const url = new URL(`${baseUrl}/sigss/agendamentoExame/visualizar`);
   url.search = new URLSearchParams({
-    "examPK.idp": idp,
-    "examPK.ids": ids,
+    'examPK.idp': idp,
+    'examPK.ids': ids,
   }).toString();
 
   const response = await fetch(url, {
     headers: {
-      Accept: "application/json, text/javascript, */*; q=0.01",
-      "X-Requested-With": "XMLHttpRequest",
+      Accept: 'application/json, text/javascript, */*; q=0.01',
+      'X-Requested-With': 'XMLHttpRequest',
     },
   });
 
@@ -606,26 +606,26 @@ export async function fetchExamAppointmentDetails({ idp, ids }) {
 }
 
 export async function fetchAppointments({ isenPK, dataInicial, dataFinal }) {
-  if (!isenPK) throw new Error("ID (isenPK) do paciente é necessário.");
+  if (!isenPK) throw new Error('ID (isenPK) do paciente é necessário.');
   const baseUrl = await getBaseUrl();
   const url = new URL(`${baseUrl}/sigss/resumoCompromisso/lista`);
   const params = {
     isenPK,
     dataInicial,
     dataFinal,
-    _search: "false",
+    _search: 'false',
     nd: Date.now(),
-    rows: "1000",
-    page: "1",
-    sidx: "data",
-    sord: "desc",
+    rows: '1000',
+    page: '1',
+    sidx: 'data',
+    sord: 'desc',
   };
   url.search = new URLSearchParams(params).toString();
 
   const response = await fetch(url, {
     headers: {
-      Accept: "application/json, text/javascript, */*; q=0.01",
-      "X-Requested-With": "XMLHttpRequest",
+      Accept: 'application/json, text/javascript, */*; q=0.01',
+      'X-Requested-With': 'XMLHttpRequest',
     },
   });
 
@@ -634,20 +634,20 @@ export async function fetchAppointments({ isenPK, dataInicial, dataFinal }) {
 
   const basicAppointments = (data?.rows || []).map((row) => {
     const cell = row.cell || [];
-    let status = "AGENDADO";
-    if (String(cell[10]).includes("red")) status = "FALTOU";
-    else if (String(cell[7]).includes("blue")) status = "PRESENTE";
-    else if (String(cell[8]).includes("red")) status = "CANCELADO";
-    else if (String(cell[11]).includes("blue")) status = "ATENDIDO";
+    let status = 'AGENDADO';
+    if (String(cell[10]).includes('red')) status = 'FALTOU';
+    else if (String(cell[7]).includes('blue')) status = 'PRESENTE';
+    else if (String(cell[8]).includes('red')) status = 'CANCELADO';
+    else if (String(cell[11]).includes('blue')) status = 'ATENDIDO';
 
     return {
-      id: row.id || "",
-      type: cell[1] || "N/A",
-      date: cell[2] || "",
-      time: cell[3] || "",
-      location: cell[4] || "",
-      professional: cell[5] || "",
-      description: (cell[6] || "").trim(),
+      id: row.id || '',
+      type: cell[1] || 'N/A',
+      date: cell[2] || '',
+      time: cell[3] || '',
+      location: cell[4] || '',
+      professional: cell[5] || '',
+      description: (cell[6] || '').trim(),
       status: status,
     };
   });
@@ -659,20 +659,20 @@ export async function fetchAppointments({ isenPK, dataInicial, dataFinal }) {
     const batch = basicAppointments.slice(i, i + batchSize);
 
     const promises = batch.map(async (appt) => {
-      if (appt.type.toUpperCase().includes("EXAME")) {
+      if (appt.type.toUpperCase().includes('EXAME')) {
         return {
           ...appt,
-          specialty: appt.description || "Exame sem descrição",
+          specialty: appt.description || 'Exame sem descrição',
         };
       }
 
-      const [idp, ids] = appt.id.split("-");
+      const [idp, ids] = appt.id.split('-');
       if (!idp || !ids) return appt;
 
       try {
         const details = await fetchAppointmentDetails({ idp, ids });
         if (details) {
-          let specialtyString = "Sem especialidade";
+          let specialtyString = 'Sem especialidade';
           const apcn = details.atividadeProfissionalCnes;
 
           if (apcn && apcn.apcnNome) {
@@ -683,8 +683,8 @@ export async function fetchAppointments({ isenPK, dataInicial, dataFinal }) {
 
           return {
             ...appt,
-            isSpecialized: details.agcoIsEspecializada === "t",
-            isOdonto: details.agcoIsOdonto === "t",
+            isSpecialized: details.agcoIsEspecializada === 't',
+            isOdonto: details.agcoIsOdonto === 't',
             specialty: specialtyString,
           };
         }
@@ -710,43 +710,43 @@ async function fetchRegulations({
   dataInicial,
   dataFinal,
 }) {
-  if (!isenPK) throw new Error("ID (isenPK) do paciente é necessário.");
+  if (!isenPK) throw new Error('ID (isenPK) do paciente é necessário.');
   const baseUrl = await getBaseUrl();
   const url = new URL(`${baseUrl}/sigss/regulacaoRegulador/lista`);
 
   const params = {
-    "filters[0]": `isFiltrarData:${!!dataInicial}`,
-    "filters[1]": `dataInicial:${dataInicial || ""}`,
-    "filters[2]": `dataFinal:${dataFinal || ""}`,
-    "filters[3]": `modalidade:${modalidade}`,
-    "filters[4]": "solicitante:undefined",
-    "filters[5]": `usuarioServico:${isenPK}`,
-    "filters[6]": "autorizado:true",
-    "filters[7]": "pendente:true",
-    "filters[8]": "devolvido:true",
-    "filters[9]": "negado:true",
-    "filters[10]": "emAnalise:true",
-    "filters[11]": "cancelados:true",
-    "filters[12]": "cboFiltro:",
-    "filters[13]": "procedimentoFiltro:",
-    "filters[14]": "reguGravidade:",
-    "filters[15]": "reguIsRetorno:...",
-    "filters[16]": "codBarProtocolo:",
-    "filters[17]": "reguIsAgendadoFiltro:todos",
-    _search: "false",
+    'filters[0]': `isFiltrarData:${!!dataInicial}`,
+    'filters[1]': `dataInicial:${dataInicial || ''}`,
+    'filters[2]': `dataFinal:${dataFinal || ''}`,
+    'filters[3]': `modalidade:${modalidade}`,
+    'filters[4]': 'solicitante:undefined',
+    'filters[5]': `usuarioServico:${isenPK}`,
+    'filters[6]': 'autorizado:true',
+    'filters[7]': 'pendente:true',
+    'filters[8]': 'devolvido:true',
+    'filters[9]': 'negado:true',
+    'filters[10]': 'emAnalise:true',
+    'filters[11]': 'cancelados:true',
+    'filters[12]': 'cboFiltro:',
+    'filters[13]': 'procedimentoFiltro:',
+    'filters[14]': 'reguGravidade:',
+    'filters[15]': 'reguIsRetorno:...',
+    'filters[16]': 'codBarProtocolo:',
+    'filters[17]': 'reguIsAgendadoFiltro:todos',
+    _search: 'false',
     nd: Date.now(),
-    rows: "1000",
-    page: "1",
-    sidx: "regu.reguDataPrevista",
-    sord: "desc",
+    rows: '1000',
+    page: '1',
+    sidx: 'regu.reguDataPrevista',
+    sord: 'desc',
   };
 
   url.search = new URLSearchParams(params).toString();
 
   const response = await fetch(url, {
     headers: {
-      Accept: "application/json, text/javascript, */*; q=0.01",
-      "X-Requested-With": "XMLHttpRequest",
+      Accept: 'application/json, text/javascript, */*; q=0.01',
+      'X-Requested-With': 'XMLHttpRequest',
     },
   });
 
@@ -757,28 +757,28 @@ async function fetchRegulations({
     const cell = row.cell || [];
     let idp = null,
       ids = null;
-    const idMatch = (row.id || "").match(/reguPK(\d+)-(\d+)/);
+    const idMatch = (row.id || '').match(/reguPK(\d+)-(\d+)/);
     if (idMatch && idMatch.length === 3) {
       idp = idMatch[1];
       ids = idMatch[2];
     }
 
-    const descriptionHtml = cell[6] || "";
-    const [procedure, cid] = descriptionHtml.split("<br/>");
+    const descriptionHtml = cell[6] || '';
+    const [procedure, cid] = descriptionHtml.split('<br/>');
 
     return {
       id: row.id,
       idp,
       ids,
-      type: cell[2] || "N/A",
+      type: cell[2] || 'N/A',
       priority: getTextFromHTML(cell[3]),
-      date: cell[4] || "",
+      date: cell[4] || '',
       status: getTextFromHTML(cell[5]),
       procedure: getTextFromHTML(procedure),
-      cid: cid ? cid.trim() : "",
-      requester: cell[7] || "",
-      provider: cell[8] || "",
-      isenFullPKCrypto: cell[9] || "",
+      cid: cid ? cid.trim() : '',
+      requester: cell[7] || '',
+      provider: cell[8] || '',
+      isenFullPKCrypto: cell[9] || '',
     };
   });
 }
@@ -787,29 +787,29 @@ export async function fetchAllRegulations({
   isenPK,
   dataInicial,
   dataFinal,
-  type = "all",
+  type = 'all',
 }) {
   let regulationsToFetch = [];
 
-  if (type === "all") {
+  if (type === 'all') {
     regulationsToFetch = await Promise.all([
-      fetchRegulations({ isenPK, modalidade: "ENC", dataInicial, dataFinal }),
-      fetchRegulations({ isenPK, modalidade: "EXA", dataInicial, dataFinal }),
+      fetchRegulations({ isenPK, modalidade: 'ENC', dataInicial, dataFinal }),
+      fetchRegulations({ isenPK, modalidade: 'EXA', dataInicial, dataFinal }),
     ]);
-  } else if (type === "ENC") {
+  } else if (type === 'ENC') {
     regulationsToFetch = [
       await fetchRegulations({
         isenPK,
-        modalidade: "ENC",
+        modalidade: 'ENC',
         dataInicial,
         dataFinal,
       }),
     ];
-  } else if (type === "EXA") {
+  } else if (type === 'EXA') {
     regulationsToFetch = [
       await fetchRegulations({
         isenPK,
-        modalidade: "EXA",
+        modalidade: 'EXA',
         dataInicial,
         dataFinal,
       }),
@@ -843,8 +843,8 @@ export async function fetchAllRegulations({
   );
 
   regulationsWithAttachments.sort((a, b) => {
-    const dateA = a.date.split("/").reverse().join("-");
-    const dateB = b.date.split("/").reverse().join("-");
+    const dateA = a.date.split('/').reverse().join('-');
+    const dateB = b.date.split('/').reverse().join('-');
     return new Date(dateB) - new Date(dateA);
   });
 
@@ -858,29 +858,29 @@ export async function fetchAllRegulations({
  * @returns {Promise<Array<object>>} Uma lista de objetos de documento.
  */
 export async function fetchDocuments({ isenPK }) {
-  if (!isenPK) throw new Error("ID (isenPK) do paciente é necessário.");
-  const [idp, ids] = isenPK.split("-");
+  if (!isenPK) throw new Error('ID (isenPK) do paciente é necessário.');
+  const [idp, ids] = isenPK.split('-');
   if (!idp || !ids)
-    throw new Error("ID (isenPK) do paciente em formato inválido.");
+    throw new Error('ID (isenPK) do paciente em formato inválido.');
 
   const baseUrl = await getBaseUrl();
   const url = new URL(`${baseUrl}/sigss/isar/buscaGrid`);
   const params = {
-    "isenPK.idp": idp,
-    "isenPK.ids": ids,
-    _search: "false",
+    'isenPK.idp': idp,
+    'isenPK.ids': ids,
+    _search: 'false',
     nd: Date.now(),
-    rows: "999",
-    page: "1",
-    sidx: "isar.isarData desc, isar.isarPK.idp",
-    sord: "desc",
+    rows: '999',
+    page: '1',
+    sidx: 'isar.isarData desc, isar.isarPK.idp',
+    sord: 'desc',
   };
   url.search = new URLSearchParams(params).toString();
 
   const response = await fetch(url, {
     headers: {
-      Accept: "application/json, text/javascript, */*; q=0.01",
-      "X-Requested-With": "XMLHttpRequest",
+      Accept: 'application/json, text/javascript, */*; q=0.01',
+      'X-Requested-With': 'XMLHttpRequest',
     },
   });
 
@@ -892,9 +892,9 @@ export async function fetchDocuments({ isenPK }) {
     return {
       idp: cell[0],
       ids: cell[1],
-      date: cell[2] || "",
-      description: (cell[3] || "").trim(),
-      fileType: (cell[4] || "").toLowerCase(),
+      date: cell[2] || '',
+      description: (cell[3] || '').trim(),
+      fileType: (cell[4] || '').toLowerCase(),
     };
   });
 }
@@ -907,19 +907,19 @@ export async function fetchDocuments({ isenPK }) {
  * @returns {Promise<string|null>} A URL completa para visualização do arquivo.
  */
 export async function fetchDocumentUrl({ idp, ids }) {
-  if (!idp || !ids) throw new Error("IDs do documento são necessários.");
+  if (!idp || !ids) throw new Error('IDs do documento são necessários.');
 
   const baseUrl = await getBaseUrl();
   const url = new URL(`${baseUrl}/sigss/isar/getHashArquivo`);
   url.search = new URLSearchParams({
-    "isarPK.idp": idp,
-    "isarPK.ids": ids,
+    'isarPK.idp': idp,
+    'isarPK.ids': ids,
   }).toString();
 
   const response = await fetch(url, {
     headers: {
-      Accept: "application/json, text/javascript, */*; q=0.01",
-      "X-Requested-With": "XMLHttpRequest",
+      Accept: 'application/json, text/javascript, */*; q=0.01',
+      'X-Requested-With': 'XMLHttpRequest',
     },
   });
 
@@ -928,7 +928,7 @@ export async function fetchDocumentUrl({ idp, ids }) {
 
   if (data?.isenArquivo?.img) {
     const filePath = data.isenArquivo.img;
-    return filePath.startsWith("http") ? filePath : `${baseUrl}${filePath}`;
+    return filePath.startsWith('http') ? filePath : `${baseUrl}${filePath}`;
   }
 
   return null;
@@ -943,33 +943,33 @@ export async function fetchDocumentUrl({ idp, ids }) {
  * @returns {Promise<Array<object>>} Uma lista de objetos de anexo.
  */
 export async function fetchRegulationAttachments({ reguIdp, reguIds, isenPK }) {
-  if (!reguIdp || !reguIds) throw new Error("ID da regulação é necessário.");
-  if (!isenPK) throw new Error("ID do paciente (isenPK) é necessário.");
+  if (!reguIdp || !reguIds) throw new Error('ID da regulação é necessário.');
+  if (!isenPK) throw new Error('ID do paciente (isenPK) é necessário.');
 
-  const [isenIdp, isenIds] = isenPK.split("-");
+  const [isenIdp, isenIds] = isenPK.split('-');
   if (!isenIdp || !isenIds)
-    throw new Error("ID do paciente (isenPK) em formato inválido.");
+    throw new Error('ID do paciente (isenPK) em formato inválido.');
 
   const baseUrl = await getBaseUrl();
   const url = new URL(`${baseUrl}/sigss/rear/buscaGrid`);
   const params = {
-    "isenPK.idp": isenIdp,
-    "isenPK.ids": isenIds,
-    "reguPK.idp": reguIdp,
-    "reguPK.ids": reguIds,
-    _search: "false",
+    'isenPK.idp': isenIdp,
+    'isenPK.ids': isenIds,
+    'reguPK.idp': reguIdp,
+    'reguPK.ids': reguIds,
+    _search: 'false',
     nd: Date.now(),
-    rows: "999",
-    page: "1",
-    sidx: "", // Corrigido para corresponder à requisição da aplicação
-    sord: "asc", // Corrigido para corresponder à requisição da aplicação
+    rows: '999',
+    page: '1',
+    sidx: '', // Corrigido para corresponder à requisição da aplicação
+    sord: 'asc', // Corrigido para corresponder à requisição da aplicação
   };
   url.search = new URLSearchParams(params).toString();
 
   const response = await fetch(url, {
     headers: {
-      Accept: "application/json, text/javascript, */*; q=0.01",
-      "X-Requested-With": "XMLHttpRequest",
+      Accept: 'application/json, text/javascript, */*; q=0.01',
+      'X-Requested-With': 'XMLHttpRequest',
     },
   });
 
@@ -981,9 +981,9 @@ export async function fetchRegulationAttachments({ reguIdp, reguIds, isenPK }) {
     return {
       idp: cell[0],
       ids: cell[1],
-      date: cell[2] || "",
-      description: (cell[3] || "").trim(),
-      fileType: (cell[4] || "").toLowerCase(),
+      date: cell[2] || '',
+      description: (cell[3] || '').trim(),
+      fileType: (cell[4] || '').toLowerCase(),
     };
   });
 }
@@ -996,19 +996,19 @@ export async function fetchRegulationAttachments({ reguIdp, reguIds, isenPK }) {
  * @returns {Promise<string|null>} A URL completa para visualização do arquivo.
  */
 export async function fetchRegulationAttachmentUrl({ idp, ids }) {
-  if (!idp || !ids) throw new Error("IDs do anexo são necessários.");
+  if (!idp || !ids) throw new Error('IDs do anexo são necessários.');
 
   const baseUrl = await getBaseUrl();
   const url = new URL(`${baseUrl}/sigss/rear/getHashArquivo`);
   url.search = new URLSearchParams({
-    "rearPK.idp": idp,
-    "rearPK.ids": ids,
+    'rearPK.idp': idp,
+    'rearPK.ids': ids,
   }).toString();
 
   const response = await fetch(url, {
     headers: {
-      Accept: "application/json, text/javascript, */*; q=0.01",
-      "X-Requested-With": "XMLHttpRequest",
+      Accept: 'application/json, text/javascript, */*; q=0.01',
+      'X-Requested-With': 'XMLHttpRequest',
     },
   });
 
@@ -1017,7 +1017,7 @@ export async function fetchRegulationAttachmentUrl({ idp, ids }) {
 
   if (data?.regulacaoArquivo?.img) {
     const filePath = data.regulacaoArquivo.img;
-    return filePath.startsWith("http") ? filePath : `${baseUrl}${filePath}`;
+    return filePath.startsWith('http') ? filePath : `${baseUrl}${filePath}`;
   }
 
   return null;
@@ -1053,7 +1053,7 @@ export async function fetchAllTimelineData({
       isenPK,
       dataInicial,
       dataFinal,
-      type: "all",
+      type: 'all',
     }),
     documents: fetchDocuments({ isenPK }),
   };
@@ -1062,13 +1062,13 @@ export async function fetchAllTimelineData({
   const dataKeys = Object.keys(dataPromises);
 
   const getValueOrDefault = (result, defaultValue = []) => {
-    if (result.status === "fulfilled") {
-      if (result.value && typeof result.value.jsonData !== "undefined") {
+    if (result.status === 'fulfilled') {
+      if (result.value && typeof result.value.jsonData !== 'undefined') {
         return result.value.jsonData; // For consultations
       }
       return result.value; // For others
     }
-    console.warn("Falha em chamada de API para a timeline:", result.reason);
+    console.warn('Falha em chamada de API para a timeline:', result.reason);
     return defaultValue;
   };
 
@@ -1090,10 +1090,10 @@ export async function keepSessionAlive() {
     const url = new URL(`${baseUrl}/sigss/common/dataHora`);
 
     const response = await fetch(url, {
-      method: "GET",
+      method: 'GET',
       headers: {
-        Accept: "application/json, text/javascript, */*; q=0.01",
-        "X-Requested-With": "XMLHttpRequest",
+        Accept: 'application/json, text/javascript, */*; q=0.01',
+        'X-Requested-With': 'XMLHttpRequest',
       },
     });
 
@@ -1103,10 +1103,10 @@ export async function keepSessionAlive() {
     }
 
     const data = await response.json();
-    console.log("Sessão mantida ativa:", data);
+    console.log('Sessão mantida ativa:', data);
     return true;
   } catch (error) {
-    console.error("Erro ao manter sessão ativa:", error);
+    console.error('Erro ao manter sessão ativa:', error);
     return false;
   }
 }

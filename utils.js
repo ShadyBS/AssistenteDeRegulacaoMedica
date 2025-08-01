@@ -1,4 +1,37 @@
 /**
+ * Exibe um modal customizado de confirmação.
+ * @param {Object} options
+ * @param {string} options.message Mensagem a exibir
+ * @param {Function} options.onConfirm Callback para confirmação
+ * @param {Function} [options.onCancel] Callback para cancelamento
+ */
+export function showDialog({ message, onConfirm, onCancel }) {
+  let modal = document.getElementById('custom-confirm-modal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'custom-confirm-modal';
+    modal.innerHTML = `
+      <div class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg shadow-lg p-6 max-w-md w-full">
+          <div class="mb-4 text-slate-800 text-base" id="custom-confirm-message"></div>
+          <div class="flex justify-end gap-2">
+            <button id="custom-confirm-cancel" class="px-4 py-2 rounded bg-slate-200 text-slate-700 hover:bg-slate-300">Cancelar</button>
+            <button id="custom-confirm-ok" class="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700">Confirmar</button>
+          </div>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+  }
+  modal.style.display = 'flex';
+  modal.querySelector('#custom-confirm-message').textContent = message;
+  const okBtn = modal.querySelector('#custom-confirm-ok');
+  const cancelBtn = modal.querySelector('#custom-confirm-cancel');
+  const close = () => { modal.style.display = 'none'; };
+  okBtn.onclick = () => { close(); onConfirm && onConfirm(); };
+  cancelBtn.onclick = () => { close(); onCancel && onCancel(); };
+}
+/**
  * @file Contém funções utilitárias compartilhadas em toda a extensão.
  */
 
@@ -23,9 +56,9 @@ export function debounce(func, delay = 500) {
  * @param {boolean} show - `true` para mostrar, `false` para esconder.
  */
 export function toggleLoader(show) {
-  const loader = document.getElementById("loader");
+  const loader = document.getElementById('loader');
   if (loader) {
-    loader.style.display = show ? "block" : "none";
+    loader.style.display = show ? 'block' : 'none';
   }
 }
 
@@ -34,19 +67,19 @@ export function toggleLoader(show) {
  * @param {string} text O texto da mensagem.
  * @param {'error' | 'success' | 'info'} [type='error'] O tipo de mensagem.
  */
-export function showMessage(text, type = "error") {
-  const messageArea = document.getElementById("message-area");
+export function showMessage(text, type = 'error') {
+  const messageArea = document.getElementById('message-area');
   if (messageArea) {
     messageArea.textContent = text;
     const typeClasses = {
-      error: "bg-red-100 text-red-700",
-      success: "bg-green-100 text-green-700",
-      info: "bg-blue-100 text-blue-700",
+      error: 'bg-red-100 text-red-700',
+      success: 'bg-green-100 text-green-700',
+      info: 'bg-blue-100 text-blue-700',
     };
     messageArea.className = `p-3 rounded-md text-sm ${
       typeClasses[type] || typeClasses.error
     }`;
-    messageArea.style.display = "block";
+    messageArea.style.display = 'block';
   }
 }
 
@@ -54,9 +87,9 @@ export function showMessage(text, type = "error") {
  * Limpa a área de mensagens.
  */
 export function clearMessage() {
-  const messageArea = document.getElementById("message-area");
+  const messageArea = document.getElementById('message-area');
   if (messageArea) {
-    messageArea.style.display = "none";
+    messageArea.style.display = 'none';
   }
 }
 
@@ -66,7 +99,7 @@ export function clearMessage() {
  * @returns {Date|null} O objeto Date ou null se a string for inválida.
  */
 export function parseDate(dateString) {
-  if (!dateString || typeof dateString !== "string") return null;
+  if (!dateString || typeof dateString !== 'string') return null;
 
   // Tenta extrair o primeiro padrão de data válido da string.
   const dateMatch = dateString.match(
@@ -78,11 +111,11 @@ export function parseDate(dateString) {
   let year, month, day;
 
   // Tenta o formato YYYY-MM-DD
-  if (matchedDate.includes("-")) {
-    [year, month, day] = matchedDate.split("-").map(Number);
-  } else if (matchedDate.includes("/")) {
+  if (matchedDate.includes('-')) {
+    [year, month, day] = matchedDate.split('-').map(Number);
+  } else if (matchedDate.includes('/')) {
     // Tenta o formato DD/MM/YYYY
-    [day, month, year] = matchedDate.split("/").map(Number);
+    [day, month, year] = matchedDate.split('/').map(Number);
   }
 
   // Valida se os números são válidos e se a data é real
@@ -115,7 +148,7 @@ export function parseDate(dateString) {
  */
 export const getNestedValue = (obj, path) => {
   if (!path) return undefined;
-  return path.split(".").reduce((acc, part) => acc && acc[part], obj);
+  return path.split('.').reduce((acc, part) => acc && acc[part], obj);
 };
 
 /**
@@ -136,12 +169,12 @@ export function calculateRelativeDate(offsetInMonths) {
  * @returns {'black' | 'white'}
  */
 export function getContrastYIQ(hexcolor) {
-  hexcolor = hexcolor.replace("#", "");
-  var r = parseInt(hexcolor.substr(0, 2), 16);
-  var g = parseInt(hexcolor.substr(2, 2), 16);
-  var b = parseInt(hexcolor.substr(4, 2), 16);
-  var yiq = (r * 299 + g * 587 + b * 114) / 1000;
-  return yiq >= 128 ? "black" : "white";
+  hexcolor = hexcolor.replace('#', '');
+  const r = parseInt(hexcolor.substr(0, 2), 16);
+  const g = parseInt(hexcolor.substr(2, 2), 16);
+  const b = parseInt(hexcolor.substr(4, 2), 16);
+  const yiq = (r * 299 + g * 587 + b * 114) / 1000;
+  return yiq >= 128 ? 'black' : 'white';
 }
 
 /**
@@ -150,12 +183,12 @@ export function getContrastYIQ(hexcolor) {
  * @returns {string} A string normalizada.
  */
 export function normalizeString(str) {
-  if (!str) return "";
+  if (!str) return '';
   return str
     .toString()
     .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "");
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
 }
 
 /**
@@ -165,18 +198,18 @@ export function normalizeString(str) {
 export function setupTabs(container) {
   if (!container) return;
 
-  const tabButtons = container.querySelectorAll(".tab-button");
-  const tabContents = container.querySelectorAll(".tab-content");
+  const tabButtons = container.querySelectorAll('.tab-button');
+  const tabContents = container.querySelectorAll('.tab-content');
 
   tabButtons.forEach((button) => {
-    button.addEventListener("click", () => {
+    button.addEventListener('click', () => {
       const tabName = button.dataset.tab;
-      tabButtons.forEach((btn) => btn.classList.remove("active"));
-      tabContents.forEach((content) => content.classList.remove("active"));
-      button.classList.add("active");
+      tabButtons.forEach((btn) => btn.classList.remove('active'));
+      tabContents.forEach((content) => content.classList.remove('active'));
+      button.classList.add('active');
       const activeContent = container.querySelector(`#${tabName}-tab`);
       if (activeContent) {
-        activeContent.classList.add("active");
+        activeContent.classList.add('active');
       }
     });
   });
@@ -200,21 +233,21 @@ export function normalizeTimelineData(apiData) {
           c.professional,
           c.unit,
           ...c.details.map((d) => d.value),
-        ].join(" ")
+        ].join(' ')
       );
       events.push({
-        type: "consultation",
-        date: parseDate(c.date.split("\n")[0]),
+        type: 'consultation',
+        date: parseDate(c.date.split('\n')[0]),
         sortableDate: c.sortableDate || parseDate(c.date),
-        title: `Consulta: ${c.specialty || "Especialidade não informada"}`,
-        summary: `com ${c.professional || "Profissional não informado"}`,
+        title: `Consulta: ${c.specialty || 'Especialidade não informada'}`,
+        summary: `com ${c.professional || 'Profissional não informado'}`,
         details: c,
         subDetails: c.details || [],
         searchText,
       });
     });
   } catch (e) {
-    console.error("Failed to normalize consultation data for timeline:", e);
+    console.error('Failed to normalize consultation data for timeline:', e);
   }
 
   // Normalize Exams
@@ -223,26 +256,26 @@ export function normalizeTimelineData(apiData) {
       const eventDate = parseDate(e.date);
       if (!e || !eventDate) return;
       const searchText = normalizeString(
-        [e.examName, e.professional, e.specialty].filter(Boolean).join(" ")
+        [e.examName, e.professional, e.specialty].filter(Boolean).join(' ')
       );
       events.push({
-        type: "exam",
+        type: 'exam',
         date: eventDate,
         sortableDate: eventDate,
-        title: `Exame Solicitado: ${e.examName || "Nome não informado"}`,
-        summary: `Solicitado por ${e.professional || "Não informado"}`,
+        title: `Exame Solicitado: ${e.examName || 'Nome não informado'}`,
+        summary: `Solicitado por ${e.professional || 'Não informado'}`,
         details: e,
         subDetails: [
           {
-            label: "Resultado",
-            value: e.hasResult ? "Disponível" : "Pendente",
+            label: 'Resultado',
+            value: e.hasResult ? 'Disponível' : 'Pendente',
           },
         ],
         searchText,
       });
     });
   } catch (e) {
-    console.error("Failed to normalize exam data for timeline:", e);
+    console.error('Failed to normalize exam data for timeline:', e);
   }
 
   // Normalize Appointments
@@ -250,24 +283,24 @@ export function normalizeTimelineData(apiData) {
     (apiData.appointments || []).forEach((a) => {
       if (!a || !a.date) return;
       const searchText = normalizeString(
-        [a.specialty, a.description, a.location, a.professional].join(" ")
+        [a.specialty, a.description, a.location, a.professional].join(' ')
       );
       events.push({
-        type: "appointment",
+        type: 'appointment',
         date: parseDate(a.date),
         sortableDate: parseDate(a.date),
-        title: `Agendamento: ${a.specialty || a.description || "Não descrito"}`,
-        summary: a.location || "Local não informado",
+        title: `Agendamento: ${a.specialty || a.description || 'Não descrito'}`,
+        summary: a.location || 'Local não informado',
         details: a,
         subDetails: [
-          { label: "Status", value: a.status || "N/A" },
-          { label: "Hora", value: a.time || "N/A" },
+          { label: 'Status', value: a.status || 'N/A' },
+          { label: 'Hora', value: a.time || 'N/A' },
         ],
         searchText,
       });
     });
   } catch (e) {
-    console.error("Failed to normalize appointment data for timeline:", e);
+    console.error('Failed to normalize appointment data for timeline:', e);
   }
 
   // Normalize Regulations
@@ -275,24 +308,24 @@ export function normalizeTimelineData(apiData) {
     (apiData.regulations || []).forEach((r) => {
       if (!r || !r.date) return;
       const searchText = normalizeString(
-        [r.procedure, r.requester, r.provider, r.cid].join(" ")
+        [r.procedure, r.requester, r.provider, r.cid].join(' ')
       );
       events.push({
-        type: "regulation",
+        type: 'regulation',
         date: parseDate(r.date),
         sortableDate: parseDate(r.date),
-        title: `Regulação: ${r.procedure || "Procedimento não informado"}`,
-        summary: `Solicitante: ${r.requester || "Não informado"}`,
+        title: `Regulação: ${r.procedure || 'Procedimento não informado'}`,
+        summary: `Solicitante: ${r.requester || 'Não informado'}`,
         details: r,
         subDetails: [
-          { label: "Status", value: r.status || "N/A" },
-          { label: "Prioridade", value: r.priority || "N/A" },
+          { label: 'Status', value: r.status || 'N/A' },
+          { label: 'Prioridade', value: r.priority || 'N/A' },
         ],
         searchText,
       });
     });
   } catch (e) {
-    console.error("Failed to normalize regulation data for timeline:", e);
+    console.error('Failed to normalize regulation data for timeline:', e);
   }
 
   // --- INÍCIO DA MODIFICAÇÃO ---
@@ -300,12 +333,12 @@ export function normalizeTimelineData(apiData) {
   try {
     (apiData.documents || []).forEach((doc) => {
       if (!doc || !doc.date) return;
-      const searchText = normalizeString(doc.description || "");
+      const searchText = normalizeString(doc.description || '');
       events.push({
-        type: "document",
+        type: 'document',
         date: parseDate(doc.date),
         sortableDate: parseDate(doc.date),
-        title: `Documento: ${doc.description || "Sem descrição"}`,
+        title: `Documento: ${doc.description || 'Sem descrição'}`,
         summary: `Tipo: ${doc.fileType.toUpperCase()}`,
         details: doc,
         subDetails: [],
@@ -313,7 +346,7 @@ export function normalizeTimelineData(apiData) {
       });
     });
   } catch (e) {
-    console.error("Failed to normalize document data for timeline:", e);
+    console.error('Failed to normalize document data for timeline:', e);
   }
   // --- FIM DA MODIFICAÇÃO ---
 
@@ -339,87 +372,91 @@ export function filterTimelineEvents(events, automationFilters) {
     if (!filterValue) return true; // If filter is empty, it passes
     const terms = filterValue
       .toLowerCase()
-      .split(",")
+      .split(',')
       .map((t) => t.trim())
       .filter(Boolean);
     if (terms.length === 0) return true;
-    const normalizedText = normalizeString(text || "");
+    const normalizedText = normalizeString(text || '');
     return terms.some((term) => normalizedText.includes(term));
   };
 
   return events.filter((event) => {
     try {
       switch (event.type) {
-        case "consultation":
-          const consultFilters = automationFilters.consultations || {};
-          // Procura por um campo rotulado como CID ou CIAP para uma busca precisa.
-          const cidDetail = (event.details.details || []).find(
-            (d) =>
-              normalizeString(d.label).includes("cid") ||
-              normalizeString(d.label).includes("ciap")
-          );
-          const cidText = cidDetail ? cidDetail.value : "";
-          return (
-            checkText(
-              event.details.specialty,
-              consultFilters["consultation-filter-specialty"]
-            ) &&
+      case 'consultation': {
+        const consultFilters = automationFilters.consultations || {};
+        // Procura por um campo rotulado como CID ou CIAP para uma busca precisa.
+        const cidDetail = (event.details.details || []).find(
+          (d) =>
+            normalizeString(d.label).includes('cid') ||
+              normalizeString(d.label).includes('ciap')
+        );
+        const cidText = cidDetail ? cidDetail.value : '';
+        return (
+          checkText(
+            event.details.specialty,
+            consultFilters['consultation-filter-specialty']
+          ) &&
             checkText(
               event.details.professional,
-              consultFilters["consultation-filter-professional"]
+              consultFilters['consultation-filter-professional']
             ) &&
-            checkText(cidText, consultFilters["consultation-filter-cid"])
-          );
+            checkText(cidText, consultFilters['consultation-filter-cid'])
+        );
+      }
 
-        case "exam":
-          const examFilters = automationFilters.exams || {};
-          return (
-            checkText(
-              event.details.examName,
-              examFilters["exam-filter-name"]
-            ) &&
+      case 'exam': {
+        const examFilters = automationFilters.exams || {};
+        return (
+          checkText(
+            event.details.examName,
+            examFilters['exam-filter-name']
+          ) &&
             checkText(
               event.details.professional,
-              examFilters["exam-filter-professional"]
+              examFilters['exam-filter-professional']
             ) &&
             checkText(
               event.details.specialty,
-              examFilters["exam-filter-specialty"]
+              examFilters['exam-filter-specialty']
             )
-          );
+        );
+      }
 
-        case "appointment":
-          const apptFilters = automationFilters.appointments || {};
-          const apptText = `${event.details.specialty} ${event.details.professional} ${event.details.location}`;
-          return checkText(apptText, apptFilters["appointment-filter-term"]);
+      case 'appointment': {
+        const apptFilters = automationFilters.appointments || {};
+        const apptText = `${event.details.specialty} ${event.details.professional} ${event.details.location}`;
+        return checkText(apptText, apptFilters['appointment-filter-term']);
+      }
 
-        case "regulation":
-          const regFilters = automationFilters.regulations || {};
-          return (
-            checkText(
-              event.details.procedure,
-              regFilters["regulation-filter-procedure"]
-            ) &&
+      case 'regulation': {
+        const regFilters = automationFilters.regulations || {};
+        return (
+          checkText(
+            event.details.procedure,
+            regFilters['regulation-filter-procedure']
+          ) &&
             checkText(
               event.details.requester,
-              regFilters["regulation-filter-requester"]
+              regFilters['regulation-filter-requester']
             ) &&
-            (regFilters["regulation-filter-status"] === "todos" ||
-              !regFilters["regulation-filter-status"] ||
+            (regFilters['regulation-filter-status'] === 'todos' ||
+              !regFilters['regulation-filter-status'] ||
               event.details.status.toUpperCase() ===
-                regFilters["regulation-filter-status"].toUpperCase()) &&
-            (regFilters["regulation-filter-priority"] === "todas" ||
-              !regFilters["regulation-filter-priority"] ||
+                regFilters['regulation-filter-status'].toUpperCase()) &&
+            (regFilters['regulation-filter-priority'] === 'todas' ||
+              !regFilters['regulation-filter-priority'] ||
               event.details.priority.toUpperCase() ===
-                regFilters["regulation-filter-priority"].toUpperCase())
-          );
+                regFilters['regulation-filter-priority'].toUpperCase())
+        );
+      }
 
-        default:
-          return true;
+      default:
+        return true;
       }
     } catch (e) {
       console.warn(
-        "Error filtering timeline event, it will be included by default:",
+        'Error filtering timeline event, it will be included by default:',
         event,
         e
       );

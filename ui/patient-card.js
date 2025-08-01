@@ -1,8 +1,8 @@
 /**
  * @file Módulo para gerir o card de "Dados do Paciente".
  */
-import * as Utils from "../utils.js";
-import { store } from "../store.js";
+import { store } from '../store.js';
+import * as Utils from '../utils.js';
 
 let patientDetailsSection,
   patientMainInfoDiv,
@@ -26,17 +26,17 @@ function render(patientData) {
 
   const { ficha, cadsus, lastCadsusCheck, isUpdating } = patientData;
 
-  patientMainInfoDiv.innerHTML = "";
-  patientAdditionalInfoDiv.innerHTML = "";
+  patientMainInfoDiv.innerHTML = '';
+  patientAdditionalInfoDiv.innerHTML = '';
 
   const getLocalValue = (field, data) => {
-    if (typeof field.key === "function") return field.key(data);
+    if (typeof field.key === 'function') return field.key(data);
     return Utils.getNestedValue(data, field.key);
   };
 
   const getCadsusValue = (field, data) => {
     if (!data || field.cadsusKey === null) return null;
-    if (typeof field.cadsusKey === "function") return field.cadsusKey(data);
+    if (typeof field.cadsusKey === 'function') return field.cadsusKey(data);
     return data[field.cadsusKey];
   };
 
@@ -51,44 +51,45 @@ function render(patientData) {
     let cadsusValue = getCadsusValue(field, cadsus);
     if (field.formatter) cadsusValue = field.formatter(cadsusValue);
 
-    const v1 = String(localValue || "").trim();
-    const v2 = String(cadsusValue || "").trim();
-    let icon = "";
+    const v1 = String(localValue || '').trim();
+    const v2 = String(cadsusValue || '').trim();
+    let icon = '';
 
     if (cadsus && field.cadsusKey !== null) {
       let compareV1 = v1;
       let compareV2 = v2;
 
-      if (field.id === "telefone") {
-        compareV1 = v1.replace(/\D/g, "").replace(/^55/, "");
-        compareV2 = v2.replace(/\D/g, "").replace(/^55/, "");
+      if (field.id === 'telefone') {
+        compareV1 = v1.replace(/\D/g, '').replace(/^55/, '');
+        compareV2 = v2.replace(/\D/g, '').replace(/^55/, '');
       } else {
         compareV1 = Utils.normalizeString(v1);
         compareV2 = Utils.normalizeString(v2);
       }
 
       if (compareV1 && compareV1 === compareV2) {
-        icon = `<span class="comparison-icon" title="Dado confere com o CADSUS">✅</span>`;
+        icon =
+          '<span class="comparison-icon" title="Dado confere com o CADSUS">✅</span>';
       } else {
-        const tooltipText = `Ficha: ${v1 || "Vazio"}\nCADSUS: ${v2 || "Vazio"}`;
+        const tooltipText = `Ficha: ${v1 || 'Vazio'}\nCADSUS: ${v2 || 'Vazio'}`;
         icon = `<span class="comparison-icon" data-tooltip="${tooltipText}">⚠️</span>`;
       }
     }
 
     const valueClass =
-      field.id.toLowerCase().includes("alerg") && v1 && v1 !== "-"
-        ? "text-red-600 font-bold"
-        : "text-slate-900";
+      field.id.toLowerCase().includes('alerg') && v1 && v1 !== '-'
+        ? 'text-red-600 font-bold'
+        : 'text-slate-900';
     const copyIcon = v1
       ? `<span class="copy-icon" title="Copiar" data-copy-text="${v1}">📄</span>`
-      : "";
+      : '';
     const rowHtml = `<div class="flex justify-between items-center py-1"><span class="font-medium text-slate-600">${
       field.label
     }:</span><span class="${valueClass} text-right flex items-center">${
-      v1 || "-"
+      v1 || '-'
     }${icon}${copyIcon}</span></div>`;
 
-    if (field.section === "main") {
+    if (field.section === 'main') {
       patientMainInfoDiv.innerHTML += rowHtml;
     } else {
       patientAdditionalInfoDiv.innerHTML += rowHtml;
@@ -97,36 +98,36 @@ function render(patientData) {
 
   if (lastCadsusCheck) {
     cadsusTimestamp.textContent = `CADSUS verificado em: ${lastCadsusCheck.toLocaleString()}`;
-    patientCardFooter.style.display = "flex";
+    patientCardFooter.style.display = 'flex';
   } else {
-    cadsusTimestamp.textContent = "Não foi possível verificar dados do CADSUS.";
-    patientCardFooter.style.display = "flex";
+    cadsusTimestamp.textContent = 'Não foi possível verificar dados do CADSUS.';
+    patientCardFooter.style.display = 'flex';
   }
 
   refreshCadsusBtn
-    .querySelector(".refresh-icon")
-    .classList.toggle("spinning", isUpdating);
+    .querySelector('.refresh-icon')
+    .classList.toggle('spinning', isUpdating);
   refreshCadsusBtn.disabled = isUpdating;
 
   toggleDetailsBtn.style.display = sortedFields.some(
-    (f) => f.enabled && f.section === "more"
+    (f) => f.enabled && f.section === 'more'
   )
-    ? "block"
-    : "none";
-  patientDetailsSection.style.display = "block";
+    ? 'block'
+    : 'none';
+  patientDetailsSection.style.display = 'block';
 }
 
 function hide() {
-  if (patientDetailsSection) patientDetailsSection.style.display = "none";
+  if (patientDetailsSection) patientDetailsSection.style.display = 'none';
 }
 
 function handleToggleDetails() {
-  patientAdditionalInfoDiv.classList.toggle("show");
+  patientAdditionalInfoDiv.classList.toggle('show');
   toggleDetailsBtn.textContent = patientAdditionalInfoDiv.classList.contains(
-    "show"
+    'show'
   )
-    ? "Mostrar menos"
-    : "Mostrar mais";
+    ? 'Mostrar menos'
+    : 'Mostrar mais';
 }
 
 function handleForceRefresh() {
@@ -155,19 +156,19 @@ function onStateChange() {
  * @param {Function} callbacks.onForceRefresh - Função para forçar a atualização.
  */
 export function init(config, callbacks) {
-  patientDetailsSection = document.getElementById("patient-details-section");
-  patientMainInfoDiv = document.getElementById("patient-main-info");
-  patientAdditionalInfoDiv = document.getElementById("patient-additional-info");
-  toggleDetailsBtn = document.getElementById("toggle-details-btn");
-  patientCardFooter = document.getElementById("patient-card-footer");
-  cadsusTimestamp = document.getElementById("cadsus-timestamp");
-  refreshCadsusBtn = document.getElementById("refresh-cadsus-btn");
+  patientDetailsSection = document.getElementById('patient-details-section');
+  patientMainInfoDiv = document.getElementById('patient-main-info');
+  patientAdditionalInfoDiv = document.getElementById('patient-additional-info');
+  toggleDetailsBtn = document.getElementById('toggle-details-btn');
+  patientCardFooter = document.getElementById('patient-card-footer');
+  cadsusTimestamp = document.getElementById('cadsus-timestamp');
+  refreshCadsusBtn = document.getElementById('refresh-cadsus-btn');
 
   fieldConfigLayout = config;
   onForceRefresh = callbacks.onForceRefresh;
 
-  toggleDetailsBtn.addEventListener("click", handleToggleDetails);
-  refreshCadsusBtn.addEventListener("click", handleForceRefresh);
+  toggleDetailsBtn.addEventListener('click', handleToggleDetails);
+  refreshCadsusBtn.addEventListener('click', handleForceRefresh);
 
   store.subscribe(onStateChange);
 }

@@ -6,21 +6,21 @@
 
 (function () {
   console.log(
-    "[Assistente de Regulação] Script de controle v16 (Detecção com Broker) ativo."
+    '[Assistente de Regulação] Script de controle v16 (Detecção com Broker) ativo.'
   );
 
   const api = browser;
   let lastProcessedReguId = null;
 
   const checkMaintenanceTab = () => {
-    const maintenanceTabPanel = document.getElementById("tabs-manutencao");
+    const maintenanceTabPanel = document.getElementById('tabs-manutencao');
     const isActive =
       maintenanceTabPanel &&
-      maintenanceTabPanel.getAttribute("aria-expanded") === "true";
+      maintenanceTabPanel.getAttribute('aria-expanded') === 'true';
 
     if (isActive) {
-      const idpElement = document.querySelector("#regu\\.reguPK\\.idp");
-      const idsElement = document.querySelector("#regu\\.reguPK\\.ids");
+      const idpElement = document.querySelector('#regu\\.reguPK\\.idp');
+      const idsElement = document.querySelector('#regu\\.reguPK\\.ids');
 
       if (idpElement && idsElement && idpElement.value) {
         const reguIdp = idpElement.value;
@@ -32,16 +32,16 @@
           const payload = { reguIdp, reguIds };
 
           console.log(
-            "[Assistente] Aba Manutenção aberta. Enviando IDs para o background script:",
+            '[Assistente] Aba Manutenção aberta. Enviando IDs para o background script:',
             payload
           );
 
           // Envia a mensagem para o background script, que tem acesso ao storage.session
           try {
-            api.runtime.sendMessage({ type: "SAVE_REGULATION_DATA", payload });
+            api.runtime.sendMessage({ type: 'SAVE_REGULATION_DATA', payload });
           } catch (e) {
             console.error(
-              "[Assistente] Falha ao enviar mensagem para o background script:",
+              '[Assistente] Falha ao enviar mensagem para o background script:',
               e
             );
           }
@@ -61,6 +61,6 @@
     childList: true,
     subtree: true,
     attributes: true,
-    attributeFilter: ["style", "aria-expanded", "class"],
+    attributeFilter: ['style', 'aria-expanded', 'class'],
   });
 })();

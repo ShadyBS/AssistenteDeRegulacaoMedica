@@ -1,28 +1,34 @@
-import "./browser-polyfill.js";
-import * as API from "./api.js";
-import { defaultFieldConfig } from "./field-config.js";
-import { filterConfig } from "./filter-config.js";
-import { SectionManager } from "./SectionManager.js";
-import { TimelineManager } from "./TimelineManager.js"; // Importa o novo gestor
-import * as Renderers from "./renderers.js";
-import * as Utils from "./utils.js";
-import * as Search from "./ui/search.js";
-import * as PatientCard from "./ui/patient-card.js";
-import { store } from "./store.js";
+import * as API from './api.js';
+import './browser-polyfill.js';
+import { defaultFieldConfig } from './field-config.js';
+import * as Renderers from './renderers.js';
+import { SectionManager } from './SectionManager.js';
+import { store } from './store.js';
+import { TimelineManager } from './TimelineManager.js'; // Importa o novo gestor
+import * as PatientCard from './ui/patient-card.js';
+import * as Search from './ui/search.js';
+import * as Utils from './utils.js';
 
 // --- ÍCONES ---
 const sectionIcons = {
-  "patient-details": `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-user-round-check-icon lucide-user-round-check"><path d="M2 21a8 8 0 0 1 13.292-6"/><circle cx="10" cy="8" r="5"/><path d="m16 19 2 2 4-4"/></svg>`,
-  timeline: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-gantt-chart"><path d="M8 6h10"/><path d="M6 12h9"/><path d="M11 18h7"/></svg>`,
-  regulations: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-shield-check-icon lucide-shield-check"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg>`,
-  consultations: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-stethoscope-icon lucide-stethoscope"><path d="M11 2v2"/><path d="M5 2v2"/><path d="M5 3H4a2 2 0 0 0-2 2v4a6 6 0 0 0 12 0V5a2 2 0 0 0-2-2h-1"/><path d="M8 15a6 6 0 0 0 12 0v-3"/><circle cx="20" cy="10" r="2"/></svg>`,
-  exams: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-microscope-icon lucide-microscope"><path d="M6 18h8"/><path d="M3 22h18"/><path d="M14 22a7 7 0 1 0 0-14h-1"/><path d="M9 14h2"/><path d="M9 12a2 2 0 0 1-2-2V6h6v4a2 2 0 0 1-2 2Z"/><path d="M12 6V3a1 1 0 0 0-1-1H9a1 1 0 0 0-1 1v3"/></svg>`,
-  appointments: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-calendar-check-icon lucide-calendar-check"><path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/><path d="m9 16 2 2 4-4"/></svg>`,
-  documents: `<svg xmlns="http://www.w3.org/2000/svg" class="lucide lucide-file-text" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>`,
+  'patient-details':
+    '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-user-round-check-icon lucide-user-round-check"><path d="M2 21a8 8 0 0 1 13.292-6"/><circle cx="10" cy="8" r="5"/><path d="m16 19 2 2 4-4"/></svg>',
+  timeline:
+    '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-gantt-chart"><path d="M8 6h10"/><path d="M6 12h9"/><path d="M11 18h7"/></svg>',
+  regulations:
+    '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-shield-check-icon lucide-shield-check"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg>',
+  consultations:
+    '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-stethoscope-icon lucide-stethoscope"><path d="M11 2v2"/><path d="M5 2v2"/><path d="M5 3H4a2 2 0 0 0-2 2v4a6 6 0 0 0 12 0V5a2 2 0 0 0-2-2h-1"/><path d="M8 15a6 6 0 0 0 12 0v-3"/><circle cx="20" cy="10" r="2"/></svg>',
+  exams:
+    '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-microscope-icon lucide-microscope"><path d="M6 18h8"/><path d="M3 22h18"/><path d="M14 22a7 7 0 1 0 0-14h-1"/><path d="M9 14h2"/><path d="M9 12a2 2 0 0 1-2-2V6h6v4a2 2 0 0 1-2 2Z"/><path d="M12 6V3a1 1 0 0 0-1-1H9a1 1 0 0 0-1 1v3"/></svg>',
+  appointments:
+    '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-calendar-check-icon lucide-calendar-check"><path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/><path d="m9 16 2 2 4-4"/></svg>',
+  documents:
+    '<svg xmlns="http://www.w3.org/2000/svg" class="lucide lucide-file-text" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>',
 };
 
 let currentRegulationData = null;
-let sectionManagers = {}; // Objeto para armazenar instâncias de SectionManager
+const sectionManagers = {}; // Objeto para armazenar instâncias de SectionManager
 
 // --- FUNÇÃO AUXILIAR DE FILTRAGEM ---
 /**
@@ -34,7 +40,7 @@ let sectionManagers = {}; // Objeto para armazenar instâncias de SectionManager
  */
 const applyNormalizedTextFilter = (items, text, getFieldContent) => {
   const searchTerms = Utils.normalizeString(text)
-    .split(",")
+    .split(',')
     .map((t) => t.trim())
     .filter(Boolean);
   if (searchTerms.length === 0) return items;
@@ -47,42 +53,42 @@ const applyNormalizedTextFilter = (items, text, getFieldContent) => {
 // --- LÓGICA DE FILTRAGEM ---
 const consultationFilterLogic = (data, filters) => {
   let filteredData = [...data];
-  if (filters["hide-no-show-checkbox"]) {
+  if (filters['hide-no-show-checkbox']) {
     filteredData = filteredData.filter((c) => !c.isNoShow);
   }
 
   filteredData = applyNormalizedTextFilter(
     filteredData,
-    filters["consultation-filter-keyword"],
+    filters['consultation-filter-keyword'],
     (c) =>
       [
         c.specialty,
         c.professional,
         c.unit,
         ...c.details.map((d) => `${d.label} ${d.value}`),
-      ].join(" ")
+      ].join(' ')
   );
 
   filteredData = applyNormalizedTextFilter(
     filteredData,
-    filters["consultation-filter-cid"],
-    (c) => c.details.map((d) => d.value).join(" ")
+    filters['consultation-filter-cid'],
+    (c) => c.details.map((d) => d.value).join(' ')
   );
 
   filteredData = applyNormalizedTextFilter(
     filteredData,
-    filters["consultation-filter-specialty"],
-    (c) => c.specialty || ""
+    filters['consultation-filter-specialty'],
+    (c) => c.specialty || ''
   );
   filteredData = applyNormalizedTextFilter(
     filteredData,
-    filters["consultation-filter-professional"],
-    (c) => c.professional || ""
+    filters['consultation-filter-professional'],
+    (c) => c.professional || ''
   );
   filteredData = applyNormalizedTextFilter(
     filteredData,
-    filters["consultation-filter-unit"],
-    (c) => c.unit || ""
+    filters['consultation-filter-unit'],
+    (c) => c.unit || ''
   );
 
   return filteredData;
@@ -93,17 +99,17 @@ const examFilterLogic = (data, filters) => {
 
   filteredData = applyNormalizedTextFilter(
     filteredData,
-    filters["exam-filter-name"],
+    filters['exam-filter-name'],
     (item) => item.examName
   );
   filteredData = applyNormalizedTextFilter(
     filteredData,
-    filters["exam-filter-professional"],
+    filters['exam-filter-professional'],
     (item) => item.professional
   );
   filteredData = applyNormalizedTextFilter(
     filteredData,
-    filters["exam-filter-specialty"],
+    filters['exam-filter-specialty'],
     (item) => item.specialty
   );
 
@@ -112,33 +118,33 @@ const examFilterLogic = (data, filters) => {
 
 const appointmentFilterLogic = (data, filters, fetchType) => {
   let filteredData = [...data];
-  const status = filters["appointment-filter-status"] || "todos";
+  const status = filters['appointment-filter-status'] || 'todos';
 
-  if (status !== "todos") {
+  if (status !== 'todos') {
     filteredData = filteredData.filter(
-      (a) => (a.status || "").toUpperCase() === status.toUpperCase()
+      (a) => (a.status || '').toUpperCase() === status.toUpperCase()
     );
   }
 
-  if (fetchType === "consultas") {
+  if (fetchType === 'consultas') {
     filteredData = filteredData.filter(
-      (a) => !a.type.toUpperCase().includes("EXAME")
+      (a) => !a.type.toUpperCase().includes('EXAME')
     );
-  } else if (fetchType === "exames") {
+  } else if (fetchType === 'exames') {
     filteredData = filteredData.filter((a) =>
-      a.type.toUpperCase().includes("EXAME")
+      a.type.toUpperCase().includes('EXAME')
     );
   }
 
   filteredData = applyNormalizedTextFilter(
     filteredData,
-    filters["appointment-filter-term"],
-    (a) => [a.professional, a.specialty, a.description].join(" ")
+    filters['appointment-filter-term'],
+    (a) => [a.professional, a.specialty, a.description].join(' ')
   );
   filteredData = applyNormalizedTextFilter(
     filteredData,
-    filters["appointment-filter-location"],
-    (a) => a.location || ""
+    filters['appointment-filter-location'],
+    (a) => a.location || ''
   );
 
   return filteredData;
@@ -146,30 +152,30 @@ const appointmentFilterLogic = (data, filters, fetchType) => {
 
 const regulationFilterLogic = (data, filters) => {
   let filteredData = [...data];
-  const status = filters["regulation-filter-status"] || "todos";
-  const priority = filters["regulation-filter-priority"] || "todas";
+  const status = filters['regulation-filter-status'] || 'todos';
+  const priority = filters['regulation-filter-priority'] || 'todas';
 
-  if (status !== "todos") {
+  if (status !== 'todos') {
     filteredData = filteredData.filter(
-      (item) => (item.status || "").toUpperCase() === status.toUpperCase()
+      (item) => (item.status || '').toUpperCase() === status.toUpperCase()
     );
   }
 
-  if (priority !== "todas") {
+  if (priority !== 'todas') {
     filteredData = filteredData.filter(
-      (item) => (item.priority || "").toUpperCase() === priority.toUpperCase()
+      (item) => (item.priority || '').toUpperCase() === priority.toUpperCase()
     );
   }
 
   filteredData = applyNormalizedTextFilter(
     filteredData,
-    filters["regulation-filter-procedure"],
-    (item) => item.procedure || ""
+    filters['regulation-filter-procedure'],
+    (item) => item.procedure || ''
   );
   filteredData = applyNormalizedTextFilter(
     filteredData,
-    filters["regulation-filter-requester"],
-    (item) => item.requester || ""
+    filters['regulation-filter-requester'],
+    (item) => item.requester || ''
   );
 
   return filteredData;
@@ -180,15 +186,15 @@ const documentFilterLogic = (data, filters) => {
 
   // Filtro por data (client-side)
   const startDateValue = document.getElementById(
-    "document-date-initial"
+    'document-date-initial'
   )?.value;
-  const endDateValue = document.getElementById("document-date-final")?.value;
+  const endDateValue = document.getElementById('document-date-final')?.value;
 
   if (startDateValue) {
     const start = Utils.parseDate(startDateValue);
     if (start) {
       filteredData = filteredData.filter((doc) => {
-        const docDate = Utils.parseDate(doc.date.split(" ")[0]);
+        const docDate = Utils.parseDate(doc.date.split(' ')[0]);
         return docDate && docDate >= start;
       });
     }
@@ -198,7 +204,7 @@ const documentFilterLogic = (data, filters) => {
     const end = Utils.parseDate(endDateValue);
     if (end) {
       filteredData = filteredData.filter((doc) => {
-        const docDate = Utils.parseDate(doc.date.split(" ")[0]);
+        const docDate = Utils.parseDate(doc.date.split(' ')[0]);
         return docDate && docDate <= end;
       });
     }
@@ -207,44 +213,44 @@ const documentFilterLogic = (data, filters) => {
   // Filtro por palavra-chave normalizada
   filteredData = applyNormalizedTextFilter(
     filteredData,
-    filters["document-filter-keyword"],
-    (doc) => doc.description || ""
+    filters['document-filter-keyword'],
+    (doc) => doc.description || ''
   );
 
   return filteredData;
 };
 
 const sectionConfigurations = {
-  "patient-details": {}, // Seção especial sem fetch
+  'patient-details': {}, // Seção especial sem fetch
   timeline: {}, // Configuração da Timeline será tratada pelo seu próprio gestor
   consultations: {
     fetchFunction: API.fetchAllConsultations,
     renderFunction: Renderers.renderConsultations,
-    initialSortState: { key: "sortableDate", order: "desc" },
+    initialSortState: { key: 'sortableDate', order: 'desc' },
     filterLogic: consultationFilterLogic,
   },
   exams: {
     fetchFunction: API.fetchExamesSolicitados,
     renderFunction: Renderers.renderExams,
-    initialSortState: { key: "date", order: "desc" },
+    initialSortState: { key: 'date', order: 'desc' },
     filterLogic: examFilterLogic,
   },
   appointments: {
     fetchFunction: API.fetchAppointments,
     renderFunction: Renderers.renderAppointments,
-    initialSortState: { key: "date", order: "desc" },
+    initialSortState: { key: 'date', order: 'desc' },
     filterLogic: appointmentFilterLogic,
   },
   regulations: {
     fetchFunction: API.fetchAllRegulations,
     renderFunction: Renderers.renderRegulations,
-    initialSortState: { key: "date", order: "desc" },
+    initialSortState: { key: 'date', order: 'desc' },
     filterLogic: regulationFilterLogic,
   },
   documents: {
     fetchFunction: API.fetchDocuments,
     renderFunction: Renderers.renderDocuments,
-    initialSortState: { key: "date", order: "desc" },
+    initialSortState: { key: 'date', order: 'desc' },
     filterLogic: documentFilterLogic,
   },
 };
@@ -273,16 +279,16 @@ function applyCustomHeaderStyles(styles) {
   // Esta função apenas define os valores das variáveis para cada seção.
 
   const defaultStyles = {
-    backgroundColor: "#ffffff",
-    color: "#1e293b",
-    iconColor: "#1e293b",
-    fontSize: "16px",
+    backgroundColor: '#ffffff',
+    color: '#1e293b',
+    iconColor: '#1e293b',
+    fontSize: '16px',
   };
 
   for (const sectionKey in sectionIcons) {
     const sectionId =
-      sectionKey === "patient-details"
-        ? "patient-details-section"
+      sectionKey === 'patient-details'
+        ? 'patient-details-section'
         : `${sectionKey}-section`;
 
     const sectionElement = document.getElementById(sectionId);
@@ -295,16 +301,16 @@ function applyCustomHeaderStyles(styles) {
 
     // Define as variáveis CSS no elemento da seção.
     sectionElement.style.setProperty(
-      "--section-bg-color",
+      '--section-bg-color',
       finalStyle.backgroundColor
     );
-    sectionElement.style.setProperty("--section-font-color", finalStyle.color);
+    sectionElement.style.setProperty('--section-font-color', finalStyle.color);
     sectionElement.style.setProperty(
-      "--section-icon-color",
+      '--section-icon-color',
       finalStyle.iconColor
     );
     sectionElement.style.setProperty(
-      "--section-font-size",
+      '--section-font-size',
       finalStyle.fontSize
     );
   }
@@ -325,20 +331,20 @@ async function selectPatient(patientInfo, forceRefresh = false) {
   try {
     const ficha = await API.fetchVisualizaUsuario(patientInfo);
     const cadsus = await API.fetchCadsusData({
-      cpf: Utils.getNestedValue(ficha, "entidadeFisica.entfCPF"),
+      cpf: Utils.getNestedValue(ficha, 'entidadeFisica.entfCPF'),
       cns: ficha.isenNumCadSus,
     });
     Object.values(sectionManagers).forEach((manager) => {
-      if (typeof manager.clearAutomationFeedbackAndFilters === "function") {
+      if (typeof manager.clearAutomationFeedbackAndFilters === 'function') {
         manager.clearAutomationFeedbackAndFilters(false);
-      } else if (typeof manager.clearAutomation === "function") {
+      } else if (typeof manager.clearAutomation === 'function') {
         manager.clearAutomation();
       }
     });
     store.setPatient(ficha, cadsus);
     await updateRecentPatients(store.getPatient());
   } catch (error) {
-    Utils.showMessage(error.message, "error");
+    Utils.showMessage(error.message, 'error');
     console.error(error);
     store.clearPatient();
   } finally {
@@ -352,34 +358,34 @@ async function init() {
   try {
     await API.getBaseUrl();
   } catch (error) {
-    if (error?.message === "URL_BASE_NOT_CONFIGURED") {
+    if (error?.message === 'URL_BASE_NOT_CONFIGURED') {
       baseUrlConfigured = false;
 
-      const mainContent = document.getElementById("main-content");
-      const urlWarning = document.getElementById("url-config-warning");
-      const openOptions = document.getElementById("open-options-from-warning");
+      const mainContent = document.getElementById('main-content');
+      const urlWarning = document.getElementById('url-config-warning');
+      const openOptions = document.getElementById('open-options-from-warning');
       const reloadSidebar = document.getElementById(
-        "reload-sidebar-from-warning"
+        'reload-sidebar-from-warning'
       );
 
-      if (mainContent) mainContent.classList.add("hidden");
-      if (urlWarning) urlWarning.classList.remove("hidden");
+      if (mainContent) mainContent.classList.add('hidden');
+      if (urlWarning) urlWarning.classList.remove('hidden');
 
       if (openOptions) {
-        openOptions.addEventListener("click", () =>
+        openOptions.addEventListener('click', () =>
           browser.runtime.openOptionsPage()
         );
       }
       if (reloadSidebar) {
-        reloadSidebar.addEventListener("click", () => window.location.reload());
+        reloadSidebar.addEventListener('click', () => window.location.reload());
       }
 
       // **não retornamos mais aqui**, apenas marcamos que deu “fallback”
     } else {
-      console.error("Initialization failed:", error);
+      console.error('Initialization failed:', error);
       Utils.showMessage(
-        "Ocorreu um erro inesperado ao iniciar a extensão.",
-        "error"
+        'Ocorreu um erro inesperado ao iniciar a extensão.',
+        'error'
       );
       // nesse caso você pode querer return ou throw de verdade
       return;
@@ -387,8 +393,8 @@ async function init() {
   }
 
   // === setup das abas: sempre rodar, mesmo sem baseURL ===
-  Utils.setupTabs(document.getElementById("layout-tabs-container"));
-  Utils.setupTabs(document.getElementById("patterns-tabs-container"));
+  Utils.setupTabs(document.getElementById('layout-tabs-container'));
+  Utils.setupTabs(document.getElementById('patterns-tabs-container'));
   // (adicione aqui quaisquer outros containers de aba que tenha)
 
   // === só o resto do fluxo principal depende de baseUrlConfigured ===
@@ -466,20 +472,20 @@ async function loadConfigAndData() {
 }
 
 function applySectionOrder(order) {
-  const mainContent = document.getElementById("main-content");
+  const mainContent = document.getElementById('main-content');
   if (!mainContent) return;
 
   const sectionMap = {
-    "patient-details": "patient-details-section",
-    timeline: "timeline-section",
-    regulations: "regulations-section",
-    consultations: "consultations-section",
-    exams: "exams-section",
-    appointments: "appointments-section",
-    documents: "documents-section",
+    'patient-details': 'patient-details-section',
+    timeline: 'timeline-section',
+    regulations: 'regulations-section',
+    consultations: 'consultations-section',
+    exams: 'exams-section',
+    appointments: 'appointments-section',
+    documents: 'documents-section',
   };
 
-  const patientCardId = "patient-details";
+  const patientCardId = 'patient-details';
 
   // Pega a ordem salva ou a ordem padrão do DOM
   const savedOrder =
@@ -487,7 +493,7 @@ function applySectionOrder(order) {
 
   // Garante que a ficha do paciente esteja sempre no topo
   // 1. Remove a ficha da ordem atual, não importa onde esteja.
-  let finalOrder = savedOrder.filter((id) => id !== patientCardId);
+  const finalOrder = savedOrder.filter((id) => id !== patientCardId);
   // 2. Adiciona a ficha no início da lista.
   finalOrder.unshift(patientCardId);
 
@@ -511,8 +517,8 @@ function applySectionOrder(order) {
 
 function initializeSections(globalSettings) {
   Object.keys(sectionConfigurations).forEach((key) => {
-    if (key === "patient-details") return;
-    if (key === "timeline") {
+    if (key === 'patient-details') return;
+    if (key === 'timeline') {
       sectionManagers[key] = new TimelineManager(
         key,
         sectionConfigurations[key],
@@ -533,11 +539,11 @@ function applyUserPreferences(globalSettings) {
   const { dateRangeDefaults } = userPreferences;
 
   const sections = [
-    "consultations",
-    "exams",
-    "appointments",
-    "regulations",
-    "documents",
+    'consultations',
+    'exams',
+    'appointments',
+    'regulations',
+    'documents',
   ];
   const defaultSystemRanges = {
     consultations: { start: -6, end: 0 },
@@ -549,7 +555,7 @@ function applyUserPreferences(globalSettings) {
 
   sections.forEach((section) => {
     const range = dateRangeDefaults[section] || defaultSystemRanges[section];
-    const prefix = section.replace(/s$/, "");
+    const prefix = section.replace(/s$/, '');
 
     const initialEl = document.getElementById(`${prefix}-date-initial`);
     const finalEl = document.getElementById(`${prefix}-date-final`);
@@ -568,7 +574,7 @@ function applyUserPreferences(globalSettings) {
         filterSetting.defaultValue !== undefined &&
         filterSetting.defaultValue !== null
       ) {
-        if (el.type === "checkbox") {
+        if (el.type === 'checkbox') {
           el.checked = filterSetting.defaultValue;
         } else {
           el.value = filterSetting.defaultValue;
@@ -578,20 +584,20 @@ function applyUserPreferences(globalSettings) {
 }
 
 function setupAutoModeToggle() {
-  const toggle = document.getElementById("auto-mode-toggle");
-  const label = document.getElementById("auto-mode-label");
+  const toggle = document.getElementById('auto-mode-toggle');
+  const label = document.getElementById('auto-mode-label');
 
   browser.storage.sync
     .get({ enableAutomaticDetection: true })
     .then((settings) => {
       toggle.checked = settings.enableAutomaticDetection;
-      label.textContent = settings.enableAutomaticDetection ? "Auto" : "Manual";
+      label.textContent = settings.enableAutomaticDetection ? 'Auto' : 'Manual';
     });
 
-  toggle.addEventListener("change", (event) => {
+  toggle.addEventListener('change', (event) => {
     const isEnabled = event.target.checked;
     browser.storage.sync.set({ enableAutomaticDetection: isEnabled });
-    label.textContent = isEnabled ? "Auto" : "Manual";
+    label.textContent = isEnabled ? 'Auto' : 'Manual';
   });
 }
 
@@ -612,26 +618,26 @@ async function handleRegulationLoaded(regulationData) {
       await selectPatient(patientInfo);
 
       const contextName =
-        regulationData.apcnNome || regulationData.prciNome || "Contexto";
-      const infoBtn = document.getElementById("context-info-btn");
+        regulationData.apcnNome || regulationData.prciNome || 'Contexto';
+      const infoBtn = document.getElementById('context-info-btn');
       infoBtn.title = `Contexto: ${contextName.trim()}`;
-      infoBtn.classList.remove("hidden");
+      infoBtn.classList.remove('hidden');
 
       await applyAutomationRules(regulationData);
     } else {
       currentRegulationData = null;
       Utils.showMessage(
-        "Não foi possível extrair os dados do paciente da regulação.",
-        "error"
+        'Não foi possível extrair os dados do paciente da regulação.',
+        'error'
       );
     }
   } catch (error) {
     currentRegulationData = null;
     Utils.showMessage(
       `Erro ao processar a regulação: ${error.message}`,
-      "error"
+      'error'
     );
-    console.error("Erro ao processar a regulação:", error);
+    console.error('Erro ao processar a regulação:', error);
   } finally {
     Utils.toggleLoader(false);
   }
@@ -644,12 +650,12 @@ async function applyAutomationRules(regulationData) {
   if (!automationRules || automationRules.length === 0) return;
 
   const contextString = [
-    regulationData.prciNome || "",
-    regulationData.prciCodigo || "",
-    regulationData.apcnNome || "",
-    regulationData.apcnCod || "",
+    regulationData.prciNome || '',
+    regulationData.prciCodigo || '',
+    regulationData.apcnNome || '',
+    regulationData.apcnCod || '',
   ]
-    .join(" ")
+    .join(' ')
     .toLowerCase();
 
   for (const rule of automationRules) {
@@ -663,7 +669,7 @@ async function applyAutomationRules(regulationData) {
         Object.entries(sectionManagers).forEach(([key, manager]) => {
           if (
             rule.filterSettings[key] &&
-            typeof manager.applyAutomationFilters === "function"
+            typeof manager.applyAutomationFilters === 'function'
           ) {
             manager.applyAutomationFilters(rule.filterSettings[key], rule.name);
           }
@@ -676,55 +682,53 @@ async function applyAutomationRules(regulationData) {
 
 function handleShowRegulationInfo() {
   if (!currentRegulationData) {
-    Utils.showMessage("Nenhuma informação de regulação carregada.", "info");
+    Utils.showMessage('Nenhuma informação de regulação carregada.', 'info');
     return;
   }
-  const modalTitle = document.getElementById("modal-title");
-  const modalContent = document.getElementById("modal-content");
-  const infoModal = document.getElementById("info-modal");
+  const modalTitle = document.getElementById('modal-title');
+  const modalContent = document.getElementById('modal-content');
+  const infoModal = document.getElementById('info-modal');
 
-  modalTitle.textContent = "Dados da Regulação (JSON)";
+  modalTitle.textContent = 'Dados da Regulação (JSON)';
   const formattedJson = JSON.stringify(currentRegulationData, null, 2);
 
   modalContent.innerHTML = `<pre class="bg-slate-100 p-2 rounded-md text-xs whitespace-pre-wrap break-all">${formattedJson}</pre>`;
 
-  infoModal.classList.remove("hidden");
+  infoModal.classList.remove('hidden');
 }
 
 function addGlobalEventListeners() {
-  const mainContent = document.getElementById("main-content");
-  const infoModal = document.getElementById("info-modal");
-  const modalCloseBtn = document.getElementById("modal-close-btn");
-  const infoBtn = document.getElementById("context-info-btn");
-  const reloadBtn = document.getElementById("reload-sidebar-btn");
+  const mainContent = document.getElementById('main-content');
+  const infoModal = document.getElementById('info-modal');
+  const modalCloseBtn = document.getElementById('modal-close-btn');
+  const infoBtn = document.getElementById('context-info-btn');
+  const reloadBtn = document.getElementById('reload-sidebar-btn');
 
   if (reloadBtn) {
-    reloadBtn.addEventListener("click", () => {
+    reloadBtn.addEventListener('click', () => {
       const patient = store.getPatient();
       if (patient && patient.ficha) {
-        const confirmation = window.confirm(
-          "Um paciente está selecionado e o estado atual será perdido. Deseja realmente recarregar o assistente?"
-        );
-        if (confirmation) {
-          window.location.reload();
-        }
+        Utils.showDialog({
+          message: 'Um paciente está selecionado e o estado atual será perdido. Deseja realmente recarregar o assistente?',
+          onConfirm: () => window.location.reload()
+        });
       } else {
         window.location.reload();
       }
     });
   }
 
-  modalCloseBtn.addEventListener("click", () =>
-    infoModal.classList.add("hidden")
+  modalCloseBtn.addEventListener('click', () =>
+    infoModal.classList.add('hidden')
   );
-  infoModal.addEventListener("click", (e) => {
-    if (e.target === infoModal) infoModal.classList.add("hidden");
+  infoModal.addEventListener('click', (e) => {
+    if (e.target === infoModal) infoModal.classList.add('hidden');
   });
-  mainContent.addEventListener("click", handleGlobalActions);
-  infoBtn.addEventListener("click", handleShowRegulationInfo);
+  mainContent.addEventListener('click', handleGlobalActions);
+  infoBtn.addEventListener('click', handleShowRegulationInfo);
 
   browser.storage.onChanged.addListener((changes, areaName) => {
-    if (areaName === "local" && changes.pendingRegulation) {
+    if (areaName === 'local' && changes.pendingRegulation) {
       // Apenas processa se a detecção automática estiver LIGADA
       browser.storage.sync
         .get({ enableAutomaticDetection: true })
@@ -733,21 +737,21 @@ function addGlobalEventListeners() {
             const { newValue } = changes.pendingRegulation;
             if (newValue && newValue.isenPKIdp) {
               console.log(
-                "[Assistente Sidebar] Nova regulação detectada via storage.onChanged:",
+                '[Assistente Sidebar] Nova regulação detectada via storage.onChanged:',
                 newValue
               );
               handleRegulationLoaded(newValue);
-              browser.storage.local.remove("pendingRegulation");
+              browser.storage.local.remove('pendingRegulation');
             }
           }
         });
     }
 
-    if (areaName === "sync" && changes.sectionHeaderStyles) {
+    if (areaName === 'sync' && changes.sectionHeaderStyles) {
       window.location.reload();
     }
 
-    if (areaName === "sync" && changes.enableAutomaticDetection) {
+    if (areaName === 'sync' && changes.enableAutomaticDetection) {
       // Mantém o botão da sidebar sincronizado com a configuração
       setupAutoModeToggle();
     }
@@ -756,42 +760,42 @@ function addGlobalEventListeners() {
 
 async function handleGlobalActions(event) {
   const target = event.target;
-  const copyBtn = target.closest(".copy-icon");
+  const copyBtn = target.closest('.copy-icon');
   if (copyBtn) {
     await copyToClipboard(copyBtn);
     return;
   }
-  const examResultBtn = target.closest(".view-exam-result-btn");
+  const examResultBtn = target.closest('.view-exam-result-btn');
   if (examResultBtn) {
     await handleViewExamResult(examResultBtn);
     return;
   }
 
-  const appointmentDetailsBtn = target.closest(".view-appointment-details-btn");
+  const appointmentDetailsBtn = target.closest('.view-appointment-details-btn');
   if (appointmentDetailsBtn) {
     await handleShowAppointmentDetailsModal(appointmentDetailsBtn);
     return;
   }
-  const regulationDetailsBtn = target.closest(".view-regulation-details-btn");
+  const regulationDetailsBtn = target.closest('.view-regulation-details-btn');
   if (regulationDetailsBtn) {
     await handleShowRegulationDetailsModal(regulationDetailsBtn);
     return;
   }
 
-  const appointmentInfoBtn = target.closest(".appointment-info-btn");
+  const appointmentInfoBtn = target.closest('.appointment-info-btn');
   if (appointmentInfoBtn) {
     handleShowAppointmentInfo(appointmentInfoBtn);
     return;
   }
 
-  const documentBtn = target.closest(".view-document-btn");
+  const documentBtn = target.closest('.view-document-btn');
   if (documentBtn) {
     await handleViewDocument(documentBtn);
     return;
   }
 
   const regulationAttachmentBtn = target.closest(
-    ".view-regulation-attachment-btn"
+    '.view-regulation-attachment-btn'
   );
   if (regulationAttachmentBtn) {
     await handleViewRegulationAttachment(regulationAttachmentBtn);
@@ -800,20 +804,20 @@ async function handleGlobalActions(event) {
 }
 
 async function copyToClipboard(button) {
-  if (button.dataset.inProgress === "true") return;
+  if (button.dataset.inProgress === 'true') return;
   const textToCopy = button.dataset.copyText;
   if (!textToCopy) return;
-  button.dataset.inProgress = "true";
+  button.dataset.inProgress = 'true';
   try {
     await navigator.clipboard.writeText(textToCopy);
-    button.textContent = "✅";
+    button.textContent = '✅';
   } catch (err) {
-    console.error("Falha ao copiar texto: ", err);
-    button.textContent = "❌";
+    console.error('Falha ao copiar texto: ', err);
+    button.textContent = '❌';
   } finally {
     setTimeout(() => {
-      button.textContent = "📄";
-      button.dataset.inProgress = "false";
+      button.textContent = '📄';
+      button.dataset.inProgress = 'false';
     }, 1200);
   }
 }
@@ -832,18 +836,18 @@ async function updateRecentPatients(patientData) {
 
 async function handleViewExamResult(button) {
   const { idp, ids } = button.dataset;
-  const newTab = window.open("", "_blank");
-  newTab.document.write("Carregando resultado do exame...");
+  const newTab = window.open('', '_blank');
+  newTab.document.write('Carregando resultado do exame...');
   try {
     const filePath = await API.fetchResultadoExame({ idp, ids });
     const baseUrl = await API.getBaseUrl();
     if (filePath) {
-      const fullUrl = filePath.startsWith("http")
+      const fullUrl = filePath.startsWith('http')
         ? filePath
         : `${baseUrl}${filePath}`;
       newTab.location.href = fullUrl;
     } else {
-      newTab.document.body.innerHTML = "<p>Resultado não encontrado.</p>";
+      newTab.document.body.innerHTML = '<p>Resultado não encontrado.</p>';
     }
   } catch (error) {
     newTab.document.body.innerHTML = `<p>Erro: ${error.message}</p>`;
@@ -852,8 +856,8 @@ async function handleViewExamResult(button) {
 
 async function handleViewDocument(button) {
   const { idp, ids } = button.dataset;
-  const newTab = window.open("", "_blank");
-  newTab.document.write("Carregando documento...");
+  const newTab = window.open('', '_blank');
+  newTab.document.write('Carregando documento...');
 
   try {
     const docUrl = await API.fetchDocumentUrl({ idp, ids });
@@ -861,44 +865,43 @@ async function handleViewDocument(button) {
       newTab.location.href = docUrl;
     } else {
       newTab.document.body.innerHTML =
-        "<p>URL do documento não encontrada.</p>";
+        '<p>URL do documento não encontrada.</p>';
     }
   } catch (error) {
     newTab.document.body.innerHTML = `<p>Erro ao carregar documento: ${error.message}</p>`;
-    console.error("Falha ao visualizar documento:", error);
+    console.error('Falha ao visualizar documento:', error);
   }
 }
 
 async function handleViewRegulationAttachment(button) {
   const { idp, ids } = button.dataset;
-  const newTab = window.open("", "_blank");
-  newTab.document.write("Carregando anexo da regulação...");
 
   try {
     const fileUrl = await API.fetchRegulationAttachmentUrl({ idp, ids });
     if (fileUrl) {
-      newTab.location.href = fileUrl;
+      // Use browser extension API instead of window.open
+      const api = browser || chrome;
+      await api.tabs.create({ url: fileUrl });
     } else {
-      newTab.document.body.innerHTML = "<p>URL do anexo não encontrada.</p>";
+      console.warn('⚠️ URL do anexo não encontrada');
     }
   } catch (error) {
-    newTab.document.body.innerHTML = `<p>Erro ao carregar anexo: ${error.message}</p>`;
-    console.error("Falha ao visualizar anexo da regulação:", error);
+    console.error('❌ Erro ao carregar anexo da regulação:', error);
   }
 }
 
 function showModal(title, content) {
-  const modal = document.getElementById("info-modal");
-  const modalTitle = document.getElementById("modal-title");
-  const modalContent = document.getElementById("modal-content");
+  const modal = document.getElementById('info-modal');
+  const modalTitle = document.getElementById('modal-title');
+  const modalContent = document.getElementById('modal-content');
 
   modalTitle.textContent = title;
   modalContent.innerHTML = content;
-  modal.classList.remove("hidden");
+  modal.classList.remove('hidden');
 }
 
 function createDetailRow(label, value) {
-  if (!value || String(value).trim() === "") return "";
+  if (!value || String(value).trim() === '') return '';
   return `<div class="py-2 border-b border-slate-100 flex justify-between items-start gap-4">
             <span class="font-semibold text-slate-600 flex-shrink-0">${label}:</span>
             <span class="text-slate-800 text-right break-words">${value}</span>
@@ -906,60 +909,60 @@ function createDetailRow(label, value) {
 }
 
 function formatRegulationDetailsForModal(data) {
-  if (!data) return "<p>Dados da regulação não encontrados.</p>";
-  let content = "";
-  content += createDetailRow("Status", data.reguStatus);
+  if (!data) return '<p>Dados da regulação não encontrados.</p>';
+  let content = '';
+  content += createDetailRow('Status', data.reguStatus);
   content += createDetailRow(
-    "Tipo",
-    data.reguTipo === "ENC" ? "Consulta" : "Exame"
+    'Tipo',
+    data.reguTipo === 'ENC' ? 'Consulta' : 'Exame'
   );
-  content += createDetailRow("Data Solicitação", data.reguDataStr);
-  content += createDetailRow("Procedimento", data.prciNome);
-  content += createDetailRow("CID", `${data.tcidCod} - ${data.tcidDescricao}`);
-  content += createDetailRow("Profissional Sol.", data.prsaEntiNome);
-  content += createDetailRow("Unidade Sol.", data.limoSolicitanteNome);
-  content += createDetailRow("Unidade Desejada", data.limoDesejadaNome);
-  content += createDetailRow("Gravidade", data.reguGravidade);
-  if (data.reguJustificativa && data.reguJustificativa !== "null") {
+  content += createDetailRow('Data Solicitação', data.reguDataStr);
+  content += createDetailRow('Procedimento', data.prciNome);
+  content += createDetailRow('CID', `${data.tcidCod} - ${data.tcidDescricao}`);
+  content += createDetailRow('Profissional Sol.', data.prsaEntiNome);
+  content += createDetailRow('Unidade Sol.', data.limoSolicitanteNome);
+  content += createDetailRow('Unidade Desejada', data.limoDesejadaNome);
+  content += createDetailRow('Gravidade', data.reguGravidade);
+  if (data.reguJustificativa && data.reguJustificativa !== 'null') {
     content += `<div class="py-2">
                       <span class="font-semibold text-slate-600">Justificativa:</span>
                       <p class="text-slate-800 whitespace-pre-wrap mt-1 p-2 bg-slate-50 rounded">${data.reguJustificativa.replace(
-                        /\\n/g,
-                        "\n"
-                      )}</p>
+    /\\n/g,
+    '\n'
+  )}</p>
                   </div>`;
   }
   return content;
 }
 
 function formatAppointmentDetailsForModal(data) {
-  if (!data) return "<p>Dados do agendamento não encontrados.</p>";
+  if (!data) return '<p>Dados do agendamento não encontrados.</p>';
 
-  let status = "Agendado";
-  if (data.agcoIsCancelado === "t") status = "Cancelado";
-  else if (data.agcoIsFaltante === "t") status = "Faltou";
-  else if (data.agcoIsAtendido === "t") status = "Atendido";
+  let status = 'Agendado';
+  if (data.agcoIsCancelado === 't') status = 'Cancelado';
+  else if (data.agcoIsFaltante === 't') status = 'Faltou';
+  else if (data.agcoIsAtendido === 't') status = 'Atendido';
 
-  let content = "";
-  content += createDetailRow("Status", status);
+  let content = '';
+  content += createDetailRow('Status', status);
   content += createDetailRow(
-    "Data",
+    'Data',
     `${data.agcoData} às ${data.agcoHoraPrevista}`
   );
   content += createDetailRow(
-    "Local",
+    'Local',
     data.unidadeSaudeDestino?.entidade?.entiNome
   );
   content += createDetailRow(
-    "Profissional",
+    'Profissional',
     data.profissionalDestino?.entidadeFisica?.entidade?.entiNome
   );
   content += createDetailRow(
-    "Especialidade",
+    'Especialidade',
     data.atividadeProfissionalCnes?.apcnNome
   );
-  content += createDetailRow("Procedimento", data.procedimento?.prciNome);
-  content += createDetailRow("Convênio", data.convenio?.entidade?.entiNome);
+  content += createDetailRow('Procedimento', data.procedimento?.prciNome);
+  content += createDetailRow('Convênio', data.convenio?.entidade?.entiNome);
   if (data.agcoObs) {
     content += `<div class="py-2">
                         <span class="font-semibold text-slate-600">Observação:</span>
@@ -970,41 +973,41 @@ function formatAppointmentDetailsForModal(data) {
 }
 
 function formatExamAppointmentDetailsForModal(data) {
-  if (!data) return "<p>Dados do agendamento de exame não encontrados.</p>";
+  if (!data) return '<p>Dados do agendamento de exame não encontrados.</p>';
 
-  let content = "";
-  content += createDetailRow("Data Agendamento", data.examDataCad);
+  let content = '';
+  content += createDetailRow('Data Agendamento', data.examDataCad);
   content += createDetailRow(
-    "Unidade Origem",
+    'Unidade Origem',
     data.ligacaoModularOrigem?.limoNome
   );
   content += createDetailRow(
-    "Unidade Destino",
+    'Unidade Destino',
     data.ligacaoModularDestino?.limoNome
   );
   content += createDetailRow(
-    "Profissional Sol.",
+    'Profissional Sol.',
     data.profissional?.entidadeFisica?.entidade?.entiNome
   );
-  content += createDetailRow("Caráter", data.CaraterAtendimento?.caraDescri);
-  content += createDetailRow("Critério", data.criterioExame?.critNome);
+  content += createDetailRow('Caráter', data.CaraterAtendimento?.caraDescri);
+  content += createDetailRow('Critério', data.criterioExame?.critNome);
 
   return content;
 }
 
 async function handleShowRegulationDetailsModal(button) {
   const { idp, ids } = button.dataset;
-  showModal("Detalhes da Regulação", "<p>Carregando...</p>");
+  showModal('Detalhes da Regulação', '<p>Carregando...</p>');
   try {
     const data = await API.fetchRegulationDetails({
       reguIdp: idp,
       reguIds: ids,
     });
     const content = formatRegulationDetailsForModal(data);
-    showModal("Detalhes da Regulação", content);
+    showModal('Detalhes da Regulação', content);
   } catch (error) {
     showModal(
-      "Erro",
+      'Erro',
       `<p>Não foi possível carregar os detalhes: ${error.message}</p>`
     );
   }
@@ -1012,12 +1015,12 @@ async function handleShowRegulationDetailsModal(button) {
 
 async function handleShowAppointmentDetailsModal(button) {
   const { idp, ids, type } = button.dataset;
-  const isExam = type.toUpperCase().includes("EXAME");
+  const isExam = type.toUpperCase().includes('EXAME');
   const title = isExam
-    ? "Detalhes do Agendamento de Exame"
-    : "Detalhes da Consulta Agendada";
+    ? 'Detalhes do Agendamento de Exame'
+    : 'Detalhes da Consulta Agendada';
 
-  showModal(title, "<p>Carregando...</p>");
+  showModal(title, '<p>Carregando...</p>');
 
   try {
     let data;
@@ -1032,7 +1035,7 @@ async function handleShowAppointmentDetailsModal(button) {
     showModal(title, content);
   } catch (error) {
     showModal(
-      "Erro",
+      'Erro',
       `<p>Não foi possível carregar os detalhes: ${error.message}</p>`
     );
   }
@@ -1040,41 +1043,41 @@ async function handleShowAppointmentDetailsModal(button) {
 
 function handleShowAppointmentInfo(button) {
   const data = JSON.parse(button.dataset.appointment);
-  const modalTitle = document.getElementById("modal-title");
-  const modalContent = document.getElementById("modal-content");
-  const infoModal = document.getElementById("info-modal");
-  modalTitle.textContent = "Detalhes do Agendamento";
+  const modalTitle = document.getElementById('modal-title');
+  const modalContent = document.getElementById('modal-content');
+  const infoModal = document.getElementById('info-modal');
+  modalTitle.textContent = 'Detalhes do Agendamento';
   modalContent.innerHTML = `
         <p><strong>ID:</strong> ${data.id}</p>
         <p><strong>Tipo:</strong> ${
-          data.isSpecialized
-            ? "Especializada"
-            : data.isOdonto
-            ? "Odontológica"
-            : data.type
-        }</p>
+  data.isSpecialized
+    ? 'Especializada'
+    : data.isOdonto
+      ? 'Odontológica'
+      : data.type
+}</p>
         <p><strong>Status:</strong> ${data.status}</p>
         <p><strong>Data:</strong> ${data.date} às ${data.time}</p>
         <p><strong>Local:</strong> ${data.location}</p>
         <p><strong>Profissional:</strong> ${data.professional}</p>
-        <p><strong>Especialidade:</strong> ${data.specialty || "N/A"}</p>
+        <p><strong>Especialidade:</strong> ${data.specialty || 'N/A'}</p>
         <p><strong>Procedimento:</strong> ${data.description}</p>
     `;
-  infoModal.classList.remove("hidden");
+  infoModal.classList.remove('hidden');
 }
 
 async function checkForPendingRegulation() {
   try {
     const { pendingRegulation } = await browser.storage.local.get(
-      "pendingRegulation"
+      'pendingRegulation'
     );
     if (pendingRegulation && pendingRegulation.isenPKIdp) {
       await handleRegulationLoaded(pendingRegulation);
-      await browser.storage.local.remove("pendingRegulation");
+      await browser.storage.local.remove('pendingRegulation');
     }
   } catch (e) {
-    console.error("Erro ao verificar regulação pendente:", e);
+    console.error('Erro ao verificar regulação pendente:', e);
   }
 }
 
-document.addEventListener("DOMContentLoaded", init);
+document.addEventListener('DOMContentLoaded', init);

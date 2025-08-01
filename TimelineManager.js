@@ -1,10 +1,10 @@
 /**
  * @file Módulo TimelineManager, responsável por gerir a secção da Linha do Tempo.
  */
-import * as API from "./api.js";
-import * as Utils from "./utils.js";
-import * as Renderers from "./renderers.js";
-import { store } from "./store.js";
+import * as API from './api.js';
+import * as Utils from './utils.js';
+import * as Renderers from './renderers.js';
+import { store } from './store.js';
 
 export class TimelineManager {
   constructor(sectionKey, config, globalSettings) {
@@ -33,55 +33,55 @@ export class TimelineManager {
 
   cacheDomElements() {
     this.elements = {
-      section: document.getElementById("timeline-section"),
-      wrapper: document.getElementById("timeline-wrapper"),
-      content: document.getElementById("timeline-content"),
-      fetchBtn: document.getElementById("fetch-timeline-btn"),
-      toggleBtn: document.getElementById("toggle-timeline-list-btn"),
+      section: document.getElementById('timeline-section'),
+      wrapper: document.getElementById('timeline-wrapper'),
+      content: document.getElementById('timeline-content'),
+      fetchBtn: document.getElementById('fetch-timeline-btn'),
+      toggleBtn: document.getElementById('toggle-timeline-list-btn'),
       automationFeedback: document.getElementById(
-        "timeline-automation-feedback"
+        'timeline-automation-feedback'
       ),
-      dateInitial: document.getElementById("timeline-date-initial"),
-      dateFinal: document.getElementById("timeline-date-final"),
-      searchKeyword: document.getElementById("timeline-search-keyword"),
+      dateInitial: document.getElementById('timeline-date-initial'),
+      dateFinal: document.getElementById('timeline-date-final'),
+      searchKeyword: document.getElementById('timeline-search-keyword'),
     };
   }
 
   addEventListeners() {
-    this.elements.fetchBtn?.addEventListener("click", () => this.fetchData());
-    this.elements.toggleBtn?.addEventListener("click", () =>
+    this.elements.fetchBtn?.addEventListener('click', () => this.fetchData());
+    this.elements.toggleBtn?.addEventListener('click', () =>
       this.toggleSection()
     );
 
     this.elements.searchKeyword?.addEventListener(
-      "input",
+      'input',
       Utils.debounce(() => this.render(), 300)
     );
-    this.elements.dateInitial?.addEventListener("change", () => this.render());
-    this.elements.dateFinal?.addEventListener("change", () => this.render());
+    this.elements.dateInitial?.addEventListener('change', () => this.render());
+    this.elements.dateFinal?.addEventListener('change', () => this.render());
 
-    this.elements.section?.addEventListener("click", (event) => {
-      const header = event.target.closest(".timeline-header");
+    this.elements.section?.addEventListener('click', (event) => {
+      const header = event.target.closest('.timeline-header');
       if (header) {
         const details = header.nextElementSibling;
-        if (details && details.classList.contains("timeline-details-body")) {
-          details.classList.toggle("show");
+        if (details && details.classList.contains('timeline-details-body')) {
+          details.classList.toggle('show');
         }
         return;
       }
 
-      const toggleDetailsBtn = event.target.closest(".timeline-toggle-details-btn");
+      const toggleDetailsBtn = event.target.closest('.timeline-toggle-details-btn');
       if (toggleDetailsBtn) {
-        const timelineItem = toggleDetailsBtn.closest(".timeline-item");
-        const details = timelineItem?.querySelector(".timeline-details-body");
+        const timelineItem = toggleDetailsBtn.closest('.timeline-item');
+        const details = timelineItem?.querySelector('.timeline-details-body');
         if (details) {
-          details.classList.toggle("show");
+          details.classList.toggle('show');
         }
         return;
       }
 
       const toggleFilterBtn = event.target.closest(
-        "#timeline-toggle-filter-btn"
+        '#timeline-toggle-filter-btn'
       );
       if (toggleFilterBtn) {
         this.toggleFilteredView();
@@ -102,14 +102,14 @@ export class TimelineManager {
     this.currentPatient = patient;
     this.allData = [];
     this.clearAutomation();
-    this.elements.content.innerHTML = "";
+    this.elements.content.innerHTML = '';
     if (this.elements.searchKeyword) {
-      this.elements.searchKeyword.value = "";
+      this.elements.searchKeyword.value = '';
     }
     this.applyDefaultDateRange();
 
     if (this.elements.section) {
-      this.elements.section.style.display = patient ? "block" : "none";
+      this.elements.section.style.display = patient ? 'block' : 'none';
     }
   }
 
@@ -134,14 +134,14 @@ export class TimelineManager {
     }
 
     this.isLoading = true;
-    Renderers.renderTimeline([], "loading");
+    Renderers.renderTimeline([], 'loading');
 
     try {
       const params = {
         isenPK: `${this.currentPatient.isenPK.idp}-${this.currentPatient.isenPK.ids}`,
         isenFullPKCrypto: this.currentPatient.isenFullPKCrypto,
-        dataInicial: "01/01/1900", // Busca sempre o histórico completo
-        dataFinal: new Date().toLocaleDateString("pt-BR"),
+        dataInicial: '01/01/1900', // Busca sempre o histórico completo
+        dataFinal: new Date().toLocaleDateString('pt-BR'),
       };
 
       const apiData = await API.fetchAllTimelineData(params);
@@ -150,8 +150,8 @@ export class TimelineManager {
       this.allData = normalizedData;
       this.render();
     } catch (error) {
-      console.error("Erro ao buscar dados para a Linha do Tempo:", error);
-      Renderers.renderTimeline([], "error");
+      console.error('Erro ao buscar dados para a Linha do Tempo:', error);
+      Renderers.renderTimeline([], 'error');
     } finally {
       this.isLoading = false;
     }
@@ -161,13 +161,13 @@ export class TimelineManager {
     return {
       startDate: this.elements.dateInitial?.value,
       endDate: this.elements.dateFinal?.value,
-      keyword: Utils.normalizeString(this.elements.searchKeyword?.value || ""),
+      keyword: Utils.normalizeString(this.elements.searchKeyword?.value || ''),
     };
   }
 
   render() {
     if (this.allData.length === 0 && !this.isLoading) {
-      Renderers.renderTimeline([], "empty");
+      Renderers.renderTimeline([], 'empty');
       return;
     }
 
@@ -202,15 +202,15 @@ export class TimelineManager {
       );
     }
 
-    Renderers.renderTimeline(dataToRender, "success");
+    Renderers.renderTimeline(dataToRender, 'success');
   }
 
   toggleSection() {
-    this.elements.wrapper?.classList.toggle("show");
+    this.elements.wrapper?.classList.toggle('show');
     this.elements.toggleBtn.textContent =
-      this.elements.wrapper.classList.contains("show")
-        ? "Recolher"
-        : "Expandir";
+      this.elements.wrapper.classList.contains('show')
+        ? 'Recolher'
+        : 'Expandir';
   }
 
   applyAutomationFilters(filters, ruleName) {
@@ -227,7 +227,7 @@ export class TimelineManager {
                 </button>
             </div>
         `;
-      this.elements.automationFeedback.classList.remove("hidden");
+      this.elements.automationFeedback.classList.remove('hidden');
     }
 
     if (this.allData.length > 0) {
@@ -240,8 +240,8 @@ export class TimelineManager {
     this.activeRuleName = null;
     this.isFilteredView = false;
     if (this.elements.automationFeedback) {
-      this.elements.automationFeedback.classList.add("hidden");
-      this.elements.automationFeedback.innerHTML = "";
+      this.elements.automationFeedback.classList.add('hidden');
+      this.elements.automationFeedback.innerHTML = '';
     }
     if (this.allData.length > 0) {
       this.render();
@@ -250,11 +250,11 @@ export class TimelineManager {
 
   toggleFilteredView() {
     this.isFilteredView = !this.isFilteredView;
-    const button = document.getElementById("timeline-toggle-filter-btn");
+    const button = document.getElementById('timeline-toggle-filter-btn');
     if (button) {
       button.textContent = this.isFilteredView
-        ? "Ver timeline completa"
-        : "Ver timeline focada";
+        ? 'Ver timeline completa'
+        : 'Ver timeline focada';
     }
     this.render();
   }

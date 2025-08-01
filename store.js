@@ -38,7 +38,7 @@ export const store = {
       try {
         listener();
       } catch (error) {
-        console.error("Erro num listener do store:", error);
+        console.error('Erro num listener do store:', error);
       }
     }
   },

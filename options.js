@@ -1,11 +1,11 @@
-import "./browser-polyfill.js";
-import { defaultFieldConfig } from "./field-config.js";
-import { filterConfig } from "./filter-config.js";
-import * as Utils from "./utils.js";
-import * as API from "./api.js"; // Importa a API para buscar prioridades
+import * as API from './api.js'; // Importa a API para buscar prioridades
+import './browser-polyfill.js';
+import { defaultFieldConfig } from './field-config.js';
+import { filterConfig } from './filter-config.js';
+import * as Utils from './utils.js';
 
 // --- Constantes ---
-const CONFIG_VERSION = "1.3"; // Versão da estrutura de configuração
+const CONFIG_VERSION = '1.3'; // Versão da estrutura de configuração
 
 // --- Variáveis de Estado ---
 let automationRules = [];
@@ -13,31 +13,29 @@ let currentlyEditingRuleId = null;
 let draggedTab = null; // Variável para a aba arrastada
 
 // --- Elementos do DOM ---
-const saveButton = document.getElementById("saveButton");
-const statusMessage = document.getElementById("statusMessage");
-const closeButton = document.getElementById("closeButton");
-const restoreDefaultsButton = document.getElementById("restoreDefaultsButton");
-const exportButton = document.getElementById("exportButton");
-const importFileInput = document.getElementById("import-file-input");
+const saveButton = document.getElementById('saveButton');
+const statusMessage = document.getElementById('statusMessage');
+const closeButton = document.getElementById('closeButton');
+const restoreDefaultsButton = document.getElementById('restoreDefaultsButton');
+const exportButton = document.getElementById('exportButton');
+const importFileInput = document.getElementById('import-file-input');
 
 // Ficha do Paciente
-const mainFieldsZone = document.getElementById("main-fields-zone");
-const moreFieldsZone = document.getElementById("more-fields-zone");
+const mainFieldsZone = document.getElementById('main-fields-zone');
+const moreFieldsZone = document.getElementById('more-fields-zone');
 
 // Abas e Zonas de Filtros Manuais
-const filterTabsContainer = document.getElementById("filter-tabs-container");
-const allDropZones = document.querySelectorAll(".drop-zone");
+const allDropZones = document.querySelectorAll('.drop-zone');
 
 // --- Elementos do DOM para o Gerenciador de Automação ---
-const automationRulesList = document.getElementById("automation-rules-list");
-const createNewRuleBtn = document.getElementById("create-new-rule-btn");
-const ruleEditorModal = document.getElementById("rule-editor-modal");
-const ruleEditorTitle = document.getElementById("rule-editor-title");
-const ruleNameInput = document.getElementById("rule-name-input");
-const ruleTriggersInput = document.getElementById("rule-triggers-input");
-const cancelRuleBtn = document.getElementById("cancel-rule-btn");
-const saveRuleBtn = document.getElementById("save-rule-btn");
-const ruleEditorFilterTabs = document.getElementById("rule-editor-filter-tabs");
+const automationRulesList = document.getElementById('automation-rules-list');
+const createNewRuleBtn = document.getElementById('create-new-rule-btn');
+const ruleEditorModal = document.getElementById('rule-editor-modal');
+const ruleEditorTitle = document.getElementById('rule-editor-title');
+const ruleNameInput = document.getElementById('rule-name-input');
+const ruleTriggersInput = document.getElementById('rule-triggers-input');
+const cancelRuleBtn = document.getElementById('cancel-rule-btn');
+const saveRuleBtn = document.getElementById('save-rule-btn');
 
 /**
  * Cria um elemento de campo arrastável para a Ficha do Paciente.
@@ -45,21 +43,21 @@ const ruleEditorFilterTabs = document.getElementById("rule-editor-filter-tabs");
  * @returns {HTMLElement} O elemento <div> do campo.
  */
 function createDraggableField(field) {
-  const div = document.createElement("div");
-  div.className = "draggable";
+  const div = document.createElement('div');
+  div.className = 'draggable';
   div.dataset.fieldId = field.id;
   div.draggable = true;
 
   div.innerHTML = `
     <span class="drag-handle">⠿</span>
     <input type="checkbox" class="field-enabled-checkbox" ${
-      field.enabled ? "checked" : ""
-    }>
+  field.enabled ? 'checked' : ''
+}>
     <input type="text" class="field-label-input" value="${field.label}">
   `;
 
-  div.addEventListener("dragstart", handleDragStart);
-  div.addEventListener("dragend", handleDragEnd);
+  div.addEventListener('dragstart', handleDragStart);
+  div.addEventListener('dragend', handleDragEnd);
 
   return div;
 }
@@ -71,41 +69,46 @@ function createDraggableField(field) {
  * @returns {HTMLElement} O elemento <div> do filtro.
  */
 function createDraggableFilter(filter, priorities = []) {
-  const div = document.createElement("div");
-  div.className = "draggable";
+  const div = document.createElement('div');
+  div.className = 'draggable';
   div.dataset.filterId = filter.id;
   div.draggable = true;
 
-  const displayType = filter.type === "selectGroup" ? "select" : filter.type;
+  const displayType = filter.type === 'selectGroup' ? 'select' : filter.type;
 
-  let defaultValueControl = "";
-  if (filter.type !== "component") {
+  let defaultValueControl = '';
+  if (filter.type !== 'component') {
     switch (filter.type) {
-      case "text":
-        defaultValueControl = `<input type="text" class="filter-default-value-input w-full" placeholder="Valor padrão...">`;
-        break;
-      case "select":
-      case "selectGroup":
-        let optionsHtml = "";
-        if (filter.id === "regulation-filter-priority") {
-          // Constrói o dropdown de prioridades dinamicamente
-          optionsHtml = filter.options
-            .map((opt) => `<option value="${opt.value}">${opt.text}</option>`)
-            .join(""); // Adiciona "Todas"
-          priorities.forEach((prio) => {
-            optionsHtml += `<option value="${prio.coreDescricao}">${prio.coreDescricao}</option>`;
-          });
-        } else {
-          // Lógica original para outros selects
-          optionsHtml = (filter.options || [])
-            .map((opt) => `<option value="${opt.value}">${opt.text}</option>`)
-            .join("");
-        }
-        defaultValueControl = `<select class="filter-default-value-input w-full">${optionsHtml}</select>`;
-        break;
-      case "checkbox":
-        defaultValueControl = `<input type="checkbox" class="filter-default-value-input h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500">`;
-        break;
+    case 'text': {
+      defaultValueControl =
+          '<input type="text" class="filter-default-value-input w-full" placeholder="Valor padrão...">';
+      break;
+    }
+    case 'select':
+    case 'selectGroup': {
+      let optionsHtml = '';
+      if (filter.id === 'regulation-filter-priority') {
+        // Constrói o dropdown de prioridades dinamicamente
+        optionsHtml = filter.options
+          .map((opt) => `<option value="${opt.value}">${opt.text}</option>`)
+          .join(''); // Adiciona "Todas"
+        priorities.forEach((prio) => {
+          optionsHtml += `<option value="${prio.coreDescricao}">${prio.coreDescricao}</option>`;
+        });
+      } else {
+        // Lógica original para outros selects
+        optionsHtml = (filter.options || [])
+          .map((opt) => `<option value="${opt.value}">${opt.text}</option>`)
+          .join('');
+      }
+      defaultValueControl = `<select class="filter-default-value-input w-full">${optionsHtml}</select>`;
+      break;
+    }
+    case 'checkbox': {
+      defaultValueControl =
+          '<input type="checkbox" class="filter-default-value-input h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500">';
+      break;
+    }
     }
   }
 
@@ -117,26 +120,26 @@ function createDraggableFilter(filter, priorities = []) {
             <span class="text-xs text-slate-400 p-1 bg-slate-100 rounded">${displayType}</span>
         </div>
         ${
-          defaultValueControl
-            ? `
+  defaultValueControl
+    ? `
         <div class="flex items-center gap-2 text-xs text-slate-500">
             <label for="default-${filter.id}">Padrão:</label>
             ${defaultValueControl.replace(
-              'class="',
-              `id="default-${filter.id}" class="`
-            )}
+    'class="',
+    `id="default-${filter.id}" class="`
+  )}
         </div>`
-            : ""
-        }
+    : ''
+}
     </div>
   `;
 
-  if (filter.type === "component") {
-    div.classList.add("draggable-component");
+  if (filter.type === 'component') {
+    div.classList.add('draggable-component');
   }
 
-  div.addEventListener("dragstart", handleDragStart);
-  div.addEventListener("dragend", handleDragEnd);
+  div.addEventListener('dragstart', handleDragStart);
+  div.addEventListener('dragend', handleDragEnd);
 
   return div;
 }
@@ -146,14 +149,14 @@ function createDraggableFilter(filter, priorities = []) {
  * @param {Array<object>} config - A configuração de campos.
  */
 function renderPatientFields(config) {
-  mainFieldsZone.innerHTML = "";
-  moreFieldsZone.innerHTML = "";
+  mainFieldsZone.innerHTML = '';
+  moreFieldsZone.innerHTML = '';
 
   const sortedConfig = [...config].sort((a, b) => a.order - b.order);
 
   sortedConfig.forEach((field) => {
     const fieldElement = createDraggableField(field);
-    if (field.section === "main") {
+    if (field.section === 'main') {
       mainFieldsZone.appendChild(fieldElement);
     } else {
       moreFieldsZone.appendChild(fieldElement);
@@ -174,14 +177,14 @@ async function renderFilterLayout(layout) {
       priorities = await API.fetchRegulationPriorities();
     }
   } catch (error) {
-    console.error("Não foi possível carregar prioridades:", error);
+    console.error('Não foi possível carregar prioridades:', error);
   }
 
   Object.keys(filterConfig).forEach((section) => {
     const mainZone = document.getElementById(`${section}-main-filters-zone`);
     const moreZone = document.getElementById(`${section}-more-filters-zone`);
-    if (mainZone) mainZone.innerHTML = "";
-    if (moreZone) moreZone.innerHTML = "";
+    if (mainZone) mainZone.innerHTML = '';
+    if (moreZone) moreZone.innerHTML = '';
   });
 
   Object.entries(filterConfig).forEach(([sectionKey, filters]) => {
@@ -198,7 +201,7 @@ async function renderFilterLayout(layout) {
       const filterLayoutData = layoutMap.get(filter.id);
       const location = filterLayoutData?.location || filter.defaultLocation;
 
-      if (sectionKey === "patient-card") return;
+      if (sectionKey === 'patient-card') return;
       const zoneId = `${sectionKey}-${location}-filters-zone`;
       const zone = document.getElementById(zoneId);
 
@@ -207,15 +210,15 @@ async function renderFilterLayout(layout) {
         zone.appendChild(filterElement);
 
         if (
-          filter.type !== "component" &&
+          filter.type !== 'component' &&
           filterLayoutData &&
           filterLayoutData.defaultValue !== undefined
         ) {
           const defaultValueInput = filterElement.querySelector(
-            ".filter-default-value-input"
+            '.filter-default-value-input'
           );
           if (defaultValueInput) {
-            if (defaultValueInput.type === "checkbox") {
+            if (defaultValueInput.type === 'checkbox') {
               defaultValueInput.checked = filterLayoutData.defaultValue;
             } else {
               defaultValueInput.value = filterLayoutData.defaultValue;
@@ -232,11 +235,11 @@ async function renderFilterLayout(layout) {
  * @param {string[]} order - Array de IDs de abas na ordem correta.
  */
 function applyTabOrder(order) {
-  const tabsContainer = document.querySelector("#filter-tabs-container .tabs");
+  const tabsContainer = document.querySelector('#filter-tabs-container .tabs');
   if (!tabsContainer) return;
 
   const tabMap = new Map();
-  tabsContainer.querySelectorAll(".tab-button").forEach((tab) => {
+  tabsContainer.querySelectorAll('.tab-button').forEach((tab) => {
     tabMap.set(tab.dataset.tab, tab);
   });
 
@@ -254,7 +257,7 @@ function applyTabOrder(order) {
  */
 async function restoreOptions() {
   const syncItems = await browser.storage.sync.get({
-    baseUrl: "",
+    baseUrl: '',
     autoLoadExams: false,
     autoLoadConsultations: false,
     autoLoadAppointments: false,
@@ -273,20 +276,20 @@ async function restoreOptions() {
     automationRules: [],
   });
 
-  document.getElementById("baseUrlInput").value = syncItems.baseUrl || "";
-  document.getElementById("enableAutomaticDetection").checked =
+  document.getElementById('baseUrlInput').value = syncItems.baseUrl || '';
+  document.getElementById('enableAutomaticDetection').checked =
     syncItems.enableAutomaticDetection;
-  document.getElementById("keepSessionAliveInterval").value =
+  document.getElementById('keepSessionAliveInterval').value =
     syncItems.keepSessionAliveInterval;
-  document.getElementById("autoLoadExamsCheckbox").checked =
+  document.getElementById('autoLoadExamsCheckbox').checked =
     syncItems.autoLoadExams;
-  document.getElementById("autoLoadConsultationsCheckbox").checked =
+  document.getElementById('autoLoadConsultationsCheckbox').checked =
     syncItems.autoLoadConsultations;
-  document.getElementById("autoLoadAppointmentsCheckbox").checked =
+  document.getElementById('autoLoadAppointmentsCheckbox').checked =
     syncItems.autoLoadAppointments;
-  document.getElementById("autoLoadRegulationsCheckbox").checked =
+  document.getElementById('autoLoadRegulationsCheckbox').checked =
     syncItems.autoLoadRegulations;
-  document.getElementById("autoLoadDocumentsCheckbox").checked =
+  document.getElementById('autoLoadDocumentsCheckbox').checked =
     syncItems.autoLoadDocuments;
 
   if (syncItems.sidebarSectionOrder) {
@@ -304,17 +307,17 @@ async function restoreOptions() {
   try {
     await renderFilterLayout(syncItems.filterLayout);
   } catch (error) {
-    console.error("Erro ao renderizar filtros:", error);
+    console.error('Erro ao renderizar filtros:', error);
   }
 
   const sections = [
-    "patient-details",
-    "timeline",
-    "consultations",
-    "exams",
-    "appointments",
-    "regulations",
-    "documents",
+    'patient-details',
+    'timeline',
+    'consultations',
+    'exams',
+    'appointments',
+    'regulations',
+    'documents',
   ];
   const defaultRanges = {
     consultations: { start: -6, end: 0 },
@@ -326,10 +329,10 @@ async function restoreOptions() {
 
   // CORREÇÃO 2: Define os estilos padrão aqui.
   const defaultStyles = {
-    backgroundColor: "#ffffff",
-    color: "#1e293b",
-    iconColor: "#1e293b",
-    fontSize: "16px",
+    backgroundColor: '#ffffff',
+    color: '#1e293b',
+    iconColor: '#1e293b',
+    fontSize: '16px',
   };
 
   sections.forEach((section) => {
@@ -365,65 +368,64 @@ async function restoreOptions() {
  * Salva as configurações GERAIS (não as regras de automação).
  */
 async function saveOptions() {
-  const baseUrl = document.getElementById("baseUrlInput").value;
+  const baseUrl = document.getElementById('baseUrlInput').value;
   const enableAutomaticDetection = document.getElementById(
-    "enableAutomaticDetection"
+    'enableAutomaticDetection'
   ).checked;
-  const keepSessionAliveInterval = parseInt(
-    document.getElementById("keepSessionAliveInterval").value,
-    10
-  ) || 0;
+  const keepSessionAliveInterval =
+    parseInt(document.getElementById('keepSessionAliveInterval').value, 10) ||
+    0;
   const autoLoadExams = document.getElementById(
-    "autoLoadExamsCheckbox"
+    'autoLoadExamsCheckbox'
   ).checked;
   const autoLoadConsultations = document.getElementById(
-    "autoLoadConsultationsCheckbox"
+    'autoLoadConsultationsCheckbox'
   ).checked;
   const autoLoadAppointments = document.getElementById(
-    "autoLoadAppointmentsCheckbox"
+    'autoLoadAppointmentsCheckbox'
   ).checked;
   const autoLoadRegulations = document.getElementById(
-    "autoLoadRegulationsCheckbox"
+    'autoLoadRegulationsCheckbox'
   ).checked;
   const autoLoadDocuments = document.getElementById(
-    "autoLoadDocumentsCheckbox"
+    'autoLoadDocumentsCheckbox'
   ).checked;
 
   const patientFields = [];
-  mainFieldsZone.querySelectorAll(".draggable").forEach((div, index) => {
+  mainFieldsZone.querySelectorAll('.draggable').forEach((div, index) => {
     const fieldId = div.dataset.fieldId;
-    const label = div.querySelector(".field-label-input").value;
-    const enabled = div.querySelector(".field-enabled-checkbox").checked;
+    const label = div.querySelector('.field-label-input').value;
+    const enabled = div.querySelector('.field-enabled-checkbox').checked;
     patientFields.push({
       id: fieldId,
       label,
       enabled,
-      section: "main",
+      section: 'main',
       order: index + 1,
     });
   });
-  moreFieldsZone.querySelectorAll(".draggable").forEach((div, index) => {
+  moreFieldsZone.querySelectorAll('.draggable').forEach((div, index) => {
     const fieldId = div.dataset.fieldId;
-    const label = div.querySelector(".field-label-input").value;
-    const enabled = div.querySelector(".field-enabled-checkbox").checked;
+    const label = div.querySelector('.field-label-input').value;
+    const enabled = div.querySelector('.field-enabled-checkbox').checked;
     patientFields.push({
       id: fieldId,
       label,
       enabled,
-      section: "more",
+      section: 'more',
       order: index + 1,
     });
   });
 
   const filterLayout = {};
   document
-    .querySelectorAll("#layout-config-section .drop-zone")
+    .querySelectorAll('#layout-config-section .drop-zone')
     .forEach((zone) => {
       if (!zone.dataset.section) return;
       const section = zone.dataset.section;
       if (!filterLayout[section]) filterLayout[section] = [];
-      const location = zone.id.includes("-main-") ? "main" : "more";
-      zone.querySelectorAll(".draggable").forEach((div, index) => {
+      const location = zone.id.includes('-main-') ? 'main' : 'more';
+      zone.querySelectorAll('.draggable').forEach((div, index) => {
         const filterId = div.dataset.filterId;
         const originalFilter = filterConfig[section].find(
           (f) => f.id === filterId
@@ -433,13 +435,13 @@ async function saveOptions() {
           location: location,
           order: index + 1,
         };
-        if (originalFilter.type !== "component") {
+        if (originalFilter.type !== 'component') {
           const defaultValueInput = div.querySelector(
-            ".filter-default-value-input"
+            '.filter-default-value-input'
           );
           if (defaultValueInput) {
             newFilterData.defaultValue =
-              defaultValueInput.type === "checkbox"
+              defaultValueInput.type === 'checkbox'
                 ? defaultValueInput.checked
                 : defaultValueInput.value;
           }
@@ -450,11 +452,11 @@ async function saveOptions() {
 
   const dateRangeDefaults = {};
   const sectionsForDate = [
-    "consultations",
-    "exams",
-    "appointments",
-    "regulations",
-    "documents",
+    'consultations',
+    'exams',
+    'appointments',
+    'regulations',
+    'documents',
   ];
   sectionsForDate.forEach((section) => {
     const startEl = document.getElementById(`${section}-start-offset`);
@@ -468,13 +470,13 @@ async function saveOptions() {
 
   const sectionHeaderStyles = {};
   const sectionsForStyle = [
-    "patient-details",
-    "timeline",
-    "consultations",
-    "exams",
-    "appointments",
-    "regulations",
-    "documents",
+    'patient-details',
+    'timeline',
+    'consultations',
+    'exams',
+    'appointments',
+    'regulations',
+    'documents',
   ];
   sectionsForStyle.forEach((section) => {
     const bgColorEl = document.getElementById(`style-${section}-bg-color`);
@@ -490,11 +492,11 @@ async function saveOptions() {
   });
 
   const sidebarSectionOrder = [
-    ...document.querySelectorAll(".tabs .tab-button"),
+    ...document.querySelectorAll('.tabs .tab-button'),
   ].map((btn) => btn.dataset.tab);
 
   await browser.storage.sync.set({
-    baseUrl: baseUrl.endsWith("/") ? baseUrl.slice(0, -1) : baseUrl,
+    baseUrl: baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl,
     enableAutomaticDetection,
     keepSessionAliveInterval,
     autoLoadExams,
@@ -510,15 +512,15 @@ async function saveOptions() {
   });
 
   Utils.showMessage(
-    "Configurações salvas! As alterações serão aplicadas ao recarregar o assistente.",
-    "success"
+    'Configurações salvas! As alterações serão aplicadas ao recarregar o assistente.',
+    'success'
   );
 
   setTimeout(() => {
-    const statusMsg = document.getElementById("statusMessage");
+    const statusMsg = document.getElementById('statusMessage');
     if (statusMsg) {
-      statusMsg.textContent = "";
-      statusMsg.className = "text-sm font-medium";
+      statusMsg.textContent = '';
+      statusMsg.className = 'text-sm font-medium';
     }
   }, 4000);
 }
@@ -527,28 +529,28 @@ async function saveOptions() {
 let draggedElement = null;
 
 function handleDragStart(e) {
-  draggedElement = e.target.closest(".draggable, .rule-item");
+  draggedElement = e.target.closest('.draggable, .rule-item');
   if (!draggedElement) return;
-  e.dataTransfer.effectAllowed = "move";
-  setTimeout(() => draggedElement.classList.add("dragging"), 0);
+  e.dataTransfer.effectAllowed = 'move';
+  setTimeout(() => draggedElement.classList.add('dragging'), 0);
 }
 
-function handleDragEnd(e) {
+function handleDragEnd() {
   if (!draggedElement) return;
-  draggedElement.classList.remove("dragging");
+  draggedElement.classList.remove('dragging');
   draggedElement = null;
 }
 
 function handleDragOver(e) {
   e.preventDefault();
-  e.dataTransfer.dropEffect = "move";
+  e.dataTransfer.dropEffect = 'move';
 }
 
 function handleDrop(e) {
   e.preventDefault();
   if (!draggedElement) return;
 
-  const dropZone = e.target.closest(".drop-zone, #automation-rules-list");
+  const dropZone = e.target.closest('.drop-zone, #automation-rules-list');
   if (dropZone) {
     const afterElement = getDragAfterElement(dropZone, e.clientY);
     if (afterElement == null) {
@@ -557,7 +559,7 @@ function handleDrop(e) {
       dropZone.insertBefore(draggedElement, afterElement);
     }
 
-    if (dropZone.id === "automation-rules-list") {
+    if (dropZone.id === 'automation-rules-list') {
       reorderAutomationRules();
     }
   }
@@ -566,7 +568,7 @@ function handleDrop(e) {
 function getDragAfterElement(container, y) {
   const draggableElements = [
     ...container.querySelectorAll(
-      ".draggable:not(.dragging), .rule-item:not(.dragging)"
+      '.draggable:not(.dragging), .rule-item:not(.dragging)'
     ),
   ];
   return draggableElements.reduce(
@@ -586,7 +588,7 @@ function getDragAfterElement(container, y) {
 // --- Lógica de Arrastar e Soltar para Abas ---
 function getDragAfterTab(container, x) {
   const draggableElements = [
-    ...container.querySelectorAll(".tab-button:not(.dragging)"),
+    ...container.querySelectorAll('.tab-button:not(.dragging)'),
   ];
   return draggableElements.reduce(
     (closest, child) => {
@@ -605,28 +607,28 @@ function getDragAfterTab(container, x) {
 function setupTabDnD(container) {
   if (!container) return;
 
-  const tabs = container.querySelectorAll(".tab-button");
+  const tabs = container.querySelectorAll('.tab-button');
   tabs.forEach((tab) => {
-    if (tab.dataset.tab !== "patient-card") {
+    if (tab.dataset.tab !== 'patient-card') {
       tab.draggable = true;
     }
   });
 
-  container.addEventListener("dragstart", (e) => {
-    if (e.target.classList.contains("tab-button") && e.target.draggable) {
+  container.addEventListener('dragstart', (e) => {
+    if (e.target.classList.contains('tab-button') && e.target.draggable) {
       draggedTab = e.target;
-      setTimeout(() => e.target.classList.add("dragging"), 0);
+      setTimeout(() => e.target.classList.add('dragging'), 0);
     }
   });
 
-  container.addEventListener("dragend", () => {
+  container.addEventListener('dragend', () => {
     if (draggedTab) {
-      draggedTab.classList.remove("dragging");
+      draggedTab.classList.remove('dragging');
       draggedTab = null;
     }
   });
 
-  container.addEventListener("dragover", (e) => {
+  container.addEventListener('dragover', (e) => {
     e.preventDefault();
     if (!draggedTab) return;
 
@@ -641,22 +643,22 @@ function setupTabDnD(container) {
 
 // --- Lógica para Restaurar Padrões ---
 async function handleRestoreDefaults() {
-  const confirmation = window.confirm(
-    "Tem certeza de que deseja restaurar todas as configurações de layout e valores padrão? Isto também restaurará a ordem das seções e os estilos dos cabeçalhos. Esta ação não pode ser desfeita."
-  );
-  if (confirmation) {
-    await browser.storage.sync.remove([
-      "patientFields",
-      "filterLayout",
-      "dateRangeDefaults",
-      "enableAutomaticDetection",
-      "sidebarSectionOrder",
-      "sectionHeaderStyles",
-    ]);
-    mainFieldsZone.innerHTML = "";
-    moreFieldsZone.innerHTML = "";
-    window.location.reload();
-  }
+  Utils.showDialog({
+    message: 'Tem certeza de que deseja restaurar todas as configurações de layout e valores padrão? Isto também restaurará a ordem das seções e os estilos dos cabeçalhos. Esta ação não pode ser desfeita.',
+    onConfirm: async () => {
+      await browser.storage.sync.remove([
+        'patientFields',
+        'filterLayout',
+        'dateRangeDefaults',
+        'enableAutomaticDetection',
+        'sidebarSectionOrder',
+        'sectionHeaderStyles',
+      ]);
+      mainFieldsZone.innerHTML = '';
+      moreFieldsZone.innerHTML = '';
+      window.location.reload();
+    }
+  });
 }
 
 // --- Lógica de Exportação e Importação ---
@@ -665,9 +667,9 @@ async function handleExport() {
     const settingsToExport = await browser.storage.sync.get(null);
     settingsToExport.configVersion = CONFIG_VERSION;
     const settingsString = JSON.stringify(settingsToExport, null, 2);
-    const blob = new Blob([settingsString], { type: "application/json" });
+    const blob = new Blob([settingsString], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
+    const a = document.createElement('a');
     a.href = url;
     const date = new Date().toISOString().slice(0, 10);
     a.download = `assistente-regulacao-config-${date}.json`;
@@ -675,13 +677,13 @@ async function handleExport() {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-    Utils.showMessage("Configurações exportadas com sucesso!", "success");
+    Utils.showMessage('Configurações exportadas com sucesso!', 'success');
   } catch (error) {
-    console.error("Erro ao exportar configurações:", error);
-    Utils.showMessage("Erro ao exportar configurações.", "error");
+    console.error('Erro ao exportar configurações:', error);
+    Utils.showMessage('Erro ao exportar configurações.', 'error');
   } finally {
     setTimeout(() => {
-      statusMessage.textContent = "";
+      statusMessage.textContent = '';
     }, 3000);
   }
 }
@@ -694,31 +696,37 @@ function handleImport(event) {
     try {
       const importedSettings = JSON.parse(e.target.result);
       if (!importedSettings.configVersion || !importedSettings.filterLayout) {
-        throw new Error("Ficheiro de configuração inválido ou corrompido.");
+        throw new Error('Ficheiro de configuração inválido ou corrompido.');
       }
       if (
-        importedSettings.configVersion.split(".")[0] !==
-        CONFIG_VERSION.split(".")[0]
+        importedSettings.configVersion.split('.')[0] !==
+        CONFIG_VERSION.split('.')[0]
       ) {
-        const goOn = window.confirm(
-          "A versão do ficheiro de configuração é muito diferente da versão da extensão. A importação pode causar erros. Deseja continuar mesmo assim?"
-        );
-        if (!goOn) return;
+        Utils.showDialog({
+          message: 'A versão do ficheiro de configuração é muito diferente da versão da extensão. A importação pode causar erros. Deseja continuar mesmo assim?',
+          onConfirm: async () => {
+            await browser.storage.sync.clear();
+            await browser.storage.sync.set(importedSettings);
+            restoreOptions();
+            Utils.showMessage('Configurações importadas e aplicadas com sucesso!', 'success');
+          }
+        });
+        return;
       }
       await browser.storage.sync.clear();
       await browser.storage.sync.set(importedSettings);
       restoreOptions();
       Utils.showMessage(
-        "Configurações importadas e aplicadas com sucesso!",
-        "success"
+        'Configurações importadas e aplicadas com sucesso!',
+        'success'
       );
     } catch (error) {
-      console.error("Erro ao importar configurações:", error);
-      Utils.showMessage(`Erro ao importar: ${error.message}`, "error");
+      console.error('Erro ao importar configurações:', error);
+      Utils.showMessage(`Erro ao importar: ${error.message}`, 'error');
     } finally {
-      importFileInput.value = "";
+      importFileInput.value = '';
       setTimeout(() => {
-        statusMessage.textContent = "";
+        statusMessage.textContent = '';
       }, 5000);
     }
   };
@@ -731,15 +739,15 @@ function handleImport(event) {
  * Renderiza a lista de regras de automação na UI.
  */
 function renderAutomationRules() {
-  automationRulesList.innerHTML = "";
+  automationRulesList.innerHTML = '';
   automationRules.forEach((rule) => {
-    const ruleElement = document.createElement("div");
-    ruleElement.className = "rule-item border rounded-lg bg-white p-3";
+    const ruleElement = document.createElement('div');
+    ruleElement.className = 'rule-item border rounded-lg bg-white p-3';
     ruleElement.dataset.ruleId = rule.id;
     ruleElement.draggable = true;
 
-    const keywords = rule.triggerKeywords.join(", ");
-    const checked = rule.isActive ? "checked" : "";
+    const keywords = rule.triggerKeywords.join(', ');
+    const checked = rule.isActive ? 'checked' : '';
 
     ruleElement.innerHTML = `
             <div class="flex items-center justify-between">
@@ -748,14 +756,14 @@ function renderAutomationRules() {
                 <div>
                   <p class="font-semibold text-slate-800">${rule.name}</p>
                   <p class="text-xs text-slate-500" title="${keywords}">Gatilhos: ${
-      keywords.length > 50 ? keywords.substring(0, 50) + "..." : keywords
-    }</p>
+  keywords.length > 50 ? keywords.substring(0, 50) + '...' : keywords
+}</p>
                 </div>
               </div>
               <div class="flex items-center gap-4">
                 <label class="relative inline-flex items-center cursor-pointer" title="${
-                  rule.isActive ? "Regra Ativa" : "Regra Inativa"
-                }">
+  rule.isActive ? 'Regra Ativa' : 'Regra Inativa'
+}">
                   <input type="checkbox" class="sr-only peer rule-toggle-active" ${checked}>
                   <div class="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
                 </label>
@@ -768,20 +776,20 @@ function renderAutomationRules() {
     automationRulesList.appendChild(ruleElement);
   });
 
-  document.querySelectorAll(".rule-item").forEach((item) => {
+  document.querySelectorAll('.rule-item').forEach((item) => {
     const ruleId = item.dataset.ruleId;
     item
-      .querySelector(".rule-edit-btn")
-      .addEventListener("click", () => handleEditRule(ruleId));
+      .querySelector('.rule-edit-btn')
+      .addEventListener('click', () => handleEditRule(ruleId));
     item
-      .querySelector(".rule-delete-btn")
-      .addEventListener("click", () => handleDeleteRule(ruleId));
+      .querySelector('.rule-delete-btn')
+      .addEventListener('click', () => handleDeleteRule(ruleId));
     item
-      .querySelector(".rule-duplicate-btn")
-      .addEventListener("click", () => handleDuplicateRule(ruleId));
+      .querySelector('.rule-duplicate-btn')
+      .addEventListener('click', () => handleDuplicateRule(ruleId));
     item
-      .querySelector(".rule-toggle-active")
-      .addEventListener("change", (e) =>
+      .querySelector('.rule-toggle-active')
+      .addEventListener('change', (e) =>
         handleToggleRuleActive(ruleId, e.target.checked)
       );
   });
@@ -792,9 +800,9 @@ function renderAutomationRules() {
  */
 async function saveAutomationRules() {
   await browser.storage.local.set({ automationRules });
-  Utils.showMessage("Regras de automação salvas.", "success");
+  Utils.showMessage('Regras de automação salvas.', 'success');
   setTimeout(() => {
-    statusMessage.textContent = "";
+    statusMessage.textContent = '';
   }, 2000);
 }
 
@@ -809,9 +817,9 @@ async function openRuleEditor(ruleId = null) {
   if (ruleId) {
     const rule = automationRules.find((r) => r.id === ruleId);
     if (!rule) return;
-    ruleEditorTitle.textContent = "Editar Regra de Automação";
+    ruleEditorTitle.textContent = 'Editar Regra de Automação';
     ruleNameInput.value = rule.name;
-    ruleTriggersInput.value = rule.triggerKeywords.join(", ");
+    ruleTriggersInput.value = rule.triggerKeywords.join(', ');
 
     Object.entries(rule.filterSettings).forEach(([sectionKey, filters]) => {
       // --- INÍCIO DA CORREÇÃO ---
@@ -827,24 +835,24 @@ async function openRuleEditor(ruleId = null) {
         if (startOffsetEl && start !== null && !isNaN(start)) {
           startOffsetEl.value = Math.abs(start);
         } else if (startOffsetEl) {
-          startOffsetEl.value = "";
+          startOffsetEl.value = '';
         }
         if (endOffsetEl && end !== null && !isNaN(end)) {
           endOffsetEl.value = end;
         } else if (endOffsetEl) {
-          endOffsetEl.value = "";
+          endOffsetEl.value = '';
         }
       }
       // --- FIM DA CORREÇÃO ---
 
       // Preenche outros filtros
       Object.entries(filters).forEach(([filterId, value]) => {
-        if (filterId === "dateRange") return;
+        if (filterId === 'dateRange') return;
         const element = document.getElementById(
           `rule-${sectionKey}-${filterId}`
         );
         if (element) {
-          if (element.type === "checkbox") {
+          if (element.type === 'checkbox') {
             element.checked = value;
           } else {
             element.value = value;
@@ -853,50 +861,50 @@ async function openRuleEditor(ruleId = null) {
       });
     });
   } else {
-    ruleEditorTitle.textContent = "Criar Nova Regra de Automação";
-    ruleNameInput.value = "";
-    ruleTriggersInput.value = "";
+    ruleEditorTitle.textContent = 'Criar Nova Regra de Automação';
+    ruleNameInput.value = '';
+    ruleTriggersInput.value = '';
 
     // Limpa todos os campos, incluindo os de data
     const sections = [
-      "consultations",
-      "exams",
-      "appointments",
-      "regulations",
-      "documents",
+      'consultations',
+      'exams',
+      'appointments',
+      'regulations',
+      'documents',
     ];
     sections.forEach((sectionKey) => {
       const startEl = document.getElementById(
         `rule-${sectionKey}-start-offset`
       );
       const endEl = document.getElementById(`rule-${sectionKey}-end-offset`);
-      if (startEl) startEl.value = "";
-      if (endEl) endEl.value = "";
+      if (startEl) startEl.value = '';
+      if (endEl) endEl.value = '';
     });
 
     document
       .querySelectorAll(
         '#rule-editor-modal input[type="text"]:not(.rule-date-range-input), #rule-editor-modal input[type="search"]:not(.rule-date-range-input)'
       )
-      .forEach((el) => (el.value = ""));
+      .forEach((el) => (el.value = ''));
     document
       .querySelectorAll('#rule-editor-modal input[type="checkbox"]')
       .forEach((el) => (el.checked = false));
-    document.querySelectorAll("#rule-editor-modal select").forEach((el) => {
+    document.querySelectorAll('#rule-editor-modal select').forEach((el) => {
       if (el.options.length > 0) {
         el.value = el.options[0].value;
       }
     });
   }
 
-  ruleEditorModal.classList.remove("hidden");
+  ruleEditorModal.classList.remove('hidden');
 }
 
 /**
  * Fecha o modal do editor de regras.
  */
 function closeRuleEditor() {
-  ruleEditorModal.classList.add("hidden");
+  ruleEditorModal.classList.add('hidden');
   currentlyEditingRuleId = null;
 }
 
@@ -906,21 +914,21 @@ function closeRuleEditor() {
 function handleSaveRule() {
   const name = ruleNameInput.value.trim();
   if (!name) {
-    alert("O nome da regra é obrigatório.");
+    Utils.showMessage('O nome da regra é obrigatório.', 'error');
     return;
   }
 
   const triggerKeywords = ruleTriggersInput.value
-    .split(",")
+    .split(',')
     .map((k) => k.trim())
     .filter(Boolean);
   const filterSettings = {};
   const sections = [
-    "consultations",
-    "exams",
-    "appointments",
-    "regulations",
-    "documents",
+    'consultations',
+    'exams',
+    'appointments',
+    'regulations',
+    'documents',
   ];
 
   sections.forEach((sectionKey) => {
@@ -951,13 +959,13 @@ function handleSaveRule() {
     // Salva as configurações dos outros filtros
     const sectionFilters = filterConfig[sectionKey] || [];
     sectionFilters.forEach((filter) => {
-      if (filter.type === "component") return;
+      if (filter.type === 'component') return;
       const element = document.getElementById(
         `rule-${sectionKey}-${filter.id}`
       );
       if (element) {
         const value =
-          element.type === "checkbox" ? element.checked : element.value;
+          element.type === 'checkbox' ? element.checked : element.value;
         filterSettings[sectionKey][filter.id] = value;
       }
     });
@@ -993,11 +1001,14 @@ function handleEditRule(ruleId) {
 }
 
 function handleDeleteRule(ruleId) {
-  if (confirm("Tem certeza que deseja excluir esta regra?")) {
-    automationRules = automationRules.filter((r) => r.id !== ruleId);
-    saveAutomationRules();
-    renderAutomationRules();
-  }
+  Utils.showDialog({
+    message: 'Tem certeza que deseja excluir esta regra?',
+    onConfirm: () => {
+      automationRules = automationRules.filter((r) => r.id !== ruleId);
+      saveAutomationRules();
+      renderAutomationRules();
+    }
+  });
 }
 
 function handleDuplicateRule(ruleId) {
@@ -1026,7 +1037,7 @@ function handleToggleRuleActive(ruleId, isActive) {
 
 function reorderAutomationRules() {
   const newOrderedIds = [
-    ...automationRulesList.querySelectorAll(".rule-item"),
+    ...automationRulesList.querySelectorAll('.rule-item'),
   ].map((item) => item.dataset.ruleId);
   automationRules.sort(
     (a, b) => newOrderedIds.indexOf(a.id) - newOrderedIds.indexOf(b.id)
@@ -1046,21 +1057,21 @@ async function populateRuleEditorFilters() {
       priorities = await API.fetchRegulationPriorities();
     }
   } catch (error) {
-    console.error("Não foi possível carregar prioridades:", error);
+    console.error('Não foi possível carregar prioridades:', error);
   }
 
   const sections = [
-    "consultations",
-    "exams",
-    "appointments",
-    "regulations",
-    "documents",
+    'consultations',
+    'exams',
+    'appointments',
+    'regulations',
+    'documents',
   ];
 
   sections.forEach((sectionKey) => {
     const container = document.getElementById(`${sectionKey}-rule-editor-tab`);
     if (!container) return;
-    container.innerHTML = ""; // Limpa o conteúdo anterior
+    container.innerHTML = ''; // Limpa o conteúdo anterior
 
     // Adiciona o componente de data
     const dateRangeElement = createDateRangeElementForRuleEditor(sectionKey);
@@ -1069,7 +1080,7 @@ async function populateRuleEditorFilters() {
     const sectionFilters = filterConfig[sectionKey] || [];
 
     sectionFilters.forEach((filter) => {
-      if (filter.type === "component") return;
+      if (filter.type === 'component') return;
       const filterElement = createFilterElementForRuleEditor(
         filter,
         sectionKey,
@@ -1080,7 +1091,7 @@ async function populateRuleEditorFilters() {
   });
 
   const firstTabButton = document.querySelector(
-    "#rule-editor-filter-tabs .tab-button"
+    '#rule-editor-filter-tabs .tab-button'
   );
   if (firstTabButton) {
     firstTabButton.click();
@@ -1095,41 +1106,41 @@ async function populateRuleEditorFilters() {
  * @returns {HTMLElement} O elemento HTML do filtro.
  */
 function createFilterElementForRuleEditor(filter, sectionKey, priorities) {
-  const container = document.createElement("div");
+  const container = document.createElement('div');
   const elementId = `rule-${sectionKey}-${filter.id}`;
-  let elementHtml = "";
+  let elementHtml = '';
 
-  if (filter.type !== "checkbox") {
-    container.className = "mb-3";
+  if (filter.type !== 'checkbox') {
+    container.className = 'mb-3';
     elementHtml += `<label for="${elementId}" class="block font-medium mb-1 text-sm">${filter.label}</label>`;
   }
 
   switch (filter.type) {
-    case "text":
-      elementHtml += `<input type="text" id="${elementId}" placeholder="${
-        filter.placeholder || ""
-      }" class="w-full px-2 py-1 border border-slate-300 rounded-md">`;
-      break;
-    case "select":
-    case "selectGroup":
-      elementHtml += `<select id="${elementId}" class="w-full px-2 py-1 border border-slate-300 rounded-md bg-white">`;
-      if (filter.id === "regulation-filter-priority") {
-        elementHtml += `<option value="todas">Todas</option>`;
-        priorities.forEach((prio) => {
-          elementHtml += `<option value="${prio.coreDescricao}">${prio.coreDescricao}</option>`;
-        });
-      } else {
-        (filter.options || []).forEach((opt) => {
-          elementHtml += `<option value="${opt.value}">${opt.text}</option>`;
-        });
-      }
-      elementHtml += `</select>`;
-      break;
-    case "checkbox":
-      container.className = "flex items-center gap-2";
-      elementHtml += `<input id="${elementId}" type="checkbox" class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+  case 'text':
+    elementHtml += `<input type="text" id="${elementId}" placeholder="${
+      filter.placeholder || ''
+    }" class="w-full px-2 py-1 border border-slate-300 rounded-md">`;
+    break;
+  case 'select':
+  case 'selectGroup':
+    elementHtml += `<select id="${elementId}" class="w-full px-2 py-1 border border-slate-300 rounded-md bg-white">`;
+    if (filter.id === 'regulation-filter-priority') {
+      elementHtml += '<option value="todas">Todas</option>';
+      priorities.forEach((prio) => {
+        elementHtml += `<option value="${prio.coreDescricao}">${prio.coreDescricao}</option>`;
+      });
+    } else {
+      (filter.options || []).forEach((opt) => {
+        elementHtml += `<option value="${opt.value}">${opt.text}</option>`;
+      });
+    }
+    elementHtml += '</select>';
+    break;
+  case 'checkbox':
+    container.className = 'flex items-center gap-2';
+    elementHtml += `<input id="${elementId}" type="checkbox" class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
                           <label for="${elementId}" class="block text-sm text-slate-700">${filter.label}</label>`;
-      break;
+    break;
   }
   container.innerHTML = elementHtml;
   return container;
@@ -1141,8 +1152,8 @@ function createFilterElementForRuleEditor(filter, sectionKey, priorities) {
  * @returns {HTMLElement} O elemento HTML do componente.
  */
 function createDateRangeElementForRuleEditor(sectionKey) {
-  const container = document.createElement("div");
-  container.className = "p-2 bg-slate-50 rounded-md border mb-4";
+  const container = document.createElement('div');
+  container.className = 'p-2 bg-slate-50 rounded-md border mb-4';
   container.innerHTML = `
     <h5 class="font-medium text-xs text-slate-500 mb-2">Período de Busca Automático</h5>
     <div class="flex items-center gap-4 text-sm">
@@ -1161,36 +1172,36 @@ function createDateRangeElementForRuleEditor(sectionKey) {
 }
 
 // --- Inicialização ---
-document.addEventListener("DOMContentLoaded", async () => {
+document.addEventListener('DOMContentLoaded', async () => {
   await restoreOptions();
 
   const mainTabsContainer = document.querySelector(
-    "#filter-tabs-container .tabs"
+    '#filter-tabs-container .tabs'
   );
-  Utils.setupTabs(document.getElementById("filter-tabs-container"));
+  Utils.setupTabs(document.getElementById('filter-tabs-container'));
   if (mainTabsContainer) {
     setupTabDnD(mainTabsContainer);
   }
-  Utils.setupTabs(document.getElementById("rule-editor-filter-tabs"));
+  Utils.setupTabs(document.getElementById('rule-editor-filter-tabs'));
 
-  createNewRuleBtn.addEventListener("click", () => openRuleEditor(null));
-  cancelRuleBtn.addEventListener("click", closeRuleEditor);
-  saveRuleBtn.addEventListener("click", handleSaveRule);
+  createNewRuleBtn.addEventListener('click', () => openRuleEditor(null));
+  cancelRuleBtn.addEventListener('click', closeRuleEditor);
+  saveRuleBtn.addEventListener('click', handleSaveRule);
 
-  ruleEditorModal.addEventListener("click", (e) => {
+  ruleEditorModal.addEventListener('click', (e) => {
     if (e.target === ruleEditorModal) {
       closeRuleEditor();
     }
   });
 
-  automationRulesList.addEventListener("dragstart", handleDragStart);
-  automationRulesList.addEventListener("dragend", handleDragEnd);
-  automationRulesList.addEventListener("dragover", handleDragOver);
-  automationRulesList.addEventListener("drop", handleDrop);
+  automationRulesList.addEventListener('dragstart', handleDragStart);
+  automationRulesList.addEventListener('dragend', handleDragEnd);
+  automationRulesList.addEventListener('dragover', handleDragOver);
+  automationRulesList.addEventListener('drop', handleDrop);
 
   browser.storage.onChanged.addListener((changes, areaName) => {
-    if (areaName === "sync" && changes.enableAutomaticDetection) {
-      const toggle = document.getElementById("enableAutomaticDetection");
+    if (areaName === 'sync' && changes.enableAutomaticDetection) {
+      const toggle = document.getElementById('enableAutomaticDetection');
       if (toggle) {
         toggle.checked = changes.enableAutomaticDetection.newValue;
       }
@@ -1198,15 +1209,15 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
 });
 
-saveButton.addEventListener("click", saveOptions);
-closeButton.addEventListener("click", () => {
+saveButton.addEventListener('click', saveOptions);
+closeButton.addEventListener('click', () => {
   window.close();
 });
-restoreDefaultsButton.addEventListener("click", handleRestoreDefaults);
-exportButton.addEventListener("click", handleExport);
-importFileInput.addEventListener("change", handleImport);
+restoreDefaultsButton.addEventListener('click', handleRestoreDefaults);
+exportButton.addEventListener('click', handleExport);
+importFileInput.addEventListener('change', handleImport);
 
 allDropZones.forEach((zone) => {
-  zone.addEventListener("dragover", handleDragOver);
-  zone.addEventListener("drop", handleDrop);
+  zone.addEventListener('dragover', handleDragOver);
+  zone.addEventListener('drop', handleDrop);
 });

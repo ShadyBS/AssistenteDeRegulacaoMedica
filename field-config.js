@@ -15,359 +15,359 @@
 // Função para obter um valor aninhado de um objeto de forma segura
 const getNestedValue = (obj, path) => {
   if (!path) return undefined;
-  return path.split(".").reduce((acc, part) => acc && acc[part], obj);
+  return path.split('.').reduce((acc, part) => acc && acc[part], obj);
 };
 
 // Função para normalizar e formatar telefones para exibição
 const formatPhone = (value) => {
-  if (!value) return "";
+  if (!value) return '';
   // Remove todos os caracteres não numéricos, incluindo o DDI 55 que pode vir do CADSUS
-  const digits = String(value).replace(/\D/g, "").replace(/^55/, "");
+  const digits = String(value).replace(/\D/g, '').replace(/^55/, '');
   if (digits.length === 11) {
     // (XX) XXXXX-XXXX
-    return digits.replace(/(\d{2})(\d{5})(\d{4})/, "($1) $2-$3");
+    return digits.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
   }
   if (digits.length === 10) {
     // (XX) XXXX-XXXX
-    return digits.replace(/(\d{2})(\d{4})(\d{4})/, "($1) $2-$3");
+    return digits.replace(/(\d{2})(\d{4})(\d{4})/, '($1) $2-$3');
   }
   return value; // Retorna original se não corresponder
 };
 
 // Formatter para valores 't' (true) e 'f' (false)
 const formatBoolean = (value) => {
-  if (value === "t" || value === true) return "Sim";
-  if (value === "f" || value === false) return "Não";
+  if (value === 't' || value === true) return 'Sim';
+  if (value === 'f' || value === false) return 'Não';
   return value;
 };
 
 export const defaultFieldConfig = [
   // --- Seção Principal (Main) ---
   {
-    id: "nomeCompleto",
-    key: "entidadeFisica.entidade.entiNome",
+    id: 'nomeCompleto',
+    key: 'entidadeFisica.entidade.entiNome',
     cadsusKey: 2,
-    label: "Nome",
+    label: 'Nome',
     enabled: true,
-    section: "main",
+    section: 'main',
     order: 1,
   },
   {
-    id: "cpf",
-    key: "entidadeFisica.entfCPF",
+    id: 'cpf',
+    key: 'entidadeFisica.entfCPF',
     cadsusKey: 50,
-    label: "CPF",
+    label: 'CPF',
     enabled: true,
-    section: "main",
+    section: 'main',
     order: 2,
-    formatter: (value) => String(value || "").replace(/\D/g, ""), // Normaliza para comparação
+    formatter: (value) => String(value || '').replace(/\D/g, ''), // Normaliza para comparação
   },
   {
-    id: "cns",
-    key: "isenNumCadSus",
+    id: 'cns',
+    key: 'isenNumCadSus',
     cadsusKey: (cell) =>
-      (String(cell[1]) || "")
-        .split("\n")[0]
-        .replace(/\s*\(.*\)/, "")
+      (String(cell[1]) || '')
+        .split('\n')[0]
+        .replace(/\s*\(.*\)/, '')
         .trim(),
-    label: "CNS",
+    label: 'CNS',
     enabled: true,
-    section: "main",
+    section: 'main',
     order: 3,
   },
   {
-    id: "nomeMae",
-    key: "entidadeFisica.entfNomeMae",
+    id: 'nomeMae',
+    key: 'entidadeFisica.entfNomeMae',
     cadsusKey: 7,
-    label: "Nome da Mãe",
+    label: 'Nome da Mãe',
     enabled: true,
-    section: "main",
+    section: 'main',
     order: 4,
   },
   {
-    id: "dtNasc",
-    key: "entidadeFisica.entfDtNasc",
+    id: 'dtNasc',
+    key: 'entidadeFisica.entfDtNasc',
     cadsusKey: 3,
-    label: "Nascimento",
+    label: 'Nascimento',
     enabled: true,
-    section: "main",
+    section: 'main',
     order: 5,
   },
   {
-    id: "telefone",
+    id: 'telefone',
     key: (data) =>
-      `${data.entidadeFisica?.entidade?.entiTel1Pre || ""}${
-        data.entidadeFisica?.entidade?.entiTel1 || ""
+      `${data.entidadeFisica?.entidade?.entiTel1Pre || ''}${
+        data.entidadeFisica?.entidade?.entiTel1 || ''
       }`,
     cadsusKey: 16,
-    label: "Telefone",
+    label: 'Telefone',
     enabled: true,
-    section: "main",
+    section: 'main',
     order: 6,
     formatter: formatPhone,
   },
   // --- Seção "Mostrar Mais" (More) ---
   {
-    id: "nomeSocial",
-    key: "entidadeFisica.entidade.entiNomeSocial",
+    id: 'nomeSocial',
+    key: 'entidadeFisica.entidade.entiNomeSocial',
     cadsusKey: null,
-    label: "Nome Social",
+    label: 'Nome Social',
     enabled: true,
-    section: "more",
+    section: 'more',
     order: 1,
   },
   {
-    id: "rg",
-    key: "entidadeFisica.entfRG",
+    id: 'rg',
+    key: 'entidadeFisica.entfRG',
     cadsusKey: 51, // CORRIGIDO
-    label: "RG",
+    label: 'RG',
     enabled: true,
-    section: "more",
+    section: 'more',
     order: 2,
   },
   {
-    id: "endereco",
+    id: 'endereco',
     key: (data) =>
       `${
         data.entidadeFisica?.entidade?.logradouro?.tipoLogradouro?.tiloNome ||
-        ""
-      } ${String(data.entidadeFisica?.entidade?.logradouro?.logrNome || "")
-        .split("/")[0]
+        ''
+      } ${String(data.entidadeFisica?.entidade?.logradouro?.logrNome || '')
+        .split('/')[0]
         .trim()}`.trim(),
     cadsusKey: (cell) =>
-      `${String(cell[35] || "")} ${String(cell[34] || "")
-        .split("/")[0]
+      `${String(cell[35] || '')} ${String(cell[34] || '')
+        .split('/')[0]
         .trim()}`.trim(),
-    label: "Endereço",
+    label: 'Endereço',
     enabled: true,
-    section: "more",
+    section: 'more',
     order: 3,
   },
   {
-    id: "bairro",
-    key: "entidadeFisica.entidade.localidade.locaNome",
+    id: 'bairro',
+    key: 'entidadeFisica.entidade.localidade.locaNome',
     cadsusKey: 30,
-    label: "Bairro",
+    label: 'Bairro',
     enabled: true,
-    section: "more",
+    section: 'more',
     order: 4,
   },
   {
-    id: "cidade",
-    key: "entidadeFisica.entidade.localidade.cidade.cidaNome",
+    id: 'cidade',
+    key: 'entidadeFisica.entidade.localidade.cidade.cidaNome',
     cadsusKey: 29,
-    label: "Cidade",
+    label: 'Cidade',
     enabled: true,
-    section: "more",
+    section: 'more',
     order: 5,
   },
   {
-    id: "cep",
-    key: "entidadeFisica.entidade.entiEndeCEP",
+    id: 'cep',
+    key: 'entidadeFisica.entidade.entiEndeCEP',
     cadsusKey: 41,
-    label: "CEP",
+    label: 'CEP',
     enabled: true,
-    section: "more",
+    section: 'more',
     order: 6,
-    formatter: (value) => String(value || "").replace(/\D/g, ""), // Normaliza para comparação
+    formatter: (value) => String(value || '').replace(/\D/g, ''), // Normaliza para comparação
   },
   {
-    id: "alergiaMedicamentos",
-    key: "isenAlergMedicamentos",
+    id: 'alergiaMedicamentos',
+    key: 'isenAlergMedicamentos',
     cadsusKey: null,
-    label: "Alergia a Medicamentos",
+    label: 'Alergia a Medicamentos',
     enabled: true,
-    section: "more",
+    section: 'more',
     order: 7,
   },
   {
-    id: "alergiaAlimentos",
-    key: "isenAlergAlimentos",
+    id: 'alergiaAlimentos',
+    key: 'isenAlergAlimentos',
     cadsusKey: null,
-    label: "Alergia a Alimentos",
+    label: 'Alergia a Alimentos',
     enabled: true,
-    section: "more",
+    section: 'more',
     order: 8,
   },
   {
-    id: "alergiaQuimicos",
-    key: "isenAlergElementosQuimicos",
+    id: 'alergiaQuimicos',
+    key: 'isenAlergElementosQuimicos',
     cadsusKey: null,
-    label: "Alergia a Químicos",
+    label: 'Alergia a Químicos',
     enabled: true,
-    section: "more",
+    section: 'more',
     order: 9,
   },
   {
-    id: "acamado",
-    key: "isenIsAcamado",
+    id: 'acamado',
+    key: 'isenIsAcamado',
     cadsusKey: null,
-    label: "Acamado",
+    label: 'Acamado',
     enabled: true,
-    section: "more",
+    section: 'more',
     order: 10,
     formatter: formatBoolean,
   },
   {
-    id: "deficiente",
-    key: "isenPessoaDeficiente",
+    id: 'deficiente',
+    key: 'isenPessoaDeficiente',
     cadsusKey: null,
-    label: "Pessoa com Deficiência",
+    label: 'Pessoa com Deficiência',
     enabled: true,
-    section: "more",
+    section: 'more',
     order: 11,
     formatter: formatBoolean,
   },
   {
-    id: "gemeo",
-    key: "isenPossuiIrmaoGemeo",
+    id: 'gemeo',
+    key: 'isenPossuiIrmaoGemeo',
     cadsusKey: null,
-    label: "Possui Irmão Gêmeo",
+    label: 'Possui Irmão Gêmeo',
     enabled: true,
-    section: "more",
+    section: 'more',
     order: 12,
     formatter: formatBoolean,
   },
   {
-    id: "statusCadastro",
-    key: "status.valor",
+    id: 'statusCadastro',
+    key: 'status.valor',
     cadsusKey: null,
-    label: "Status do Cadastro",
+    label: 'Status do Cadastro',
     enabled: true,
-    section: "more",
+    section: 'more',
     order: 13,
   },
   {
-    id: "unidadeSaude",
-    key: "unidadeSaude.entidade.entiNome",
+    id: 'unidadeSaude',
+    key: 'unidadeSaude.entidade.entiNome',
     cadsusKey: null,
-    label: "Unidade de Saúde",
+    label: 'Unidade de Saúde',
     enabled: true,
-    section: "more",
+    section: 'more',
     order: 14,
   },
   {
-    id: "observacao",
-    key: "entidadeFisica.entidade.entiObs",
+    id: 'observacao',
+    key: 'entidadeFisica.entidade.entiObs',
     cadsusKey: null,
-    label: "Observação do Cadastro",
+    label: 'Observação do Cadastro',
     enabled: true,
-    section: "more",
+    section: 'more',
     order: 15,
   },
   {
-    id: "nomePai",
-    key: "entidadeFisica.entfNomePai",
+    id: 'nomePai',
+    key: 'entidadeFisica.entfNomePai',
     cadsusKey: 8, // CORRIGIDO
-    label: "Nome do Pai",
+    label: 'Nome do Pai',
     enabled: false,
-    section: "more",
+    section: 'more',
     order: 16,
   },
   {
-    id: "racaCor",
-    key: "entidadeFisica.racaCor.racoNome",
+    id: 'racaCor',
+    key: 'entidadeFisica.racaCor.racoNome',
     cadsusKey: 11, // CORRIGIDO
-    label: "Raça/Cor",
+    label: 'Raça/Cor',
     enabled: false,
-    section: "more",
+    section: 'more',
     order: 17,
   },
   {
-    id: "grauInstrucao",
-    key: "entidadeFisica.grauInstrucao.grinNome",
+    id: 'grauInstrucao',
+    key: 'entidadeFisica.grauInstrucao.grinNome',
     cadsusKey: null,
-    label: "Grau de Instrução",
+    label: 'Grau de Instrução',
     enabled: false,
-    section: "more",
+    section: 'more',
     order: 18,
   },
   {
-    id: "cidadeNascimento",
-    key: "entidadeFisica.cidadeNasc.cidaNome",
+    id: 'cidadeNascimento',
+    key: 'entidadeFisica.cidadeNasc.cidaNome',
     cadsusKey: 45, // CORRIGIDO
-    label: "Cidade de Nascimento",
+    label: 'Cidade de Nascimento',
     enabled: false,
-    section: "more",
+    section: 'more',
     order: 19,
   },
   {
-    id: "nacionalidade",
-    key: "entidadeFisica.nacionalidade.naciDescricao",
+    id: 'nacionalidade',
+    key: 'entidadeFisica.nacionalidade.naciDescricao',
     cadsusKey: 23, // CORRIGIDO
-    label: "Nacionalidade",
+    label: 'Nacionalidade',
     enabled: false,
-    section: "more",
+    section: 'more',
     order: 20,
   },
   {
-    id: "religiao",
-    key: "entidadeFisica.religiao.reliNome",
+    id: 'religiao',
+    key: 'entidadeFisica.religiao.reliNome',
     cadsusKey: null,
-    label: "Religião",
+    label: 'Religião',
     enabled: false,
-    section: "more",
+    section: 'more',
     order: 21,
   },
   {
-    id: "cbo",
-    key: "entidadeFisica.cbo.dcboNome",
+    id: 'cbo',
+    key: 'entidadeFisica.cbo.dcboNome',
     cadsusKey: null,
-    label: "Profissão (CBO)",
+    label: 'Profissão (CBO)',
     enabled: false,
-    section: "more",
+    section: 'more',
     order: 22,
   },
   {
-    id: "pis",
-    key: "entidadeFisica.entfPis",
+    id: 'pis',
+    key: 'entidadeFisica.entfPis',
     cadsusKey: 55, // CORRIGIDO
-    label: "PIS",
+    label: 'PIS',
     enabled: false,
-    section: "more",
+    section: 'more',
     order: 23,
   },
   {
-    id: "ctps",
+    id: 'ctps',
     key: (data) => {
-      const ctps = data.entidadeFisica?.entfCTPS || "";
-      const serie = data.entidadeFisica?.entfCTPSSerie || "";
-      if (!ctps) return "";
+      const ctps = data.entidadeFisica?.entfCTPS || '';
+      const serie = data.entidadeFisica?.entfCTPSSerie || '';
+      if (!ctps) return '';
       return `${ctps} (Série: ${serie})`;
     },
     cadsusKey: null,
-    label: "CTPS",
+    label: 'CTPS',
     enabled: false,
-    section: "more",
+    section: 'more',
     order: 24,
   },
   {
-    id: "convulsivo",
-    key: "isenIsConvulsivo",
+    id: 'convulsivo',
+    key: 'isenIsConvulsivo',
     cadsusKey: null,
-    label: "É Convulsivo",
+    label: 'É Convulsivo',
     enabled: true,
-    section: "more",
+    section: 'more',
     order: 25,
     formatter: formatBoolean,
   },
   {
-    id: "bpc",
-    key: "isenRecebeBPC",
+    id: 'bpc',
+    key: 'isenRecebeBPC',
     cadsusKey: null,
-    label: "Recebe BPC",
+    label: 'Recebe BPC',
     enabled: true,
-    section: "more",
+    section: 'more',
     order: 26,
     formatter: formatBoolean,
   },
   {
-    id: "autista",
-    key: "isenEspectroAutista",
+    id: 'autista',
+    key: 'isenEspectroAutista',
     cadsusKey: null,
-    label: "Espectro Autista",
+    label: 'Espectro Autista',
     enabled: true,
-    section: "more",
+    section: 'more',
     order: 27,
     formatter: formatBoolean,
   },
