@@ -1,5 +1,5 @@
 // Cross-browser API alias (lint-safe)
-const api = (typeof browser !== 'undefined' ? browser : (typeof chrome !== 'undefined' ? chrome : {}));
+const api = typeof browser !== 'undefined' ? browser : typeof chrome !== 'undefined' ? chrome : {};
 import * as API from './api.js';
 import './browser-polyfill.js';
 import { defaultFieldConfig } from './field-config.js';
@@ -626,6 +626,42 @@ function handleShowRegulationInfo() {
   infoModal.classList.remove('hidden');
 }
 
+
+// Funções nomeadas para listeners
+function onReloadBtnClick() {
+  const patient = store.getPatient();
+  if (patient && patient.ficha) {
+    Utils.showDialog({
+      message:
+        'Um paciente está selecionado e o estado atual será perdido. Deseja realmente recarregar o assistente?',
+      onConfirm: () => {
+        location.reload();
+      },
+    });
+  } else {
+    location.reload();
+  }
+}
+
+function onModalCloseBtnClick() {
+  const infoModal = document.getElementById('info-modal');
+  infoModal.classList.add('hidden');
+}
+
+function onInfoModalClick(e) {
+  const infoModal = document.getElementById('info-modal');
+  if (e.target === infoModal) infoModal.classList.add('hidden');
+}
+
+function onMainContentClick(event) {
+  handleGlobalActions(event);
+}
+
+function onInfoBtnClick() {
+  handleShowRegulationInfo();
+}
+
+let listenersAdded = false;
 function addGlobalEventListeners() {
   const mainContent = document.getElementById('main-content');
   const infoModal = document.getElementById('info-modal');
@@ -633,57 +669,54 @@ function addGlobalEventListeners() {
   const infoBtn = document.getElementById('context-info-btn');
   const reloadBtn = document.getElementById('reload-sidebar-btn');
 
-  if (reloadBtn) {
-    reloadBtn.addEventListener('click', () => {
-      const patient = store.getPatient();
-      if (patient && patient.ficha) {
-        Utils.showDialog({
-          message:
-            'Um paciente está selecionado e o estado atual será perdido. Deseja realmente recarregar o assistente?',
-          onConfirm: () => {
-            location.reload();
-          },
-        });
-      } else {
-        location.reload();
-      }
-    });
+  // Remove listeners antes de adicionar novamente
+  if (listenersAdded) {
+    if (reloadBtn) reloadBtn.removeEventListener('click', onReloadBtnClick);
+    if (modalCloseBtn) modalCloseBtn.removeEventListener('click', onModalCloseBtnClick);
+    if (infoModal) infoModal.removeEventListener('click', onInfoModalClick);
+    if (mainContent) mainContent.removeEventListener('click', onMainContentClick);
+    if (infoBtn) infoBtn.removeEventListener('click', onInfoBtnClick);
   }
 
-  modalCloseBtn.addEventListener('click', () => infoModal.classList.add('hidden'));
-  infoModal.addEventListener('click', (e) => {
-    if (e.target === infoModal) infoModal.classList.add('hidden');
-  });
-  mainContent.addEventListener('click', handleGlobalActions);
-  infoBtn.addEventListener('click', handleShowRegulationInfo);
+  if (reloadBtn) reloadBtn.addEventListener('click', onReloadBtnClick);
+  if (modalCloseBtn) modalCloseBtn.addEventListener('click', onModalCloseBtnClick);
+  if (infoModal) infoModal.addEventListener('click', onInfoModalClick);
+  if (mainContent) mainContent.addEventListener('click', onMainContentClick);
+  if (infoBtn) infoBtn.addEventListener('click', onInfoBtnClick);
 
-  api.storage.onChanged.addListener((changes, areaName) => {
-    if (areaName === 'local' && changes.pendingRegulation) {
-      // Apenas processa se a detecção automática estiver LIGADA
-      api.storage.sync.get({ enableAutomaticDetection: true }).then((settings) => {
-        if (settings.enableAutomaticDetection) {
-          const { newValue } = changes.pendingRegulation;
-          if (newValue && newValue.isenPKIdp) {
-            console.log(
-              '[Assistente Sidebar] Nova regulação detectada via storage.onChanged:',
-              newValue
-            );
-            handleRegulationLoaded(newValue);
-            api.storage.local.remove('pendingRegulation');
+  listenersAdded = true;
+
+  // Listener do storage não precisa ser removido, pois é singleton
+  if (!addGlobalEventListeners.storageListenerAdded) {
+    api.storage.onChanged.addListener((changes, areaName) => {
+      if (areaName === 'local' && changes.pendingRegulation) {
+        // Apenas processa se a detecção automática estiver LIGADA
+        api.storage.sync.get({ enableAutomaticDetection: true }).then((settings) => {
+          if (settings.enableAutomaticDetection) {
+            const { newValue } = changes.pendingRegulation;
+            if (newValue && newValue.isenPKIdp) {
+              console.log(
+                '[Assistente Sidebar] Nova regulação detectada via storage.onChanged:',
+                newValue
+              );
+              handleRegulationLoaded(newValue);
+              api.storage.local.remove('pendingRegulation');
+            }
           }
-        }
-      });
-    }
+        });
+      }
 
-    if (areaName === 'sync' && changes.sectionHeaderStyles) {
-      api.runtime.reload();
-    }
+      if (areaName === 'sync' && changes.sectionHeaderStyles) {
+        api.runtime.reload();
+      }
 
-    if (areaName === 'sync' && changes.enableAutomaticDetection) {
-      // Mantém o botão da sidebar sincronizado com a configuração
-      setupAutoModeToggle();
-    }
-  });
+      if (areaName === 'sync' && changes.enableAutomaticDetection) {
+        // Mantém o botão da sidebar sincronizado com a configuração
+        setupAutoModeToggle();
+      }
+    });
+    addGlobalEventListeners.storageListenerAdded = true;
+  }
 }
 
 async function handleGlobalActions(event) {
