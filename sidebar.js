@@ -32,6 +32,19 @@ const sectionIcons = {
 let currentRegulationData = null;
 const sectionManagers = {}; // Objeto para armazenar instâncias de SectionManager
 
+// Global listeners storage for memory leak prevention
+const globalListeners = {
+  onOpenOptionsClick: null,
+  onReloadSidebarClick: null,
+  onAutoModeToggleChange: null,
+  onReloadBtnClick: null,
+  onModalCloseBtnClick: null,
+  onInfoModalClick: null,
+  onMainContentClick: null,
+  onInfoBtnClick: null,
+  onDOMContentLoaded: null,
+};
+
 // --- FUNÇÃO AUXILIAR DE FILTRAGEM ---
 /**
  * Aplica um filtro de texto normalizado a um array de dados.
@@ -345,19 +358,22 @@ async function init() {
 
       if (openOptions) {
         // Remove antes de adicionar
-        openOptions.removeEventListener('click', onOpenOptionsClick);
-        openOptions.addEventListener('click', onOpenOptionsClick);
+        if (globalListeners.onOpenOptionsClick) {
+          openOptions.removeEventListener('click', globalListeners.onOpenOptionsClick);
+        }
+        globalListeners.onOpenOptionsClick = function () {
+          api.runtime.openOptionsPage();
+        };
+        openOptions.addEventListener('click', globalListeners.onOpenOptionsClick);
       }
       if (reloadSidebar) {
-        reloadSidebar.removeEventListener('click', onReloadSidebarClick);
-        reloadSidebar.addEventListener('click', onReloadSidebarClick);
-      }
-      // Funções nomeadas para listeners de init
-      function onOpenOptionsClick() {
-        api.runtime.openOptionsPage();
-      }
-      function onReloadSidebarClick() {
-        location.reload();
+        if (globalListeners.onReloadSidebarClick) {
+          reloadSidebar.removeEventListener('click', globalListeners.onReloadSidebarClick);
+        }
+        globalListeners.onReloadSidebarClick = function () {
+          location.reload();
+        };
+        reloadSidebar.addEventListener('click', globalListeners.onReloadSidebarClick);
       }
 
       // **não retornamos mais aqui**, apenas marcamos que deu “fallback”
@@ -548,14 +564,17 @@ function setupAutoModeToggle() {
   });
 
   // Remove antes de adicionar
-  toggle.removeEventListener('change', onAutoModeToggleChange);
-  toggle.addEventListener('change', onAutoModeToggleChange);
+  if (globalListeners.onAutoModeToggleChange) {
+    toggle.removeEventListener('change', globalListeners.onAutoModeToggleChange);
+  }
 
-  function onAutoModeToggleChange(event) {
+  globalListeners.onAutoModeToggleChange = function (event) {
     const isEnabled = event.target.checked;
     api.storage.sync.set({ enableAutomaticDetection: isEnabled });
     label.textContent = isEnabled ? 'Auto' : 'Manual';
-  }
+  };
+
+  toggle.addEventListener('change', globalListeners.onAutoModeToggleChange);
 }
 
 async function handleRegulationLoaded(regulationData) {
@@ -623,57 +642,6 @@ async function applyAutomationRules(regulationData) {
   }
 }
 
-function handleShowRegulationInfo() {
-  if (!currentRegulationData) {
-    Utils.showMessage('Nenhuma informação de regulação carregada.', 'info');
-    return;
-  }
-  const modalTitle = document.getElementById('modal-title');
-  const modalContent = document.getElementById('modal-content');
-  const infoModal = document.getElementById('info-modal');
-
-  modalTitle.textContent = 'Dados da Regulação (JSON)';
-  const formattedJson = JSON.stringify(currentRegulationData, null, 2);
-
-  modalContent.innerHTML = `<pre class="bg-slate-100 p-2 rounded-md text-xs whitespace-pre-wrap break-all">${formattedJson}</pre>`;
-
-  infoModal.classList.remove('hidden');
-}
-
-// Funções nomeadas para listeners globais
-function onReloadBtnClick() {
-  const patient = store.getPatient();
-  if (patient && patient.ficha) {
-    Utils.showDialog({
-      message:
-        'Um paciente está selecionado e o estado atual será perdido. Deseja realmente recarregar o assistente?',
-      onConfirm: () => {
-        location.reload();
-      },
-    });
-  } else {
-    location.reload();
-  }
-}
-
-function onModalCloseBtnClick() {
-  const infoModal = document.getElementById('info-modal');
-  infoModal.classList.add('hidden');
-}
-
-function onInfoModalClick(e) {
-  const infoModal = document.getElementById('info-modal');
-  if (e.target === infoModal) infoModal.classList.add('hidden');
-}
-
-function onMainContentClick(event) {
-  handleGlobalActions(event);
-}
-
-function onInfoBtnClick() {
-  handleShowRegulationInfo();
-}
-
 let listenersAdded = false;
 function addGlobalEventListeners() {
   const mainContent = document.getElementById('main-content');
@@ -684,18 +652,86 @@ function addGlobalEventListeners() {
 
   // Remove listeners antes de adicionar novamente
   if (listenersAdded) {
-    if (reloadBtn) reloadBtn.removeEventListener('click', onReloadBtnClick);
-    if (modalCloseBtn) modalCloseBtn.removeEventListener('click', onModalCloseBtnClick);
-    if (infoModal) infoModal.removeEventListener('click', onInfoModalClick);
-    if (mainContent) mainContent.removeEventListener('click', onMainContentClick);
-    if (infoBtn) infoBtn.removeEventListener('click', onInfoBtnClick);
+    if (reloadBtn && globalListeners.onReloadBtnClick) {
+      reloadBtn.removeEventListener('click', globalListeners.onReloadBtnClick);
+    }
+    if (modalCloseBtn && globalListeners.onModalCloseBtnClick) {
+      modalCloseBtn.removeEventListener('click', globalListeners.onModalCloseBtnClick);
+    }
+    if (infoModal && globalListeners.onInfoModalClick) {
+      infoModal.removeEventListener('click', globalListeners.onInfoModalClick);
+    }
+    if (mainContent && globalListeners.onMainContentClick) {
+      mainContent.removeEventListener('click', globalListeners.onMainContentClick);
+    }
+    if (infoBtn && globalListeners.onInfoBtnClick) {
+      infoBtn.removeEventListener('click', globalListeners.onInfoBtnClick);
+    }
   }
 
-  if (reloadBtn) reloadBtn.addEventListener('click', onReloadBtnClick);
-  if (modalCloseBtn) modalCloseBtn.addEventListener('click', onModalCloseBtnClick);
-  if (infoModal) infoModal.addEventListener('click', onInfoModalClick);
-  if (mainContent) mainContent.addEventListener('click', onMainContentClick);
-  if (infoBtn) infoBtn.addEventListener('click', onInfoBtnClick);
+  // Create named functions for listeners
+  if (!globalListeners.onReloadBtnClick) {
+    globalListeners.onReloadBtnClick = function () {
+      const patient = store.getPatient();
+      if (patient && patient.ficha) {
+        Utils.showDialog({
+          message:
+            'Um paciente está selecionado e o estado atual será perdido. Deseja realmente recarregar o assistente?',
+          onConfirm: () => {
+            location.reload();
+          },
+        });
+      } else {
+        location.reload();
+      }
+    };
+  }
+
+  if (!globalListeners.onModalCloseBtnClick) {
+    globalListeners.onModalCloseBtnClick = function () {
+      const modal = document.getElementById('info-modal');
+      if (modal) modal.classList.add('hidden');
+    };
+  }
+
+  if (!globalListeners.onInfoModalClick) {
+    globalListeners.onInfoModalClick = function (e) {
+      if (e.target === e.currentTarget) {
+        e.currentTarget.classList.add('hidden');
+      }
+    };
+  }
+
+  if (!globalListeners.onMainContentClick) {
+    globalListeners.onMainContentClick = async function (event) {
+      await handleGlobalActions(event);
+    };
+  }
+
+  if (!globalListeners.onInfoBtnClick) {
+    globalListeners.onInfoBtnClick = function () {
+      if (!currentRegulationData) {
+        Utils.showMessage('Nenhuma informação de regulação carregada.', 'info');
+        return;
+      }
+      const modalTitle = document.getElementById('modal-title');
+      const modalContent = document.getElementById('modal-content');
+      const modal = document.getElementById('info-modal');
+
+      modalTitle.textContent = 'Dados da Regulação (JSON)';
+      const formattedJson = JSON.stringify(currentRegulationData, null, 2);
+
+      modalContent.innerHTML = `<pre class="bg-slate-100 p-2 rounded-md text-xs whitespace-pre-wrap break-all">${formattedJson}</pre>`;
+
+      modal.classList.remove('hidden');
+    };
+  }
+
+  if (reloadBtn) reloadBtn.addEventListener('click', globalListeners.onReloadBtnClick);
+  if (modalCloseBtn) modalCloseBtn.addEventListener('click', globalListeners.onModalCloseBtnClick);
+  if (infoModal) infoModal.addEventListener('click', globalListeners.onInfoModalClick);
+  if (mainContent) mainContent.addEventListener('click', globalListeners.onMainContentClick);
+  if (infoBtn) infoBtn.addEventListener('click', globalListeners.onInfoBtnClick);
 
   listenersAdded = true;
 
@@ -879,12 +915,12 @@ function formatRegulationDetailsForModal(data) {
   content += createDetailRow('Gravidade', data.reguGravidade);
   if (data.reguJustificativa && data.reguJustificativa !== 'null') {
     content += `<div class="py-2">
-                      <span class="font-semibold text-slate-600">Justificativa:</span>
-                      <p class="text-slate-800 whitespace-pre-wrap mt-1 p-2 bg-slate-50 rounded">${data.reguJustificativa.replace(
-                        /\\n/g,
-                        '\n'
-                      )}</p>
-                  </div>`;
+    <span class="font-semibold text-slate-600">Justificativa:</span>
+    <p class="text-slate-800 whitespace-pre-wrap mt-1 p-2 bg-slate-50 rounded">${data.reguJustificativa.replace(
+      /\\n/g,
+      '\n'
+    )}</p>
+</div>`;
   }
   return content;
 }
@@ -979,17 +1015,17 @@ function handleShowAppointmentInfo(button) {
   const infoModal = document.getElementById('info-modal');
   modalTitle.textContent = 'Detalhes do Agendamento';
   modalContent.innerHTML = `
-        <p><strong>ID:</strong> ${data.id}</p>
-        <p><strong>Tipo:</strong> ${
-          data.isSpecialized ? 'Especializada' : data.isOdonto ? 'Odontológica' : data.type
-        }</p>
-        <p><strong>Status:</strong> ${data.status}</p>
-        <p><strong>Data:</strong> ${data.date} às ${data.time}</p>
-        <p><strong>Local:</strong> ${data.location}</p>
-        <p><strong>Profissional:</strong> ${data.professional}</p>
-        <p><strong>Especialidade:</strong> ${data.specialty || 'N/A'}</p>
-        <p><strong>Procedimento:</strong> ${data.description}</p>
-    `;
+    <p><strong>ID:</strong> ${data.id}</p>
+    <p><strong>Tipo:</strong> ${
+      data.isSpecialized ? 'Especializada' : data.isOdonto ? 'Odontológica' : data.type
+    }</p>
+    <p><strong>Status:</strong> ${data.status}</p>
+    <p><strong>Data:</strong> ${data.date} às ${data.time}</p>
+    <p><strong>Local:</strong> ${data.location}</p>
+    <p><strong>Profissional:</strong> ${data.professional}</p>
+    <p><strong>Especialidade:</strong> ${data.specialty || 'N/A'}</p>
+    <p><strong>Procedimento:</strong> ${data.description}</p>
+  `;
   infoModal.classList.remove('hidden');
 }
 
@@ -1005,4 +1041,6 @@ async function checkForPendingRegulation() {
   }
 }
 
-document.addEventListener('DOMContentLoaded', init);
+// Initialize with removable listener
+globalListeners.onDOMContentLoaded = init;
+document.addEventListener('DOMContentLoaded', globalListeners.onDOMContentLoaded);

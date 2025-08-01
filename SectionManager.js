@@ -505,14 +505,14 @@ export class SectionManager {
   }
 
   createUiComponent(componentName) {
-  switch (componentName) {
-    case 'date-range':
-      return this.renderDateRangeComponent();
-    case 'saved-filters':
-      return this.renderSavedFiltersComponent();
-    default:
-      return null;
-  }
+    switch (componentName) {
+      case 'date-range':
+        return this.renderDateRangeComponent();
+      case 'saved-filters':
+        return this.renderSavedFiltersComponent();
+      default:
+        return null;
+    }
   }
 
   renderDateRangeComponent() {

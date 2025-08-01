@@ -2,9 +2,9 @@
  * @file Módulo TimelineManager, responsável por gerir a secção da Linha do Tempo.
  */
 import * as API from './api.js';
-import * as Utils from './utils.js';
 import * as Renderers from './renderers.js';
 import { store } from './store.js';
+import * as Utils from './utils.js';
 
 export class TimelineManager {
   constructor(sectionKey, config, globalSettings) {
