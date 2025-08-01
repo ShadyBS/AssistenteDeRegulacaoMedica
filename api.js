@@ -70,6 +70,50 @@ export async function fetchRegulationPriorities() {
 }
 
 /**
+ * Limpa o lock de uma regulação específica.
+ * @param {object} params
+ * @param {string} params.reguIdp - O IDP da regulação.
+ * @param {string} params.reguIds - O IDS da regulação.
+ * @returns {Promise<boolean>} True se a operação foi bem-sucedida, false caso contrário.
+ */
+export async function clearRegulationLock({ reguIdp, reguIds }) {
+  if (!reguIdp || !reguIds) {
+    console.warn('[Assistente] IDs da regulação não fornecidos para limpeza de lock.');
+    return false;
+  }
+
+  try {
+    const baseUrl = await getBaseUrl();
+    const url = new URL(`${baseUrl}/sigss/regulacao/limparLock`);
+    const lockId = `${reguIdp}-${reguIds}`;
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+        Accept: 'application/json, text/javascript, */*; q=0.01',
+        'X-Requested-With': 'XMLHttpRequest',
+      },
+      body: `lock=${lockId}`,
+    });
+
+    if (response.ok) {
+      console.log(`[Assistente] Lock da regulação ${lockId} liberado com sucesso.`);
+      return true;
+    } else {
+      console.warn(
+        `[Assistente] Falha ao liberar lock da regulação ${lockId}: ${response.status} ${response.statusText}`
+      );
+      return false;
+    }
+  } catch (error) {
+    // Ignora erros conforme solicitado
+    console.warn('[Assistente] Erro ao liberar lock da regulação:', error);
+    return false;
+  }
+}
+
+/**
  * Busca os detalhes completos de uma regulação específica.
  * @param {object} params
  * @param {string} params.reguIdp - O IDP da regulação.
@@ -101,14 +145,23 @@ export async function fetchRegulationDetails({ reguIdp, reguIds }) {
     return null;
   }
 
+  let result = null;
   const contentType = response.headers.get('content-type');
   if (contentType && contentType.includes('application/json')) {
     const data = await response.json();
     // O objeto de dados está aninhado sob a chave "regulacao"
-    return data.regulacao || null;
+    result = data.regulacao || null;
   } else {
     throw new Error('A resposta do servidor não foi JSON. A sessão pode ter expirado.');
   }
+
+  // Libera o lock após obter os detalhes, independente do resultado
+  // Não aguardamos o resultado da limpeza do lock para não atrasar a resposta
+  clearRegulationLock({ reguIdp, reguIds }).catch((error) =>
+    console.warn('[Assistente] Erro ao limpar lock após buscar detalhes:', error)
+  );
+
+  return result;
 }
 
 function parseConsultasHTML(htmlString) {

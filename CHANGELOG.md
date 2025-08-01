@@ -7,6 +7,10 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased]
 
+### ✨ Added
+
+- Adicionada liberação automática de locks de regulação após buscar detalhes, prevenindo bloqueios de registro no SIGSS.
+
 ### 🛠️ Refactor & Linting
 
 ### 🐞 Fixed
