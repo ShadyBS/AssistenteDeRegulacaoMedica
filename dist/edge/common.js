@@ -1,33 +1,6 @@
 "use strict";
 (self["webpackChunkassistente_de_regulacao_medica"] = self["webpackChunkassistente_de_regulacao_medica"] || []).push([[76,984],{
 
-/***/ 64:
-/***/ (() => {
-
-/*
- * Copyright (c) 2016-2019, 2021-2022  Mozilla Foundation.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-
-
-if (typeof browser === 'undefined' && typeof chrome !== 'undefined') {
-  var browser = chrome;
-}
-
-/***/ }),
-
 /***/ 335:
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
@@ -134,16 +107,14 @@ const store = {
 /* harmony export */ });
 /* harmony import */ var bluebird__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(104);
 /* harmony import */ var _filter_config_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(733);
+/* harmony import */ var _store_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(335);
 if (61 == __webpack_require__.j) {
-	/* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(239);
+	/* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(239);
 }
-/* harmony import */ var _api_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(574);
-/* harmony import */ var _store_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(335);
 
 /**
  * @file Módulo SectionManager, responsável por gerir uma secção inteira da sidebar.
  */
-
 
 
 
@@ -197,11 +168,11 @@ class SectionManager {
     this.cacheDomElements();
     this.renderFilterControls();
     this.addEventListeners();
-    _store_js__WEBPACK_IMPORTED_MODULE_4__/* .store */ .M.subscribe(() => this.onStateChange());
+    _store_js__WEBPACK_IMPORTED_MODULE_2__/* .store */ .M.subscribe(() => this.onStateChange());
   }
   onStateChange() {
     var _this$currentPatient, _this$currentPatient$, _newPatient$isenPK;
-    const patientState = _store_js__WEBPACK_IMPORTED_MODULE_4__/* .store */ .M.getPatient();
+    const patientState = _store_js__WEBPACK_IMPORTED_MODULE_2__/* .store */ .M.getPatient();
     const newPatient = patientState ? patientState.ficha : null;
     if (((_this$currentPatient = this.currentPatient) === null || _this$currentPatient === void 0 ? void 0 : (_this$currentPatient$ = _this$currentPatient.isenPK) === null || _this$currentPatient$ === void 0 ? void 0 : _this$currentPatient$.idp) !== (newPatient === null || newPatient === void 0 ? void 0 : (_newPatient$isenPK = newPatient.isenPK) === null || _newPatient$isenPK === void 0 ? void 0 : _newPatient$isenPK.idp)) {
       this.setPatient(newPatient);
@@ -232,7 +203,7 @@ class SectionManager {
     (_this$elements$toggle = this.elements.toggleBtn) === null || _this$elements$toggle === void 0 ? void 0 : _this$elements$toggle.addEventListener('click', () => this.toggleSection());
     (_this$elements$toggle2 = this.elements.toggleMoreBtn) === null || _this$elements$toggle2 === void 0 ? void 0 : _this$elements$toggle2.addEventListener('click', () => this.toggleMoreFilters());
     (_this$elements$clearB = this.elements.clearBtn) === null || _this$elements$clearB === void 0 ? void 0 : _this$elements$clearB.addEventListener('click', () => this.clearFilters());
-    (_this$elements$sectio = this.elements.section) === null || _this$elements$sectio === void 0 ? void 0 : _this$elements$sectio.addEventListener('input', _utils_js__WEBPACK_IMPORTED_MODULE_2__/* .debounce */ .sg(e => {
+    (_this$elements$sectio = this.elements.section) === null || _this$elements$sectio === void 0 ? void 0 : _this$elements$sectio.addEventListener('input', _utils_js__WEBPACK_IMPORTED_MODULE_3__/* .debounce */ .sg(e => {
       if (e.target.matches("input[type='text'], input[type='date']")) this.applyFiltersAndRender();
     }, 300));
     (_this$elements$sectio2 = this.elements.section) === null || _this$elements$sectio2 === void 0 ? void 0 : _this$elements$sectio2.addEventListener('change', e => {
@@ -273,7 +244,7 @@ class SectionManager {
     var _this = this;
     return (0,bluebird__WEBPACK_IMPORTED_MODULE_0__.coroutine)(function* () {
       if (!_this.currentPatient) {
-        if (_this.elements.section.style.display !== 'none') _utils_js__WEBPACK_IMPORTED_MODULE_2__/* .showMessage */ .rG('Nenhum paciente selecionado.');
+        if (_this.elements.section.style.display !== 'none') _utils_js__WEBPACK_IMPORTED_MODULE_3__/* .showMessage */ .rG('Nenhum paciente selecionado.');
         return;
       }
       if (_this.isLoading) return;
@@ -310,7 +281,7 @@ class SectionManager {
           documents: 'documentos'
         };
         const friendlyName = sectionNameMap[_this.sectionKey] || _this.sectionKey;
-        _utils_js__WEBPACK_IMPORTED_MODULE_2__/* .showMessage */ .rG(`Erro ao buscar ${friendlyName}. Verifique a conexão e a URL base.`);
+        _utils_js__WEBPACK_IMPORTED_MODULE_3__/* .showMessage */ .rG(`Erro ao buscar ${friendlyName}. Verifique a conexão e a URL base.`);
         _this.allData = [];
       } finally {
         _this.isLoading = false;
@@ -335,8 +306,8 @@ class SectionManager {
     return [...data].sort((a, b) => {
       let valA, valB;
       if (key === 'date' || key === 'sortableDate') {
-        valA = a.sortableDate || _utils_js__WEBPACK_IMPORTED_MODULE_2__/* .parseDate */ ._U(a.date);
-        valB = b.sortableDate || _utils_js__WEBPACK_IMPORTED_MODULE_2__/* .parseDate */ ._U(b.date);
+        valA = a.sortableDate || _utils_js__WEBPACK_IMPORTED_MODULE_3__/* .parseDate */ ._U(a.date);
+        valB = b.sortableDate || _utils_js__WEBPACK_IMPORTED_MODULE_3__/* .parseDate */ ._U(b.date);
       } else {
         valA = (a[key] || '').toString().toLowerCase();
         valB = (b[key] || '').toString().toLowerCase();
@@ -399,8 +370,8 @@ class SectionManager {
       }
     };
     const range = dateRangeDefaults[this.sectionKey] || defaultRanges[this.sectionKey];
-    if (this.elements.dateInitial) this.elements.dateInitial.valueAsDate = _utils_js__WEBPACK_IMPORTED_MODULE_2__/* .calculateRelativeDate */ .Z9(range.start);
-    if (this.elements.dateFinal) this.elements.dateFinal.valueAsDate = _utils_js__WEBPACK_IMPORTED_MODULE_2__/* .calculateRelativeDate */ .Z9(range.end);
+    if (this.elements.dateInitial) this.elements.dateInitial.valueAsDate = _utils_js__WEBPACK_IMPORTED_MODULE_3__/* .calculateRelativeDate */ .Z9(range.start);
+    if (this.elements.dateFinal) this.elements.dateFinal.valueAsDate = _utils_js__WEBPACK_IMPORTED_MODULE_3__/* .calculateRelativeDate */ .Z9(range.end);
     // --- FIM DA CORREÇÃO ---
 
     (_filter_config_js__WEBPACK_IMPORTED_MODULE_1__/* .filterConfig */ .J[this.sectionKey] || []).forEach(filter => {
@@ -460,12 +431,13 @@ class SectionManager {
     }
   }
   saveFilterSet() {
+    // eslint-disable-next-line no-alert
     const name = window.prompt('Digite um nome para o conjunto de filtros:');
     if (!name || name.trim() === '') {
-      _utils_js__WEBPACK_IMPORTED_MODULE_2__/* .showMessage */ .rG('Nome inválido. O filtro não foi salvo.');
+      _utils_js__WEBPACK_IMPORTED_MODULE_3__/* .showMessage */ .rG('Nome inválido. O filtro não foi salvo.');
       return;
     }
-    const savedSets = _store_js__WEBPACK_IMPORTED_MODULE_4__/* .store */ .M.getSavedFilterSets();
+    const savedSets = _store_js__WEBPACK_IMPORTED_MODULE_2__/* .store */ .M.getSavedFilterSets();
     if (!savedSets[this.sectionKey]) {
       savedSets[this.sectionKey] = [];
     }
@@ -483,14 +455,14 @@ class SectionManager {
     browser.storage.local.set({
       savedFilterSets: savedSets
     });
-    _store_js__WEBPACK_IMPORTED_MODULE_4__/* .store */ .M.setSavedFilterSets(savedSets);
-    _utils_js__WEBPACK_IMPORTED_MODULE_2__/* .showMessage */ .rG(`Filtro "${name}" salvo com sucesso.`, 'success');
+    _store_js__WEBPACK_IMPORTED_MODULE_2__/* .store */ .M.setSavedFilterSets(savedSets);
+    _utils_js__WEBPACK_IMPORTED_MODULE_3__/* .showMessage */ .rG(`Filtro "${name}" salvo com sucesso.`, 'success');
   }
   loadFilterSet() {
     const select = document.getElementById(`${this.prefix}-saved-filters-select`);
     const name = select.value;
     if (!name) return;
-    const set = (_store_js__WEBPACK_IMPORTED_MODULE_4__/* .store */ .M.getSavedFilterSets()[this.sectionKey] || []).find(s => s.name === name);
+    const set = (_store_js__WEBPACK_IMPORTED_MODULE_2__/* .store */ .M.getSavedFilterSets()[this.sectionKey] || []).find(s => s.name === name);
     if (!set) return;
     Object.entries(set.values).forEach(([id, value]) => {
       const el = document.getElementById(id);
@@ -507,25 +479,27 @@ class SectionManager {
     const select = document.getElementById(`${this.prefix}-saved-filters-select`);
     const name = select.value;
     if (!name) {
-      _utils_js__WEBPACK_IMPORTED_MODULE_2__/* .showMessage */ .rG('Selecione um filtro para apagar.');
+      _utils_js__WEBPACK_IMPORTED_MODULE_3__/* .showMessage */ .rG('Selecione um filtro para apagar.');
       return;
     }
+
+    // eslint-disable-next-line no-alert
     const confirmation = window.confirm(`Tem certeza que deseja apagar o filtro "${name}"?`);
     if (!confirmation) return;
-    const savedSets = _store_js__WEBPACK_IMPORTED_MODULE_4__/* .store */ .M.getSavedFilterSets();
+    const savedSets = _store_js__WEBPACK_IMPORTED_MODULE_2__/* .store */ .M.getSavedFilterSets();
     savedSets[this.sectionKey] = (savedSets[this.sectionKey] || []).filter(set => set.name !== name);
     browser.storage.local.set({
       savedFilterSets: savedSets
     });
-    _store_js__WEBPACK_IMPORTED_MODULE_4__/* .store */ .M.setSavedFilterSets(savedSets);
-    _utils_js__WEBPACK_IMPORTED_MODULE_2__/* .showMessage */ .rG(`Filtro "${name}" apagado.`, 'success');
+    _store_js__WEBPACK_IMPORTED_MODULE_2__/* .store */ .M.setSavedFilterSets(savedSets);
+    _utils_js__WEBPACK_IMPORTED_MODULE_3__/* .showMessage */ .rG(`Filtro "${name}" apagado.`, 'success');
   }
   populateSavedFilterDropdown() {
     const select = document.getElementById(`${this.prefix}-saved-filters-select`);
     if (!select) return;
     const currentSelection = select.value;
     select.innerHTML = '<option value="">Carregar filtro...</option>';
-    const sets = _store_js__WEBPACK_IMPORTED_MODULE_4__/* .store */ .M.getSavedFilterSets()[this.sectionKey] || [];
+    const sets = _store_js__WEBPACK_IMPORTED_MODULE_2__/* .store */ .M.getSavedFilterSets()[this.sectionKey] || [];
     sets.forEach(set => {
       const option = document.createElement('option');
       option.value = set.name;
@@ -661,10 +635,10 @@ class SectionManager {
         end
       } = filterSettings.dateRange;
       if (this.elements.dateInitial && start !== null && !isNaN(start)) {
-        this.elements.dateInitial.valueAsDate = _utils_js__WEBPACK_IMPORTED_MODULE_2__/* .calculateRelativeDate */ .Z9(start);
+        this.elements.dateInitial.valueAsDate = _utils_js__WEBPACK_IMPORTED_MODULE_3__/* .calculateRelativeDate */ .Z9(start);
       }
       if (this.elements.dateFinal && end !== null && !isNaN(end)) {
-        this.elements.dateFinal.valueAsDate = _utils_js__WEBPACK_IMPORTED_MODULE_2__/* .calculateRelativeDate */ .Z9(end);
+        this.elements.dateFinal.valueAsDate = _utils_js__WEBPACK_IMPORTED_MODULE_3__/* .calculateRelativeDate */ .Z9(end);
       }
     }
     // --- FIM DA CORREÇÃO ---
@@ -731,7 +705,6 @@ class SectionManager {
 /* harmony export */ });
 /* unused harmony exports fetchProntuarioHash, fetchConsultasEspecializadas, fetchConsultasBasicas, fetchRegulationAttachments */
 /* harmony import */ var bluebird__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(104);
-/* harmony import */ var _browser_polyfill_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(64);
 
 
 const api = typeof browser !== 'undefined' ? browser : chrome;

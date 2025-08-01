@@ -9,6 +9,14 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ### 🛠️ Refactor & Linting
 
+### 🐞 Fixed
+
+- Corrigido erro `ReferenceError: browser is not defined` em `sidebar.js` e `options.js` usando alias cross-browser (`const api = window.browser || window.chrome`).
+- Garantido uso do `browser-polyfill.js` para compatibilidade Edge/Chrome/Firefox.
+- Ajustado todos os botões de recarregar assistente na sidebar para usar `window.location.reload()` ao invés de `api.runtime.reload()`, evitando fechamento da sidebar e melhorando UX.
+- Modal de confirmação de recarregamento agora recarrega apenas a sidebar, não fecha a UI.
+- Garantido que todas as ações de reload e configuração funcionam de forma idêntica em todos os browsers suportados.
+
 #### Fixed
 
 - Correção de todos os erros de lint (ESLint, StyleLint)

@@ -4,6 +4,9 @@ import { defaultFieldConfig } from './field-config.js';
 import { filterConfig } from './filter-config.js';
 import * as Utils from './utils.js';
 
+// Cross-browser API alias
+const api = window.browser || window.chrome;
+
 // --- Constantes ---
 const CONFIG_VERSION = '1.3'; // Versão da estrutura de configuração
 
@@ -249,7 +252,7 @@ function applyTabOrder(order) {
  * Carrega a configuração salva e renderiza a página.
  */
 async function restoreOptions() {
-  const syncItems = await browser.storage.sync.get({
+  const syncItems = await api.storage.sync.get({
     baseUrl: '',
     autoLoadExams: false,
     autoLoadConsultations: false,
@@ -265,7 +268,7 @@ async function restoreOptions() {
     sectionHeaderStyles: {},
   });
 
-  const localItems = await browser.storage.local.get({
+  const localItems = await api.storage.local.get({
     automationRules: [],
   });
 
@@ -454,7 +457,7 @@ async function saveOptions() {
     (btn) => btn.dataset.tab
   );
 
-  await browser.storage.sync.set({
+  await api.storage.sync.set({
     baseUrl: baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl,
     enableAutomaticDetection,
     keepSessionAliveInterval,
@@ -602,7 +605,7 @@ async function handleRestoreDefaults() {
     message:
       'Tem certeza de que deseja restaurar todas as configurações de layout e valores padrão? Isto também restaurará a ordem das seções e os estilos dos cabeçalhos. Esta ação não pode ser desfeita.',
     onConfirm: async () => {
-      await browser.storage.sync.remove([
+      await api.storage.sync.remove([
         'patientFields',
         'filterLayout',
         'dateRangeDefaults',
@@ -620,7 +623,7 @@ async function handleRestoreDefaults() {
 // --- Lógica de Exportação e Importação ---
 async function handleExport() {
   try {
-    const settingsToExport = await browser.storage.sync.get(null);
+    const settingsToExport = await api.storage.sync.get(null);
     settingsToExport.configVersion = CONFIG_VERSION;
     const settingsString = JSON.stringify(settingsToExport, null, 2);
     const blob = new Blob([settingsString], { type: 'application/json' });
@@ -659,16 +662,16 @@ function handleImport(event) {
           message:
             'A versão do ficheiro de configuração é muito diferente da versão da extensão. A importação pode causar erros. Deseja continuar mesmo assim?',
           onConfirm: async () => {
-            await browser.storage.sync.clear();
-            await browser.storage.sync.set(importedSettings);
+            await api.storage.sync.clear();
+            await api.storage.sync.set(importedSettings);
             restoreOptions();
             Utils.showMessage('Configurações importadas e aplicadas com sucesso!', 'success');
           },
         });
         return;
       }
-      await browser.storage.sync.clear();
-      await browser.storage.sync.set(importedSettings);
+      await api.storage.sync.clear();
+      await api.storage.sync.set(importedSettings);
       restoreOptions();
       Utils.showMessage('Configurações importadas e aplicadas com sucesso!', 'success');
     } catch (error) {
@@ -707,8 +710,8 @@ function renderAutomationRules() {
                 <div>
                   <p class="font-semibold text-slate-800">${rule.name}</p>
                   <p class="text-xs text-slate-500" title="${keywords}">Gatilhos: ${
-                    keywords.length > 50 ? keywords.substring(0, 50) + '...' : keywords
-                  }</p>
+      keywords.length > 50 ? keywords.substring(0, 50) + '...' : keywords
+    }</p>
                 </div>
               </div>
               <div class="flex items-center gap-4">
@@ -746,7 +749,7 @@ function renderAutomationRules() {
  * Salva o array de regras de automação no storage local.
  */
 async function saveAutomationRules() {
-  await browser.storage.local.set({ automationRules });
+  await api.storage.local.set({ automationRules });
   Utils.showMessage('Regras de automação salvas.', 'success');
   setTimeout(() => {
     statusMessage.textContent = '';
@@ -1101,7 +1104,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   automationRulesList.addEventListener('dragover', handleDragOver);
   automationRulesList.addEventListener('drop', handleDrop);
 
-  browser.storage.onChanged.addListener((changes, areaName) => {
+  api.storage.onChanged.addListener((changes, areaName) => {
     if (areaName === 'sync' && changes.enableAutomaticDetection) {
       const toggle = document.getElementById('enableAutomaticDetection');
       if (toggle) {

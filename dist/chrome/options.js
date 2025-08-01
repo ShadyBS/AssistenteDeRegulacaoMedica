@@ -411,10 +411,9 @@ function filterTimelineEvents(events, automationFilters) {
 /***/ ((__unused_webpack___webpack_module__, __unused_webpack___webpack_exports__, __webpack_require__) => {
 
 /* harmony import */ var _api_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(574);
-/* harmony import */ var _browser_polyfill_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(64);
-/* harmony import */ var _field_config_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(869);
-/* harmony import */ var _filter_config_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(733);
-/* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(239);
+/* harmony import */ var _field_config_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(869);
+/* harmony import */ var _filter_config_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(733);
+/* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(239);
  // Importa a API para buscar prioridades
 
 
@@ -572,13 +571,13 @@ async function renderFilterLayout(layout) {
   } catch (error) {
     console.error('Não foi possível carregar prioridades:', error);
   }
-  Object.keys(_filter_config_js__WEBPACK_IMPORTED_MODULE_3__/* .filterConfig */ .J).forEach(section => {
+  Object.keys(_filter_config_js__WEBPACK_IMPORTED_MODULE_2__/* .filterConfig */ .J).forEach(section => {
     const mainZone = document.getElementById(`${section}-main-filters-zone`);
     const moreZone = document.getElementById(`${section}-more-filters-zone`);
     if (mainZone) mainZone.innerHTML = '';
     if (moreZone) moreZone.innerHTML = '';
   });
-  Object.entries(_filter_config_js__WEBPACK_IMPORTED_MODULE_3__/* .filterConfig */ .J).forEach(([sectionKey, filters]) => {
+  Object.entries(_filter_config_js__WEBPACK_IMPORTED_MODULE_2__/* .filterConfig */ .J).forEach(([sectionKey, filters]) => {
     const sectionLayout = layout[sectionKey] || [];
     const layoutMap = new Map(sectionLayout.map(f => [f.id, f]));
     const sortedFilters = [...filters].sort((a, b) => {
@@ -645,7 +644,7 @@ async function restoreOptions() {
     autoLoadDocuments: false,
     enableAutomaticDetection: true,
     keepSessionAliveInterval: 10,
-    patientFields: _field_config_js__WEBPACK_IMPORTED_MODULE_2__/* .defaultFieldConfig */ .Q,
+    patientFields: _field_config_js__WEBPACK_IMPORTED_MODULE_1__/* .defaultFieldConfig */ .Q,
     filterLayout: {},
     dateRangeDefaults: {},
     sidebarSectionOrder: null,
@@ -665,7 +664,7 @@ async function restoreOptions() {
   if (syncItems.sidebarSectionOrder) {
     applyTabOrder(syncItems.sidebarSectionOrder);
   }
-  const currentPatientFieldsConfig = _field_config_js__WEBPACK_IMPORTED_MODULE_2__/* .defaultFieldConfig */ .Q.map(defaultField => {
+  const currentPatientFieldsConfig = _field_config_js__WEBPACK_IMPORTED_MODULE_1__/* .defaultFieldConfig */ .Q.map(defaultField => {
     const savedField = syncItems.patientFields.find(f => f.id === defaultField.id);
     return savedField ? {
       ...defaultField,
@@ -782,7 +781,7 @@ async function saveOptions() {
     const location = zone.id.includes('-main-') ? 'main' : 'more';
     zone.querySelectorAll('.draggable').forEach((div, index) => {
       const filterId = div.dataset.filterId;
-      const originalFilter = _filter_config_js__WEBPACK_IMPORTED_MODULE_3__/* .filterConfig */ .J[section].find(f => f.id === filterId);
+      const originalFilter = _filter_config_js__WEBPACK_IMPORTED_MODULE_2__/* .filterConfig */ .J[section].find(f => f.id === filterId);
       const newFilterData = {
         id: filterId,
         location: location,
@@ -841,7 +840,7 @@ async function saveOptions() {
     sidebarSectionOrder,
     sectionHeaderStyles
   });
-  _utils_js__WEBPACK_IMPORTED_MODULE_4__/* .showMessage */ .rG('Configurações salvas! As alterações serão aplicadas ao recarregar o assistente.', 'success');
+  _utils_js__WEBPACK_IMPORTED_MODULE_3__/* .showMessage */ .rG('Configurações salvas! As alterações serão aplicadas ao recarregar o assistente.', 'success');
   setTimeout(() => {
     const statusMsg = document.getElementById('statusMessage');
     if (statusMsg) {
@@ -954,7 +953,7 @@ function setupTabDnD(container) {
 
 // --- Lógica para Restaurar Padrões ---
 async function handleRestoreDefaults() {
-  _utils_js__WEBPACK_IMPORTED_MODULE_4__/* .showDialog */ .ui({
+  _utils_js__WEBPACK_IMPORTED_MODULE_3__/* .showDialog */ .ui({
     message: 'Tem certeza de que deseja restaurar todas as configurações de layout e valores padrão? Isto também restaurará a ordem das seções e os estilos dos cabeçalhos. Esta ação não pode ser desfeita.',
     onConfirm: async () => {
       await browser.storage.sync.remove(['patientFields', 'filterLayout', 'dateRangeDefaults', 'enableAutomaticDetection', 'sidebarSectionOrder', 'sectionHeaderStyles']);
@@ -983,10 +982,10 @@ async function handleExport() {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-    _utils_js__WEBPACK_IMPORTED_MODULE_4__/* .showMessage */ .rG('Configurações exportadas com sucesso!', 'success');
+    _utils_js__WEBPACK_IMPORTED_MODULE_3__/* .showMessage */ .rG('Configurações exportadas com sucesso!', 'success');
   } catch (error) {
     console.error('Erro ao exportar configurações:', error);
-    _utils_js__WEBPACK_IMPORTED_MODULE_4__/* .showMessage */ .rG('Erro ao exportar configurações.', 'error');
+    _utils_js__WEBPACK_IMPORTED_MODULE_3__/* .showMessage */ .rG('Erro ao exportar configurações.', 'error');
   } finally {
     setTimeout(() => {
       statusMessage.textContent = '';
@@ -1004,13 +1003,13 @@ function handleImport(event) {
         throw new Error('Ficheiro de configuração inválido ou corrompido.');
       }
       if (importedSettings.configVersion.split('.')[0] !== CONFIG_VERSION.split('.')[0]) {
-        _utils_js__WEBPACK_IMPORTED_MODULE_4__/* .showDialog */ .ui({
+        _utils_js__WEBPACK_IMPORTED_MODULE_3__/* .showDialog */ .ui({
           message: 'A versão do ficheiro de configuração é muito diferente da versão da extensão. A importação pode causar erros. Deseja continuar mesmo assim?',
           onConfirm: async () => {
             await browser.storage.sync.clear();
             await browser.storage.sync.set(importedSettings);
             restoreOptions();
-            _utils_js__WEBPACK_IMPORTED_MODULE_4__/* .showMessage */ .rG('Configurações importadas e aplicadas com sucesso!', 'success');
+            _utils_js__WEBPACK_IMPORTED_MODULE_3__/* .showMessage */ .rG('Configurações importadas e aplicadas com sucesso!', 'success');
           }
         });
         return;
@@ -1018,10 +1017,10 @@ function handleImport(event) {
       await browser.storage.sync.clear();
       await browser.storage.sync.set(importedSettings);
       restoreOptions();
-      _utils_js__WEBPACK_IMPORTED_MODULE_4__/* .showMessage */ .rG('Configurações importadas e aplicadas com sucesso!', 'success');
+      _utils_js__WEBPACK_IMPORTED_MODULE_3__/* .showMessage */ .rG('Configurações importadas e aplicadas com sucesso!', 'success');
     } catch (error) {
       console.error('Erro ao importar configurações:', error);
-      _utils_js__WEBPACK_IMPORTED_MODULE_4__/* .showMessage */ .rG(`Erro ao importar: ${error.message}`, 'error');
+      _utils_js__WEBPACK_IMPORTED_MODULE_3__/* .showMessage */ .rG(`Erro ao importar: ${error.message}`, 'error');
     } finally {
       importFileInput.value = '';
       setTimeout(() => {
@@ -1084,7 +1083,7 @@ async function saveAutomationRules() {
   await browser.storage.local.set({
     automationRules
   });
-  _utils_js__WEBPACK_IMPORTED_MODULE_4__/* .showMessage */ .rG('Regras de automação salvas.', 'success');
+  _utils_js__WEBPACK_IMPORTED_MODULE_3__/* .showMessage */ .rG('Regras de automação salvas.', 'success');
   setTimeout(() => {
     statusMessage.textContent = '';
   }, 2000);
@@ -1177,7 +1176,7 @@ function closeRuleEditor() {
 function handleSaveRule() {
   const name = ruleNameInput.value.trim();
   if (!name) {
-    _utils_js__WEBPACK_IMPORTED_MODULE_4__/* .showMessage */ .rG('O nome da regra é obrigatório.', 'error');
+    _utils_js__WEBPACK_IMPORTED_MODULE_3__/* .showMessage */ .rG('O nome da regra é obrigatório.', 'error');
     return;
   }
   const triggerKeywords = ruleTriggersInput.value.split(',').map(k => k.trim()).filter(Boolean);
@@ -1203,7 +1202,7 @@ function handleSaveRule() {
     // --- FIM DA CORREÇÃO ---
 
     // Salva as configurações dos outros filtros
-    const sectionFilters = _filter_config_js__WEBPACK_IMPORTED_MODULE_3__/* .filterConfig */ .J[sectionKey] || [];
+    const sectionFilters = _filter_config_js__WEBPACK_IMPORTED_MODULE_2__/* .filterConfig */ .J[sectionKey] || [];
     sectionFilters.forEach(filter => {
       if (filter.type === 'component') return;
       const element = document.getElementById(`rule-${sectionKey}-${filter.id}`);
@@ -1238,7 +1237,7 @@ function handleEditRule(ruleId) {
   openRuleEditor(ruleId);
 }
 function handleDeleteRule(ruleId) {
-  _utils_js__WEBPACK_IMPORTED_MODULE_4__/* .showDialog */ .ui({
+  _utils_js__WEBPACK_IMPORTED_MODULE_3__/* .showDialog */ .ui({
     message: 'Tem certeza que deseja excluir esta regra?',
     onConfirm: () => {
       automationRules = automationRules.filter(r => r.id !== ruleId);
@@ -1294,7 +1293,7 @@ async function populateRuleEditorFilters() {
     // Adiciona o componente de data
     const dateRangeElement = createDateRangeElementForRuleEditor(sectionKey);
     container.appendChild(dateRangeElement);
-    const sectionFilters = _filter_config_js__WEBPACK_IMPORTED_MODULE_3__/* .filterConfig */ .J[sectionKey] || [];
+    const sectionFilters = _filter_config_js__WEBPACK_IMPORTED_MODULE_2__/* .filterConfig */ .J[sectionKey] || [];
     sectionFilters.forEach(filter => {
       if (filter.type === 'component') return;
       const filterElement = createFilterElementForRuleEditor(filter, sectionKey, priorities);
@@ -1380,11 +1379,11 @@ function createDateRangeElementForRuleEditor(sectionKey) {
 document.addEventListener('DOMContentLoaded', async () => {
   await restoreOptions();
   const mainTabsContainer = document.querySelector('#filter-tabs-container .tabs');
-  _utils_js__WEBPACK_IMPORTED_MODULE_4__/* .setupTabs */ .AQ(document.getElementById('filter-tabs-container'));
+  _utils_js__WEBPACK_IMPORTED_MODULE_3__/* .setupTabs */ .AQ(document.getElementById('filter-tabs-container'));
   if (mainTabsContainer) {
     setupTabDnD(mainTabsContainer);
   }
-  _utils_js__WEBPACK_IMPORTED_MODULE_4__/* .setupTabs */ .AQ(document.getElementById('rule-editor-filter-tabs'));
+  _utils_js__WEBPACK_IMPORTED_MODULE_3__/* .setupTabs */ .AQ(document.getElementById('rule-editor-filter-tabs'));
   createNewRuleBtn.addEventListener('click', () => openRuleEditor(null));
   cancelRuleBtn.addEventListener('click', closeRuleEditor);
   saveRuleBtn.addEventListener('click', handleSaveRule);

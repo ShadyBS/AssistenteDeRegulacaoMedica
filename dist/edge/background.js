@@ -7,8 +7,7 @@
 
 /* harmony import */ var bluebird__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(104);
 /* harmony import */ var _api_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(574);
-/* harmony import */ var _browser_polyfill_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(64);
-/* harmony import */ var _KeepAliveManager_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(657);
+/* harmony import */ var _KeepAliveManager_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(657);
 
 
 
@@ -55,7 +54,7 @@ function _openSidebar() {
   return _openSidebar.apply(this, arguments);
 }
 api.action.onClicked.addListener(openSidebar);
-new _KeepAliveManager_js__WEBPACK_IMPORTED_MODULE_3__/* .KeepAliveManager */ .E();
+new _KeepAliveManager_js__WEBPACK_IMPORTED_MODULE_2__/* .KeepAliveManager */ .E();
 api.runtime.onInstalled.addListener(details => {
   if (api.sidePanel) {
     api.sidePanel.setPanelBehavior({

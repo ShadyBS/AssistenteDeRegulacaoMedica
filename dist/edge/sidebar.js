@@ -560,15 +560,14 @@ function init(config, callbacks) {
 
 /* harmony import */ var bluebird__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(104);
 /* harmony import */ var _api_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(574);
-/* harmony import */ var _browser_polyfill_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(64);
-/* harmony import */ var _field_config_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(869);
-/* harmony import */ var _renderers_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(690);
-/* harmony import */ var _SectionManager_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(338);
-/* harmony import */ var _store_js__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(335);
-/* harmony import */ var _TimelineManager_js__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(968);
-/* harmony import */ var _ui_patient_card_js__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(627);
-/* harmony import */ var _ui_search_js__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(889);
-/* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(239);
+/* harmony import */ var _field_config_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(869);
+/* harmony import */ var _renderers_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(690);
+/* harmony import */ var _SectionManager_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(338);
+/* harmony import */ var _store_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(335);
+/* harmony import */ var _TimelineManager_js__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(968);
+/* harmony import */ var _ui_patient_card_js__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(627);
+/* harmony import */ var _ui_search_js__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(889);
+/* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(239);
 
 
 
@@ -603,10 +602,10 @@ const sectionManagers = {}; // Objeto para armazenar instâncias de SectionManag
  * @returns {Array} O array de itens filtrado.
  */
 const applyNormalizedTextFilter = (items, text, getFieldContent) => {
-  const searchTerms = _utils_js__WEBPACK_IMPORTED_MODULE_10__/* .normalizeString */ .J2(text).split(',').map(t => t.trim()).filter(Boolean);
+  const searchTerms = _utils_js__WEBPACK_IMPORTED_MODULE_9__/* .normalizeString */ .J2(text).split(',').map(t => t.trim()).filter(Boolean);
   if (searchTerms.length === 0) return items;
   return items.filter(item => {
-    const content = _utils_js__WEBPACK_IMPORTED_MODULE_10__/* .normalizeString */ .J2(getFieldContent(item));
+    const content = _utils_js__WEBPACK_IMPORTED_MODULE_9__/* .normalizeString */ .J2(getFieldContent(item));
     return searchTerms.some(term => content.includes(term));
   });
 };
@@ -668,19 +667,19 @@ const documentFilterLogic = (data, filters) => {
   const startDateValue = (_document$getElementB = document.getElementById('document-date-initial')) === null || _document$getElementB === void 0 ? void 0 : _document$getElementB.value;
   const endDateValue = (_document$getElementB2 = document.getElementById('document-date-final')) === null || _document$getElementB2 === void 0 ? void 0 : _document$getElementB2.value;
   if (startDateValue) {
-    const start = _utils_js__WEBPACK_IMPORTED_MODULE_10__/* .parseDate */ ._U(startDateValue);
+    const start = _utils_js__WEBPACK_IMPORTED_MODULE_9__/* .parseDate */ ._U(startDateValue);
     if (start) {
       filteredData = filteredData.filter(doc => {
-        const docDate = _utils_js__WEBPACK_IMPORTED_MODULE_10__/* .parseDate */ ._U(doc.date.split(' ')[0]);
+        const docDate = _utils_js__WEBPACK_IMPORTED_MODULE_9__/* .parseDate */ ._U(doc.date.split(' ')[0]);
         return docDate && docDate >= start;
       });
     }
   }
   if (endDateValue) {
-    const end = _utils_js__WEBPACK_IMPORTED_MODULE_10__/* .parseDate */ ._U(endDateValue);
+    const end = _utils_js__WEBPACK_IMPORTED_MODULE_9__/* .parseDate */ ._U(endDateValue);
     if (end) {
       filteredData = filteredData.filter(doc => {
-        const docDate = _utils_js__WEBPACK_IMPORTED_MODULE_10__/* .parseDate */ ._U(doc.date.split(' ')[0]);
+        const docDate = _utils_js__WEBPACK_IMPORTED_MODULE_9__/* .parseDate */ ._U(doc.date.split(' ')[0]);
         return docDate && docDate <= end;
       });
     }
@@ -697,7 +696,7 @@ const sectionConfigurations = {
   // Configuração da Timeline será tratada pelo seu próprio gestor
   consultations: {
     fetchFunction: _api_js__WEBPACK_IMPORTED_MODULE_1__/* .fetchAllConsultations */ .wF,
-    renderFunction: _renderers_js__WEBPACK_IMPORTED_MODULE_4__/* .renderConsultations */ .rX,
+    renderFunction: _renderers_js__WEBPACK_IMPORTED_MODULE_3__/* .renderConsultations */ .rX,
     initialSortState: {
       key: 'sortableDate',
       order: 'desc'
@@ -706,7 +705,7 @@ const sectionConfigurations = {
   },
   exams: {
     fetchFunction: _api_js__WEBPACK_IMPORTED_MODULE_1__/* .fetchExamesSolicitados */ .K4,
-    renderFunction: _renderers_js__WEBPACK_IMPORTED_MODULE_4__/* .renderExams */ .Rb,
+    renderFunction: _renderers_js__WEBPACK_IMPORTED_MODULE_3__/* .renderExams */ .Rb,
     initialSortState: {
       key: 'date',
       order: 'desc'
@@ -715,7 +714,7 @@ const sectionConfigurations = {
   },
   appointments: {
     fetchFunction: _api_js__WEBPACK_IMPORTED_MODULE_1__/* .fetchAppointments */ .Ns,
-    renderFunction: _renderers_js__WEBPACK_IMPORTED_MODULE_4__/* .renderAppointments */ .lT,
+    renderFunction: _renderers_js__WEBPACK_IMPORTED_MODULE_3__/* .renderAppointments */ .lT,
     initialSortState: {
       key: 'date',
       order: 'desc'
@@ -724,7 +723,7 @@ const sectionConfigurations = {
   },
   regulations: {
     fetchFunction: _api_js__WEBPACK_IMPORTED_MODULE_1__/* .fetchAllRegulations */ .v0,
-    renderFunction: _renderers_js__WEBPACK_IMPORTED_MODULE_4__/* .renderRegulations */ .IC,
+    renderFunction: _renderers_js__WEBPACK_IMPORTED_MODULE_3__/* .renderRegulations */ .IC,
     initialSortState: {
       key: 'date',
       order: 'desc'
@@ -733,7 +732,7 @@ const sectionConfigurations = {
   },
   documents: {
     fetchFunction: _api_js__WEBPACK_IMPORTED_MODULE_1__/* .fetchDocuments */ .P_,
-    renderFunction: _renderers_js__WEBPACK_IMPORTED_MODULE_4__/* .renderDocuments */ .zL,
+    renderFunction: _renderers_js__WEBPACK_IMPORTED_MODULE_3__/* .renderDocuments */ .zL,
     initialSortState: {
       key: 'date',
       order: 'desc'
@@ -796,17 +795,17 @@ function selectPatient(_x) {
 }
 function _selectPatient() {
   _selectPatient = (0,bluebird__WEBPACK_IMPORTED_MODULE_0__.coroutine)(function* (patientInfo, forceRefresh = false) {
-    const currentPatient = _store_js__WEBPACK_IMPORTED_MODULE_6__/* .store */ .M.getPatient();
+    const currentPatient = _store_js__WEBPACK_IMPORTED_MODULE_5__/* .store */ .M.getPatient();
     if (currentPatient && currentPatient.ficha.isenPK.idp === patientInfo.idp && !forceRefresh) {
       return;
     }
-    _utils_js__WEBPACK_IMPORTED_MODULE_10__/* .toggleLoader */ .i1(true);
-    _utils_js__WEBPACK_IMPORTED_MODULE_10__/* .clearMessage */ .de();
-    _store_js__WEBPACK_IMPORTED_MODULE_6__/* .store */ .M.setPatientUpdating();
+    _utils_js__WEBPACK_IMPORTED_MODULE_9__/* .toggleLoader */ .i1(true);
+    _utils_js__WEBPACK_IMPORTED_MODULE_9__/* .clearMessage */ .de();
+    _store_js__WEBPACK_IMPORTED_MODULE_5__/* .store */ .M.setPatientUpdating();
     try {
       const ficha = yield _api_js__WEBPACK_IMPORTED_MODULE_1__/* .fetchVisualizaUsuario */ .Tp(patientInfo);
       const cadsus = yield _api_js__WEBPACK_IMPORTED_MODULE_1__/* .fetchCadsusData */ .GP({
-        cpf: _utils_js__WEBPACK_IMPORTED_MODULE_10__/* .getNestedValue */ .LJ(ficha, 'entidadeFisica.entfCPF'),
+        cpf: _utils_js__WEBPACK_IMPORTED_MODULE_9__/* .getNestedValue */ .LJ(ficha, 'entidadeFisica.entfCPF'),
         cns: ficha.isenNumCadSus
       });
       Object.values(sectionManagers).forEach(manager => {
@@ -816,14 +815,14 @@ function _selectPatient() {
           manager.clearAutomation();
         }
       });
-      _store_js__WEBPACK_IMPORTED_MODULE_6__/* .store */ .M.setPatient(ficha, cadsus);
-      yield updateRecentPatients(_store_js__WEBPACK_IMPORTED_MODULE_6__/* .store */ .M.getPatient());
+      _store_js__WEBPACK_IMPORTED_MODULE_5__/* .store */ .M.setPatient(ficha, cadsus);
+      yield updateRecentPatients(_store_js__WEBPACK_IMPORTED_MODULE_5__/* .store */ .M.getPatient());
     } catch (error) {
-      _utils_js__WEBPACK_IMPORTED_MODULE_10__/* .showMessage */ .rG(error.message, 'error');
+      _utils_js__WEBPACK_IMPORTED_MODULE_9__/* .showMessage */ .rG(error.message, 'error');
       console.error(error);
-      _store_js__WEBPACK_IMPORTED_MODULE_6__/* .store */ .M.clearPatient();
+      _store_js__WEBPACK_IMPORTED_MODULE_5__/* .store */ .M.clearPatient();
     } finally {
-      _utils_js__WEBPACK_IMPORTED_MODULE_10__/* .toggleLoader */ .i1(false);
+      _utils_js__WEBPACK_IMPORTED_MODULE_9__/* .toggleLoader */ .i1(false);
     }
   });
   return _selectPatient.apply(this, arguments);
@@ -849,21 +848,24 @@ function _init() {
           openOptions.addEventListener('click', () => browser.runtime.openOptionsPage());
         }
         if (reloadSidebar) {
-          reloadSidebar.addEventListener('click', () => window.location.reload());
+          reloadSidebar.addEventListener('click', () => {
+            const api = browser || chrome;
+            api.runtime.reload();
+          });
         }
 
         // **não retornamos mais aqui**, apenas marcamos que deu “fallback”
       } else {
         console.error('Initialization failed:', error);
-        _utils_js__WEBPACK_IMPORTED_MODULE_10__/* .showMessage */ .rG('Ocorreu um erro inesperado ao iniciar a extensão.', 'error');
+        _utils_js__WEBPACK_IMPORTED_MODULE_9__/* .showMessage */ .rG('Ocorreu um erro inesperado ao iniciar a extensão.', 'error');
         // nesse caso você pode querer return ou throw de verdade
         return;
       }
     }
 
     // === setup das abas: sempre rodar, mesmo sem baseURL ===
-    _utils_js__WEBPACK_IMPORTED_MODULE_10__/* .setupTabs */ .AQ(document.getElementById('layout-tabs-container'));
-    _utils_js__WEBPACK_IMPORTED_MODULE_10__/* .setupTabs */ .AQ(document.getElementById('patterns-tabs-container'));
+    _utils_js__WEBPACK_IMPORTED_MODULE_9__/* .setupTabs */ .AQ(document.getElementById('layout-tabs-container'));
+    _utils_js__WEBPACK_IMPORTED_MODULE_9__/* .setupTabs */ .AQ(document.getElementById('patterns-tabs-container'));
     // (adicione aqui quaisquer outros containers de aba que tenha)
 
     // === só o resto do fluxo principal depende de baseUrlConfigured ===
@@ -878,10 +880,10 @@ function _init() {
     applySectionIcons();
     applyCustomHeaderStyles(globalSettings.sectionHeaderStyles);
     applySectionOrder(globalSettings.sidebarSectionOrder);
-    _ui_search_js__WEBPACK_IMPORTED_MODULE_9__/* .init */ .T({
+    _ui_search_js__WEBPACK_IMPORTED_MODULE_8__/* .init */ .T({
       onSelectPatient: selectPatient
     });
-    _ui_patient_card_js__WEBPACK_IMPORTED_MODULE_8__/* .init */ .T(globalSettings.fieldConfigLayout, {
+    _ui_patient_card_js__WEBPACK_IMPORTED_MODULE_7__/* .init */ .T(globalSettings.fieldConfigLayout, {
       onForceRefresh: selectPatient
     });
     initializeSections(globalSettings);
@@ -898,7 +900,7 @@ function loadConfigAndData() {
 function _loadConfigAndData() {
   _loadConfigAndData = (0,bluebird__WEBPACK_IMPORTED_MODULE_0__.coroutine)(function* () {
     const syncData = yield browser.storage.sync.get({
-      patientFields: _field_config_js__WEBPACK_IMPORTED_MODULE_3__/* .defaultFieldConfig */ .Q,
+      patientFields: _field_config_js__WEBPACK_IMPORTED_MODULE_2__/* .defaultFieldConfig */ .Q,
       filterLayout: {},
       autoLoadExams: false,
       autoLoadConsultations: false,
@@ -915,10 +917,10 @@ function _loadConfigAndData() {
       savedFilterSets: {},
       automationRules: []
     });
-    _store_js__WEBPACK_IMPORTED_MODULE_6__/* .store */ .M.setRecentPatients(localData.recentPatients);
-    _store_js__WEBPACK_IMPORTED_MODULE_6__/* .store */ .M.setSavedFilterSets(localData.savedFilterSets);
+    _store_js__WEBPACK_IMPORTED_MODULE_5__/* .store */ .M.setRecentPatients(localData.recentPatients);
+    _store_js__WEBPACK_IMPORTED_MODULE_5__/* .store */ .M.setSavedFilterSets(localData.savedFilterSets);
     return {
-      fieldConfigLayout: _field_config_js__WEBPACK_IMPORTED_MODULE_3__/* .defaultFieldConfig */ .Q.map(defaultField => {
+      fieldConfigLayout: _field_config_js__WEBPACK_IMPORTED_MODULE_2__/* .defaultFieldConfig */ .Q.map(defaultField => {
         const savedField = syncData.patientFields.find(f => f.id === defaultField.id);
         return savedField ? {
           ...defaultField,
@@ -985,10 +987,10 @@ function initializeSections(globalSettings) {
   Object.keys(sectionConfigurations).forEach(key => {
     if (key === 'patient-details') return;
     if (key === 'timeline') {
-      sectionManagers[key] = new _TimelineManager_js__WEBPACK_IMPORTED_MODULE_7__/* .TimelineManager */ .l(key, sectionConfigurations[key], globalSettings);
+      sectionManagers[key] = new _TimelineManager_js__WEBPACK_IMPORTED_MODULE_6__/* .TimelineManager */ .l(key, sectionConfigurations[key], globalSettings);
       return;
     }
-    sectionManagers[key] = new _SectionManager_js__WEBPACK_IMPORTED_MODULE_5__/* .SectionManager */ .N(key, sectionConfigurations[key], globalSettings);
+    sectionManagers[key] = new _SectionManager_js__WEBPACK_IMPORTED_MODULE_4__/* .SectionManager */ .N(key, sectionConfigurations[key], globalSettings);
   });
 }
 function applyUserPreferences(globalSettings) {
@@ -1027,8 +1029,8 @@ function applyUserPreferences(globalSettings) {
     const prefix = section.replace(/s$/, '');
     const initialEl = document.getElementById(`${prefix}-date-initial`);
     const finalEl = document.getElementById(`${prefix}-date-final`);
-    if (initialEl) initialEl.valueAsDate = _utils_js__WEBPACK_IMPORTED_MODULE_10__/* .calculateRelativeDate */ .Z9(range.start);
-    if (finalEl) finalEl.valueAsDate = _utils_js__WEBPACK_IMPORTED_MODULE_10__/* .calculateRelativeDate */ .Z9(range.end);
+    if (initialEl) initialEl.valueAsDate = _utils_js__WEBPACK_IMPORTED_MODULE_9__/* .calculateRelativeDate */ .Z9(range.start);
+    if (finalEl) finalEl.valueAsDate = _utils_js__WEBPACK_IMPORTED_MODULE_9__/* .calculateRelativeDate */ .Z9(range.end);
   });
   Object.values(filterLayout).flat().forEach(filterSetting => {
     const el = document.getElementById(filterSetting.id);
@@ -1063,7 +1065,7 @@ function handleRegulationLoaded(_x2) {
 }
 function _handleRegulationLoaded() {
   _handleRegulationLoaded = (0,bluebird__WEBPACK_IMPORTED_MODULE_0__.coroutine)(function* (regulationData) {
-    _utils_js__WEBPACK_IMPORTED_MODULE_10__/* .toggleLoader */ .i1(true);
+    _utils_js__WEBPACK_IMPORTED_MODULE_9__/* .toggleLoader */ .i1(true);
     try {
       currentRegulationData = regulationData;
       if (regulationData && regulationData.isenPKIdp && regulationData.isenPKIds) {
@@ -1079,14 +1081,14 @@ function _handleRegulationLoaded() {
         yield applyAutomationRules(regulationData);
       } else {
         currentRegulationData = null;
-        _utils_js__WEBPACK_IMPORTED_MODULE_10__/* .showMessage */ .rG('Não foi possível extrair os dados do paciente da regulação.', 'error');
+        _utils_js__WEBPACK_IMPORTED_MODULE_9__/* .showMessage */ .rG('Não foi possível extrair os dados do paciente da regulação.', 'error');
       }
     } catch (error) {
       currentRegulationData = null;
-      _utils_js__WEBPACK_IMPORTED_MODULE_10__/* .showMessage */ .rG(`Erro ao processar a regulação: ${error.message}`, 'error');
+      _utils_js__WEBPACK_IMPORTED_MODULE_9__/* .showMessage */ .rG(`Erro ao processar a regulação: ${error.message}`, 'error');
       console.error('Erro ao processar a regulação:', error);
     } finally {
-      _utils_js__WEBPACK_IMPORTED_MODULE_10__/* .toggleLoader */ .i1(false);
+      _utils_js__WEBPACK_IMPORTED_MODULE_9__/* .toggleLoader */ .i1(false);
     }
   });
   return _handleRegulationLoaded.apply(this, arguments);
@@ -1122,7 +1124,7 @@ function _applyAutomationRules() {
 }
 function handleShowRegulationInfo() {
   if (!currentRegulationData) {
-    _utils_js__WEBPACK_IMPORTED_MODULE_10__/* .showMessage */ .rG('Nenhuma informação de regulação carregada.', 'info');
+    _utils_js__WEBPACK_IMPORTED_MODULE_9__/* .showMessage */ .rG('Nenhuma informação de regulação carregada.', 'info');
     return;
   }
   const modalTitle = document.getElementById('modal-title');
@@ -1141,14 +1143,18 @@ function addGlobalEventListeners() {
   const reloadBtn = document.getElementById('reload-sidebar-btn');
   if (reloadBtn) {
     reloadBtn.addEventListener('click', () => {
-      const patient = _store_js__WEBPACK_IMPORTED_MODULE_6__/* .store */ .M.getPatient();
+      const patient = _store_js__WEBPACK_IMPORTED_MODULE_5__/* .store */ .M.getPatient();
       if (patient && patient.ficha) {
-        _utils_js__WEBPACK_IMPORTED_MODULE_10__/* .showDialog */ .ui({
+        _utils_js__WEBPACK_IMPORTED_MODULE_9__/* .showDialog */ .ui({
           message: 'Um paciente está selecionado e o estado atual será perdido. Deseja realmente recarregar o assistente?',
-          onConfirm: () => window.location.reload()
+          onConfirm: () => {
+            const api = browser || chrome;
+            api.runtime.reload();
+          }
         });
       } else {
-        window.location.reload();
+        const api = browser || chrome;
+        api.runtime.reload();
       }
     });
   }
@@ -1177,7 +1183,8 @@ function addGlobalEventListeners() {
       });
     }
     if (areaName === 'sync' && changes.sectionHeaderStyles) {
-      window.location.reload();
+      const api = browser || chrome;
+      api.runtime.reload();
     }
     if (areaName === 'sync' && changes.enableAutomaticDetection) {
       // Mantém o botão da sidebar sincronizado com a configuração
@@ -1238,16 +1245,17 @@ function _copyToClipboard() {
     const textToCopy = button.dataset.copyText;
     if (!textToCopy) return;
     button.dataset.inProgress = 'true';
+    const original = button;
     try {
       yield navigator.clipboard.writeText(textToCopy);
-      button.textContent = '✅';
+      if (document.body.contains(original)) original.textContent = '✅';
     } catch (err) {
       console.error('Falha ao copiar texto: ', err);
-      button.textContent = '❌';
+      if (document.body.contains(original)) original.textContent = '❌';
     } finally {
       setTimeout(() => {
-        button.textContent = '📄';
-        button.dataset.inProgress = 'false';
+        if (document.body.contains(original)) original.textContent = '📄';
+        if (document.body.contains(original)) original.dataset.inProgress = 'false';
       }, 1200);
     }
   });
@@ -1262,13 +1270,13 @@ function _updateRecentPatients() {
     const newRecent = {
       ...patientData
     };
-    const currentRecents = _store_js__WEBPACK_IMPORTED_MODULE_6__/* .store */ .M.getRecentPatients();
+    const currentRecents = _store_js__WEBPACK_IMPORTED_MODULE_5__/* .store */ .M.getRecentPatients();
     const filtered = (currentRecents || []).filter(p => p.ficha.isenPK.idp !== newRecent.ficha.isenPK.idp);
     const updatedRecents = [newRecent, ...filtered].slice(0, 5);
     yield browser.storage.local.set({
       recentPatients: updatedRecents
     });
-    _store_js__WEBPACK_IMPORTED_MODULE_6__/* .store */ .M.setRecentPatients(updatedRecents);
+    _store_js__WEBPACK_IMPORTED_MODULE_5__/* .store */ .M.setRecentPatients(updatedRecents);
   });
   return _updateRecentPatients.apply(this, arguments);
 }
@@ -1281,23 +1289,19 @@ function _handleViewExamResult() {
       idp,
       ids
     } = button.dataset;
-    const newTab = window.open('', '_blank');
-    newTab.document.write('Carregando resultado do exame...');
-    try {
-      const filePath = yield _api_js__WEBPACK_IMPORTED_MODULE_1__/* .fetchResultadoExame */ .Sp({
-        idp,
-        ids
-      });
-      const baseUrl = yield _api_js__WEBPACK_IMPORTED_MODULE_1__/* .getBaseUrl */ .$_();
-      if (filePath) {
-        const fullUrl = filePath.startsWith('http') ? filePath : `${baseUrl}${filePath}`;
-        newTab.location.href = fullUrl;
-      } else {
-        newTab.document.body.innerHTML = '<p>Resultado não encontrado.</p>';
-      }
-    } catch (error) {
-      newTab.document.body.innerHTML = `<p>Erro: ${error.message}</p>`;
+    const api = browser || chrome;
+    const filePath = yield _api_js__WEBPACK_IMPORTED_MODULE_1__/* .fetchResultadoExame */ .Sp({
+      idp,
+      ids
+    });
+    const baseUrl = yield _api_js__WEBPACK_IMPORTED_MODULE_1__/* .getBaseUrl */ .$_();
+    let url = 'about:blank';
+    if (filePath) {
+      url = filePath.startsWith('http') ? filePath : `${baseUrl}${filePath}`;
     }
+    api.tabs.create({
+      url
+    });
   });
   return _handleViewExamResult.apply(this, arguments);
 }
@@ -1310,20 +1314,19 @@ function _handleViewDocument() {
       idp,
       ids
     } = button.dataset;
-    const newTab = window.open('', '_blank');
-    newTab.document.write('Carregando documento...');
+    const api = browser || chrome;
     try {
       const docUrl = yield _api_js__WEBPACK_IMPORTED_MODULE_1__/* .fetchDocumentUrl */ .pP({
         idp,
         ids
       });
-      if (docUrl) {
-        newTab.location.href = docUrl;
-      } else {
-        newTab.document.body.innerHTML = '<p>URL do documento não encontrada.</p>';
+      api.tabs.create({
+        url: docUrl || 'about:blank'
+      });
+      if (!docUrl) {
+        console.warn('URL do documento não encontrada.');
       }
     } catch (error) {
-      newTab.document.body.innerHTML = `<p>Erro ao carregar documento: ${error.message}</p>`;
       console.error('Falha ao visualizar documento:', error);
     }
   });

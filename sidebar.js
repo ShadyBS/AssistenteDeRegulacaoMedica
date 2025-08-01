@@ -1,3 +1,5 @@
+// Cross-browser API alias (lint-safe)
+const api = (typeof browser !== 'undefined' ? browser : (typeof chrome !== 'undefined' ? chrome : {}));
 import * as API from './api.js';
 import './browser-polyfill.js';
 import { defaultFieldConfig } from './field-config.js';
@@ -342,13 +344,10 @@ async function init() {
       if (urlWarning) urlWarning.classList.remove('hidden');
 
       if (openOptions) {
-        openOptions.addEventListener('click', () => browser.runtime.openOptionsPage());
+        openOptions.addEventListener('click', () => api.runtime.openOptionsPage());
       }
       if (reloadSidebar) {
-        reloadSidebar.addEventListener('click', () => {
-          const api = browser || chrome;
-          api.runtime.reload();
-        });
+        reloadSidebar.addEventListener('click', () => location.reload());
       }
 
       // **não retornamos mais aqui**, apenas marcamos que deu “fallback”
@@ -396,7 +395,7 @@ async function init() {
 }
 
 async function loadConfigAndData() {
-  const syncData = await browser.storage.sync.get({
+  const syncData = await api.storage.sync.get({
     patientFields: defaultFieldConfig,
     filterLayout: {},
     autoLoadExams: false,
@@ -409,7 +408,7 @@ async function loadConfigAndData() {
     sidebarSectionOrder: [],
     sectionHeaderStyles: {}, // Carrega a nova configuração de estilos
   });
-  const localData = await browser.storage.local.get({
+  const localData = await api.storage.local.get({
     recentPatients: [],
     savedFilterSets: {},
     automationRules: [],
@@ -533,14 +532,14 @@ function setupAutoModeToggle() {
   const toggle = document.getElementById('auto-mode-toggle');
   const label = document.getElementById('auto-mode-label');
 
-  browser.storage.sync.get({ enableAutomaticDetection: true }).then((settings) => {
+  api.storage.sync.get({ enableAutomaticDetection: true }).then((settings) => {
     toggle.checked = settings.enableAutomaticDetection;
     label.textContent = settings.enableAutomaticDetection ? 'Auto' : 'Manual';
   });
 
   toggle.addEventListener('change', (event) => {
     const isEnabled = event.target.checked;
-    browser.storage.sync.set({ enableAutomaticDetection: isEnabled });
+    api.storage.sync.set({ enableAutomaticDetection: isEnabled });
     label.textContent = isEnabled ? 'Auto' : 'Manual';
   });
 }
@@ -577,7 +576,7 @@ async function handleRegulationLoaded(regulationData) {
 }
 
 async function applyAutomationRules(regulationData) {
-  const { automationRules } = await browser.storage.local.get({
+  const { automationRules } = await api.storage.local.get({
     automationRules: [],
   });
   if (!automationRules || automationRules.length === 0) return;
@@ -642,13 +641,11 @@ function addGlobalEventListeners() {
           message:
             'Um paciente está selecionado e o estado atual será perdido. Deseja realmente recarregar o assistente?',
           onConfirm: () => {
-            const api = browser || chrome;
-            api.runtime.reload();
+            location.reload();
           },
         });
       } else {
-        const api = browser || chrome;
-        api.runtime.reload();
+        location.reload();
       }
     });
   }
@@ -660,10 +657,10 @@ function addGlobalEventListeners() {
   mainContent.addEventListener('click', handleGlobalActions);
   infoBtn.addEventListener('click', handleShowRegulationInfo);
 
-  browser.storage.onChanged.addListener((changes, areaName) => {
+  api.storage.onChanged.addListener((changes, areaName) => {
     if (areaName === 'local' && changes.pendingRegulation) {
       // Apenas processa se a detecção automática estiver LIGADA
-      browser.storage.sync.get({ enableAutomaticDetection: true }).then((settings) => {
+      api.storage.sync.get({ enableAutomaticDetection: true }).then((settings) => {
         if (settings.enableAutomaticDetection) {
           const { newValue } = changes.pendingRegulation;
           if (newValue && newValue.isenPKIdp) {
@@ -672,14 +669,13 @@ function addGlobalEventListeners() {
               newValue
             );
             handleRegulationLoaded(newValue);
-            browser.storage.local.remove('pendingRegulation');
+            api.storage.local.remove('pendingRegulation');
           }
         }
       });
     }
 
     if (areaName === 'sync' && changes.sectionHeaderStyles) {
-      const api = browser || chrome;
       api.runtime.reload();
     }
 
@@ -761,13 +757,12 @@ async function updateRecentPatients(patientData) {
     (p) => p.ficha.isenPK.idp !== newRecent.ficha.isenPK.idp
   );
   const updatedRecents = [newRecent, ...filtered].slice(0, 5);
-  await browser.storage.local.set({ recentPatients: updatedRecents });
+  await api.storage.local.set({ recentPatients: updatedRecents });
   store.setRecentPatients(updatedRecents);
 }
 
 async function handleViewExamResult(button) {
   const { idp, ids } = button.dataset;
-  const api = browser || chrome;
   const filePath = await API.fetchResultadoExame({ idp, ids });
   const baseUrl = await API.getBaseUrl();
   let url = 'about:blank';
@@ -779,7 +774,6 @@ async function handleViewExamResult(button) {
 
 async function handleViewDocument(button) {
   const { idp, ids } = button.dataset;
-  const api = browser || chrome;
   try {
     const docUrl = await API.fetchDocumentUrl({ idp, ids });
     api.tabs.create({ url: docUrl || 'about:blank' });
@@ -798,7 +792,6 @@ async function handleViewRegulationAttachment(button) {
     const fileUrl = await API.fetchRegulationAttachmentUrl({ idp, ids });
     if (fileUrl) {
       // Use browser extension API instead of window.open
-      const api = browser || chrome;
       await api.tabs.create({ url: fileUrl });
     } else {
       console.warn('⚠️ URL do anexo não encontrada');
@@ -956,10 +949,10 @@ function handleShowAppointmentInfo(button) {
 
 async function checkForPendingRegulation() {
   try {
-    const { pendingRegulation } = await browser.storage.local.get('pendingRegulation');
+    const { pendingRegulation } = await api.storage.local.get('pendingRegulation');
     if (pendingRegulation && pendingRegulation.isenPKIdp) {
       await handleRegulationLoaded(pendingRegulation);
-      await browser.storage.local.remove('pendingRegulation');
+      await api.storage.local.remove('pendingRegulation');
     }
   } catch (e) {
     console.error('Erro ao verificar regulação pendente:', e);
