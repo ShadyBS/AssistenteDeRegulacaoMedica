@@ -196,34 +196,72 @@ class SectionManager {
     };
   }
   addEventListeners() {
-    var _this$elements$fetchB, _this$elements$toggle, _this$elements$toggle2, _this$elements$clearB, _this$elements$sectio, _this$elements$sectio2, _this$elements$sectio3;
-    (_this$elements$fetchB = this.elements.fetchBtn) === null || _this$elements$fetchB === void 0 ? void 0 : _this$elements$fetchB.addEventListener('click', () => this.fetchData());
-    (_this$elements$toggle = this.elements.toggleBtn) === null || _this$elements$toggle === void 0 ? void 0 : _this$elements$toggle.addEventListener('click', () => this.toggleSection());
-    (_this$elements$toggle2 = this.elements.toggleMoreBtn) === null || _this$elements$toggle2 === void 0 ? void 0 : _this$elements$toggle2.addEventListener('click', () => this.toggleMoreFilters());
-    (_this$elements$clearB = this.elements.clearBtn) === null || _this$elements$clearB === void 0 ? void 0 : _this$elements$clearB.addEventListener('click', () => this.clearFilters());
-    (_this$elements$sectio = this.elements.section) === null || _this$elements$sectio === void 0 ? void 0 : _this$elements$sectio.addEventListener('input', _utils_js__WEBPACK_IMPORTED_MODULE_2__/* .debounce */ .sg(e => {
-      if (e.target.matches("input[type='text'], input[type='date']")) this.applyFiltersAndRender();
-    }, 300));
-    (_this$elements$sectio2 = this.elements.section) === null || _this$elements$sectio2 === void 0 ? void 0 : _this$elements$sectio2.addEventListener('change', e => {
-      if (e.target.matches("select, input[type='checkbox']")) {
-        if (e.target.closest('.filter-select-group')) {
-          this.handleFetchTypeChange(e.target);
-        } else {
-          this.applyFiltersAndRender();
-        }
+    var _el$fetchBtn, _el$toggleBtn, _el$toggleMoreBtn, _el$clearBtn, _el$section, _el$section2, _el$section3, _el$fetchBtn2, _el$toggleBtn2, _el$toggleMoreBtn2, _el$clearBtn2, _el$section4, _el$section5, _el$section6;
+    // Remove listeners antes de adicionar
+    if (!this._listeners) this._listeners = {};
+    const el = this.elements;
+    (_el$fetchBtn = el.fetchBtn) === null || _el$fetchBtn === void 0 ? void 0 : _el$fetchBtn.removeEventListener('click', this._listeners.onFetchBtnClick);
+    (_el$toggleBtn = el.toggleBtn) === null || _el$toggleBtn === void 0 ? void 0 : _el$toggleBtn.removeEventListener('click', this._listeners.onToggleBtnClick);
+    (_el$toggleMoreBtn = el.toggleMoreBtn) === null || _el$toggleMoreBtn === void 0 ? void 0 : _el$toggleMoreBtn.removeEventListener('click', this._listeners.onToggleMoreBtnClick);
+    (_el$clearBtn = el.clearBtn) === null || _el$clearBtn === void 0 ? void 0 : _el$clearBtn.removeEventListener('click', this._listeners.onClearBtnClick);
+    (_el$section = el.section) === null || _el$section === void 0 ? void 0 : _el$section.removeEventListener('input', this._listeners.onSectionInput);
+    (_el$section2 = el.section) === null || _el$section2 === void 0 ? void 0 : _el$section2.removeEventListener('change', this._listeners.onSectionChange);
+    (_el$section3 = el.section) === null || _el$section3 === void 0 ? void 0 : _el$section3.removeEventListener('click', this._listeners.onSectionClick);
+
+    // Funções nomeadas
+    this._listeners.onFetchBtnClick = this.onFetchBtnClick.bind(this);
+    this._listeners.onToggleBtnClick = this.onToggleBtnClick.bind(this);
+    this._listeners.onToggleMoreBtnClick = this.onToggleMoreBtnClick.bind(this);
+    this._listeners.onClearBtnClick = this.onClearBtnClick.bind(this);
+    this._listeners.onSectionInput = _utils_js__WEBPACK_IMPORTED_MODULE_2__/* .debounce */ .sg(this.onSectionInput.bind(this), 300);
+    this._listeners.onSectionChange = this.onSectionChange.bind(this);
+    this._listeners.onSectionClick = this.onSectionClick.bind(this);
+
+    // Adiciona
+    (_el$fetchBtn2 = el.fetchBtn) === null || _el$fetchBtn2 === void 0 ? void 0 : _el$fetchBtn2.addEventListener('click', this._listeners.onFetchBtnClick);
+    (_el$toggleBtn2 = el.toggleBtn) === null || _el$toggleBtn2 === void 0 ? void 0 : _el$toggleBtn2.addEventListener('click', this._listeners.onToggleBtnClick);
+    (_el$toggleMoreBtn2 = el.toggleMoreBtn) === null || _el$toggleMoreBtn2 === void 0 ? void 0 : _el$toggleMoreBtn2.addEventListener('click', this._listeners.onToggleMoreBtnClick);
+    (_el$clearBtn2 = el.clearBtn) === null || _el$clearBtn2 === void 0 ? void 0 : _el$clearBtn2.addEventListener('click', this._listeners.onClearBtnClick);
+    (_el$section4 = el.section) === null || _el$section4 === void 0 ? void 0 : _el$section4.addEventListener('input', this._listeners.onSectionInput);
+    (_el$section5 = el.section) === null || _el$section5 === void 0 ? void 0 : _el$section5.addEventListener('change', this._listeners.onSectionChange);
+    (_el$section6 = el.section) === null || _el$section6 === void 0 ? void 0 : _el$section6.addEventListener('click', this._listeners.onSectionClick);
+  }
+  onFetchBtnClick() {
+    this.fetchData();
+  }
+  onToggleBtnClick() {
+    this.toggleSection();
+  }
+  onToggleMoreBtnClick() {
+    this.toggleMoreFilters();
+  }
+  onClearBtnClick() {
+    this.clearFilters();
+  }
+  onSectionInput(e) {
+    if (e.target.matches("input[type='text'], input[type='date']")) {
+      this.applyFiltersAndRender();
+    }
+  }
+  onSectionChange(e) {
+    if (e.target.matches("select, input[type='checkbox']")) {
+      if (e.target.closest('.filter-select-group')) {
+        this.handleFetchTypeChange(e.target);
+      } else {
+        this.applyFiltersAndRender();
       }
-      if (e.target.id === `${this.prefix}-saved-filters-select`) this.loadFilterSet();
-    });
-    (_this$elements$sectio3 = this.elements.section) === null || _this$elements$sectio3 === void 0 ? void 0 : _this$elements$sectio3.addEventListener('click', e => {
-      const target = e.target;
-      const sortHeader = target.closest('.sort-header');
-      if (sortHeader) this.handleSort(sortHeader.dataset.sortKey);
-      if (target.closest(`#${this.prefix}-save-filter-btn`)) this.saveFilterSet();
-      if (target.closest(`#${this.prefix}-delete-filter-btn`)) this.deleteFilterSet();
-      if (target.closest('.clear-automation-btn')) {
-        this.clearAutomationFeedbackAndFilters(true);
-      }
-    });
+    }
+    if (e.target.id === `${this.prefix}-saved-filters-select`) this.loadFilterSet();
+  }
+  onSectionClick(e) {
+    const target = e.target;
+    const sortHeader = target.closest('.sort-header');
+    if (sortHeader) this.handleSort(sortHeader.dataset.sortKey);
+    if (target.closest(`#${this.prefix}-save-filter-btn`)) this.saveFilterSet();
+    if (target.closest(`#${this.prefix}-delete-filter-btn`)) this.deleteFilterSet();
+    if (target.closest('.clear-automation-btn')) {
+      this.clearAutomationFeedbackAndFilters(true);
+    }
   }
   setPatient(patient) {
     this.currentPatient = patient;
@@ -409,8 +447,8 @@ class SectionManager {
     this.fetchData();
   }
   updateActiveFiltersIndicator() {
-    var _this$elements$toggle3;
-    const indicator = (_this$elements$toggle3 = this.elements.toggleMoreBtn) === null || _this$elements$toggle3 === void 0 ? void 0 : _this$elements$toggle3.querySelector('span:not(.button-text)');
+    var _this$elements$toggle;
+    const indicator = (_this$elements$toggle = this.elements.toggleMoreBtn) === null || _this$elements$toggle === void 0 ? void 0 : _this$elements$toggle.querySelector('span:not(.button-text)');
     if (!indicator || !this.elements.moreFilters) return;
     const isShown = this.elements.moreFilters.classList.contains('show');
     let activeCount = 0;
@@ -568,55 +606,15 @@ class SectionManager {
     container.className = 'mt-4 pt-4 border-t';
     container.id = `${this.prefix}-saved-filters-container`;
     container.innerHTML = `
-        <h3 class="text-sm font-semibold text-slate-600 mt-3 mb-2">Filtros Salvos</h3>
-        <div class="flex items-center gap-2">
-            <select id="${this.prefix}-saved-filters-select" class="flex-grow w-full px-2 py-1 border border-slate-300 rounded-md bg-white text-sm" title="Carregar um filtro salvo">
-                <option value="">Carregar filtro...</option>
-            </select>
-            <button id="${this.prefix}-save-filter-btn" title="Salvar filtros atuais" class="p-1.5 text-slate-500 hover:bg-blue-100 hover:text-blue-600 rounded">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M2 1a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H9.5a1 1 0 0 0-1 1v4.5h2a.5.5 0 0 1 .354.854l-2.5 2.5a.5.5 0 0 1-.708 0l-2.5-2.5A.5.5 0 0 1 5.5 6.5h2V2a2 2 0 0 1 2-2H14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2h2.5a.5.5 0 0 1 0 1H2z"/></svg>
-            </button>
-            <button id="${this.prefix}-delete-filter-btn" title="Apagar filtro selecionado" class="p-1.5 text-slate-500 hover:bg-red-100 hover:text-red-600 rounded">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/><path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/></svg>
-            </button>
-        </div>
-      `;
-    this.elements.savedFiltersContainer = container;
-    this.populateSavedFilterDropdown();
-    return container;
-  }
-  createFilterElement(filter) {
-    const container = document.createElement('div');
-    let elementHtml = '';
-    if (filter.type !== 'checkbox') {
-      elementHtml += `<label for="${filter.id}" class="block font-medium mb-1 text-sm">${filter.label}</label>`;
-    }
-    switch (filter.type) {
-      case 'text':
-        elementHtml += `<input type="text" id="${filter.id}" placeholder="${filter.placeholder || ''}" class="w-full px-2 py-1 border border-slate-300 rounded-md">`;
-        break;
-      case 'select':
-      case 'selectGroup':
-        elementHtml += `<select id="${filter.id}" class="w-full px-2 py-1 border border-slate-300 rounded-md bg-white">`;
-        if (filter.id === 'regulation-filter-priority' && this.globalSettings.regulationPriorities) {
-          elementHtml += '<option value="todas">Todas</option>';
-          this.globalSettings.regulationPriorities.forEach(prio => {
-            elementHtml += `<option value="${prio.coreDescricao}">${prio.coreDescricao}</option>`;
-          });
-        } else {
-          (filter.options || []).forEach(opt => {
-            elementHtml += `<option value="${opt.value}">${opt.text}</option>`;
-          });
-        }
-        elementHtml += '</select>';
-        break;
-      case 'checkbox':
-        container.className = 'flex items-center';
-        elementHtml += `<input id="${filter.id}" type="checkbox" class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
-                          <label for="${filter.id}" class="ml-2 block text-sm text-slate-700">${filter.label}</label>`;
-        break;
-    }
-    container.innerHTML = elementHtml;
+      <h3 class="text-sm font-semibold text-slate-600 mt-3 mb-2">Filtros Salvos</h3>
+      <div class="flex items-center gap-2">
+        <select id="${this.prefix}-saved-filters-select" class="flex-grow w-full px-2 py-1 border border-slate-300 rounded-md bg-white text-sm" title="Carregar um filtro salvo">
+          <option value="">Carregar filtro...</option>
+        </select>
+        <button id="${this.prefix}-saved-filters-load" class="px-2 py-1 bg-blue-500 text-white rounded-md text-sm">Carregar</button>
+        <button id="${this.prefix}-saved-filters-delete" class="px-2 py-1 bg-red-500 text-white rounded-md text-sm">Excluir</button>
+      </div>
+    `;
     return container;
   }
   applyAutomationFilters(filterSettings, ruleName) {
@@ -697,7 +695,7 @@ class SectionManager {
 /* harmony export */   v0: () => (/* binding */ fetchAllRegulations),
 /* harmony export */   wF: () => (/* binding */ fetchAllConsultations)
 /* harmony export */ });
-/* unused harmony exports fetchProntuarioHash, fetchConsultasEspecializadas, fetchConsultasBasicas, fetchRegulationAttachments, keepSessionAlive */
+/* unused harmony exports clearRegulationLock, fetchProntuarioHash, fetchConsultasEspecializadas, fetchConsultasBasicas, fetchRegulationAttachments, keepSessionAlive */
 
 const api = typeof browser !== 'undefined' ? browser : chrome;
 
@@ -764,6 +762,48 @@ async function fetchRegulationPriorities() {
 }
 
 /**
+ * Limpa o lock de uma regulação específica.
+ * @param {object} params 
+ * @param {string} params.reguIdp - O IDP da regulação.
+ * @param {string} params.reguIds - O IDS da regulação.
+ * @returns {Promise<boolean>} True se a operação foi bem-sucedida, false caso contrário.
+ */
+async function clearRegulationLock({
+  reguIdp,
+  reguIds
+}) {
+  if (!reguIdp || !reguIds) {
+    console.warn('[Assistente] IDs da regulação não fornecidos para limpeza de lock.');
+    return false;
+  }
+  try {
+    const baseUrl = await getBaseUrl();
+    const url = new URL(`${baseUrl}/sigss/regulacao/limparLock`);
+    const lockId = `${reguIdp}-${reguIds}`;
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+        'Accept': 'application/json, text/javascript, */*; q=0.01',
+        'X-Requested-With': 'XMLHttpRequest'
+      },
+      body: `lock=${lockId}`
+    });
+    if (response.ok) {
+      console.log(`[Assistente] Lock da regulação ${lockId} liberado com sucesso.`);
+      return true;
+    } else {
+      console.warn(`[Assistente] Falha ao liberar lock da regulação ${lockId}: ${response.status} ${response.statusText}`);
+      return false;
+    }
+  } catch (error) {
+    // Ignora erros conforme solicitado
+    console.warn('[Assistente] Erro ao liberar lock da regulação:', error);
+    return false;
+  }
+}
+
+/**
  * Busca os detalhes completos de uma regulação específica.
  * @param {object} params
  * @param {string} params.reguIdp - O IDP da regulação.
@@ -795,14 +835,23 @@ async function fetchRegulationDetails({
     handleFetchError(response);
     return null;
   }
+  let result = null;
   const contentType = response.headers.get('content-type');
   if (contentType && contentType.includes('application/json')) {
     const data = await response.json();
     // O objeto de dados está aninhado sob a chave "regulacao"
-    return data.regulacao || null;
+    result = data.regulacao || null;
   } else {
     throw new Error('A resposta do servidor não foi JSON. A sessão pode ter expirado.');
   }
+
+  // Libera o lock após obter os detalhes, independente do resultado
+  // Não aguardamos o resultado da limpeza do lock para não atrasar a resposta
+  clearRegulationLock({
+    reguIdp,
+    reguIds
+  }).catch(error => console.warn('[Assistente] Erro ao limpar lock após buscar detalhes:', error));
+  return result;
 }
 function parseConsultasHTML(htmlString) {
   const parser = new DOMParser();

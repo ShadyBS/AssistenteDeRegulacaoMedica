@@ -7,8 +7,8 @@
 
 /* unused harmony export TimelineManager */
 /* harmony import */ var _api_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(574);
-/* harmony import */ var _renderers_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(690);
-/* harmony import */ var _store_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(335);
+/* harmony import */ var _renderers_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(690);
+/* harmony import */ var _store_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(335);
 /**
  * @file Módulo TimelineManager, responsável por gerir a secção da Linha do Tempo.
  */
@@ -51,35 +51,71 @@ class TimelineManager {
     };
   }
   addEventListeners() {
-    var _this$elements$fetchB, _this$elements$toggle, _this$elements$search, _this$elements$dateIn, _this$elements$dateFi, _this$elements$sectio;
-    (_this$elements$fetchB = this.elements.fetchBtn) === null || _this$elements$fetchB === void 0 ? void 0 : _this$elements$fetchB.addEventListener('click', () => this.fetchData());
-    (_this$elements$toggle = this.elements.toggleBtn) === null || _this$elements$toggle === void 0 ? void 0 : _this$elements$toggle.addEventListener('click', () => this.toggleSection());
-    (_this$elements$search = this.elements.searchKeyword) === null || _this$elements$search === void 0 ? void 0 : _this$elements$search.addEventListener('input', Utils.debounce(() => this.render(), 300));
-    (_this$elements$dateIn = this.elements.dateInitial) === null || _this$elements$dateIn === void 0 ? void 0 : _this$elements$dateIn.addEventListener('change', () => this.render());
-    (_this$elements$dateFi = this.elements.dateFinal) === null || _this$elements$dateFi === void 0 ? void 0 : _this$elements$dateFi.addEventListener('change', () => this.render());
-    (_this$elements$sectio = this.elements.section) === null || _this$elements$sectio === void 0 ? void 0 : _this$elements$sectio.addEventListener('click', event => {
-      const header = event.target.closest('.timeline-header');
-      if (header) {
-        const details = header.nextElementSibling;
-        if (details && details.classList.contains('timeline-details-body')) {
-          details.classList.toggle('show');
-        }
-        return;
+    var _el$fetchBtn, _el$toggleBtn, _el$searchKeyword, _el$dateInitial, _el$dateFinal, _el$section, _el$fetchBtn2, _el$toggleBtn2, _el$searchKeyword2, _el$dateInitial2, _el$dateFinal2, _el$section2;
+    // Remove listeners antes de adicionar
+    if (!this._listeners) this._listeners = {};
+    const el = this.elements;
+    // Remove
+    (_el$fetchBtn = el.fetchBtn) === null || _el$fetchBtn === void 0 ? void 0 : _el$fetchBtn.removeEventListener('click', this._listeners.onFetchBtnClick);
+    (_el$toggleBtn = el.toggleBtn) === null || _el$toggleBtn === void 0 ? void 0 : _el$toggleBtn.removeEventListener('click', this._listeners.onToggleBtnClick);
+    (_el$searchKeyword = el.searchKeyword) === null || _el$searchKeyword === void 0 ? void 0 : _el$searchKeyword.removeEventListener('input', this._listeners.onSearchKeywordInput);
+    (_el$dateInitial = el.dateInitial) === null || _el$dateInitial === void 0 ? void 0 : _el$dateInitial.removeEventListener('change', this._listeners.onDateInitialChange);
+    (_el$dateFinal = el.dateFinal) === null || _el$dateFinal === void 0 ? void 0 : _el$dateFinal.removeEventListener('change', this._listeners.onDateFinalChange);
+    (_el$section = el.section) === null || _el$section === void 0 ? void 0 : _el$section.removeEventListener('click', this._listeners.onSectionClick);
+
+    // Funções nomeadas
+    this._listeners.onFetchBtnClick = this.onFetchBtnClick.bind(this);
+    this._listeners.onToggleBtnClick = this.onToggleBtnClick.bind(this);
+    this._listeners.onSearchKeywordInput = Utils.debounce(this.onSearchKeywordInput.bind(this), 300);
+    this._listeners.onDateInitialChange = this.onDateInitialChange.bind(this);
+    this._listeners.onDateFinalChange = this.onDateFinalChange.bind(this);
+    this._listeners.onSectionClick = this.onSectionClick.bind(this);
+
+    // Adiciona
+    (_el$fetchBtn2 = el.fetchBtn) === null || _el$fetchBtn2 === void 0 ? void 0 : _el$fetchBtn2.addEventListener('click', this._listeners.onFetchBtnClick);
+    (_el$toggleBtn2 = el.toggleBtn) === null || _el$toggleBtn2 === void 0 ? void 0 : _el$toggleBtn2.addEventListener('click', this._listeners.onToggleBtnClick);
+    (_el$searchKeyword2 = el.searchKeyword) === null || _el$searchKeyword2 === void 0 ? void 0 : _el$searchKeyword2.addEventListener('input', this._listeners.onSearchKeywordInput);
+    (_el$dateInitial2 = el.dateInitial) === null || _el$dateInitial2 === void 0 ? void 0 : _el$dateInitial2.addEventListener('change', this._listeners.onDateInitialChange);
+    (_el$dateFinal2 = el.dateFinal) === null || _el$dateFinal2 === void 0 ? void 0 : _el$dateFinal2.addEventListener('change', this._listeners.onDateFinalChange);
+    (_el$section2 = el.section) === null || _el$section2 === void 0 ? void 0 : _el$section2.addEventListener('click', this._listeners.onSectionClick);
+  }
+  onFetchBtnClick() {
+    this.fetchData();
+  }
+  onToggleBtnClick() {
+    this.toggleSection();
+  }
+  onSearchKeywordInput() {
+    this.render();
+  }
+  onDateInitialChange() {
+    this.render();
+  }
+  onDateFinalChange() {
+    this.render();
+  }
+  onSectionClick(event) {
+    const header = event.target.closest('.timeline-header');
+    if (header) {
+      const details = header.nextElementSibling;
+      if (details && details.classList.contains('timeline-details-body')) {
+        details.classList.toggle('show');
       }
-      const toggleDetailsBtn = event.target.closest('.timeline-toggle-details-btn');
-      if (toggleDetailsBtn) {
-        const timelineItem = toggleDetailsBtn.closest('.timeline-item');
-        const details = timelineItem === null || timelineItem === void 0 ? void 0 : timelineItem.querySelector('.timeline-details-body');
-        if (details) {
-          details.classList.toggle('show');
-        }
-        return;
+      return;
+    }
+    const toggleDetailsBtn = event.target.closest('.timeline-toggle-details-btn');
+    if (toggleDetailsBtn) {
+      const timelineItem = toggleDetailsBtn.closest('.timeline-item');
+      const details = timelineItem === null || timelineItem === void 0 ? void 0 : timelineItem.querySelector('.timeline-details-body');
+      if (details) {
+        details.classList.toggle('show');
       }
-      const toggleFilterBtn = event.target.closest('#timeline-toggle-filter-btn');
-      if (toggleFilterBtn) {
-        this.toggleFilteredView();
-      }
-    });
+      return;
+    }
+    const toggleFilterBtn = event.target.closest('#timeline-toggle-filter-btn');
+    if (toggleFilterBtn) {
+      this.toggleFilteredView();
+    }
   }
   onStateChange() {
     var _this$currentPatient, _this$currentPatient$, _newPatient$isenPK;
@@ -137,11 +173,11 @@ class TimelineManager {
     }
   }
   getFilterValues() {
-    var _this$elements$dateIn2, _this$elements$dateFi2, _this$elements$search2;
+    var _this$elements$dateIn, _this$elements$dateFi, _this$elements$search;
     return {
-      startDate: (_this$elements$dateIn2 = this.elements.dateInitial) === null || _this$elements$dateIn2 === void 0 ? void 0 : _this$elements$dateIn2.value,
-      endDate: (_this$elements$dateFi2 = this.elements.dateFinal) === null || _this$elements$dateFi2 === void 0 ? void 0 : _this$elements$dateFi2.value,
-      keyword: Utils.normalizeString(((_this$elements$search2 = this.elements.searchKeyword) === null || _this$elements$search2 === void 0 ? void 0 : _this$elements$search2.value) || '')
+      startDate: (_this$elements$dateIn = this.elements.dateInitial) === null || _this$elements$dateIn === void 0 ? void 0 : _this$elements$dateIn.value,
+      endDate: (_this$elements$dateFi = this.elements.dateFinal) === null || _this$elements$dateFi === void 0 ? void 0 : _this$elements$dateFi.value,
+      keyword: Utils.normalizeString(((_this$elements$search = this.elements.searchKeyword) === null || _this$elements$search === void 0 ? void 0 : _this$elements$search.value) || '')
     };
   }
   render() {

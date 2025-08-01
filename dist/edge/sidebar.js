@@ -595,6 +595,19 @@ const sectionIcons = {
 let currentRegulationData = null;
 const sectionManagers = {}; // Objeto para armazenar instâncias de SectionManager
 
+// Global listeners storage for memory leak prevention
+const globalListeners = {
+  onOpenOptionsClick: null,
+  onReloadSidebarClick: null,
+  onAutoModeToggleChange: null,
+  onReloadBtnClick: null,
+  onModalCloseBtnClick: null,
+  onInfoModalClick: null,
+  onMainContentClick: null,
+  onInfoBtnClick: null,
+  onDOMContentLoaded: null
+};
+
 // --- FUNÇÃO AUXILIAR DE FILTRAGEM ---
 /**
  * Aplica um filtro de texto normalizado a um array de dados.
@@ -848,19 +861,22 @@ function _init() {
         if (urlWarning) urlWarning.classList.remove('hidden');
         if (openOptions) {
           // Remove antes de adicionar
-          openOptions.removeEventListener('click', onOpenOptionsClick);
-          openOptions.addEventListener('click', onOpenOptionsClick);
+          if (globalListeners.onOpenOptionsClick) {
+            openOptions.removeEventListener('click', globalListeners.onOpenOptionsClick);
+          }
+          globalListeners.onOpenOptionsClick = function () {
+            api.runtime.openOptionsPage();
+          };
+          openOptions.addEventListener('click', globalListeners.onOpenOptionsClick);
         }
         if (reloadSidebar) {
-          reloadSidebar.removeEventListener('click', onReloadSidebarClick);
-          reloadSidebar.addEventListener('click', onReloadSidebarClick);
-        }
-        // Funções nomeadas para listeners de init
-        function onOpenOptionsClick() {
-          api.runtime.openOptionsPage();
-        }
-        function onReloadSidebarClick() {
-          location.reload();
+          if (globalListeners.onReloadSidebarClick) {
+            reloadSidebar.removeEventListener('click', globalListeners.onReloadSidebarClick);
+          }
+          globalListeners.onReloadSidebarClick = function () {
+            location.reload();
+          };
+          reloadSidebar.addEventListener('click', globalListeners.onReloadSidebarClick);
         }
 
         // **não retornamos mais aqui**, apenas marcamos que deu “fallback”
@@ -1063,15 +1079,17 @@ function setupAutoModeToggle() {
   });
 
   // Remove antes de adicionar
-  toggle.removeEventListener('change', onAutoModeToggleChange);
-  toggle.addEventListener('change', onAutoModeToggleChange);
-  function onAutoModeToggleChange(event) {
+  if (globalListeners.onAutoModeToggleChange) {
+    toggle.removeEventListener('change', globalListeners.onAutoModeToggleChange);
+  }
+  globalListeners.onAutoModeToggleChange = function (event) {
     const isEnabled = event.target.checked;
     api.storage.sync.set({
       enableAutomaticDetection: isEnabled
     });
     label.textContent = isEnabled ? 'Auto' : 'Manual';
-  }
+  };
+  toggle.addEventListener('change', globalListeners.onAutoModeToggleChange);
 }
 function handleRegulationLoaded(_x2) {
   return _handleRegulationLoaded.apply(this, arguments);
@@ -1135,48 +1153,6 @@ function _applyAutomationRules() {
   });
   return _applyAutomationRules.apply(this, arguments);
 }
-function handleShowRegulationInfo() {
-  if (!currentRegulationData) {
-    _utils_js__WEBPACK_IMPORTED_MODULE_9__/* .showMessage */ .rG('Nenhuma informação de regulação carregada.', 'info');
-    return;
-  }
-  const modalTitle = document.getElementById('modal-title');
-  const modalContent = document.getElementById('modal-content');
-  const infoModal = document.getElementById('info-modal');
-  modalTitle.textContent = 'Dados da Regulação (JSON)';
-  const formattedJson = JSON.stringify(currentRegulationData, null, 2);
-  modalContent.innerHTML = `<pre class="bg-slate-100 p-2 rounded-md text-xs whitespace-pre-wrap break-all">${formattedJson}</pre>`;
-  infoModal.classList.remove('hidden');
-}
-
-// Funções nomeadas para listeners globais
-function onReloadBtnClick() {
-  const patient = _store_js__WEBPACK_IMPORTED_MODULE_5__/* .store */ .M.getPatient();
-  if (patient && patient.ficha) {
-    _utils_js__WEBPACK_IMPORTED_MODULE_9__/* .showDialog */ .ui({
-      message: 'Um paciente está selecionado e o estado atual será perdido. Deseja realmente recarregar o assistente?',
-      onConfirm: () => {
-        location.reload();
-      }
-    });
-  } else {
-    location.reload();
-  }
-}
-function onModalCloseBtnClick() {
-  const infoModal = document.getElementById('info-modal');
-  infoModal.classList.add('hidden');
-}
-function onInfoModalClick(e) {
-  const infoModal = document.getElementById('info-modal');
-  if (e.target === infoModal) infoModal.classList.add('hidden');
-}
-function onMainContentClick(event) {
-  handleGlobalActions(event);
-}
-function onInfoBtnClick() {
-  handleShowRegulationInfo();
-}
 let listenersAdded = false;
 function addGlobalEventListeners() {
   const mainContent = document.getElementById('main-content');
@@ -1187,17 +1163,82 @@ function addGlobalEventListeners() {
 
   // Remove listeners antes de adicionar novamente
   if (listenersAdded) {
-    if (reloadBtn) reloadBtn.removeEventListener('click', onReloadBtnClick);
-    if (modalCloseBtn) modalCloseBtn.removeEventListener('click', onModalCloseBtnClick);
-    if (infoModal) infoModal.removeEventListener('click', onInfoModalClick);
-    if (mainContent) mainContent.removeEventListener('click', onMainContentClick);
-    if (infoBtn) infoBtn.removeEventListener('click', onInfoBtnClick);
+    if (reloadBtn && globalListeners.onReloadBtnClick) {
+      reloadBtn.removeEventListener('click', globalListeners.onReloadBtnClick);
+    }
+    if (modalCloseBtn && globalListeners.onModalCloseBtnClick) {
+      modalCloseBtn.removeEventListener('click', globalListeners.onModalCloseBtnClick);
+    }
+    if (infoModal && globalListeners.onInfoModalClick) {
+      infoModal.removeEventListener('click', globalListeners.onInfoModalClick);
+    }
+    if (mainContent && globalListeners.onMainContentClick) {
+      mainContent.removeEventListener('click', globalListeners.onMainContentClick);
+    }
+    if (infoBtn && globalListeners.onInfoBtnClick) {
+      infoBtn.removeEventListener('click', globalListeners.onInfoBtnClick);
+    }
   }
-  if (reloadBtn) reloadBtn.addEventListener('click', onReloadBtnClick);
-  if (modalCloseBtn) modalCloseBtn.addEventListener('click', onModalCloseBtnClick);
-  if (infoModal) infoModal.addEventListener('click', onInfoModalClick);
-  if (mainContent) mainContent.addEventListener('click', onMainContentClick);
-  if (infoBtn) infoBtn.addEventListener('click', onInfoBtnClick);
+
+  // Create named functions for listeners
+  if (!globalListeners.onReloadBtnClick) {
+    globalListeners.onReloadBtnClick = function () {
+      const patient = _store_js__WEBPACK_IMPORTED_MODULE_5__/* .store */ .M.getPatient();
+      if (patient && patient.ficha) {
+        _utils_js__WEBPACK_IMPORTED_MODULE_9__/* .showDialog */ .ui({
+          message: 'Um paciente está selecionado e o estado atual será perdido. Deseja realmente recarregar o assistente?',
+          onConfirm: () => {
+            location.reload();
+          }
+        });
+      } else {
+        location.reload();
+      }
+    };
+  }
+  if (!globalListeners.onModalCloseBtnClick) {
+    globalListeners.onModalCloseBtnClick = function () {
+      const modal = document.getElementById('info-modal');
+      if (modal) modal.classList.add('hidden');
+    };
+  }
+  if (!globalListeners.onInfoModalClick) {
+    globalListeners.onInfoModalClick = function (e) {
+      if (e.target === e.currentTarget) {
+        e.currentTarget.classList.add('hidden');
+      }
+    };
+  }
+  if (!globalListeners.onMainContentClick) {
+    globalListeners.onMainContentClick = /*#__PURE__*/function () {
+      var _ref = (0,bluebird__WEBPACK_IMPORTED_MODULE_0__.coroutine)(function* (event) {
+        yield handleGlobalActions(event);
+      });
+      return function (_x4) {
+        return _ref.apply(this, arguments);
+      };
+    }();
+  }
+  if (!globalListeners.onInfoBtnClick) {
+    globalListeners.onInfoBtnClick = function () {
+      if (!currentRegulationData) {
+        _utils_js__WEBPACK_IMPORTED_MODULE_9__/* .showMessage */ .rG('Nenhuma informação de regulação carregada.', 'info');
+        return;
+      }
+      const modalTitle = document.getElementById('modal-title');
+      const modalContent = document.getElementById('modal-content');
+      const modal = document.getElementById('info-modal');
+      modalTitle.textContent = 'Dados da Regulação (JSON)';
+      const formattedJson = JSON.stringify(currentRegulationData, null, 2);
+      modalContent.innerHTML = `<pre class="bg-slate-100 p-2 rounded-md text-xs whitespace-pre-wrap break-all">${formattedJson}</pre>`;
+      modal.classList.remove('hidden');
+    };
+  }
+  if (reloadBtn) reloadBtn.addEventListener('click', globalListeners.onReloadBtnClick);
+  if (modalCloseBtn) modalCloseBtn.addEventListener('click', globalListeners.onModalCloseBtnClick);
+  if (infoModal) infoModal.addEventListener('click', globalListeners.onInfoModalClick);
+  if (mainContent) mainContent.addEventListener('click', globalListeners.onMainContentClick);
+  if (infoBtn) infoBtn.addEventListener('click', globalListeners.onInfoBtnClick);
   listenersAdded = true;
 
   // Listener do storage não precisa ser removido, pois é singleton
@@ -1231,7 +1272,7 @@ function addGlobalEventListeners() {
     addGlobalEventListeners.storageListenerAdded = true;
   }
 }
-function handleGlobalActions(_x4) {
+function handleGlobalActions(_x5) {
   return _handleGlobalActions.apply(this, arguments);
 }
 function _handleGlobalActions() {
@@ -1275,7 +1316,7 @@ function _handleGlobalActions() {
   });
   return _handleGlobalActions.apply(this, arguments);
 }
-function copyToClipboard(_x5) {
+function copyToClipboard(_x6) {
   return _copyToClipboard.apply(this, arguments);
 }
 function _copyToClipboard() {
@@ -1300,7 +1341,7 @@ function _copyToClipboard() {
   });
   return _copyToClipboard.apply(this, arguments);
 }
-function updateRecentPatients(_x6) {
+function updateRecentPatients(_x7) {
   return _updateRecentPatients.apply(this, arguments);
 }
 function _updateRecentPatients() {
@@ -1319,7 +1360,7 @@ function _updateRecentPatients() {
   });
   return _updateRecentPatients.apply(this, arguments);
 }
-function handleViewExamResult(_x7) {
+function handleViewExamResult(_x8) {
   return _handleViewExamResult.apply(this, arguments);
 }
 function _handleViewExamResult() {
@@ -1343,7 +1384,7 @@ function _handleViewExamResult() {
   });
   return _handleViewExamResult.apply(this, arguments);
 }
-function handleViewDocument(_x8) {
+function handleViewDocument(_x9) {
   return _handleViewDocument.apply(this, arguments);
 }
 function _handleViewDocument() {
@@ -1369,7 +1410,7 @@ function _handleViewDocument() {
   });
   return _handleViewDocument.apply(this, arguments);
 }
-function handleViewRegulationAttachment(_x9) {
+function handleViewRegulationAttachment(_x0) {
   return _handleViewRegulationAttachment.apply(this, arguments);
 }
 function _handleViewRegulationAttachment() {
@@ -1426,9 +1467,9 @@ function formatRegulationDetailsForModal(data) {
   content += createDetailRow('Gravidade', data.reguGravidade);
   if (data.reguJustificativa && data.reguJustificativa !== 'null') {
     content += `<div class="py-2">
-                      <span class="font-semibold text-slate-600">Justificativa:</span>
-                      <p class="text-slate-800 whitespace-pre-wrap mt-1 p-2 bg-slate-50 rounded">${data.reguJustificativa.replace(/\\n/g, '\n')}</p>
-                  </div>`;
+    <span class="font-semibold text-slate-600">Justificativa:</span>
+    <p class="text-slate-800 whitespace-pre-wrap mt-1 p-2 bg-slate-50 rounded">${data.reguJustificativa.replace(/\\n/g, '\n')}</p>
+</div>`;
   }
   return content;
 }
@@ -1465,7 +1506,7 @@ function formatExamAppointmentDetailsForModal(data) {
   content += createDetailRow('Critério', (_data$criterioExame = data.criterioExame) === null || _data$criterioExame === void 0 ? void 0 : _data$criterioExame.critNome);
   return content;
 }
-function handleShowRegulationDetailsModal(_x0) {
+function handleShowRegulationDetailsModal(_x1) {
   return _handleShowRegulationDetailsModal.apply(this, arguments);
 }
 function _handleShowRegulationDetailsModal() {
@@ -1488,7 +1529,7 @@ function _handleShowRegulationDetailsModal() {
   });
   return _handleShowRegulationDetailsModal.apply(this, arguments);
 }
-function handleShowAppointmentDetailsModal(_x1) {
+function handleShowAppointmentDetailsModal(_x10) {
   return _handleShowAppointmentDetailsModal.apply(this, arguments);
 }
 function _handleShowAppointmentDetailsModal() {
@@ -1531,20 +1572,20 @@ function handleShowAppointmentInfo(button) {
   const infoModal = document.getElementById('info-modal');
   modalTitle.textContent = 'Detalhes do Agendamento';
   modalContent.innerHTML = `
-        <p><strong>ID:</strong> ${data.id}</p>
-        <p><strong>Tipo:</strong> ${data.isSpecialized ? 'Especializada' : data.isOdonto ? 'Odontológica' : data.type}</p>
-        <p><strong>Status:</strong> ${data.status}</p>
-        <p><strong>Data:</strong> ${data.date} às ${data.time}</p>
-        <p><strong>Local:</strong> ${data.location}</p>
-        <p><strong>Profissional:</strong> ${data.professional}</p>
-        <p><strong>Especialidade:</strong> ${data.specialty || 'N/A'}</p>
-        <p><strong>Procedimento:</strong> ${data.description}</p>
-    `;
+    <p><strong>ID:</strong> ${data.id}</p>
+    <p><strong>Tipo:</strong> ${data.isSpecialized ? 'Especializada' : data.isOdonto ? 'Odontológica' : data.type}</p>
+    <p><strong>Status:</strong> ${data.status}</p>
+    <p><strong>Data:</strong> ${data.date} às ${data.time}</p>
+    <p><strong>Local:</strong> ${data.location}</p>
+    <p><strong>Profissional:</strong> ${data.professional}</p>
+    <p><strong>Especialidade:</strong> ${data.specialty || 'N/A'}</p>
+    <p><strong>Procedimento:</strong> ${data.description}</p>
+  `;
   infoModal.classList.remove('hidden');
 }
 function checkForPendingRegulation() {
   return _checkForPendingRegulation.apply(this, arguments);
-}
+} // Initialize with removable listener
 function _checkForPendingRegulation() {
   _checkForPendingRegulation = (0,bluebird__WEBPACK_IMPORTED_MODULE_0__.coroutine)(function* () {
     try {
@@ -1561,7 +1602,8 @@ function _checkForPendingRegulation() {
   });
   return _checkForPendingRegulation.apply(this, arguments);
 }
-document.addEventListener('DOMContentLoaded', init);
+globalListeners.onDOMContentLoaded = init;
+document.addEventListener('DOMContentLoaded', globalListeners.onDOMContentLoaded);
 
 /***/ }),
 
@@ -1730,9 +1772,9 @@ function init(config) {
 /* harmony export */ });
 /* harmony import */ var bluebird__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(104);
 /* harmony import */ var _api_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(574);
-/* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(239);
-/* harmony import */ var _renderers_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(690);
-/* harmony import */ var _store_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(335);
+/* harmony import */ var _renderers_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(690);
+/* harmony import */ var _store_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(335);
+/* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(239);
 
 /**
  * @file Módulo TimelineManager, responsável por gerir a secção da Linha do Tempo.
@@ -1760,7 +1802,7 @@ class TimelineManager {
   init() {
     this.cacheDomElements();
     this.addEventListeners();
-    _store_js__WEBPACK_IMPORTED_MODULE_4__/* .store */ .M.subscribe(() => this.onStateChange());
+    _store_js__WEBPACK_IMPORTED_MODULE_3__/* .store */ .M.subscribe(() => this.onStateChange());
   }
   cacheDomElements() {
     this.elements = {
@@ -1776,39 +1818,75 @@ class TimelineManager {
     };
   }
   addEventListeners() {
-    var _this$elements$fetchB, _this$elements$toggle, _this$elements$search, _this$elements$dateIn, _this$elements$dateFi, _this$elements$sectio;
-    (_this$elements$fetchB = this.elements.fetchBtn) === null || _this$elements$fetchB === void 0 ? void 0 : _this$elements$fetchB.addEventListener('click', () => this.fetchData());
-    (_this$elements$toggle = this.elements.toggleBtn) === null || _this$elements$toggle === void 0 ? void 0 : _this$elements$toggle.addEventListener('click', () => this.toggleSection());
-    (_this$elements$search = this.elements.searchKeyword) === null || _this$elements$search === void 0 ? void 0 : _this$elements$search.addEventListener('input', _utils_js__WEBPACK_IMPORTED_MODULE_2__/* .debounce */ .sg(() => this.render(), 300));
-    (_this$elements$dateIn = this.elements.dateInitial) === null || _this$elements$dateIn === void 0 ? void 0 : _this$elements$dateIn.addEventListener('change', () => this.render());
-    (_this$elements$dateFi = this.elements.dateFinal) === null || _this$elements$dateFi === void 0 ? void 0 : _this$elements$dateFi.addEventListener('change', () => this.render());
-    (_this$elements$sectio = this.elements.section) === null || _this$elements$sectio === void 0 ? void 0 : _this$elements$sectio.addEventListener('click', event => {
-      const header = event.target.closest('.timeline-header');
-      if (header) {
-        const details = header.nextElementSibling;
-        if (details && details.classList.contains('timeline-details-body')) {
-          details.classList.toggle('show');
-        }
-        return;
+    var _el$fetchBtn, _el$toggleBtn, _el$searchKeyword, _el$dateInitial, _el$dateFinal, _el$section, _el$fetchBtn2, _el$toggleBtn2, _el$searchKeyword2, _el$dateInitial2, _el$dateFinal2, _el$section2;
+    // Remove listeners antes de adicionar
+    if (!this._listeners) this._listeners = {};
+    const el = this.elements;
+    // Remove
+    (_el$fetchBtn = el.fetchBtn) === null || _el$fetchBtn === void 0 ? void 0 : _el$fetchBtn.removeEventListener('click', this._listeners.onFetchBtnClick);
+    (_el$toggleBtn = el.toggleBtn) === null || _el$toggleBtn === void 0 ? void 0 : _el$toggleBtn.removeEventListener('click', this._listeners.onToggleBtnClick);
+    (_el$searchKeyword = el.searchKeyword) === null || _el$searchKeyword === void 0 ? void 0 : _el$searchKeyword.removeEventListener('input', this._listeners.onSearchKeywordInput);
+    (_el$dateInitial = el.dateInitial) === null || _el$dateInitial === void 0 ? void 0 : _el$dateInitial.removeEventListener('change', this._listeners.onDateInitialChange);
+    (_el$dateFinal = el.dateFinal) === null || _el$dateFinal === void 0 ? void 0 : _el$dateFinal.removeEventListener('change', this._listeners.onDateFinalChange);
+    (_el$section = el.section) === null || _el$section === void 0 ? void 0 : _el$section.removeEventListener('click', this._listeners.onSectionClick);
+
+    // Funções nomeadas
+    this._listeners.onFetchBtnClick = this.onFetchBtnClick.bind(this);
+    this._listeners.onToggleBtnClick = this.onToggleBtnClick.bind(this);
+    this._listeners.onSearchKeywordInput = _utils_js__WEBPACK_IMPORTED_MODULE_4__/* .debounce */ .sg(this.onSearchKeywordInput.bind(this), 300);
+    this._listeners.onDateInitialChange = this.onDateInitialChange.bind(this);
+    this._listeners.onDateFinalChange = this.onDateFinalChange.bind(this);
+    this._listeners.onSectionClick = this.onSectionClick.bind(this);
+
+    // Adiciona
+    (_el$fetchBtn2 = el.fetchBtn) === null || _el$fetchBtn2 === void 0 ? void 0 : _el$fetchBtn2.addEventListener('click', this._listeners.onFetchBtnClick);
+    (_el$toggleBtn2 = el.toggleBtn) === null || _el$toggleBtn2 === void 0 ? void 0 : _el$toggleBtn2.addEventListener('click', this._listeners.onToggleBtnClick);
+    (_el$searchKeyword2 = el.searchKeyword) === null || _el$searchKeyword2 === void 0 ? void 0 : _el$searchKeyword2.addEventListener('input', this._listeners.onSearchKeywordInput);
+    (_el$dateInitial2 = el.dateInitial) === null || _el$dateInitial2 === void 0 ? void 0 : _el$dateInitial2.addEventListener('change', this._listeners.onDateInitialChange);
+    (_el$dateFinal2 = el.dateFinal) === null || _el$dateFinal2 === void 0 ? void 0 : _el$dateFinal2.addEventListener('change', this._listeners.onDateFinalChange);
+    (_el$section2 = el.section) === null || _el$section2 === void 0 ? void 0 : _el$section2.addEventListener('click', this._listeners.onSectionClick);
+  }
+  onFetchBtnClick() {
+    this.fetchData();
+  }
+  onToggleBtnClick() {
+    this.toggleSection();
+  }
+  onSearchKeywordInput() {
+    this.render();
+  }
+  onDateInitialChange() {
+    this.render();
+  }
+  onDateFinalChange() {
+    this.render();
+  }
+  onSectionClick(event) {
+    const header = event.target.closest('.timeline-header');
+    if (header) {
+      const details = header.nextElementSibling;
+      if (details && details.classList.contains('timeline-details-body')) {
+        details.classList.toggle('show');
       }
-      const toggleDetailsBtn = event.target.closest('.timeline-toggle-details-btn');
-      if (toggleDetailsBtn) {
-        const timelineItem = toggleDetailsBtn.closest('.timeline-item');
-        const details = timelineItem === null || timelineItem === void 0 ? void 0 : timelineItem.querySelector('.timeline-details-body');
-        if (details) {
-          details.classList.toggle('show');
-        }
-        return;
+      return;
+    }
+    const toggleDetailsBtn = event.target.closest('.timeline-toggle-details-btn');
+    if (toggleDetailsBtn) {
+      const timelineItem = toggleDetailsBtn.closest('.timeline-item');
+      const details = timelineItem === null || timelineItem === void 0 ? void 0 : timelineItem.querySelector('.timeline-details-body');
+      if (details) {
+        details.classList.toggle('show');
       }
-      const toggleFilterBtn = event.target.closest('#timeline-toggle-filter-btn');
-      if (toggleFilterBtn) {
-        this.toggleFilteredView();
-      }
-    });
+      return;
+    }
+    const toggleFilterBtn = event.target.closest('#timeline-toggle-filter-btn');
+    if (toggleFilterBtn) {
+      this.toggleFilteredView();
+    }
   }
   onStateChange() {
     var _this$currentPatient, _this$currentPatient$, _newPatient$isenPK;
-    const patientState = _store_js__WEBPACK_IMPORTED_MODULE_4__/* .store */ .M.getPatient();
+    const patientState = _store_js__WEBPACK_IMPORTED_MODULE_3__/* .store */ .M.getPatient();
     const newPatient = patientState ? patientState.ficha : null;
     if (((_this$currentPatient = this.currentPatient) === null || _this$currentPatient === void 0 ? void 0 : (_this$currentPatient$ = _this$currentPatient.isenPK) === null || _this$currentPatient$ === void 0 ? void 0 : _this$currentPatient$.idp) !== (newPatient === null || newPatient === void 0 ? void 0 : (_newPatient$isenPK = newPatient.isenPK) === null || _newPatient$isenPK === void 0 ? void 0 : _newPatient$isenPK.idp)) {
       this.setPatient(newPatient);
@@ -1833,8 +1911,8 @@ class TimelineManager {
       start: -12,
       end: 0
     };
-    if (this.elements.dateInitial) this.elements.dateInitial.valueAsDate = _utils_js__WEBPACK_IMPORTED_MODULE_2__/* .calculateRelativeDate */ .Z9(range.start);
-    if (this.elements.dateFinal) this.elements.dateFinal.valueAsDate = _utils_js__WEBPACK_IMPORTED_MODULE_2__/* .calculateRelativeDate */ .Z9(range.end);
+    if (this.elements.dateInitial) this.elements.dateInitial.valueAsDate = _utils_js__WEBPACK_IMPORTED_MODULE_4__/* .calculateRelativeDate */ .Z9(range.start);
+    if (this.elements.dateFinal) this.elements.dateFinal.valueAsDate = _utils_js__WEBPACK_IMPORTED_MODULE_4__/* .calculateRelativeDate */ .Z9(range.end);
   }
   fetchData() {
     var _this = this;
@@ -1843,7 +1921,7 @@ class TimelineManager {
         return;
       }
       _this.isLoading = true;
-      _renderers_js__WEBPACK_IMPORTED_MODULE_3__/* .renderTimeline */ .s8([], 'loading');
+      _renderers_js__WEBPACK_IMPORTED_MODULE_2__/* .renderTimeline */ .s8([], 'loading');
       try {
         const params = {
           isenPK: `${_this.currentPatient.isenPK.idp}-${_this.currentPatient.isenPK.ids}`,
@@ -1853,28 +1931,28 @@ class TimelineManager {
           dataFinal: new Date().toLocaleDateString('pt-BR')
         };
         const apiData = yield _api_js__WEBPACK_IMPORTED_MODULE_1__/* .fetchAllTimelineData */ .lQ(params);
-        const normalizedData = _utils_js__WEBPACK_IMPORTED_MODULE_2__/* .normalizeTimelineData */ .td(apiData);
+        const normalizedData = _utils_js__WEBPACK_IMPORTED_MODULE_4__/* .normalizeTimelineData */ .td(apiData);
         _this.allData = normalizedData;
         _this.render();
       } catch (error) {
         console.error('Erro ao buscar dados para a Linha do Tempo:', error);
-        _renderers_js__WEBPACK_IMPORTED_MODULE_3__/* .renderTimeline */ .s8([], 'error');
+        _renderers_js__WEBPACK_IMPORTED_MODULE_2__/* .renderTimeline */ .s8([], 'error');
       } finally {
         _this.isLoading = false;
       }
     })();
   }
   getFilterValues() {
-    var _this$elements$dateIn2, _this$elements$dateFi2, _this$elements$search2;
+    var _this$elements$dateIn, _this$elements$dateFi, _this$elements$search;
     return {
-      startDate: (_this$elements$dateIn2 = this.elements.dateInitial) === null || _this$elements$dateIn2 === void 0 ? void 0 : _this$elements$dateIn2.value,
-      endDate: (_this$elements$dateFi2 = this.elements.dateFinal) === null || _this$elements$dateFi2 === void 0 ? void 0 : _this$elements$dateFi2.value,
-      keyword: _utils_js__WEBPACK_IMPORTED_MODULE_2__/* .normalizeString */ .J2(((_this$elements$search2 = this.elements.searchKeyword) === null || _this$elements$search2 === void 0 ? void 0 : _this$elements$search2.value) || '')
+      startDate: (_this$elements$dateIn = this.elements.dateInitial) === null || _this$elements$dateIn === void 0 ? void 0 : _this$elements$dateIn.value,
+      endDate: (_this$elements$dateFi = this.elements.dateFinal) === null || _this$elements$dateFi === void 0 ? void 0 : _this$elements$dateFi.value,
+      keyword: _utils_js__WEBPACK_IMPORTED_MODULE_4__/* .normalizeString */ .J2(((_this$elements$search = this.elements.searchKeyword) === null || _this$elements$search === void 0 ? void 0 : _this$elements$search.value) || '')
     };
   }
   render() {
     if (this.allData.length === 0 && !this.isLoading) {
-      _renderers_js__WEBPACK_IMPORTED_MODULE_3__/* .renderTimeline */ .s8([], 'empty');
+      _renderers_js__WEBPACK_IMPORTED_MODULE_2__/* .renderTimeline */ .s8([], 'empty');
       return;
     }
     let dataToRender = this.allData;
@@ -1896,9 +1974,9 @@ class TimelineManager {
 
     // Automation rule filtering
     if (this.isFilteredView && this.activeRuleFilters) {
-      dataToRender = _utils_js__WEBPACK_IMPORTED_MODULE_2__/* .filterTimelineEvents */ .Pr(dataToRender, this.activeRuleFilters);
+      dataToRender = _utils_js__WEBPACK_IMPORTED_MODULE_4__/* .filterTimelineEvents */ .Pr(dataToRender, this.activeRuleFilters);
     }
-    _renderers_js__WEBPACK_IMPORTED_MODULE_3__/* .renderTimeline */ .s8(dataToRender, 'success');
+    _renderers_js__WEBPACK_IMPORTED_MODULE_2__/* .renderTimeline */ .s8(dataToRender, 'success');
   }
   toggleSection() {
     var _this$elements$wrappe;
