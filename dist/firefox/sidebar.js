@@ -567,6 +567,8 @@ function init(config, callbacks) {
 /* harmony import */ var _ui_patient_card_js__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(627);
 /* harmony import */ var _ui_search_js__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(889);
 /* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(239);
+// Cross-browser API alias (lint-safe)
+const api = typeof browser !== 'undefined' ? browser : typeof chrome !== 'undefined' ? chrome : {};
 
 
 
@@ -833,13 +835,20 @@ async function init() {
       if (mainContent) mainContent.classList.add('hidden');
       if (urlWarning) urlWarning.classList.remove('hidden');
       if (openOptions) {
-        openOptions.addEventListener('click', () => browser.runtime.openOptionsPage());
+        // Remove antes de adicionar
+        openOptions.removeEventListener('click', onOpenOptionsClick);
+        openOptions.addEventListener('click', onOpenOptionsClick);
       }
       if (reloadSidebar) {
-        reloadSidebar.addEventListener('click', () => {
-          const api = browser || chrome;
-          api.runtime.reload();
-        });
+        reloadSidebar.removeEventListener('click', onReloadSidebarClick);
+        reloadSidebar.addEventListener('click', onReloadSidebarClick);
+      }
+      // Funções nomeadas para listeners de init
+      function onOpenOptionsClick() {
+        api.runtime.openOptionsPage();
+      }
+      function onReloadSidebarClick() {
+        location.reload();
       }
 
       // **não retornamos mais aqui**, apenas marcamos que deu “fallback”
@@ -881,7 +890,7 @@ async function init() {
   await checkForPendingRegulation();
 }
 async function loadConfigAndData() {
-  const syncData = await browser.storage.sync.get({
+  const syncData = await api.storage.sync.get({
     patientFields: _field_config_js__WEBPACK_IMPORTED_MODULE_1__/* .defaultFieldConfig */ .Q,
     filterLayout: {},
     autoLoadExams: false,
@@ -894,7 +903,7 @@ async function loadConfigAndData() {
     sidebarSectionOrder: [],
     sectionHeaderStyles: {} // Carrega a nova configuração de estilos
   });
-  const localData = await browser.storage.local.get({
+  const localData = await api.storage.local.get({
     recentPatients: [],
     savedFilterSets: {},
     automationRules: []
@@ -1026,19 +1035,23 @@ function applyUserPreferences(globalSettings) {
 function setupAutoModeToggle() {
   const toggle = document.getElementById('auto-mode-toggle');
   const label = document.getElementById('auto-mode-label');
-  browser.storage.sync.get({
+  api.storage.sync.get({
     enableAutomaticDetection: true
   }).then(settings => {
     toggle.checked = settings.enableAutomaticDetection;
     label.textContent = settings.enableAutomaticDetection ? 'Auto' : 'Manual';
   });
-  toggle.addEventListener('change', event => {
+
+  // Remove antes de adicionar
+  toggle.removeEventListener('change', onAutoModeToggleChange);
+  toggle.addEventListener('change', onAutoModeToggleChange);
+  function onAutoModeToggleChange(event) {
     const isEnabled = event.target.checked;
-    browser.storage.sync.set({
+    api.storage.sync.set({
       enableAutomaticDetection: isEnabled
     });
     label.textContent = isEnabled ? 'Auto' : 'Manual';
-  });
+  }
 }
 async function handleRegulationLoaded(regulationData) {
   _utils_js__WEBPACK_IMPORTED_MODULE_8__/* .toggleLoader */ .i1(true);
@@ -1070,7 +1083,7 @@ async function handleRegulationLoaded(regulationData) {
 async function applyAutomationRules(regulationData) {
   const {
     automationRules
-  } = await browser.storage.local.get({
+  } = await api.storage.local.get({
     automationRules: []
   });
   if (!automationRules || automationRules.length === 0) return;
@@ -1103,62 +1116,88 @@ function handleShowRegulationInfo() {
   modalContent.innerHTML = `<pre class="bg-slate-100 p-2 rounded-md text-xs whitespace-pre-wrap break-all">${formattedJson}</pre>`;
   infoModal.classList.remove('hidden');
 }
+
+// Funções nomeadas para listeners globais
+function onReloadBtnClick() {
+  const patient = _store_js__WEBPACK_IMPORTED_MODULE_4__/* .store */ .M.getPatient();
+  if (patient && patient.ficha) {
+    _utils_js__WEBPACK_IMPORTED_MODULE_8__/* .showDialog */ .ui({
+      message: 'Um paciente está selecionado e o estado atual será perdido. Deseja realmente recarregar o assistente?',
+      onConfirm: () => {
+        location.reload();
+      }
+    });
+  } else {
+    location.reload();
+  }
+}
+function onModalCloseBtnClick() {
+  const infoModal = document.getElementById('info-modal');
+  infoModal.classList.add('hidden');
+}
+function onInfoModalClick(e) {
+  const infoModal = document.getElementById('info-modal');
+  if (e.target === infoModal) infoModal.classList.add('hidden');
+}
+function onMainContentClick(event) {
+  handleGlobalActions(event);
+}
+function onInfoBtnClick() {
+  handleShowRegulationInfo();
+}
+let listenersAdded = false;
 function addGlobalEventListeners() {
   const mainContent = document.getElementById('main-content');
   const infoModal = document.getElementById('info-modal');
   const modalCloseBtn = document.getElementById('modal-close-btn');
   const infoBtn = document.getElementById('context-info-btn');
   const reloadBtn = document.getElementById('reload-sidebar-btn');
-  if (reloadBtn) {
-    reloadBtn.addEventListener('click', () => {
-      const patient = _store_js__WEBPACK_IMPORTED_MODULE_4__/* .store */ .M.getPatient();
-      if (patient && patient.ficha) {
-        _utils_js__WEBPACK_IMPORTED_MODULE_8__/* .showDialog */ .ui({
-          message: 'Um paciente está selecionado e o estado atual será perdido. Deseja realmente recarregar o assistente?',
-          onConfirm: () => {
-            const api = browser || chrome;
-            api.runtime.reload();
+
+  // Remove listeners antes de adicionar novamente
+  if (listenersAdded) {
+    if (reloadBtn) reloadBtn.removeEventListener('click', onReloadBtnClick);
+    if (modalCloseBtn) modalCloseBtn.removeEventListener('click', onModalCloseBtnClick);
+    if (infoModal) infoModal.removeEventListener('click', onInfoModalClick);
+    if (mainContent) mainContent.removeEventListener('click', onMainContentClick);
+    if (infoBtn) infoBtn.removeEventListener('click', onInfoBtnClick);
+  }
+  if (reloadBtn) reloadBtn.addEventListener('click', onReloadBtnClick);
+  if (modalCloseBtn) modalCloseBtn.addEventListener('click', onModalCloseBtnClick);
+  if (infoModal) infoModal.addEventListener('click', onInfoModalClick);
+  if (mainContent) mainContent.addEventListener('click', onMainContentClick);
+  if (infoBtn) infoBtn.addEventListener('click', onInfoBtnClick);
+  listenersAdded = true;
+
+  // Listener do storage não precisa ser removido, pois é singleton
+  if (!addGlobalEventListeners.storageListenerAdded) {
+    api.storage.onChanged.addListener((changes, areaName) => {
+      if (areaName === 'local' && changes.pendingRegulation) {
+        // Apenas processa se a detecção automática estiver LIGADA
+        api.storage.sync.get({
+          enableAutomaticDetection: true
+        }).then(settings => {
+          if (settings.enableAutomaticDetection) {
+            const {
+              newValue
+            } = changes.pendingRegulation;
+            if (newValue && newValue.isenPKIdp) {
+              console.log('[Assistente Sidebar] Nova regulação detectada via storage.onChanged:', newValue);
+              handleRegulationLoaded(newValue);
+              api.storage.local.remove('pendingRegulation');
+            }
           }
         });
-      } else {
-        const api = browser || chrome;
+      }
+      if (areaName === 'sync' && changes.sectionHeaderStyles) {
         api.runtime.reload();
       }
+      if (areaName === 'sync' && changes.enableAutomaticDetection) {
+        // Mantém o botão da sidebar sincronizado com a configuração
+        setupAutoModeToggle();
+      }
     });
+    addGlobalEventListeners.storageListenerAdded = true;
   }
-  modalCloseBtn.addEventListener('click', () => infoModal.classList.add('hidden'));
-  infoModal.addEventListener('click', e => {
-    if (e.target === infoModal) infoModal.classList.add('hidden');
-  });
-  mainContent.addEventListener('click', handleGlobalActions);
-  infoBtn.addEventListener('click', handleShowRegulationInfo);
-  browser.storage.onChanged.addListener((changes, areaName) => {
-    if (areaName === 'local' && changes.pendingRegulation) {
-      // Apenas processa se a detecção automática estiver LIGADA
-      browser.storage.sync.get({
-        enableAutomaticDetection: true
-      }).then(settings => {
-        if (settings.enableAutomaticDetection) {
-          const {
-            newValue
-          } = changes.pendingRegulation;
-          if (newValue && newValue.isenPKIdp) {
-            console.log('[Assistente Sidebar] Nova regulação detectada via storage.onChanged:', newValue);
-            handleRegulationLoaded(newValue);
-            browser.storage.local.remove('pendingRegulation');
-          }
-        }
-      });
-    }
-    if (areaName === 'sync' && changes.sectionHeaderStyles) {
-      const api = browser || chrome;
-      api.runtime.reload();
-    }
-    if (areaName === 'sync' && changes.enableAutomaticDetection) {
-      // Mantém o botão da sidebar sincronizado com a configuração
-      setupAutoModeToggle();
-    }
-  });
 }
 async function handleGlobalActions(event) {
   const target = event.target;
@@ -1225,7 +1264,7 @@ async function updateRecentPatients(patientData) {
   const currentRecents = _store_js__WEBPACK_IMPORTED_MODULE_4__/* .store */ .M.getRecentPatients();
   const filtered = (currentRecents || []).filter(p => p.ficha.isenPK.idp !== newRecent.ficha.isenPK.idp);
   const updatedRecents = [newRecent, ...filtered].slice(0, 5);
-  await browser.storage.local.set({
+  await api.storage.local.set({
     recentPatients: updatedRecents
   });
   _store_js__WEBPACK_IMPORTED_MODULE_4__/* .store */ .M.setRecentPatients(updatedRecents);
@@ -1235,7 +1274,6 @@ async function handleViewExamResult(button) {
     idp,
     ids
   } = button.dataset;
-  const api = browser || chrome;
   const filePath = await _api_js__WEBPACK_IMPORTED_MODULE_0__/* .fetchResultadoExame */ .Sp({
     idp,
     ids
@@ -1254,7 +1292,6 @@ async function handleViewDocument(button) {
     idp,
     ids
   } = button.dataset;
-  const api = browser || chrome;
   try {
     const docUrl = await _api_js__WEBPACK_IMPORTED_MODULE_0__/* .fetchDocumentUrl */ .pP({
       idp,
@@ -1282,7 +1319,6 @@ async function handleViewRegulationAttachment(button) {
     });
     if (fileUrl) {
       // Use browser extension API instead of window.open
-      const api = browser || chrome;
       await api.tabs.create({
         url: fileUrl
       });
@@ -1430,10 +1466,10 @@ async function checkForPendingRegulation() {
   try {
     const {
       pendingRegulation
-    } = await browser.storage.local.get('pendingRegulation');
+    } = await api.storage.local.get('pendingRegulation');
     if (pendingRegulation && pendingRegulation.isenPKIdp) {
       await handleRegulationLoaded(pendingRegulation);
-      await browser.storage.local.remove('pendingRegulation');
+      await api.storage.local.remove('pendingRegulation');
     }
   } catch (e) {
     console.error('Erro ao verificar regulação pendente:', e);

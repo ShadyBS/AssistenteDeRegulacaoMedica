@@ -420,6 +420,9 @@ function filterTimelineEvents(events, automationFilters) {
 
 
 
+// Cross-browser API alias
+const api = window.browser || window.chrome;
+
 // --- Constantes ---
 const CONFIG_VERSION = '1.3'; // Versão da estrutura de configuração
 
@@ -635,7 +638,7 @@ function applyTabOrder(order) {
  * Carrega a configuração salva e renderiza a página.
  */
 async function restoreOptions() {
-  const syncItems = await browser.storage.sync.get({
+  const syncItems = await api.storage.sync.get({
     baseUrl: '',
     autoLoadExams: false,
     autoLoadConsultations: false,
@@ -650,7 +653,7 @@ async function restoreOptions() {
     sidebarSectionOrder: null,
     sectionHeaderStyles: {}
   });
-  const localItems = await browser.storage.local.get({
+  const localItems = await api.storage.local.get({
     automationRules: []
   });
   document.getElementById('baseUrlInput').value = syncItems.baseUrl || '';
@@ -825,7 +828,7 @@ async function saveOptions() {
     }
   });
   const sidebarSectionOrder = [...document.querySelectorAll('.tabs .tab-button')].map(btn => btn.dataset.tab);
-  await browser.storage.sync.set({
+  await api.storage.sync.set({
     baseUrl: baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl,
     enableAutomaticDetection,
     keepSessionAliveInterval,
@@ -956,7 +959,7 @@ async function handleRestoreDefaults() {
   _utils_js__WEBPACK_IMPORTED_MODULE_3__/* .showDialog */ .ui({
     message: 'Tem certeza de que deseja restaurar todas as configurações de layout e valores padrão? Isto também restaurará a ordem das seções e os estilos dos cabeçalhos. Esta ação não pode ser desfeita.',
     onConfirm: async () => {
-      await browser.storage.sync.remove(['patientFields', 'filterLayout', 'dateRangeDefaults', 'enableAutomaticDetection', 'sidebarSectionOrder', 'sectionHeaderStyles']);
+      await api.storage.sync.remove(['patientFields', 'filterLayout', 'dateRangeDefaults', 'enableAutomaticDetection', 'sidebarSectionOrder', 'sectionHeaderStyles']);
       mainFieldsZone.innerHTML = '';
       moreFieldsZone.innerHTML = '';
       window.location.reload();
@@ -967,7 +970,7 @@ async function handleRestoreDefaults() {
 // --- Lógica de Exportação e Importação ---
 async function handleExport() {
   try {
-    const settingsToExport = await browser.storage.sync.get(null);
+    const settingsToExport = await api.storage.sync.get(null);
     settingsToExport.configVersion = CONFIG_VERSION;
     const settingsString = JSON.stringify(settingsToExport, null, 2);
     const blob = new Blob([settingsString], {
@@ -1006,16 +1009,16 @@ function handleImport(event) {
         _utils_js__WEBPACK_IMPORTED_MODULE_3__/* .showDialog */ .ui({
           message: 'A versão do ficheiro de configuração é muito diferente da versão da extensão. A importação pode causar erros. Deseja continuar mesmo assim?',
           onConfirm: async () => {
-            await browser.storage.sync.clear();
-            await browser.storage.sync.set(importedSettings);
+            await api.storage.sync.clear();
+            await api.storage.sync.set(importedSettings);
             restoreOptions();
             _utils_js__WEBPACK_IMPORTED_MODULE_3__/* .showMessage */ .rG('Configurações importadas e aplicadas com sucesso!', 'success');
           }
         });
         return;
       }
-      await browser.storage.sync.clear();
-      await browser.storage.sync.set(importedSettings);
+      await api.storage.sync.clear();
+      await api.storage.sync.set(importedSettings);
       restoreOptions();
       _utils_js__WEBPACK_IMPORTED_MODULE_3__/* .showMessage */ .rG('Configurações importadas e aplicadas com sucesso!', 'success');
     } catch (error) {
@@ -1080,7 +1083,7 @@ function renderAutomationRules() {
  * Salva o array de regras de automação no storage local.
  */
 async function saveAutomationRules() {
-  await browser.storage.local.set({
+  await api.storage.local.set({
     automationRules
   });
   _utils_js__WEBPACK_IMPORTED_MODULE_3__/* .showMessage */ .rG('Regras de automação salvas.', 'success');
@@ -1396,7 +1399,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   automationRulesList.addEventListener('dragend', handleDragEnd);
   automationRulesList.addEventListener('dragover', handleDragOver);
   automationRulesList.addEventListener('drop', handleDrop);
-  browser.storage.onChanged.addListener((changes, areaName) => {
+  api.storage.onChanged.addListener((changes, areaName) => {
     if (areaName === 'sync' && changes.enableAutomaticDetection) {
       const toggle = document.getElementById('enableAutomaticDetection');
       if (toggle) {

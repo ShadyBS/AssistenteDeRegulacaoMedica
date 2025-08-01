@@ -710,8 +710,8 @@ function renderAutomationRules() {
                 <div>
                   <p class="font-semibold text-slate-800">${rule.name}</p>
                   <p class="text-xs text-slate-500" title="${keywords}">Gatilhos: ${
-      keywords.length > 50 ? keywords.substring(0, 50) + '...' : keywords
-    }</p>
+                    keywords.length > 50 ? keywords.substring(0, 50) + '...' : keywords
+                  }</p>
                 </div>
               </div>
               <div class="flex items-center gap-4">

@@ -422,6 +422,9 @@ function filterTimelineEvents(events, automationFilters) {
 
 
 
+// Cross-browser API alias
+const api = window.browser || window.chrome;
+
 // --- Constantes ---
 const CONFIG_VERSION = '1.3'; // Versão da estrutura de configuração
 
@@ -649,7 +652,7 @@ function restoreOptions() {
  */
 function _restoreOptions() {
   _restoreOptions = (0,bluebird__WEBPACK_IMPORTED_MODULE_0__.coroutine)(function* () {
-    const syncItems = yield browser.storage.sync.get({
+    const syncItems = yield api.storage.sync.get({
       baseUrl: '',
       autoLoadExams: false,
       autoLoadConsultations: false,
@@ -664,7 +667,7 @@ function _restoreOptions() {
       sidebarSectionOrder: null,
       sectionHeaderStyles: {}
     });
-    const localItems = yield browser.storage.local.get({
+    const localItems = yield api.storage.local.get({
       automationRules: []
     });
     document.getElementById('baseUrlInput').value = syncItems.baseUrl || '';
@@ -841,7 +844,7 @@ function _saveOptions() {
       }
     });
     const sidebarSectionOrder = [...document.querySelectorAll('.tabs .tab-button')].map(btn => btn.dataset.tab);
-    yield browser.storage.sync.set({
+    yield api.storage.sync.set({
       baseUrl: baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl,
       enableAutomaticDetection,
       keepSessionAliveInterval,
@@ -977,7 +980,7 @@ function _handleRestoreDefaults() {
       message: 'Tem certeza de que deseja restaurar todas as configurações de layout e valores padrão? Isto também restaurará a ordem das seções e os estilos dos cabeçalhos. Esta ação não pode ser desfeita.',
       onConfirm: function () {
         var _ref4 = (0,bluebird__WEBPACK_IMPORTED_MODULE_0__.coroutine)(function* () {
-          yield browser.storage.sync.remove(['patientFields', 'filterLayout', 'dateRangeDefaults', 'enableAutomaticDetection', 'sidebarSectionOrder', 'sectionHeaderStyles']);
+          yield api.storage.sync.remove(['patientFields', 'filterLayout', 'dateRangeDefaults', 'enableAutomaticDetection', 'sidebarSectionOrder', 'sectionHeaderStyles']);
           mainFieldsZone.innerHTML = '';
           moreFieldsZone.innerHTML = '';
           window.location.reload();
@@ -996,7 +999,7 @@ function handleExport() {
 function _handleExport() {
   _handleExport = (0,bluebird__WEBPACK_IMPORTED_MODULE_0__.coroutine)(function* () {
     try {
-      const settingsToExport = yield browser.storage.sync.get(null);
+      const settingsToExport = yield api.storage.sync.get(null);
       settingsToExport.configVersion = CONFIG_VERSION;
       const settingsString = JSON.stringify(settingsToExport, null, 2);
       const blob = new Blob([settingsString], {
@@ -1039,8 +1042,8 @@ function handleImport(event) {
             message: 'A versão do ficheiro de configuração é muito diferente da versão da extensão. A importação pode causar erros. Deseja continuar mesmo assim?',
             onConfirm: function () {
               var _ref2 = (0,bluebird__WEBPACK_IMPORTED_MODULE_0__.coroutine)(function* () {
-                yield browser.storage.sync.clear();
-                yield browser.storage.sync.set(importedSettings);
+                yield api.storage.sync.clear();
+                yield api.storage.sync.set(importedSettings);
                 restoreOptions();
                 _utils_js__WEBPACK_IMPORTED_MODULE_4__/* .showMessage */ .rG('Configurações importadas e aplicadas com sucesso!', 'success');
               });
@@ -1051,8 +1054,8 @@ function handleImport(event) {
           });
           return;
         }
-        yield browser.storage.sync.clear();
-        yield browser.storage.sync.set(importedSettings);
+        yield api.storage.sync.clear();
+        yield api.storage.sync.set(importedSettings);
         restoreOptions();
         _utils_js__WEBPACK_IMPORTED_MODULE_4__/* .showMessage */ .rG('Configurações importadas e aplicadas com sucesso!', 'success');
       } catch (error) {
@@ -1129,7 +1132,7 @@ function saveAutomationRules() {
  */
 function _saveAutomationRules() {
   _saveAutomationRules = (0,bluebird__WEBPACK_IMPORTED_MODULE_0__.coroutine)(function* () {
-    yield browser.storage.local.set({
+    yield api.storage.local.set({
       automationRules
     });
     _utils_js__WEBPACK_IMPORTED_MODULE_4__/* .showMessage */ .rG('Regras de automação salvas.', 'success');
@@ -1452,7 +1455,7 @@ document.addEventListener('DOMContentLoaded', /*#__PURE__*/(0,bluebird__WEBPACK_
   automationRulesList.addEventListener('dragend', handleDragEnd);
   automationRulesList.addEventListener('dragover', handleDragOver);
   automationRulesList.addEventListener('drop', handleDrop);
-  browser.storage.onChanged.addListener((changes, areaName) => {
+  api.storage.onChanged.addListener((changes, areaName) => {
     if (areaName === 'sync' && changes.enableAutomaticDetection) {
       const toggle = document.getElementById('enableAutomaticDetection');
       if (toggle) {

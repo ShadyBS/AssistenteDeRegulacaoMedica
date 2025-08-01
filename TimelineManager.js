@@ -46,41 +46,76 @@ export class TimelineManager {
   }
 
   addEventListeners() {
-    this.elements.fetchBtn?.addEventListener('click', () => this.fetchData());
-    this.elements.toggleBtn?.addEventListener('click', () => this.toggleSection());
+    // Remove listeners antes de adicionar
+    if (!this._listeners) this._listeners = {};
+    const el = this.elements;
+    // Remove
+    el.fetchBtn?.removeEventListener('click', this._listeners.onFetchBtnClick);
+    el.toggleBtn?.removeEventListener('click', this._listeners.onToggleBtnClick);
+    el.searchKeyword?.removeEventListener('input', this._listeners.onSearchKeywordInput);
+    el.dateInitial?.removeEventListener('change', this._listeners.onDateInitialChange);
+    el.dateFinal?.removeEventListener('change', this._listeners.onDateFinalChange);
+    el.section?.removeEventListener('click', this._listeners.onSectionClick);
 
-    this.elements.searchKeyword?.addEventListener(
-      'input',
-      Utils.debounce(() => this.render(), 300)
+    // Funções nomeadas
+    this._listeners.onFetchBtnClick = this.onFetchBtnClick.bind(this);
+    this._listeners.onToggleBtnClick = this.onToggleBtnClick.bind(this);
+    this._listeners.onSearchKeywordInput = Utils.debounce(
+      this.onSearchKeywordInput.bind(this),
+      300
     );
-    this.elements.dateInitial?.addEventListener('change', () => this.render());
-    this.elements.dateFinal?.addEventListener('change', () => this.render());
+    this._listeners.onDateInitialChange = this.onDateInitialChange.bind(this);
+    this._listeners.onDateFinalChange = this.onDateFinalChange.bind(this);
+    this._listeners.onSectionClick = this.onSectionClick.bind(this);
 
-    this.elements.section?.addEventListener('click', (event) => {
-      const header = event.target.closest('.timeline-header');
-      if (header) {
-        const details = header.nextElementSibling;
-        if (details && details.classList.contains('timeline-details-body')) {
-          details.classList.toggle('show');
-        }
-        return;
-      }
+    // Adiciona
+    el.fetchBtn?.addEventListener('click', this._listeners.onFetchBtnClick);
+    el.toggleBtn?.addEventListener('click', this._listeners.onToggleBtnClick);
+    el.searchKeyword?.addEventListener('input', this._listeners.onSearchKeywordInput);
+    el.dateInitial?.addEventListener('change', this._listeners.onDateInitialChange);
+    el.dateFinal?.addEventListener('change', this._listeners.onDateFinalChange);
+    el.section?.addEventListener('click', this._listeners.onSectionClick);
+  }
 
-      const toggleDetailsBtn = event.target.closest('.timeline-toggle-details-btn');
-      if (toggleDetailsBtn) {
-        const timelineItem = toggleDetailsBtn.closest('.timeline-item');
-        const details = timelineItem?.querySelector('.timeline-details-body');
-        if (details) {
-          details.classList.toggle('show');
-        }
-        return;
+  onFetchBtnClick() {
+    this.fetchData();
+  }
+  onToggleBtnClick() {
+    this.toggleSection();
+  }
+  onSearchKeywordInput() {
+    this.render();
+  }
+  onDateInitialChange() {
+    this.render();
+  }
+  onDateFinalChange() {
+    this.render();
+  }
+  onSectionClick(event) {
+    const header = event.target.closest('.timeline-header');
+    if (header) {
+      const details = header.nextElementSibling;
+      if (details && details.classList.contains('timeline-details-body')) {
+        details.classList.toggle('show');
       }
+      return;
+    }
 
-      const toggleFilterBtn = event.target.closest('#timeline-toggle-filter-btn');
-      if (toggleFilterBtn) {
-        this.toggleFilteredView();
+    const toggleDetailsBtn = event.target.closest('.timeline-toggle-details-btn');
+    if (toggleDetailsBtn) {
+      const timelineItem = toggleDetailsBtn.closest('.timeline-item');
+      const details = timelineItem?.querySelector('.timeline-details-body');
+      if (details) {
+        details.classList.toggle('show');
       }
-    });
+      return;
+    }
+
+    const toggleFilterBtn = event.target.closest('#timeline-toggle-filter-btn');
+    if (toggleFilterBtn) {
+      this.toggleFilteredView();
+    }
   }
 
   onStateChange() {

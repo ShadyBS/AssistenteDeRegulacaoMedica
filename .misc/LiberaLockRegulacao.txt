@@ -1,0 +1,186 @@
+{
+  "log": {
+    "version": "1.2",
+    "creator": {
+      "name": "Firefox",
+      "version": "141.0"
+    },
+    "browser": {
+      "name": "Firefox",
+      "version": "141.0"
+    },
+    "pages": [
+      {
+        "id": "page_1",
+        "pageTimings": {
+          "onContentLoad": -13486,
+          "onLoad": -12891
+        },
+        "startedDateTime": "2025-08-01T14:18:37.604-03:00",
+        "title": "http://saudehml.farroupilha.rs.gov.br/sigss/regulacaoRegulador.jsp"
+      }
+    ],
+    "entries": [
+      {
+        "startedDateTime": "2025-08-01T14:18:37.604-03:00",
+        "request": {
+          "bodySize": 13,
+          "method": "POST",
+          "url": "http://saudehml.farroupilha.rs.gov.br/sigss/regulacao/limparLock",
+          "httpVersion": "HTTP/1.1",
+          "headers": [
+            {
+              "name": "Host",
+              "value": "saudehml.farroupilha.rs.gov.br"
+            },
+            {
+              "name": "User-Agent",
+              "value": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:141.0) Gecko/20100101 Firefox/141.0"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json, text/javascript, */*; q=0.01"
+            },
+            {
+              "name": "Accept-Language",
+              "value": "pt-BR,pt;q=0.8,en-US;q=0.5,en;q=0.3"
+            },
+            {
+              "name": "Accept-Encoding",
+              "value": "gzip, deflate"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/x-www-form-urlencoded; charset=UTF-8"
+            },
+            {
+              "name": "X-Requested-With",
+              "value": "XMLHttpRequest"
+            },
+            {
+              "name": "Content-Length",
+              "value": "13"
+            },
+            {
+              "name": "Origin",
+              "value": "http://saudehml.farroupilha.rs.gov.br"
+            },
+            {
+              "name": "Sec-GPC",
+              "value": "1"
+            },
+            {
+              "name": "Connection",
+              "value": "keep-alive"
+            },
+            {
+              "name": "Referer",
+              "value": "http://saudehml.farroupilha.rs.gov.br/sigss/regulacaoRegulador.jsp"
+            },
+            {
+              "name": "Cookie",
+              "value": "JSESSIONID=0D95DAD911371C4CE77B836A85471DCF.worker_28080; pac4jCsrfToken=2380aa80-51f7-4580-9b2d-d3833e841fb5; languageDefault=pt-BR; StiMobileDesignerDictionarySettings=%7B%22createFieldOnDoubleClick%22%3Afalse%2C%22createLabel%22%3Afalse%2C%22useAliases%22%3Afalse%7D; StimulsoftMobileDesignerLastTabOnPropertiesPanel=Dictionary"
+            },
+            {
+              "name": "Priority",
+              "value": "u=0"
+            }
+          ],
+          "cookies": [
+            {
+              "name": "JSESSIONID",
+              "value": "0D95DAD911371C4CE77B836A85471DCF.worker_28080"
+            },
+            {
+              "name": "pac4jCsrfToken",
+              "value": "2380aa80-51f7-4580-9b2d-d3833e841fb5"
+            },
+            {
+              "name": "languageDefault",
+              "value": "pt-BR"
+            },
+            {
+              "name": "StiMobileDesignerDictionarySettings",
+              "value": "{\"createFieldOnDoubleClick\":false,\"createLabel\":false,\"useAliases\":false}"
+            },
+            {
+              "name": "StimulsoftMobileDesignerLastTabOnPropertiesPanel",
+              "value": "Dictionary"
+            }
+          ],
+          "queryString": [],
+          "headersSize": 952,
+          "postData": {
+            "mimeType": "application/x-www-form-urlencoded",
+            "params": [
+              {
+                "name": "lock",
+                "value": "114819-1"
+              }
+            ],
+            "text": "lock=114819-1"
+          }
+        },
+        "response": {
+          "status": 200,
+          "statusText": "",
+          "httpVersion": "HTTP/1.1",
+          "headers": [
+            {
+              "name": "Server",
+              "value": "nginx/1.20.2"
+            },
+            {
+              "name": "Date",
+              "value": "Fri, 01 Aug 2025 17:18:37 GMT"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json;charset=UTF-8"
+            },
+            {
+              "name": "Transfer-Encoding",
+              "value": "chunked"
+            },
+            {
+              "name": "Connection",
+              "value": "keep-alive"
+            },
+            {
+              "name": "Cache-Control",
+              "value": "max-age=0"
+            },
+            {
+              "name": "Expires",
+              "value": "Fri, 01 Aug 2025 17:18:37 GMT"
+            }
+          ],
+          "cookies": [],
+          "content": {
+            "mimeType": "application/json; charset=UTF-8",
+            "size": 13,
+            "text": "{\"string\":\"\"}"
+          },
+          "redirectURL": "",
+          "headersSize": 240,
+          "bodySize": 253
+        },
+        "cache": {},
+        "timings": {
+          "blocked": -1,
+          "dns": 0,
+          "connect": 0,
+          "ssl": 0,
+          "send": 0,
+          "wait": 68,
+          "receive": 2
+        },
+        "time": 70,
+        "_securityState": "insecure",
+        "serverIPAddress": "150.230.89.212",
+        "connection": "80",
+        "pageref": "page_1"
+      }
+    ]
+  }
+}
