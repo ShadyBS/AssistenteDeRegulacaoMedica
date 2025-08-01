@@ -15,6 +15,7 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ### 🐞 Fixed
 
+- Corrigido vazamento de memória (memory leak) em `sidebar.js` ao garantir que todos os event listeners globais sejam removidos quando a sidebar é fechada ou recarregada.
 - Corrigido erro `ReferenceError: browser is not defined` em `sidebar.js` e `options.js` usando alias cross-browser (`const api = window.browser || window.chrome`).
 - Garantido uso do `browser-polyfill.js` para compatibilidade Edge/Chrome/Firefox.
 - Ajustado todos os botões de recarregar assistente na sidebar para usar `window.location.reload()` ao invés de `api.runtime.reload()`, evitando fechamento da sidebar e melhorando UX.
