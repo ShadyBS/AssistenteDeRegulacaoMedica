@@ -97,7 +97,8 @@ function validateMemoryUsage() {
     const addListenerCount = (content.match(/addEventListener\(/g) || []).length;
     const removeListenerCount = (content.match(/removeEventListener\(/g) || []).length;
     const onChangedAdd = (content.match(/api\.storage\.onChanged\.addListener/g) || []).length;
-    const onChangedRemove = (content.match(/api\.storage\.onChanged\.removeListener/g) || []).length;
+    const onChangedRemove = (content.match(/api\.storage\.onChanged\.removeListener/g) || [])
+      .length;
 
     const totalAdd = addListenerCount + onChangedAdd;
     const totalRemove = removeListenerCount + onChangedRemove;
