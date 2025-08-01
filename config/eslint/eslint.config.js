@@ -66,7 +66,7 @@ export default [
       'no-proto': 'error',
 
       // Medical Data Protection
-      'no-alert': 'warn', // Alerts might expose sensitive data
+      'no-alert': 'warn', // Permitimos alertas no SectionManager apenas com disable-next-line
       'no-debugger': 'error', // No debugger in production
 
       // Extension Specific
@@ -149,8 +149,7 @@ export default [
         'error',
         {
           name: 'window',
-          message:
-            'Use browser/chrome API instead of window in extension context',
+          message: 'Use browser/chrome API instead of window in extension context',
         },
       ],
 
@@ -191,8 +190,7 @@ export default [
         },
         {
           property: 'innerHTML',
-          message:
-            'innerHTML can introduce XSS - use textContent or secure methods',
+          message: 'innerHTML can introduce XSS - use textContent or secure methods',
         },
       ],
     },
@@ -206,14 +204,12 @@ export default [
         'error',
         {
           selector: "MemberExpression[property.name='localStorage']",
-          message:
-            'Use browser.storage.session for medical data instead of localStorage',
+          message: 'Use browser.storage.session for medical data instead of localStorage',
         },
         {
           selector:
             "CallExpression[callee.object.name='JSON'][callee.property.name='stringify'] > MemberExpression[property.name=/(?:cpf|sus|cns|password)/i]",
-          message:
-            'Do not serialize sensitive medical data without sanitization',
+          message: 'Do not serialize sensitive medical data without sanitization',
         },
       ],
 
@@ -241,6 +237,28 @@ export default [
     rules: {
       'no-console': 'off', // Allow console in tests
       'no-unused-expressions': 'off', // Allow expect statements
+    },
+  },
+
+  // Prettier integration - deve ser o último para garantir que as regras do Prettier sobrescrevam as do ESLint
+  {
+    files: ['**/*.js', '**/*.jsx', '**/*.ts', '**/*.tsx'],
+    rules: {
+      // Desativamos regras que podem entrar em conflito com o Prettier
+      indent: 'off',
+      'quote-props': 'off',
+      quotes: 'off',
+      'brace-style': 'off',
+      'object-curly-spacing': 'off',
+      'array-bracket-spacing': 'off',
+      'arrow-parens': 'off',
+      'comma-dangle': 'off',
+      'computed-property-spacing': 'off',
+      'max-len': 'off',
+      'no-mixed-spaces-and-tabs': 'off',
+      'no-multi-spaces': 'off',
+      'space-before-function-paren': 'off',
+      'keyword-spacing': 'off',
     },
   },
 ];

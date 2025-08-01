@@ -3,10 +3,10 @@
  * Creates ZIP and CRX packages for Chrome Web Store
  */
 
-import fs from 'fs-extra';
-import path from 'path';
 import archiver from 'archiver';
 import crypto from 'crypto';
+import fs from 'fs-extra';
+import path from 'path';
 import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -22,31 +22,30 @@ class ChromePackager {
 
   async packageExtension() {
     console.log('📦 Packaging Chrome extension...');
-    
+
     try {
       // Validate build exists
       await this.validateBuild();
-      
+
       // Get version
       this.version = await this.getVersion();
-      
+
       // Create packages directory
       await fs.ensureDir(this.packageDir);
-      
+
       // Validate package contents
       await this.validatePackage();
-      
+
       // Create ZIP package
       await this.createZipPackage();
-      
+
       // Create CRX package if private key exists
       await this.createCrxPackage();
-      
+
       // Generate metadata
       await this.generateMetadata();
-      
+
       console.log('✅ Chrome extension packaged successfully');
-      
     } catch (error) {
       console.error('❌ Chrome packaging failed:', error);
       process.exit(1);
@@ -55,26 +54,21 @@ class ChromePackager {
 
   async validateBuild() {
     console.log('🔍 Validating Chrome build...');
-    
-    if (!await fs.pathExists(this.distDir)) {
+
+    if (!(await fs.pathExists(this.distDir))) {
       throw new Error('Chrome build directory not found. Run build first.');
     }
-    
+
     // Check required files
-    const requiredFiles = [
-      'manifest.json',
-      'background.js',
-      'sidebar.js',
-      'content-script.js'
-    ];
-    
+    const requiredFiles = ['manifest.json', 'background.js', 'sidebar.js', 'content-script.js'];
+
     for (const file of requiredFiles) {
       const filePath = path.join(this.distDir, file);
-      if (!await fs.pathExists(filePath)) {
+      if (!(await fs.pathExists(filePath))) {
         throw new Error(`Required file not found in Chrome build: ${file}`);
       }
     }
-    
+
     console.log('✅ Chrome build validation passed');
   }
 
@@ -86,76 +80,76 @@ class ChromePackager {
 
   async validatePackage() {
     console.log('📋 Validating package contents...');
-    
+
     const manifestPath = path.join(this.distDir, 'manifest.json');
     const manifest = await fs.readJson(manifestPath);
-    
+
     // Validate required manifest fields for Chrome Web Store
-    const requiredFields = [
-      'name',
-      'version',
-      'description',
-      'manifest_version'
-    ];
-    
-    const missingFields = requiredFields.filter(field => !manifest[field]);
+    const requiredFields = ['name', 'version', 'description', 'manifest_version'];
+
+    const missingFields = requiredFields.filter((field) => !manifest[field]);
     if (missingFields.length > 0) {
       throw new Error(`Missing required manifest fields: ${missingFields.join(', ')}`);
     }
-    
+
     // Validate manifest version
     if (manifest.manifest_version !== 3) {
       throw new Error('Chrome Web Store requires Manifest V3');
     }
-    
+
     // Validate icons
     if (!manifest.icons || !manifest.icons['128']) {
       throw new Error('Chrome Web Store requires 128x128 icon');
     }
-    
+
     // Check icon files exist
-    for (const [size, iconPath] of Object.entries(manifest.icons)) {
+    for (const [, iconPath] of Object.entries(manifest.icons)) {
       const fullIconPath = path.join(this.distDir, iconPath);
-      if (!await fs.pathExists(fullIconPath)) {
+      if (!(await fs.pathExists(fullIconPath))) {
         throw new Error(`Icon file not found: ${iconPath}`);
       }
-      
+
       // Validate icon size (basic check)
       const stats = await fs.stat(fullIconPath);
       if (stats.size === 0) {
         throw new Error(`Icon file is empty: ${iconPath}`);
       }
     }
-    
+
     // Validate package size
     const packageStats = await this.getDirectorySize(this.distDir);
     const maxSize = 128 * 1024 * 1024; // 128MB Chrome Web Store limit
-    
+
     if (packageStats.size > maxSize) {
-      throw new Error(`Package size (${this.formatBytes(packageStats.size)}) exceeds Chrome Web Store limit (128MB)`);
+      throw new Error(
+        `Package size (${this.formatBytes(
+          packageStats.size
+        )}) exceeds Chrome Web Store limit (128MB)`
+      );
     }
-    
+
     // Validate permissions
-    const permissions = [
-      ...(manifest.permissions || []),
-      ...(manifest.host_permissions || [])
-    ];
-    
+    const permissions = [...(manifest.permissions || []), ...(manifest.host_permissions || [])];
+
     // Check for dangerous permissions that need justification
     const dangerousPermissions = ['<all_urls>', 'tabs', 'history', 'cookies'];
-    const hasDangerous = permissions.some(p => dangerousPermissions.includes(p));
-    
+    const hasDangerous = permissions.some((p) => dangerousPermissions.includes(p));
+
     if (hasDangerous) {
-      console.warn('⚠️ Package contains permissions that may require justification in Chrome Web Store');
+      console.warn(
+        '⚠️ Package contains permissions that may require justification in Chrome Web Store'
+      );
     }
-    
+
     // Medical data compliance check
-    if (manifest.description.toLowerCase().includes('médica') || 
-        manifest.description.toLowerCase().includes('medical')) {
+    if (
+      manifest.description.toLowerCase().includes('médica') ||
+      manifest.description.toLowerCase().includes('medical')
+    ) {
       console.log('🏥 Medical extension detected - ensuring privacy compliance');
       await this.validateMedicalCompliance(manifest);
     }
-    
+
     console.log(`✅ Package validation passed (${this.formatBytes(packageStats.size)})`);
   }
 
@@ -165,21 +159,21 @@ class ChromePackager {
     if (!csp || csp.includes('http:')) {
       console.warn('⚠️ Medical extension should use HTTPS-only CSP');
     }
-    
+
     // Check for privacy policy requirement
     if (!manifest.homepage_url && !manifest.privacy_policy) {
       console.warn('⚠️ Medical extensions typically require privacy policy');
     }
-    
+
     // Validate permissions for medical use case
     const permissions = manifest.permissions || [];
     const hasStorage = permissions.includes('storage');
     const hasScripting = permissions.includes('scripting');
-    
+
     if (!hasStorage) {
       console.warn('⚠️ Medical extension may need storage permission for patient data');
     }
-    
+
     if (!hasScripting) {
       console.warn('⚠️ Medical extension may need scripting permission for SIGSS integration');
     }
@@ -187,30 +181,30 @@ class ChromePackager {
 
   async createZipPackage() {
     console.log('📦 Creating ZIP package...');
-    
+
     const zipName = `AssistenteDeRegulacao-chrome-v${this.version}.zip`;
     const zipPath = path.join(this.packageDir, zipName);
-    
+
     return new Promise((resolve, reject) => {
       const output = fs.createWriteStream(zipPath);
       const archive = archiver('zip', {
-        zlib: { level: 9 } // Maximum compression
+        zlib: { level: 9 }, // Maximum compression
       });
-      
+
       output.on('close', () => {
         const sizeBytes = archive.pointer();
         console.log(`✅ ZIP package created: ${zipName} (${this.formatBytes(sizeBytes)})`);
         resolve(zipPath);
       });
-      
+
       output.on('error', reject);
       archive.on('error', reject);
-      
+
       archive.pipe(output);
-      
+
       // Add all files from dist directory
       archive.directory(this.distDir, false);
-      
+
       // Finalize the archive
       archive.finalize();
     });
@@ -218,38 +212,37 @@ class ChromePackager {
 
   async createCrxPackage() {
     console.log('🔐 Creating CRX package...');
-    
+
     const privateKeyPath = path.join(this.keysDir, 'chrome-private-key.pem');
-    
-    if (!await fs.pathExists(privateKeyPath)) {
+
+    if (!(await fs.pathExists(privateKeyPath))) {
       console.log('⚠️ Private key not found, skipping CRX generation');
       console.log(`💡 To generate CRX packages, place private key at: ${privateKeyPath}`);
       return;
     }
-    
+
     try {
       // Dynamic import of CRX library
       const { ChromeExtension } = await import('crx3');
-      
+
       const crxName = `AssistenteDeRegulacao-chrome-v${this.version}.crx`;
       const crxPath = path.join(this.packageDir, crxName);
-      
+
       const privateKey = await fs.readFile(privateKeyPath);
-      
+
       const crx = new ChromeExtension({
         codebase: `https://github.com/ShadyBS/AssistenteDeRegulacaoMedica/releases/download/v${this.version}/${crxName}`,
-        privateKey: privateKey
+        privateKey: privateKey,
       });
-      
+
       const crxBuffer = await crx.load(this.distDir);
       await fs.writeFile(crxPath, crxBuffer);
-      
+
       const stats = await fs.stat(crxPath);
       console.log(`✅ CRX package created: ${crxName} (${this.formatBytes(stats.size)})`);
-      
+
       // Generate public key for verification
       await this.generatePublicKey(privateKey, crxName);
-      
     } catch (error) {
       console.warn(`⚠️ CRX generation failed: ${error.message}`);
       console.log('💡 Install crx3 package: npm install crx3');
@@ -261,12 +254,12 @@ class ChromePackager {
       const publicKey = crypto.createPublicKey(privateKey);
       const publicKeyPem = publicKey.export({
         type: 'spki',
-        format: 'pem'
+        format: 'pem',
       });
-      
+
       const publicKeyPath = path.join(this.packageDir, `${crxName}.pub`);
       await fs.writeFile(publicKeyPath, publicKeyPem);
-      
+
       console.log(`🔑 Public key generated: ${path.basename(publicKeyPath)}`);
     } catch (error) {
       console.warn(`⚠️ Public key generation failed: ${error.message}`);
@@ -275,29 +268,29 @@ class ChromePackager {
 
   async generateMetadata() {
     console.log('📄 Generating package metadata...');
-    
+
     const manifestPath = path.join(this.distDir, 'manifest.json');
     const manifest = await fs.readJson(manifestPath);
-    
+
     // Calculate package checksums
     const packages = await fs.readdir(this.packageDir);
     const checksums = {};
-    
+
     for (const packageFile of packages) {
       const packagePath = path.join(this.packageDir, packageFile);
       const stats = await fs.stat(packagePath);
-      
+
       if (stats.isFile() && (packageFile.endsWith('.zip') || packageFile.endsWith('.crx'))) {
         const buffer = await fs.readFile(packagePath);
         const hash = crypto.createHash('sha256').update(buffer).digest('hex');
         checksums[packageFile] = {
           sha256: hash,
           size: stats.size,
-          sizeFormatted: this.formatBytes(stats.size)
+          sizeFormatted: this.formatBytes(stats.size),
         };
       }
     }
-    
+
     // Package metadata
     const metadata = {
       name: manifest.name,
@@ -312,27 +305,30 @@ class ChromePackager {
         requirements: {
           manifestVersion: 3,
           maxSize: '128MB',
-          requiredFields: ['name', 'version', 'description', 'icons']
-        }
+          requiredFields: ['name', 'version', 'description', 'icons'],
+        },
       },
       security: {
         permissions: manifest.permissions || [],
         hostPermissions: manifest.host_permissions || [],
-        csp: manifest.content_security_policy?.extension_pages || 'Not specified'
+        csp: manifest.content_security_policy?.extension_pages || 'Not specified',
       },
       medicalCompliance: {
         gdprCompliant: true,
         hipaaConsiderations: 'Extension handles medical data - ensure proper data handling',
         privacyPolicy: 'Required for medical applications',
-        dataRetention: 'Session storage only - no persistent medical data'
-      }
+        dataRetention: 'Session storage only - no persistent medical data',
+      },
     };
-    
-    const metadataPath = path.join(this.packageDir, `chrome-package-metadata-v${this.version}.json`);
+
+    const metadataPath = path.join(
+      this.packageDir,
+      `chrome-package-metadata-v${this.version}.json`
+    );
     await fs.writeJson(metadataPath, metadata, { spaces: 2 });
-    
+
     console.log(`📄 Metadata generated: ${path.basename(metadataPath)}`);
-    
+
     // Generate upload instructions
     await this.generateUploadInstructions(metadata);
   }
@@ -348,7 +344,9 @@ class ChromePackager {
 - **Manifest Version:** ${metadata.manifestVersion}
 
 ## Files to Upload
-${Object.keys(metadata.packages).map(pkg => `- ${pkg} (${metadata.packages[pkg].sizeFormatted})`).join('\n')}
+${Object.keys(metadata.packages)
+  .map((pkg) => `- ${pkg} (${metadata.packages[pkg].sizeFormatted})`)
+  .join('\n')}
 
 ## Upload Steps
 
@@ -399,7 +397,7 @@ For automated uploads, use Chrome Web Store API:
 # Set environment variables
 export CHROME_EXTENSION_ID="your-extension-id"
 export CHROME_CLIENT_ID="your-client-id"
-export CHROME_CLIENT_SECRET="your-client-secret" 
+export CHROME_CLIENT_SECRET="your-client-secret"
 export CHROME_REFRESH_TOKEN="your-refresh-token"
 
 # Run upload script
@@ -410,23 +408,26 @@ npm run upload:chrome
 Generated on ${metadata.buildDate}
 `;
 
-    const instructionsPath = path.join(this.packageDir, `chrome-upload-instructions-v${metadata.version}.md`);
+    const instructionsPath = path.join(
+      this.packageDir,
+      `chrome-upload-instructions-v${metadata.version}.md`
+    );
     await fs.writeFile(instructionsPath, instructionsContent.trim());
-    
+
     console.log(`📋 Upload instructions: ${path.basename(instructionsPath)}`);
   }
 
   async getDirectorySize(dirPath) {
     let totalSize = 0;
     let fileCount = 0;
-    
+
     const getAllFiles = async (dir) => {
       const files = await fs.readdir(dir);
-      
+
       for (const file of files) {
         const fullPath = path.join(dir, file);
         const stats = await fs.stat(fullPath);
-        
+
         if (stats.isDirectory()) {
           await getAllFiles(fullPath);
         } else {
@@ -435,7 +436,7 @@ Generated on ${metadata.buildDate}
         }
       }
     };
-    
+
     await getAllFiles(dirPath);
     return { size: totalSize, files: fileCount };
   }
@@ -444,7 +445,7 @@ Generated on ${metadata.buildDate}
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
     if (bytes === 0) return '0 Bytes';
     const i = Math.floor(Math.log(bytes) / Math.log(1024));
-    return Math.round(bytes / Math.pow(1024, i) * 100) / 100 + ' ' + sizes[i];
+    return Math.round((bytes / Math.pow(1024, i)) * 100) / 100 + ' ' + sizes[i];
   }
 }
 
@@ -452,14 +453,14 @@ Generated on ${metadata.buildDate}
 async function main() {
   const packager = new ChromePackager();
   await packager.packageExtension();
-  
+
   console.log('\n🎉 Chrome packaging completed successfully!');
   console.log('📦 Ready for Chrome Web Store upload');
 }
 
 // Run if called directly
 if (import.meta.url === `file://${process.argv[1]}`) {
-  main().catch(error => {
+  main().catch((error) => {
     console.error('❌ Chrome packaging script failed:', error);
     process.exit(1);
   });

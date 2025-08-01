@@ -25,7 +25,7 @@
       },
       "detail": "Inicia desenvolvimento com hot reload"
     },
-    
+
     {
       "label": "🏗️ Build: All Browsers",
       "type": "shell",
@@ -43,7 +43,7 @@
       "problemMatcher": ["$eslint-stylish"],
       "detail": "Build para Chrome, Firefox e Edge"
     },
-    
+
     {
       "label": "🔍 Validate: Complete",
       "type": "shell",
@@ -61,7 +61,7 @@
       "problemMatcher": ["$eslint-stylish"],
       "detail": "Validação completa: manifest, segurança, performance"
     },
-    
+
     {
       "label": "🧪 Test: All Tests",
       "type": "shell",
@@ -82,7 +82,7 @@
       "problemMatcher": ["$eslint-stylish"],
       "detail": "Executa todos os testes (unit, integration, e2e)"
     },
-    
+
     {
       "label": "🧪 Test: Unit Only",
       "type": "shell",
@@ -100,7 +100,7 @@
       "problemMatcher": ["$eslint-stylish"],
       "detail": "Executa apenas testes unitários"
     },
-    
+
     {
       "label": "🧪 Test: Watch Mode",
       "type": "shell",
@@ -119,7 +119,7 @@
       "problemMatcher": ["$eslint-stylish"],
       "detail": "Testes em modo watch (re-executa ao salvar)"
     },
-    
+
     {
       "label": "📊 Test: Coverage Report",
       "type": "shell",
@@ -137,7 +137,7 @@
       "problemMatcher": ["$eslint-stylish"],
       "detail": "Gera relatório de cobertura de testes"
     },
-    
+
     {
       "label": "🔧 Lint: Fix All",
       "type": "shell",
@@ -155,7 +155,7 @@
       "problemMatcher": ["$eslint-stylish"],
       "detail": "Corrige automaticamente problemas de lint"
     },
-    
+
     {
       "label": "🎨 Build: CSS Only",
       "type": "shell",
@@ -172,7 +172,7 @@
       },
       "detail": "Compila apenas o TailwindCSS"
     },
-    
+
     {
       "label": "📦 Package: All Stores",
       "type": "shell",
@@ -190,7 +190,7 @@
       "problemMatcher": ["$eslint-stylish"],
       "detail": "Gera packages para todas as web stores"
     },
-    
+
     {
       "label": "🚀 Release: Patch",
       "type": "shell",
@@ -207,7 +207,7 @@
       },
       "detail": "Release patch version (bug fixes)"
     },
-    
+
     {
       "label": "🚀 Release: Minor",
       "type": "shell",
@@ -224,7 +224,7 @@
       },
       "detail": "Release minor version (new features)"
     },
-    
+
     {
       "label": "🔒 Security: Scan",
       "type": "shell",
@@ -241,7 +241,7 @@
       },
       "detail": "Scan de segurança e vulnerabilidades"
     },
-    
+
     {
       "label": "🧹 Clean: All",
       "type": "shell",
@@ -258,7 +258,7 @@
       },
       "detail": "Limpa todos os arquivos de build"
     },
-    
+
     {
       "label": "🌐 Serve: Firefox",
       "type": "shell",
@@ -276,7 +276,7 @@
       "isBackground": true,
       "detail": "Serve extensão no Firefox para teste"
     },
-    
+
     {
       "label": "📋 Docs: Generate",
       "type": "shell",
@@ -293,7 +293,7 @@
       },
       "detail": "Gera documentação JSDoc"
     },
-    
+
     {
       "label": "🏥 Medical: Compliance Check",
       "type": "shell",
@@ -310,7 +310,7 @@
       },
       "detail": "Verifica compliance médico (GDPR/LGPD)"
     },
-    
+
     {
       "label": "⚡ Quick: Pre-commit",
       "type": "shell",

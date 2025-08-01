@@ -15,7 +15,7 @@
     "command": "workbench.action.tasks.runTask",
     "args": "🎨 Build: CSS Only"
   },
-  
+
   // 🧪 Testing
   {
     "key": "ctrl+shift+t",
@@ -37,7 +37,7 @@
     "command": "workbench.action.tasks.runTask",
     "args": "📊 Test: Coverage Report"
   },
-  
+
   // 🔍 Validation & Linting
   {
     "key": "ctrl+shift+v",
@@ -49,7 +49,7 @@
     "command": "workbench.action.tasks.runTask",
     "args": "🔧 Lint: Fix All"
   },
-  
+
   // 🔒 Security & Medical
   {
     "key": "ctrl+shift+s ctrl+shift+c",
@@ -61,7 +61,7 @@
     "command": "workbench.action.tasks.runTask",
     "args": "🏥 Medical: Compliance Check"
   },
-  
+
   // 📦 Package & Release
   {
     "key": "ctrl+shift+p ctrl+shift+a",
@@ -78,7 +78,7 @@
     "command": "workbench.action.tasks.runTask",
     "args": "🚀 Release: Minor"
   },
-  
+
   // 🧹 Utilities
   {
     "key": "ctrl+shift+x ctrl+shift+c",
@@ -90,21 +90,21 @@
     "command": "workbench.action.tasks.runTask",
     "args": "⚡ Quick: Pre-commit"
   },
-  
+
   // 📝 Documentation
   {
     "key": "ctrl+shift+d ctrl+shift+g",
     "command": "workbench.action.tasks.runTask",
     "args": "📋 Docs: Generate"
   },
-  
+
   // 🌐 Browser Specific
   {
     "key": "ctrl+shift+f ctrl+shift+s",
     "command": "workbench.action.tasks.runTask",
     "args": "🌐 Serve: Firefox"
   },
-  
+
   // 🎯 Debug Shortcuts
   {
     "key": "f5",
@@ -126,7 +126,7 @@
     "command": "workbench.action.debug.restart",
     "when": "inDebugMode"
   },
-  
+
   // 📁 File Navigation for Extension Development
   {
     "key": "ctrl+shift+m",
@@ -148,7 +148,7 @@
     "command": "workbench.action.quickOpen",
     "args": "background.js"
   },
-  
+
   // 🔍 Search Specific to Medical Extension
   {
     "key": "ctrl+shift+f ctrl+shift+m",
@@ -168,7 +168,7 @@
       "isRegex": false
     }
   },
-  
+
   // 📋 Code Snippets
   {
     "key": "ctrl+shift+i ctrl+shift+c",

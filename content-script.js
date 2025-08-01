@@ -5,9 +5,7 @@
  */
 
 (function () {
-  console.log(
-    '[Assistente de Regulação] Script de controle v16 (Detecção com Broker) ativo.'
-  );
+  console.log('[Assistente de Regulação] Script de controle v16 (Detecção com Broker) ativo.');
 
   const api = browser;
   let lastProcessedReguId = null;
@@ -15,8 +13,7 @@
   const checkMaintenanceTab = () => {
     const maintenanceTabPanel = document.getElementById('tabs-manutencao');
     const isActive =
-      maintenanceTabPanel &&
-      maintenanceTabPanel.getAttribute('aria-expanded') === 'true';
+      maintenanceTabPanel && maintenanceTabPanel.getAttribute('aria-expanded') === 'true';
 
     if (isActive) {
       const idpElement = document.querySelector('#regu\\.reguPK\\.idp');
@@ -40,10 +37,7 @@
           try {
             api.runtime.sendMessage({ type: 'SAVE_REGULATION_DATA', payload });
           } catch (e) {
-            console.error(
-              '[Assistente] Falha ao enviar mensagem para o background script:',
-              e
-            );
+            console.error('[Assistente] Falha ao enviar mensagem para o background script:', e);
           }
         }
       }

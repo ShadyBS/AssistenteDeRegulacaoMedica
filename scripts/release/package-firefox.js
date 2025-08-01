@@ -103,9 +103,7 @@ class FirefoxPackager {
       // 2. Aplicações específicas (se manifest v2)
       if (manifest.manifest_version === 2) {
         if (!manifest.applications && !manifest.browser_specific_settings) {
-          errors.push(
-            'applications ou browser_specific_settings necessário para Firefox'
-          );
+          errors.push('applications ou browser_specific_settings necessário para Firefox');
         }
       }
 
@@ -116,24 +114,17 @@ class FirefoxPackager {
         }
       } else {
         if (!manifest.background || !manifest.background.service_worker) {
-          errors.push(
-            'background.service_worker necessário para Firefox Manifest v3'
-          );
+          errors.push('background.service_worker necessário para Firefox Manifest v3');
         }
       }
 
       // 4. Permissões válidas
       if (manifest.permissions) {
         const invalidPerms = manifest.permissions.filter(
-          (perm) =>
-            perm.includes('://') &&
-            !perm.startsWith('*://') &&
-            !perm.includes('*')
+          (perm) => perm.includes('://') && !perm.startsWith('*://') && !perm.includes('*')
         );
         if (invalidPerms.length > 0) {
-          errors.push(
-            `Permissões inválidas para Firefox: ${invalidPerms.join(', ')}`
-          );
+          errors.push(`Permissões inválidas para Firefox: ${invalidPerms.join(', ')}`);
         }
       }
 
@@ -191,9 +182,7 @@ class FirefoxPackager {
     console.log(`📊 Tamanho do build: ${sizeMB.toFixed(2)} MB`);
 
     if (sizeMB > maxSizeMB) {
-      console.error(
-        `❌ Build muito grande: ${sizeMB.toFixed(2)} MB > ${maxSizeMB} MB`
-      );
+      console.error(`❌ Build muito grande: ${sizeMB.toFixed(2)} MB > ${maxSizeMB} MB`);
       process.exit(1);
     }
 
@@ -360,7 +349,7 @@ class FirefoxPackager {
             "`,
         { stdio: 'pipe' }
       );
-    } catch (error) {
+    } catch {
       console.warn('⚠️  Não foi possível validar ZIP (adm-zip não disponível)');
     }
 
@@ -381,8 +370,7 @@ class FirefoxPackager {
       },
       amo: {
         compatible_firefox: '91.0',
-        upload_notes:
-          'Automated build for medical regulation assistant extension',
+        upload_notes: 'Automated build for medical regulation assistant extension',
         submission_date: new Date().toISOString(),
         review_required: true,
       },
@@ -472,7 +460,7 @@ class FirefoxPackager {
       };
     } catch (error) {
       console.error('\n❌ Erro no packaging Firefox:');
-      console.error(error.message);
+      console.error('❌ Falha no packaging');
 
       if (error.stack) {
         console.error('\n📍 Stack trace:');
@@ -489,12 +477,12 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   const packager = new FirefoxPackager();
   packager
     .package()
-    .then((result) => {
+    .then(() => {
       console.log('\n✅ Firefox package criado com sucesso!');
       process.exit(0);
     })
-    .catch((error) => {
-      console.error('\n❌ Falha no packaging:', error.message);
+    .catch(() => {
+      console.error('\n❌ Falha no packaging');
       process.exit(1);
     });
 }

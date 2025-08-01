@@ -128,10 +128,9 @@ export const defaultFieldConfig = [
   {
     id: 'endereco',
     key: (data) =>
-      `${
-        data.entidadeFisica?.entidade?.logradouro?.tipoLogradouro?.tiloNome ||
-        ''
-      } ${String(data.entidadeFisica?.entidade?.logradouro?.logrNome || '')
+      `${data.entidadeFisica?.entidade?.logradouro?.tipoLogradouro?.tiloNome || ''} ${String(
+        data.entidadeFisica?.entidade?.logradouro?.logrNome || ''
+      )
         .split('/')[0]
         .trim()}`.trim(),
     cadsusKey: (cell) =>

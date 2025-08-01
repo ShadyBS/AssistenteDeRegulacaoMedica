@@ -37,7 +37,7 @@ async function zipExtension({ zipName, manifestSource }) {
   const output = fs.createWriteStream(zipPath);
   const archive = archiver('zip', { zlib: { level: 9 } });
 
-  return new Promise(async (resolve, reject) => {
+  return new Promise((resolve, reject) => {
     output.on('close', () => {
       console.log(`${zipName} gerado com ${archive.pointer()} bytes.`);
       resolve();
@@ -46,27 +46,27 @@ async function zipExtension({ zipName, manifestSource }) {
     archive.pipe(output);
 
     // Adiciona todos os arquivos exceto os ignorados e os manifests específicos
-    const files = await fs.readdir(SRC_DIR);
-    for (const file of files) {
-      if (FILES_TO_IGNORE.includes(file)) continue;
-      // Ignora os arquivos de manifesto para serem adicionados especificamente depois, de forma case-insensitive
-      const lowerCaseFile = file.toLowerCase();
-      if (
-        lowerCaseFile === 'manifest.json' ||
-        lowerCaseFile === 'manifest-edge.json'
-      )
-        continue;
-      const filePath = path.join(SRC_DIR, file);
-      const stats = await fs.stat(filePath);
-      if (stats.isDirectory()) {
-        archive.directory(filePath, file);
-      } else {
-        archive.file(filePath, { name: file });
+    (async () => {
+      const files = await fs.readdir(SRC_DIR);
+
+      for (const file of files) {
+        if (FILES_TO_IGNORE.includes(file)) continue;
+        // Ignora os arquivos de manifesto para serem adicionados especificamente depois, de forma case-insensitive
+        const lowerCaseFile = file.toLowerCase();
+        if (lowerCaseFile === 'manifest.json' || lowerCaseFile === 'manifest-edge.json') continue;
+        const filePath = path.join(SRC_DIR, file);
+        const stats = await fs.stat(filePath);
+        if (stats.isDirectory()) {
+          archive.directory(filePath, file);
+        } else {
+          archive.file(filePath, { name: file });
+        }
       }
-    }
-    // Adiciona o manifest correto como manifest.json
-    archive.file(path.join(SRC_DIR, manifestSource), { name: 'manifest.json' });
-    archive.finalize();
+
+      // Adiciona o manifest correto como manifest.json
+      archive.file(path.join(SRC_DIR, manifestSource), { name: 'manifest.json' });
+      archive.finalize();
+    })();
   });
 }
 
@@ -79,9 +79,7 @@ const getVersionFromManifest = async (manifestPath) => {
   try {
     // Limpa os arquivos ZIP antigos da pasta de saída
     await fs.ensureDir(OUT_DIR);
-    const oldZips = (await fs.readdir(OUT_DIR)).filter((f) =>
-      f.endsWith('.zip')
-    );
+    const oldZips = (await fs.readdir(OUT_DIR)).filter((f) => f.endsWith('.zip'));
     for (const zip of oldZips) {
       await fs.remove(path.join(OUT_DIR, zip));
     }

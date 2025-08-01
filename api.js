@@ -28,9 +28,7 @@ export async function getBaseUrl() {
  * @param {Response} response - O objeto de resposta do fetch.
  */
 function handleFetchError(response) {
-  console.error(
-    `Erro na requisição: ${response.status} ${response.statusText}`
-  );
+  console.error(`Erro na requisição: ${response.status} ${response.statusText}`);
   throw new Error('Falha na comunicação com o servidor.');
 }
 
@@ -52,9 +50,7 @@ function getTextFromHTML(htmlString) {
  */
 export async function fetchRegulationPriorities() {
   const baseUrl = await getBaseUrl();
-  const url = new URL(
-    `${baseUrl}/sigss/configuracaoGravidade/loadConfiguracaoRegra`
-  );
+  const url = new URL(`${baseUrl}/sigss/configuracaoGravidade/loadConfiguracaoRegra`);
 
   try {
     const response = await fetch(url);
@@ -86,9 +82,7 @@ export async function fetchRegulationDetails({ reguIdp, reguIds }) {
   }
   const baseUrl = await getBaseUrl();
   // Este é o endpoint que vimos no arquivo HAR.
-  const url = new URL(
-    `${baseUrl}/sigss/regulacaoControleSolicitacao/visualiza`
-  );
+  const url = new URL(`${baseUrl}/sigss/regulacaoControleSolicitacao/visualiza`);
   url.search = new URLSearchParams({
     'reguPK.idp': reguIdp,
     'reguPK.ids': reguIds,
@@ -113,9 +107,7 @@ export async function fetchRegulationDetails({ reguIdp, reguIds }) {
     // O objeto de dados está aninhado sob a chave "regulacao"
     return data.regulacao || null;
   } else {
-    throw new Error(
-      'A resposta do servidor não foi JSON. A sessão pode ter expirado.'
-    );
+    throw new Error('A resposta do servidor não foi JSON. A sessão pode ter expirado.');
   }
 }
 
@@ -129,20 +121,14 @@ function parseConsultasHTML(htmlString) {
     const clone = element.cloneNode(true);
     clone
       .querySelectorAll('br')
-      .forEach((br) =>
-        br.parentNode.replaceChild(document.createTextNode('\n'), br)
-      );
+      .forEach((br) => br.parentNode.replaceChild(document.createTextNode('\n'), br));
     return clone.textContent || '';
   };
   const parseDateForSorting = (dateString) => {
-    const datePart = (
-      dateString.split('\n').find((p) => p.startsWith('At')) || dateString
-    )
+    const datePart = (dateString.split('\n').find((p) => p.startsWith('At')) || dateString)
       .replace('At', '')
       .trim();
-    const match = datePart.match(
-      /(\d{2})\/(\d{2})\/(\d{4})(?: (\d{2}):(\d{2}):(\d{2}))?/
-    );
+    const match = datePart.match(/(\d{2})\/(\d{2})\/(\d{4})(?: (\d{2}):(\d{2}):(\d{2}))?/);
     if (!match) return null;
     const [, day, month, year, hour = 0, minute = 0, second = 0] = match;
     return new Date(year, month - 1, day, hour, minute, second);
@@ -177,9 +163,7 @@ function parseConsultasHTML(htmlString) {
     );
     if (endIndex === -1) endIndex = rows.length;
     const blockRows = rows.slice(i + 1, endIndex);
-    const isSoapNote = blockRows.some((row) =>
-      row.textContent.includes('SOAP -')
-    );
+    const isSoapNote = blockRows.some((row) => row.textContent.includes('SOAP -'));
     if (isSoapNote) {
       const soapSections = ['SUBJETIVO', 'OBJETIVO', 'AVALIAÇÃO', 'PLANO'];
       soapSections.forEach((sectionName) => {
@@ -191,8 +175,7 @@ function parseConsultasHTML(htmlString) {
           ciapCid = '',
           obsNota = '';
         const contentEndIndex = blockRows.findIndex(
-          (row, index) =>
-            index > headerRowIndex && row.textContent.includes('SOAP -')
+          (row, index) => index > headerRowIndex && row.textContent.includes('SOAP -')
         );
         const sectionRows = blockRows.slice(
           headerRowIndex + 1,
@@ -200,9 +183,7 @@ function parseConsultasHTML(htmlString) {
         );
         sectionRows.forEach((row) => {
           const diagCell = Array.from(row.querySelectorAll('td')).find(
-            (cell) =>
-              cell.textContent.includes('CID -') ||
-              cell.textContent.includes('CIAP -')
+            (cell) => cell.textContent.includes('CID -') || cell.textContent.includes('CIAP -')
           );
           if (diagCell) {
             ciapCid = diagCell.textContent.trim();
@@ -214,18 +195,13 @@ function parseConsultasHTML(htmlString) {
           const obsCell = Array.from(row.querySelectorAll('td')).find((cell) =>
             cell.textContent.trim().startsWith('OBS./NOTA:')
           );
-          if (obsCell)
-            obsNota = obsCell.textContent.replace('OBS./NOTA:', '').trim();
+          if (obsCell) obsNota = obsCell.textContent.replace('OBS./NOTA:', '').trim();
         });
         let finalValue = '';
         if (ciapCid) finalValue += ciapCid.trim();
-        if (obsNota)
-          finalValue += (finalValue ? '\n' : '') + `Obs.: ${obsNota.trim()}`;
-        if (content)
-          finalValue +=
-            (finalValue ? '\n' : '') + `Descrição: ${content.trim()}`;
-        if (finalValue.trim())
-          consultation.details.push({ label: sectionName, value: finalValue });
+        if (obsNota) finalValue += (finalValue ? '\n' : '') + `Obs.: ${obsNota.trim()}`;
+        if (content) finalValue += (finalValue ? '\n' : '') + `Descrição: ${content.trim()}`;
+        if (finalValue.trim()) consultation.details.push({ label: sectionName, value: finalValue });
       });
     } else {
       blockRows.forEach((row) => {
@@ -255,9 +231,7 @@ function parseConsultasHTML(htmlString) {
           if (obsCell)
             consultation.details.push({
               label: 'Observação de Enfermagem',
-              value: getFormattedText(obsCell)
-                .replace('OBSERVAÇÃO DE ENFERMAGEM:', '')
-                .trim(),
+              value: getFormattedText(obsCell).replace('OBSERVAÇÃO DE ENFERMAGEM:', '').trim(),
             });
         }
       });
@@ -283,24 +257,21 @@ export async function searchPatients(term) {
   const data = await response.json();
   return Array.isArray(data)
     ? data.map((p) => ({
-      idp: p[0],
-      ids: p[1],
-      value: p[5],
-      cns: p[6],
-      dataNascimento: p[7],
-      cpf: p[15],
-    }))
+        idp: p[0],
+        ids: p[1],
+        value: p[5],
+        cns: p[6],
+        dataNascimento: p[7],
+        cpf: p[15],
+      }))
     : [];
 }
 
 export async function fetchVisualizaUsuario({ idp, ids }) {
-  if (!idp || !ids)
-    throw new Error(`ID inválido. idp: '${idp}', ids: '${ids}'.`);
+  if (!idp || !ids) throw new Error(`ID inválido. idp: '${idp}', ids: '${ids}'.`);
   const baseUrl = await getBaseUrl();
   const url = `${baseUrl}/sigss/usuarioServico/visualiza`;
-  const body = `isenPK.idp=${encodeURIComponent(
-    idp
-  )}&isenPK.ids=${encodeURIComponent(ids)}`;
+  const body = `isenPK.idp=${encodeURIComponent(idp)}&isenPK.ids=${encodeURIComponent(ids)}`;
   const response = await fetch(url, {
     method: 'POST',
     headers: {
@@ -317,20 +288,12 @@ export async function fetchVisualizaUsuario({ idp, ids }) {
     const patientData = await response.json();
     return patientData?.usuarioServico || {};
   } else {
-    console.error(
-      'A resposta do servidor não foi JSON. Provável expiração de sessão.'
-    );
-    throw new Error(
-      'A sessão pode ter expirado. Por favor, faça login no sistema novamente.'
-    );
+    console.error('A resposta do servidor não foi JSON. Provável expiração de sessão.');
+    throw new Error('A sessão pode ter expirado. Por favor, faça login no sistema novamente.');
   }
 }
 
-export async function fetchProntuarioHash({
-  isenFullPKCrypto,
-  dataInicial,
-  dataFinal,
-}) {
+export async function fetchProntuarioHash({ isenFullPKCrypto, dataInicial, dataFinal }) {
   const baseUrl = await getBaseUrl();
   const url = `${baseUrl}/sigss/common/queryStrToParamHash`;
   const rawParamString = `isenFullPKCrypto=${isenFullPKCrypto}&moip_idp=4&moip_ids=1&dataInicial=${dataInicial}&dataFinal=${dataFinal}&ppdc=t&consulta_basica=t&obs_enfermagem=t&encaminhamento=t&consulta_especializada=t&consulta_odonto=t&exame_solicitado=t&exame=t&triagem=t&procedimento=t&vacina=t&proc_odonto=t&medicamento_receitado=t&demais_orientacoes=t&medicamento_retirado=t&aih=t&acs=t&lista_espera=t&beneficio=f&internacao=t&apac=t&procedimento_coletivo=t&justificativa=&responsavelNome=&responsavelCPF=&isOdonto=t&isSoOdonto=f`;
@@ -341,18 +304,13 @@ export async function fetchProntuarioHash({
     },
     body: `paramString=${encodeURIComponent(rawParamString)}`,
   });
-  if (!response.ok)
-    throw new Error('Não foi possível gerar o passe de acesso.');
+  if (!response.ok) throw new Error('Não foi possível gerar o passe de acesso.');
   const data = await response.json();
   if (data?.string) return data.string;
   throw new Error(data.mensagem || 'Resposta não continha o hash.');
 }
 
-export async function fetchConsultasEspecializadas({
-  isenFullPKCrypto,
-  dataInicial,
-  dataFinal,
-}) {
+export async function fetchConsultasEspecializadas({ isenFullPKCrypto, dataInicial, dataFinal }) {
   if (!isenFullPKCrypto) throw new Error('ID criptografado necessário.');
   const baseUrl = await getBaseUrl();
   const url = new URL(
@@ -377,16 +335,10 @@ export async function fetchConsultasEspecializadas({
   };
 }
 
-export async function fetchConsultasBasicas({
-  isenFullPKCrypto,
-  dataInicial,
-  dataFinal,
-}) {
+export async function fetchConsultasBasicas({ isenFullPKCrypto, dataInicial, dataFinal }) {
   if (!isenFullPKCrypto) throw new Error('ID criptografado necessário.');
   const baseUrl = await getBaseUrl();
-  const url = new URL(
-    `${baseUrl}/sigss/prontuarioAmbulatorial2/buscaDadosConsulta_HTML`
-  );
+  const url = new URL(`${baseUrl}/sigss/prontuarioAmbulatorial2/buscaDadosConsulta_HTML`);
   url.search = new URLSearchParams({
     isenFullPKCrypto,
     dataInicial,
@@ -406,19 +358,12 @@ export async function fetchConsultasBasicas({
   };
 }
 
-export async function fetchAllConsultations({
-  isenFullPKCrypto,
-  dataInicial,
-  dataFinal,
-}) {
+export async function fetchAllConsultations({ isenFullPKCrypto, dataInicial, dataFinal }) {
   const [basicasResult, especializadasResult] = await Promise.all([
     fetchConsultasBasicas({ isenFullPKCrypto, dataInicial, dataFinal }),
     fetchConsultasEspecializadas({ isenFullPKCrypto, dataInicial, dataFinal }),
   ]);
-  const combinedJsonData = [
-    ...basicasResult.jsonData,
-    ...especializadasResult.jsonData,
-  ];
+  const combinedJsonData = [...basicasResult.jsonData, ...especializadasResult.jsonData];
   const combinedHtmlData = `<h3>Consultas Básicas</h3>${basicasResult.htmlData}<h3>Consultas Especializadas</h3>${especializadasResult.htmlData}`;
   return { jsonData: combinedJsonData, htmlData: combinedHtmlData };
 }
@@ -474,8 +419,7 @@ export async function fetchExamesSolicitados({
 }
 
 export async function fetchResultadoExame({ idp, ids }) {
-  if (!idp || !ids)
-    throw new Error('IDs do resultado do exame são necessários.');
+  if (!idp || !ids) throw new Error('IDs do resultado do exame são necessários.');
   const baseUrl = await getBaseUrl();
   const url = new URL(`${baseUrl}/sigss/resultadoExame/visualizaImagem`);
   url.search = new URLSearchParams({
@@ -499,9 +443,7 @@ export async function fetchCadsusData({ cpf, cns }) {
   }
 
   const baseUrl = await getBaseUrl();
-  const url = new URL(
-    `${baseUrl}/sigss/usuarioServicoConsultaPDQ/consultarPaciente`
-  );
+  const url = new URL(`${baseUrl}/sigss/usuarioServicoConsultaPDQ/consultarPaciente`);
 
   const params = new URLSearchParams({
     _search: 'false',
@@ -676,9 +618,7 @@ export async function fetchAppointments({ isenPK, dataInicial, dataFinal }) {
           const apcn = details.atividadeProfissionalCnes;
 
           if (apcn && apcn.apcnNome) {
-            specialtyString = apcn.apcnCod
-              ? `${apcn.apcnNome} (${apcn.apcnCod})`
-              : apcn.apcnNome;
+            specialtyString = apcn.apcnCod ? `${apcn.apcnNome} (${apcn.apcnCod})` : apcn.apcnNome;
           }
 
           return {
@@ -689,10 +629,7 @@ export async function fetchAppointments({ isenPK, dataInicial, dataFinal }) {
           };
         }
       } catch (error) {
-        console.warn(
-          `Falha ao buscar detalhes para o agendamento ${appt.id}`,
-          error
-        );
+        console.warn(`Falha ao buscar detalhes para o agendamento ${appt.id}`, error);
       }
       return appt;
     });
@@ -704,12 +641,7 @@ export async function fetchAppointments({ isenPK, dataInicial, dataFinal }) {
   return enrichedAppointments;
 }
 
-async function fetchRegulations({
-  isenPK,
-  modalidade,
-  dataInicial,
-  dataFinal,
-}) {
+async function fetchRegulations({ isenPK, modalidade, dataInicial, dataFinal }) {
   if (!isenPK) throw new Error('ID (isenPK) do paciente é necessário.');
   const baseUrl = await getBaseUrl();
   const url = new URL(`${baseUrl}/sigss/regulacaoRegulador/lista`);
@@ -783,12 +715,7 @@ async function fetchRegulations({
   });
 }
 
-export async function fetchAllRegulations({
-  isenPK,
-  dataInicial,
-  dataFinal,
-  type = 'all',
-}) {
+export async function fetchAllRegulations({ isenPK, dataInicial, dataFinal, type = 'all' }) {
   let regulationsToFetch = [];
 
   if (type === 'all') {
@@ -831,10 +758,7 @@ export async function fetchAllRegulations({
           });
           return { ...regulation, attachments };
         } catch (error) {
-          console.warn(
-            `Falha ao buscar anexos para regulação ${regulation.id}:`,
-            error
-          );
+          console.warn(`Falha ao buscar anexos para regulação ${regulation.id}:`, error);
           return { ...regulation, attachments: [] };
         }
       }
@@ -860,8 +784,7 @@ export async function fetchAllRegulations({
 export async function fetchDocuments({ isenPK }) {
   if (!isenPK) throw new Error('ID (isenPK) do paciente é necessário.');
   const [idp, ids] = isenPK.split('-');
-  if (!idp || !ids)
-    throw new Error('ID (isenPK) do paciente em formato inválido.');
+  if (!idp || !ids) throw new Error('ID (isenPK) do paciente em formato inválido.');
 
   const baseUrl = await getBaseUrl();
   const url = new URL(`${baseUrl}/sigss/isar/buscaGrid`);
@@ -947,8 +870,7 @@ export async function fetchRegulationAttachments({ reguIdp, reguIds, isenPK }) {
   if (!isenPK) throw new Error('ID do paciente (isenPK) é necessário.');
 
   const [isenIdp, isenIds] = isenPK.split('-');
-  if (!isenIdp || !isenIds)
-    throw new Error('ID do paciente (isenPK) em formato inválido.');
+  if (!isenIdp || !isenIds) throw new Error('ID do paciente (isenPK) em formato inválido.');
 
   const baseUrl = await getBaseUrl();
   const url = new URL(`${baseUrl}/sigss/rear/buscaGrid`);
@@ -1028,12 +950,7 @@ export async function fetchRegulationAttachmentUrl({ idp, ids }) {
  * @param {object} params - The parameters for the API calls.
  * @returns {Promise<object>} An object containing the data from all sources.
  */
-export async function fetchAllTimelineData({
-  isenPK,
-  isenFullPKCrypto,
-  dataInicial,
-  dataFinal,
-}) {
+export async function fetchAllTimelineData({ isenPK, isenFullPKCrypto, dataInicial, dataFinal }) {
   // Usando um objeto de promessas para tornar a extração de resultados mais robusta.
   const dataPromises = {
     consultations: fetchAllConsultations({

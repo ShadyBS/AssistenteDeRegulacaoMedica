@@ -3,9 +3,9 @@
  * Validates Manifest V3 compliance, permissions, and browser compatibility
  */
 
+import Ajv from 'ajv';
 import fs from 'fs';
 import path from 'path';
-import Ajv from 'ajv';
 import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -25,34 +25,34 @@ class ManifestValidator {
       properties: {
         manifest_version: { const: 3 },
         name: { type: 'string', minLength: 1, maxLength: 132 },
-        version: { 
+        version: {
           type: 'string',
-          pattern: '^[0-9]+\\.[0-9]+\\.[0-9]+$'
+          pattern: '^[0-9]+\\.[0-9]+\\.[0-9]+$',
         },
         description: { type: 'string', maxLength: 10000 },
         permissions: {
           type: 'array',
-          items: { type: 'string' }
+          items: { type: 'string' },
         },
         host_permissions: {
           type: 'array',
-          items: { type: 'string' }
+          items: { type: 'string' },
         },
         content_security_policy: {
           type: 'object',
           properties: {
-            extension_pages: { type: 'string' }
-          }
+            extension_pages: { type: 'string' },
+          },
         },
         background: {
           type: 'object',
           properties: {
             scripts: {
               type: 'array',
-              items: { type: 'string' }
+              items: { type: 'string' },
             },
-            type: { enum: ['module'] }
-          }
+            type: { enum: ['module'] },
+          },
         },
         content_scripts: {
           type: 'array',
@@ -63,30 +63,30 @@ class ManifestValidator {
               matches: {
                 type: 'array',
                 minItems: 1,
-                items: { type: 'string' }
+                items: { type: 'string' },
               },
               js: {
                 type: 'array',
-                items: { type: 'string' }
-              }
-            }
-          }
+                items: { type: 'string' },
+              },
+            },
+          },
         },
         icons: {
           type: 'object',
           properties: {
-            '16': { type: 'string' },
-            '48': { type: 'string' },
-            '128': { type: 'string' }
-          }
-        }
-      }
+            16: { type: 'string' },
+            48: { type: 'string' },
+            128: { type: 'string' },
+          },
+        },
+      },
     };
   }
 
   async validateManifest(manifestPath) {
     console.log(`🔍 Validating manifest: ${manifestPath}`);
-    
+
     try {
       // Check if file exists
       if (!fs.existsSync(manifestPath)) {
@@ -97,7 +97,7 @@ class ManifestValidator {
       // Read and parse manifest
       const manifestContent = fs.readFileSync(manifestPath, 'utf8');
       let manifest;
-      
+
       try {
         manifest = JSON.parse(manifestContent);
       } catch (parseError) {
@@ -108,7 +108,7 @@ class ManifestValidator {
       // Schema validation
       const isValid = this.ajv.validate(this.manifestV3Schema, manifest);
       if (!isValid) {
-        this.ajv.errors.forEach(error => {
+        this.ajv.errors.forEach((error) => {
           this.addError(`Schema validation: ${error.instancePath} ${error.message}`);
         });
       }
@@ -124,7 +124,6 @@ class ManifestValidator {
       this.validateMedicalDataCompliance(manifest);
 
       return this.errors.length === 0;
-
     } catch (error) {
       this.addError(`Validation error: ${error.message}`);
       return false;
@@ -133,50 +132,43 @@ class ManifestValidator {
 
   validatePermissions(manifest) {
     const dangerousPermissions = [
-      '<all_urls>', 
-      'tabs', 
-      'history', 
-      'bookmarks', 
+      '<all_urls>',
+      'tabs',
+      'history',
+      'bookmarks',
       'cookies',
       'debugger',
       'nativeMessaging',
-      'privacy'
+      'privacy',
     ];
-    
-    const permissions = [
-      ...(manifest.permissions || []),
-      ...(manifest.host_permissions || [])
-    ];
-    
+
+    const permissions = [...(manifest.permissions || []), ...(manifest.host_permissions || [])];
+
     // Check for dangerous permissions
-    const dangerous = permissions.filter(p => 
-      dangerousPermissions.some(dp => p.includes(dp))
-    );
-    
+    const dangerous = permissions.filter((p) => dangerousPermissions.some((dp) => p.includes(dp)));
+
     if (dangerous.length > 0) {
-      dangerous.forEach(perm => {
+      dangerous.forEach((perm) => {
         this.addWarning(`Potentially dangerous permission: ${perm}`);
       });
     }
 
     // Validate medical data specific permissions
     const requiredPermissions = ['storage', 'scripting'];
-    const missingRequired = requiredPermissions.filter(req => 
-      !permissions.includes(req)
-    );
-    
+    const missingRequired = requiredPermissions.filter((req) => !permissions.includes(req));
+
     if (missingRequired.length > 0) {
-      missingRequired.forEach(perm => {
+      missingRequired.forEach((perm) => {
         this.addError(`Missing required permission: ${perm}`);
       });
     }
 
     // Check host permissions for SIGSS
     const hostPermissions = manifest.host_permissions || [];
-    const hasSigssPermission = hostPermissions.some(host => 
-      host.includes('sigss') || host.includes('<all_urls>')
+    const hasSigssPermission = hostPermissions.some(
+      (host) => host.includes('sigss') || host.includes('<all_urls>')
     );
-    
+
     if (!hasSigssPermission) {
       this.addError('Missing SIGSS host permission for medical system integration');
     }
@@ -187,24 +179,22 @@ class ManifestValidator {
       this.addError('Missing icons object');
       return;
     }
-    
+
     const requiredSizes = ['16', '48', '128'];
     const availableSizes = Object.keys(manifest.icons);
-    const missingSizes = requiredSizes.filter(size => 
-      !availableSizes.includes(size)
-    );
-    
+    const missingSizes = requiredSizes.filter((size) => !availableSizes.includes(size));
+
     if (missingSizes.length > 0) {
-      missingSizes.forEach(size => {
+      missingSizes.forEach((size) => {
         this.addError(`Missing required icon size: ${size}`);
       });
     }
 
     // Validate icon file paths
-    Object.entries(manifest.icons).forEach(([size, path]) => {
-      const iconPath = this.resolveIconPath(path);
+    Object.entries(manifest.icons).forEach(([, iconPathRel]) => {
+      const iconPath = this.resolveIconPath(iconPathRel);
       if (!fs.existsSync(iconPath)) {
-        this.addError(`Icon file not found: ${path}`);
+        this.addError(`Icon file not found: ${iconPathRel}`);
       }
     });
   }
@@ -214,7 +204,7 @@ class ManifestValidator {
       this.addWarning('No content scripts defined');
       return;
     }
-    
+
     manifest.content_scripts.forEach((script, index) => {
       if (!script.matches || script.matches.length === 0) {
         this.addError(`Content script ${index}: missing or empty matches array`);
@@ -225,17 +215,15 @@ class ManifestValidator {
       }
 
       // Validate SIGSS-specific patterns
-      const hasSigssMatch = script.matches.some(match => 
-        match.includes('sigss')
-      );
-      
+      const hasSigssMatch = script.matches.some((match) => match.includes('sigss'));
+
       if (!hasSigssMatch) {
         this.addWarning(`Content script ${index}: no SIGSS-specific match patterns`);
       }
 
       // Validate script files exist
       if (script.js) {
-        script.js.forEach(jsFile => {
+        script.js.forEach((jsFile) => {
           const scriptPath = this.resolveScriptPath(jsFile);
           if (!fs.existsSync(scriptPath)) {
             this.addError(`Content script file not found: ${jsFile}`);
@@ -249,14 +237,14 @@ class ManifestValidator {
     if (!manifest.web_accessible_resources) {
       return; // Optional for this extension
     }
-    
+
     // Validate new Manifest V3 format
     if (Array.isArray(manifest.web_accessible_resources)) {
       manifest.web_accessible_resources.forEach((resource, index) => {
         if (!resource.resources || !Array.isArray(resource.resources)) {
           this.addError(`Web accessible resource ${index}: missing or invalid resources array`);
         }
-        
+
         if (!resource.matches || !Array.isArray(resource.matches)) {
           this.addError(`Web accessible resource ${index}: missing or invalid matches array`);
         }
@@ -268,7 +256,7 @@ class ManifestValidator {
 
   validateContentSecurityPolicy(manifest) {
     const csp = manifest.content_security_policy;
-    
+
     if (!csp) {
       this.addWarning('No Content Security Policy defined');
       return;
@@ -280,16 +268,11 @@ class ManifestValidator {
     }
 
     const extensionCSP = csp.extension_pages;
-    
+
     // Check for unsafe directives
-    const unsafeDirectives = [
-      "'unsafe-eval'",
-      "'unsafe-inline'",
-      'data:',
-      "'unsafe-hashes'"
-    ];
-    
-    unsafeDirectives.forEach(directive => {
+    const unsafeDirectives = ["'unsafe-eval'", "'unsafe-inline'", 'data:', "'unsafe-hashes'"];
+
+    unsafeDirectives.forEach((directive) => {
       if (extensionCSP.includes(directive)) {
         this.addWarning(`Potentially unsafe CSP directive: ${directive}`);
       }
@@ -312,7 +295,7 @@ class ManifestValidator {
 
   validateBackgroundScript(manifest) {
     const background = manifest.background;
-    
+
     if (!background) {
       this.addWarning('No background script defined');
       return;
@@ -332,7 +315,7 @@ class ManifestValidator {
     }
 
     // Validate background script files exist
-    background.scripts.forEach(scriptFile => {
+    background.scripts.forEach((scriptFile) => {
       const scriptPath = this.resolveScriptPath(scriptFile);
       if (!fs.existsSync(scriptPath)) {
         this.addError(`Background script file not found: ${scriptFile}`);
@@ -357,9 +340,9 @@ class ManifestValidator {
     // Validate permissions compatibility
     const permissions = manifest.permissions || [];
     const chromeOnlyPermissions = ['clipboardWrite', 'alarms'];
-    const firefoxOnlyPermissions = ['nativeMessaging'];
-    
-    chromeOnlyPermissions.forEach(perm => {
+    // const firefoxOnlyPermissions = ['nativeMessaging'];
+
+    chromeOnlyPermissions.forEach((perm) => {
       if (permissions.includes(perm)) {
         this.addWarning(`Permission '${perm}' may not be supported in all browsers`);
       }
@@ -368,19 +351,16 @@ class ManifestValidator {
 
   validateMedicalDataCompliance(manifest) {
     // Medical data specific validations
-    const permissions = [
-      ...(manifest.permissions || []),
-      ...(manifest.host_permissions || [])
-    ];
+    const permissions = [...(manifest.permissions || []), ...(manifest.host_permissions || [])];
 
     // Check for privacy-sensitive permissions
     const privacyPermissions = ['tabs', 'history', 'cookies', 'identity'];
-    const hasPrivacyPermissions = permissions.some(p => 
-      privacyPermissions.includes(p)
-    );
+    const hasPrivacyPermissions = permissions.some((p) => privacyPermissions.includes(p));
 
     if (hasPrivacyPermissions) {
-      this.addWarning('Extension requests privacy-sensitive permissions - ensure GDPR/LGPD compliance');
+      this.addWarning(
+        'Extension requests privacy-sensitive permissions - ensure GDPR/LGPD compliance'
+      );
     }
 
     // Validate CSP for secure medical data handling
@@ -393,7 +373,9 @@ class ManifestValidator {
     const contentScripts = manifest.content_scripts || [];
     contentScripts.forEach((script, index) => {
       if (script.all_frames === true) {
-        this.addWarning(`Content script ${index}: all_frames=true may expose medical data in iframes`);
+        this.addWarning(
+          `Content script ${index}: all_frames=true may expose medical data in iframes`
+        );
       }
     });
   }
@@ -420,21 +402,21 @@ class ManifestValidator {
     console.log('\n📊 Validation Results:');
     console.log(`✅ Errors: ${this.errors.length}`);
     console.log(`⚠️ Warnings: ${this.warnings.length}`);
-    
+
     if (this.errors.length > 0) {
       console.log('\n❌ Errors found:');
       this.errors.forEach((error, index) => {
         console.log(`  ${index + 1}. ${error}`);
       });
     }
-    
+
     if (this.warnings.length > 0) {
       console.log('\n⚠️ Warnings:');
       this.warnings.forEach((warning, index) => {
         console.log(`  ${index + 1}. ${warning}`);
       });
     }
-    
+
     if (this.errors.length === 0 && this.warnings.length === 0) {
       console.log('🎉 No issues found! Manifest is valid.');
     }
@@ -445,23 +427,23 @@ class ManifestValidator {
 async function main() {
   const validator = new ManifestValidator();
   const rootDir = path.resolve(path.dirname(__dirname), '..', '..');
-  
+
   // Validate main manifest
   const mainManifestPath = path.join(rootDir, 'manifest.json');
   const isMainValid = await validator.validateManifest(mainManifestPath);
-  
+
   // Validate Edge-specific manifest if it exists
   const edgeManifestPath = path.join(rootDir, 'manifest-edge.json');
   let isEdgeValid = true;
-  
+
   if (fs.existsSync(edgeManifestPath)) {
     console.log('\n🌐 Validating Edge-specific manifest...');
     isEdgeValid = await validator.validateManifest(edgeManifestPath);
   }
-  
+
   // Print results
   validator.printResults();
-  
+
   // Exit with appropriate code
   const isValid = isMainValid && isEdgeValid;
   if (isValid) {
@@ -475,7 +457,7 @@ async function main() {
 
 // Run if called directly
 if (import.meta.url === `file://${process.argv[1]}`) {
-  main().catch(error => {
+  main().catch((error) => {
     console.error('❌ Validation script failed:', error);
     process.exit(1);
   });

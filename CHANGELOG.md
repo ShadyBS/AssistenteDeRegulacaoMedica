@@ -7,10 +7,10 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased]
 
-
 ### 🛠️ Refactor & Linting
 
 #### Fixed
+
 - Correção de todos os erros de lint (ESLint, StyleLint)
 - Padronização de aspas simples em todo o código
 - Remoção de variáveis não utilizadas
@@ -18,7 +18,18 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 - Substituição de `window.location.reload` e `window.open` por APIs seguras de extensão (`browser.runtime.reload`, `browser.tabs.create`)
 - Correção de race condition no feedback de UI do botão de copiar para área de transferência
 
+### 🔧 DevOps
+
+#### Added
+
+- Configuração de Prettier para formatação de código consistente
+- Scripts de automação para formatação e linting (`npm run format`, `npm run format:check`)
+- Integração de Husky para verificações pré-commit e pré-push
+- Script de health-check para validação completa do projeto (`npm run health-check`)
+- Tarefas VS Code para facilitar formatação e verificação de código
+
 #### Changed
+
 - Garantia de uso de ES6 modules e padrões de projeto
 - Adequação total ao Manifest V3 e CSP
 - Melhoria da compatibilidade cross-browser (Chrome/Firefox/Edge)
@@ -29,7 +40,9 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 ### 🎉 Major: Pipeline CI/CD Completo
 
 #### Added
+
 - **Pipeline CI/CD Completo**: Sistema de integração e deploy contínuo
+
   - GitHub Actions workflows para CI, CD e security scan
   - Validação automatizada de manifests e segurança
   - Build multi-browser (Chrome, Firefox, Edge)
@@ -37,6 +50,7 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
   - Upload automatizado para Chrome Web Store e Firefox AMO
 
 - **Sistema de Build Avançado**:
+
   - Webpack configurations específicas por browser
   - Build otimizado para produção com minificação
   - Hot reload para desenvolvimento
@@ -44,12 +58,14 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
   - Bundle analysis e performance monitoring
 
 - **Automação de Release**:
+
   - Scripts de packaging para Chrome (.zip), Firefox (.xpi) e Edge (.zip)
   - Validação de compliance para cada web store
   - Upload automatizado com retry logic
   - Geração automática de changelog e versioning
 
 - **Quality Assurance**:
+
   - ESLint, StyleLint e HTMLHint configurados
   - Jest para testes unitários e integração
   - Playwright para testes E2E
@@ -57,6 +73,7 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
   - Security scanning com Snyk e CodeQL
 
 - **Compliance Médico Avançado**:
+
   - Validação GDPR/LGPD automática
   - Sanitização de logs médicos
   - Verificação de não persistência de dados sensíveis
@@ -71,11 +88,12 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
   - Documentation auto-generation
 
 #### Scripts Adicionados
+
 ```bash
 # Build & Development
 npm run build:all           # Build completo multi-browser
 npm run build:chrome        # Build específico Chrome
-npm run build:firefox       # Build específico Firefox  
+npm run build:firefox       # Build específico Firefox
 npm run build:edge          # Build específico Edge
 npm run dev                 # Desenvolvimento com hot reload
 
@@ -123,12 +141,14 @@ npm run docs:generate       # Gerar documentação
 ```
 
 #### GitHub Actions Workflows
+
 - **CI Pipeline**: Validação, testes, build e packaging automático
 - **CD Pipeline**: Deploy automático para web stores em releases
 - **Security Scan**: Análise diária de vulnerabilidades
 - **Dependabot**: Updates automáticos de dependências
 
 #### Configurações Criadas
+
 - `config/webpack/` - Configurações Webpack por browser
 - `config/eslint/` - Configurações ESLint modulares
 - `config/jest/` - Setup de testes com mocks médicos
@@ -137,6 +157,7 @@ npm run docs:generate       # Gerar documentação
 - `.github/` - Templates e workflows GitHub
 
 #### Medical Compliance Features
+
 - **Data Sanitization**: Logs automaticamente sanitizados
 - **GDPR/LGPD Validation**: Verificação automática de compliance
 - **Medical Data Protection**: Não persistência de dados sensíveis
@@ -144,6 +165,7 @@ npm run docs:generate       # Gerar documentação
 - **Privacy by Design**: Configurações seguras por padrão
 
 #### Developer Tools
+
 - **Hot Reload**: Recarregamento automático durante desenvolvimento
 - **Source Maps**: Debugging facilitado
 - **Lint on Save**: Correção automática de código
@@ -151,11 +173,13 @@ npm run docs:generate       # Gerar documentação
 - **Bundle Analysis**: Análise de tamanho e performance
 
 ### Changed
+
 - **README.md**: Completamente reescrito com instruções detalhadas do pipeline
 - **package.json**: Reestruturado com 50+ scripts organizados
 - **Estrutura do projeto**: Organização melhorada com separação por categoria
 
 ### Security
+
 - **Manifest V3**: Atualização para máxima segurança
 - **CSP rigoroso**: Content Security Policy sem unsafe-eval
 - **Permission audit**: Validação automática de permissões
@@ -163,6 +187,7 @@ npm run docs:generate       # Gerar documentação
 - **Code analysis**: Análise estática de segurança
 
 ### Medical Compliance
+
 - **HIPAA Awareness**: Configurações compatíveis com HIPAA
 - **GDPR/LGPD Compliance**: Totalmente conforme com regulamentações
 - **Data Minimization**: Coleta mínima de dados necessários
@@ -172,6 +197,7 @@ npm run docs:generate       # Gerar documentação
 ## [3.3.7] - 2024-01-XX
 
 ### Added
+
 - Estrutura base da extensão
 - Integração com sistema SIGSS
 - Busca de pacientes no CADSUS
@@ -180,6 +206,7 @@ npm run docs:generate       # Gerar documentação
 - Filtros personalizáveis
 
 ### Features
+
 - Busca automática e manual de pacientes
 - Comparação de dados com CADSUS
 - Gerenciador de automações
@@ -187,6 +214,7 @@ npm run docs:generate       # Gerar documentação
 - Compatibilidade Chrome, Firefox e Edge
 
 ### Security
+
 - Manifest V3 implementation
 - Secure CSP configuration
 - Medical data protection

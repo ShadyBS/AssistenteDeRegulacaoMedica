@@ -68,8 +68,7 @@ function render(patientData) {
       }
 
       if (compareV1 && compareV1 === compareV2) {
-        icon =
-          '<span class="comparison-icon" title="Dado confere com o CADSUS">✅</span>';
+        icon = '<span class="comparison-icon" title="Dado confere com o CADSUS">✅</span>';
       } else {
         const tooltipText = `Ficha: ${v1 || 'Vazio'}\nCADSUS: ${v2 || 'Vazio'}`;
         icon = `<span class="comparison-icon" data-tooltip="${tooltipText}">⚠️</span>`;
@@ -104,14 +103,10 @@ function render(patientData) {
     patientCardFooter.style.display = 'flex';
   }
 
-  refreshCadsusBtn
-    .querySelector('.refresh-icon')
-    .classList.toggle('spinning', isUpdating);
+  refreshCadsusBtn.querySelector('.refresh-icon').classList.toggle('spinning', isUpdating);
   refreshCadsusBtn.disabled = isUpdating;
 
-  toggleDetailsBtn.style.display = sortedFields.some(
-    (f) => f.enabled && f.section === 'more'
-  )
+  toggleDetailsBtn.style.display = sortedFields.some((f) => f.enabled && f.section === 'more')
     ? 'block'
     : 'none';
   patientDetailsSection.style.display = 'block';
@@ -123,9 +118,7 @@ function hide() {
 
 function handleToggleDetails() {
   patientAdditionalInfoDiv.classList.toggle('show');
-  toggleDetailsBtn.textContent = patientAdditionalInfoDiv.classList.contains(
-    'show'
-  )
+  toggleDetailsBtn.textContent = patientAdditionalInfoDiv.classList.contains('show')
     ? 'Mostrar menos'
     : 'Mostrar mais';
 }
@@ -133,10 +126,7 @@ function handleToggleDetails() {
 function handleForceRefresh() {
   const patient = store.getPatient();
   if (patient && patient.ficha && onForceRefresh) {
-    onForceRefresh(
-      { idp: patient.ficha.isenPK.idp, ids: patient.ficha.isenPK.ids },
-      true
-    );
+    onForceRefresh({ idp: patient.ficha.isenPK.idp, ids: patient.ficha.isenPK.ids }, true);
   }
 }
 

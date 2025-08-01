@@ -38,19 +38,19 @@ function renderRecentPatients() {
     (recents.length === 0
       ? '<li class="px-4 py-3 text-sm text-slate-500">Nenhum paciente recente.</li>'
       : recents
-        .map((p) => {
-          // CORREÇÃO: Lida com a estrutura de dados antiga e nova dos pacientes recentes.
-          const fichaData = p.ficha || p; // Se p.ficha não existe, 'p' é o próprio objeto da ficha.
-          const idp = fichaData.isenPK?.idp || fichaData.idp;
-          const ids = fichaData.isenPK?.ids || fichaData.ids;
+          .map((p) => {
+            // CORREÇÃO: Lida com a estrutura de dados antiga e nova dos pacientes recentes.
+            const fichaData = p.ficha || p; // Se p.ficha não existe, 'p' é o próprio objeto da ficha.
+            const idp = fichaData.isenPK?.idp || fichaData.idp;
+            const ids = fichaData.isenPK?.ids || fichaData.ids;
 
-          if (!idp || !ids) return ''; // Pula a renderização se o item estiver malformado.
+            if (!idp || !ids) return ''; // Pula a renderização se o item estiver malformado.
 
-          return `<li class="px-4 py-3 border-b border-slate-100 hover:bg-slate-50 cursor-pointer transition recent-patient-item" data-idp="${idp}" data-ids="${ids}">${renderPatientListItem(
-            fichaData
-          )}</li>`;
-        })
-        .join(''));
+            return `<li class="px-4 py-3 border-b border-slate-100 hover:bg-slate-50 cursor-pointer transition recent-patient-item" data-idp="${idp}" data-ids="${ids}">${renderPatientListItem(
+              fichaData
+            )}</li>`;
+          })
+          .join(''));
 }
 
 function renderPatientListItem(patient) {
@@ -61,18 +61,14 @@ function renderPatientListItem(patient) {
   const idp = patient.idp || patient.isenPK?.idp;
   const ids = patient.ids || patient.isenPK?.ids;
   const dataNascimento =
-    patient.dataNascimento ||
-    Utils.getNestedValue(patient, 'entidadeFisica.entfDtNasc');
-  const cpf =
-    patient.cpf || Utils.getNestedValue(patient, 'entidadeFisica.entfCPF');
+    patient.dataNascimento || Utils.getNestedValue(patient, 'entidadeFisica.entfDtNasc');
+  const cpf = patient.cpf || Utils.getNestedValue(patient, 'entidadeFisica.entfCPF');
   const cns = patient.cns || patient.isenNumCadSus;
   return `
       <div class="font-medium text-slate-800">${nome}</div>
       <div class="grid grid-cols-2 gap-x-4 text-xs text-slate-500 mt-1">
         <span><strong class="font-semibold">Cód:</strong> ${idp}-${ids}</span>
-        <span><strong class="font-semibold">Nasc:</strong> ${
-  dataNascimento || '-'
-}</span>
+        <span><strong class="font-semibold">Nasc:</strong> ${dataNascimento || '-'}</span>
         <span><strong class="font-semibold">CPF:</strong> ${cpf || '-'}</span>
         <span><strong class="font-semibold">CNS:</strong> ${cns || '-'}</span>
       </div>

@@ -50,9 +50,7 @@ function createDraggableField(field) {
 
   div.innerHTML = `
     <span class="drag-handle">⠿</span>
-    <input type="checkbox" class="field-enabled-checkbox" ${
-  field.enabled ? 'checked' : ''
-}>
+    <input type="checkbox" class="field-enabled-checkbox" ${field.enabled ? 'checked' : ''}>
     <input type="text" class="field-label-input" value="${field.label}">
   `;
 
@@ -79,36 +77,36 @@ function createDraggableFilter(filter, priorities = []) {
   let defaultValueControl = '';
   if (filter.type !== 'component') {
     switch (filter.type) {
-    case 'text': {
-      defaultValueControl =
+      case 'text': {
+        defaultValueControl =
           '<input type="text" class="filter-default-value-input w-full" placeholder="Valor padrão...">';
-      break;
-    }
-    case 'select':
-    case 'selectGroup': {
-      let optionsHtml = '';
-      if (filter.id === 'regulation-filter-priority') {
-        // Constrói o dropdown de prioridades dinamicamente
-        optionsHtml = filter.options
-          .map((opt) => `<option value="${opt.value}">${opt.text}</option>`)
-          .join(''); // Adiciona "Todas"
-        priorities.forEach((prio) => {
-          optionsHtml += `<option value="${prio.coreDescricao}">${prio.coreDescricao}</option>`;
-        });
-      } else {
-        // Lógica original para outros selects
-        optionsHtml = (filter.options || [])
-          .map((opt) => `<option value="${opt.value}">${opt.text}</option>`)
-          .join('');
+        break;
       }
-      defaultValueControl = `<select class="filter-default-value-input w-full">${optionsHtml}</select>`;
-      break;
-    }
-    case 'checkbox': {
-      defaultValueControl =
+      case 'select':
+      case 'selectGroup': {
+        let optionsHtml = '';
+        if (filter.id === 'regulation-filter-priority') {
+          // Constrói o dropdown de prioridades dinamicamente
+          optionsHtml = filter.options
+            .map((opt) => `<option value="${opt.value}">${opt.text}</option>`)
+            .join(''); // Adiciona "Todas"
+          priorities.forEach((prio) => {
+            optionsHtml += `<option value="${prio.coreDescricao}">${prio.coreDescricao}</option>`;
+          });
+        } else {
+          // Lógica original para outros selects
+          optionsHtml = (filter.options || [])
+            .map((opt) => `<option value="${opt.value}">${opt.text}</option>`)
+            .join('');
+        }
+        defaultValueControl = `<select class="filter-default-value-input w-full">${optionsHtml}</select>`;
+        break;
+      }
+      case 'checkbox': {
+        defaultValueControl =
           '<input type="checkbox" class="filter-default-value-input h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500">';
-      break;
-    }
+        break;
+      }
     }
   }
 
@@ -120,17 +118,14 @@ function createDraggableFilter(filter, priorities = []) {
             <span class="text-xs text-slate-400 p-1 bg-slate-100 rounded">${displayType}</span>
         </div>
         ${
-  defaultValueControl
-    ? `
+          defaultValueControl
+            ? `
         <div class="flex items-center gap-2 text-xs text-slate-500">
             <label for="default-${filter.id}">Padrão:</label>
-            ${defaultValueControl.replace(
-    'class="',
-    `id="default-${filter.id}" class="`
-  )}
+            ${defaultValueControl.replace('class="', `id="default-${filter.id}" class="`)}
         </div>`
-    : ''
-}
+            : ''
+        }
     </div>
   `;
 
@@ -214,9 +209,7 @@ async function renderFilterLayout(layout) {
           filterLayoutData &&
           filterLayoutData.defaultValue !== undefined
         ) {
-          const defaultValueInput = filterElement.querySelector(
-            '.filter-default-value-input'
-          );
+          const defaultValueInput = filterElement.querySelector('.filter-default-value-input');
           if (defaultValueInput) {
             if (defaultValueInput.type === 'checkbox') {
               defaultValueInput.checked = filterLayoutData.defaultValue;
@@ -277,29 +270,21 @@ async function restoreOptions() {
   });
 
   document.getElementById('baseUrlInput').value = syncItems.baseUrl || '';
-  document.getElementById('enableAutomaticDetection').checked =
-    syncItems.enableAutomaticDetection;
-  document.getElementById('keepSessionAliveInterval').value =
-    syncItems.keepSessionAliveInterval;
-  document.getElementById('autoLoadExamsCheckbox').checked =
-    syncItems.autoLoadExams;
+  document.getElementById('enableAutomaticDetection').checked = syncItems.enableAutomaticDetection;
+  document.getElementById('keepSessionAliveInterval').value = syncItems.keepSessionAliveInterval;
+  document.getElementById('autoLoadExamsCheckbox').checked = syncItems.autoLoadExams;
   document.getElementById('autoLoadConsultationsCheckbox').checked =
     syncItems.autoLoadConsultations;
-  document.getElementById('autoLoadAppointmentsCheckbox').checked =
-    syncItems.autoLoadAppointments;
-  document.getElementById('autoLoadRegulationsCheckbox').checked =
-    syncItems.autoLoadRegulations;
-  document.getElementById('autoLoadDocumentsCheckbox').checked =
-    syncItems.autoLoadDocuments;
+  document.getElementById('autoLoadAppointmentsCheckbox').checked = syncItems.autoLoadAppointments;
+  document.getElementById('autoLoadRegulationsCheckbox').checked = syncItems.autoLoadRegulations;
+  document.getElementById('autoLoadDocumentsCheckbox').checked = syncItems.autoLoadDocuments;
 
   if (syncItems.sidebarSectionOrder) {
     applyTabOrder(syncItems.sidebarSectionOrder);
   }
 
   const currentPatientFieldsConfig = defaultFieldConfig.map((defaultField) => {
-    const savedField = syncItems.patientFields.find(
-      (f) => f.id === defaultField.id
-    );
+    const savedField = syncItems.patientFields.find((f) => f.id === defaultField.id);
     return savedField ? { ...defaultField, ...savedField } : defaultField;
   });
   renderPatientFields(currentPatientFieldsConfig);
@@ -337,8 +322,7 @@ async function restoreOptions() {
 
   sections.forEach((section) => {
     if (defaultRanges[section]) {
-      const range =
-        syncItems.dateRangeDefaults[section] || defaultRanges[section];
+      const range = syncItems.dateRangeDefaults[section] || defaultRanges[section];
       const startOffsetEl = document.getElementById(`${section}-start-offset`);
       const endOffsetEl = document.getElementById(`${section}-end-offset`);
       if (startOffsetEl) startOffsetEl.value = Math.abs(range.start);
@@ -369,27 +353,14 @@ async function restoreOptions() {
  */
 async function saveOptions() {
   const baseUrl = document.getElementById('baseUrlInput').value;
-  const enableAutomaticDetection = document.getElementById(
-    'enableAutomaticDetection'
-  ).checked;
+  const enableAutomaticDetection = document.getElementById('enableAutomaticDetection').checked;
   const keepSessionAliveInterval =
-    parseInt(document.getElementById('keepSessionAliveInterval').value, 10) ||
-    0;
-  const autoLoadExams = document.getElementById(
-    'autoLoadExamsCheckbox'
-  ).checked;
-  const autoLoadConsultations = document.getElementById(
-    'autoLoadConsultationsCheckbox'
-  ).checked;
-  const autoLoadAppointments = document.getElementById(
-    'autoLoadAppointmentsCheckbox'
-  ).checked;
-  const autoLoadRegulations = document.getElementById(
-    'autoLoadRegulationsCheckbox'
-  ).checked;
-  const autoLoadDocuments = document.getElementById(
-    'autoLoadDocumentsCheckbox'
-  ).checked;
+    parseInt(document.getElementById('keepSessionAliveInterval').value, 10) || 0;
+  const autoLoadExams = document.getElementById('autoLoadExamsCheckbox').checked;
+  const autoLoadConsultations = document.getElementById('autoLoadConsultationsCheckbox').checked;
+  const autoLoadAppointments = document.getElementById('autoLoadAppointmentsCheckbox').checked;
+  const autoLoadRegulations = document.getElementById('autoLoadRegulationsCheckbox').checked;
+  const autoLoadDocuments = document.getElementById('autoLoadDocumentsCheckbox').checked;
 
   const patientFields = [];
   mainFieldsZone.querySelectorAll('.draggable').forEach((div, index) => {
@@ -418,46 +389,34 @@ async function saveOptions() {
   });
 
   const filterLayout = {};
-  document
-    .querySelectorAll('#layout-config-section .drop-zone')
-    .forEach((zone) => {
-      if (!zone.dataset.section) return;
-      const section = zone.dataset.section;
-      if (!filterLayout[section]) filterLayout[section] = [];
-      const location = zone.id.includes('-main-') ? 'main' : 'more';
-      zone.querySelectorAll('.draggable').forEach((div, index) => {
-        const filterId = div.dataset.filterId;
-        const originalFilter = filterConfig[section].find(
-          (f) => f.id === filterId
-        );
-        const newFilterData = {
-          id: filterId,
-          location: location,
-          order: index + 1,
-        };
-        if (originalFilter.type !== 'component') {
-          const defaultValueInput = div.querySelector(
-            '.filter-default-value-input'
-          );
-          if (defaultValueInput) {
-            newFilterData.defaultValue =
-              defaultValueInput.type === 'checkbox'
-                ? defaultValueInput.checked
-                : defaultValueInput.value;
-          }
+  document.querySelectorAll('#layout-config-section .drop-zone').forEach((zone) => {
+    if (!zone.dataset.section) return;
+    const section = zone.dataset.section;
+    if (!filterLayout[section]) filterLayout[section] = [];
+    const location = zone.id.includes('-main-') ? 'main' : 'more';
+    zone.querySelectorAll('.draggable').forEach((div, index) => {
+      const filterId = div.dataset.filterId;
+      const originalFilter = filterConfig[section].find((f) => f.id === filterId);
+      const newFilterData = {
+        id: filterId,
+        location: location,
+        order: index + 1,
+      };
+      if (originalFilter.type !== 'component') {
+        const defaultValueInput = div.querySelector('.filter-default-value-input');
+        if (defaultValueInput) {
+          newFilterData.defaultValue =
+            defaultValueInput.type === 'checkbox'
+              ? defaultValueInput.checked
+              : defaultValueInput.value;
         }
-        filterLayout[section].push(newFilterData);
-      });
+      }
+      filterLayout[section].push(newFilterData);
     });
+  });
 
   const dateRangeDefaults = {};
-  const sectionsForDate = [
-    'consultations',
-    'exams',
-    'appointments',
-    'regulations',
-    'documents',
-  ];
+  const sectionsForDate = ['consultations', 'exams', 'appointments', 'regulations', 'documents'];
   sectionsForDate.forEach((section) => {
     const startEl = document.getElementById(`${section}-start-offset`);
     const endEl = document.getElementById(`${section}-end-offset`);
@@ -491,9 +450,9 @@ async function saveOptions() {
     }
   });
 
-  const sidebarSectionOrder = [
-    ...document.querySelectorAll('.tabs .tab-button'),
-  ].map((btn) => btn.dataset.tab);
+  const sidebarSectionOrder = [...document.querySelectorAll('.tabs .tab-button')].map(
+    (btn) => btn.dataset.tab
+  );
 
   await browser.storage.sync.set({
     baseUrl: baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl,
@@ -567,9 +526,7 @@ function handleDrop(e) {
 
 function getDragAfterElement(container, y) {
   const draggableElements = [
-    ...container.querySelectorAll(
-      '.draggable:not(.dragging), .rule-item:not(.dragging)'
-    ),
+    ...container.querySelectorAll('.draggable:not(.dragging), .rule-item:not(.dragging)'),
   ];
   return draggableElements.reduce(
     (closest, child) => {
@@ -587,9 +544,7 @@ function getDragAfterElement(container, y) {
 
 // --- Lógica de Arrastar e Soltar para Abas ---
 function getDragAfterTab(container, x) {
-  const draggableElements = [
-    ...container.querySelectorAll('.tab-button:not(.dragging)'),
-  ];
+  const draggableElements = [...container.querySelectorAll('.tab-button:not(.dragging)')];
   return draggableElements.reduce(
     (closest, child) => {
       const box = child.getBoundingClientRect();
@@ -644,7 +599,8 @@ function setupTabDnD(container) {
 // --- Lógica para Restaurar Padrões ---
 async function handleRestoreDefaults() {
   Utils.showDialog({
-    message: 'Tem certeza de que deseja restaurar todas as configurações de layout e valores padrão? Isto também restaurará a ordem das seções e os estilos dos cabeçalhos. Esta ação não pode ser desfeita.',
+    message:
+      'Tem certeza de que deseja restaurar todas as configurações de layout e valores padrão? Isto também restaurará a ordem das seções e os estilos dos cabeçalhos. Esta ação não pode ser desfeita.',
     onConfirm: async () => {
       await browser.storage.sync.remove([
         'patientFields',
@@ -657,7 +613,7 @@ async function handleRestoreDefaults() {
       mainFieldsZone.innerHTML = '';
       moreFieldsZone.innerHTML = '';
       window.location.reload();
-    }
+    },
   });
 }
 
@@ -698,28 +654,23 @@ function handleImport(event) {
       if (!importedSettings.configVersion || !importedSettings.filterLayout) {
         throw new Error('Ficheiro de configuração inválido ou corrompido.');
       }
-      if (
-        importedSettings.configVersion.split('.')[0] !==
-        CONFIG_VERSION.split('.')[0]
-      ) {
+      if (importedSettings.configVersion.split('.')[0] !== CONFIG_VERSION.split('.')[0]) {
         Utils.showDialog({
-          message: 'A versão do ficheiro de configuração é muito diferente da versão da extensão. A importação pode causar erros. Deseja continuar mesmo assim?',
+          message:
+            'A versão do ficheiro de configuração é muito diferente da versão da extensão. A importação pode causar erros. Deseja continuar mesmo assim?',
           onConfirm: async () => {
             await browser.storage.sync.clear();
             await browser.storage.sync.set(importedSettings);
             restoreOptions();
             Utils.showMessage('Configurações importadas e aplicadas com sucesso!', 'success');
-          }
+          },
         });
         return;
       }
       await browser.storage.sync.clear();
       await browser.storage.sync.set(importedSettings);
       restoreOptions();
-      Utils.showMessage(
-        'Configurações importadas e aplicadas com sucesso!',
-        'success'
-      );
+      Utils.showMessage('Configurações importadas e aplicadas com sucesso!', 'success');
     } catch (error) {
       console.error('Erro ao importar configurações:', error);
       Utils.showMessage(`Erro ao importar: ${error.message}`, 'error');
@@ -756,14 +707,14 @@ function renderAutomationRules() {
                 <div>
                   <p class="font-semibold text-slate-800">${rule.name}</p>
                   <p class="text-xs text-slate-500" title="${keywords}">Gatilhos: ${
-  keywords.length > 50 ? keywords.substring(0, 50) + '...' : keywords
-}</p>
+                    keywords.length > 50 ? keywords.substring(0, 50) + '...' : keywords
+                  }</p>
                 </div>
               </div>
               <div class="flex items-center gap-4">
                 <label class="relative inline-flex items-center cursor-pointer" title="${
-  rule.isActive ? 'Regra Ativa' : 'Regra Inativa'
-}">
+                  rule.isActive ? 'Regra Ativa' : 'Regra Inativa'
+                }">
                   <input type="checkbox" class="sr-only peer rule-toggle-active" ${checked}>
                   <div class="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
                 </label>
@@ -778,9 +729,7 @@ function renderAutomationRules() {
 
   document.querySelectorAll('.rule-item').forEach((item) => {
     const ruleId = item.dataset.ruleId;
-    item
-      .querySelector('.rule-edit-btn')
-      .addEventListener('click', () => handleEditRule(ruleId));
+    item.querySelector('.rule-edit-btn').addEventListener('click', () => handleEditRule(ruleId));
     item
       .querySelector('.rule-delete-btn')
       .addEventListener('click', () => handleDeleteRule(ruleId));
@@ -789,9 +738,7 @@ function renderAutomationRules() {
       .addEventListener('click', () => handleDuplicateRule(ruleId));
     item
       .querySelector('.rule-toggle-active')
-      .addEventListener('change', (e) =>
-        handleToggleRuleActive(ruleId, e.target.checked)
-      );
+      .addEventListener('change', (e) => handleToggleRuleActive(ruleId, e.target.checked));
   });
 }
 
@@ -826,12 +773,8 @@ async function openRuleEditor(ruleId = null) {
       // Preenche os filtros de data
       if (filters && filters.dateRange) {
         const { start, end } = filters.dateRange;
-        const startOffsetEl = document.getElementById(
-          `rule-${sectionKey}-start-offset`
-        );
-        const endOffsetEl = document.getElementById(
-          `rule-${sectionKey}-end-offset`
-        );
+        const startOffsetEl = document.getElementById(`rule-${sectionKey}-start-offset`);
+        const endOffsetEl = document.getElementById(`rule-${sectionKey}-end-offset`);
         if (startOffsetEl && start !== null && !isNaN(start)) {
           startOffsetEl.value = Math.abs(start);
         } else if (startOffsetEl) {
@@ -848,9 +791,7 @@ async function openRuleEditor(ruleId = null) {
       // Preenche outros filtros
       Object.entries(filters).forEach(([filterId, value]) => {
         if (filterId === 'dateRange') return;
-        const element = document.getElementById(
-          `rule-${sectionKey}-${filterId}`
-        );
+        const element = document.getElementById(`rule-${sectionKey}-${filterId}`);
         if (element) {
           if (element.type === 'checkbox') {
             element.checked = value;
@@ -866,17 +807,9 @@ async function openRuleEditor(ruleId = null) {
     ruleTriggersInput.value = '';
 
     // Limpa todos os campos, incluindo os de data
-    const sections = [
-      'consultations',
-      'exams',
-      'appointments',
-      'regulations',
-      'documents',
-    ];
+    const sections = ['consultations', 'exams', 'appointments', 'regulations', 'documents'];
     sections.forEach((sectionKey) => {
-      const startEl = document.getElementById(
-        `rule-${sectionKey}-start-offset`
-      );
+      const startEl = document.getElementById(`rule-${sectionKey}-start-offset`);
       const endEl = document.getElementById(`rule-${sectionKey}-end-offset`);
       if (startEl) startEl.value = '';
       if (endEl) endEl.value = '';
@@ -923,25 +856,15 @@ function handleSaveRule() {
     .map((k) => k.trim())
     .filter(Boolean);
   const filterSettings = {};
-  const sections = [
-    'consultations',
-    'exams',
-    'appointments',
-    'regulations',
-    'documents',
-  ];
+  const sections = ['consultations', 'exams', 'appointments', 'regulations', 'documents'];
 
   sections.forEach((sectionKey) => {
     filterSettings[sectionKey] = {};
 
     // --- INÍCIO DA CORREÇÃO ---
     // Salva as configurações de data
-    const startOffsetEl = document.getElementById(
-      `rule-${sectionKey}-start-offset`
-    );
-    const endOffsetEl = document.getElementById(
-      `rule-${sectionKey}-end-offset`
-    );
+    const startOffsetEl = document.getElementById(`rule-${sectionKey}-start-offset`);
+    const endOffsetEl = document.getElementById(`rule-${sectionKey}-end-offset`);
     const startVal = startOffsetEl.value;
     const endVal = endOffsetEl.value;
 
@@ -960,21 +883,16 @@ function handleSaveRule() {
     const sectionFilters = filterConfig[sectionKey] || [];
     sectionFilters.forEach((filter) => {
       if (filter.type === 'component') return;
-      const element = document.getElementById(
-        `rule-${sectionKey}-${filter.id}`
-      );
+      const element = document.getElementById(`rule-${sectionKey}-${filter.id}`);
       if (element) {
-        const value =
-          element.type === 'checkbox' ? element.checked : element.value;
+        const value = element.type === 'checkbox' ? element.checked : element.value;
         filterSettings[sectionKey][filter.id] = value;
       }
     });
   });
 
   if (currentlyEditingRuleId) {
-    const ruleIndex = automationRules.findIndex(
-      (r) => r.id === currentlyEditingRuleId
-    );
+    const ruleIndex = automationRules.findIndex((r) => r.id === currentlyEditingRuleId);
     if (ruleIndex > -1) {
       automationRules[ruleIndex].name = name;
       automationRules[ruleIndex].triggerKeywords = triggerKeywords;
@@ -1007,7 +925,7 @@ function handleDeleteRule(ruleId) {
       automationRules = automationRules.filter((r) => r.id !== ruleId);
       saveAutomationRules();
       renderAutomationRules();
-    }
+    },
   });
 }
 
@@ -1036,12 +954,10 @@ function handleToggleRuleActive(ruleId, isActive) {
 }
 
 function reorderAutomationRules() {
-  const newOrderedIds = [
-    ...automationRulesList.querySelectorAll('.rule-item'),
-  ].map((item) => item.dataset.ruleId);
-  automationRules.sort(
-    (a, b) => newOrderedIds.indexOf(a.id) - newOrderedIds.indexOf(b.id)
+  const newOrderedIds = [...automationRulesList.querySelectorAll('.rule-item')].map(
+    (item) => item.dataset.ruleId
   );
+  automationRules.sort((a, b) => newOrderedIds.indexOf(a.id) - newOrderedIds.indexOf(b.id));
   saveAutomationRules();
 }
 
@@ -1060,13 +976,7 @@ async function populateRuleEditorFilters() {
     console.error('Não foi possível carregar prioridades:', error);
   }
 
-  const sections = [
-    'consultations',
-    'exams',
-    'appointments',
-    'regulations',
-    'documents',
-  ];
+  const sections = ['consultations', 'exams', 'appointments', 'regulations', 'documents'];
 
   sections.forEach((sectionKey) => {
     const container = document.getElementById(`${sectionKey}-rule-editor-tab`);
@@ -1081,18 +991,12 @@ async function populateRuleEditorFilters() {
 
     sectionFilters.forEach((filter) => {
       if (filter.type === 'component') return;
-      const filterElement = createFilterElementForRuleEditor(
-        filter,
-        sectionKey,
-        priorities
-      );
+      const filterElement = createFilterElementForRuleEditor(filter, sectionKey, priorities);
       container.appendChild(filterElement);
     });
   });
 
-  const firstTabButton = document.querySelector(
-    '#rule-editor-filter-tabs .tab-button'
-  );
+  const firstTabButton = document.querySelector('#rule-editor-filter-tabs .tab-button');
   if (firstTabButton) {
     firstTabButton.click();
   }
@@ -1116,31 +1020,31 @@ function createFilterElementForRuleEditor(filter, sectionKey, priorities) {
   }
 
   switch (filter.type) {
-  case 'text':
-    elementHtml += `<input type="text" id="${elementId}" placeholder="${
-      filter.placeholder || ''
-    }" class="w-full px-2 py-1 border border-slate-300 rounded-md">`;
-    break;
-  case 'select':
-  case 'selectGroup':
-    elementHtml += `<select id="${elementId}" class="w-full px-2 py-1 border border-slate-300 rounded-md bg-white">`;
-    if (filter.id === 'regulation-filter-priority') {
-      elementHtml += '<option value="todas">Todas</option>';
-      priorities.forEach((prio) => {
-        elementHtml += `<option value="${prio.coreDescricao}">${prio.coreDescricao}</option>`;
-      });
-    } else {
-      (filter.options || []).forEach((opt) => {
-        elementHtml += `<option value="${opt.value}">${opt.text}</option>`;
-      });
-    }
-    elementHtml += '</select>';
-    break;
-  case 'checkbox':
-    container.className = 'flex items-center gap-2';
-    elementHtml += `<input id="${elementId}" type="checkbox" class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+    case 'text':
+      elementHtml += `<input type="text" id="${elementId}" placeholder="${
+        filter.placeholder || ''
+      }" class="w-full px-2 py-1 border border-slate-300 rounded-md">`;
+      break;
+    case 'select':
+    case 'selectGroup':
+      elementHtml += `<select id="${elementId}" class="w-full px-2 py-1 border border-slate-300 rounded-md bg-white">`;
+      if (filter.id === 'regulation-filter-priority') {
+        elementHtml += '<option value="todas">Todas</option>';
+        priorities.forEach((prio) => {
+          elementHtml += `<option value="${prio.coreDescricao}">${prio.coreDescricao}</option>`;
+        });
+      } else {
+        (filter.options || []).forEach((opt) => {
+          elementHtml += `<option value="${opt.value}">${opt.text}</option>`;
+        });
+      }
+      elementHtml += '</select>';
+      break;
+    case 'checkbox':
+      container.className = 'flex items-center gap-2';
+      elementHtml += `<input id="${elementId}" type="checkbox" class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
                           <label for="${elementId}" class="block text-sm text-slate-700">${filter.label}</label>`;
-    break;
+      break;
   }
   container.innerHTML = elementHtml;
   return container;
@@ -1175,9 +1079,7 @@ function createDateRangeElementForRuleEditor(sectionKey) {
 document.addEventListener('DOMContentLoaded', async () => {
   await restoreOptions();
 
-  const mainTabsContainer = document.querySelector(
-    '#filter-tabs-container .tabs'
-  );
+  const mainTabsContainer = document.querySelector('#filter-tabs-container .tabs');
   Utils.setupTabs(document.getElementById('filter-tabs-container'));
   if (mainTabsContainer) {
     setupTabDnD(mainTabsContainer);

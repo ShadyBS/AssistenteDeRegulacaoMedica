@@ -2,23 +2,572 @@
 /******/ 	"use strict";
 /******/ 	var __webpack_modules__ = ({
 
-/***/ "./sidebar.js":
-/*!********************!*\
-  !*** ./sidebar.js ***!
-  \********************/
+/***/ 239:
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-__webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _api_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./api.js */ "./api.js");
-/* harmony import */ var _browser_polyfill_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./browser-polyfill.js */ "./browser-polyfill.js");
-/* harmony import */ var _field_config_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./field-config.js */ "./field-config.js");
-/* harmony import */ var _renderers_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./renderers.js */ "./renderers.js");
-/* harmony import */ var _SectionManager_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./SectionManager.js */ "./SectionManager.js");
-/* harmony import */ var _store_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./store.js */ "./store.js");
-/* harmony import */ var _TimelineManager_js__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./TimelineManager.js */ "./TimelineManager.js");
-/* harmony import */ var _ui_patient_card_js__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./ui/patient-card.js */ "./ui/patient-card.js");
-/* harmony import */ var _ui_search_js__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ./ui/search.js */ "./ui/search.js");
-/* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ./utils.js */ "./utils.js");
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   AQ: () => (/* binding */ setupTabs),
+/* harmony export */   Eg: () => (/* binding */ getContrastYIQ),
+/* harmony export */   J2: () => (/* binding */ normalizeString),
+/* harmony export */   LJ: () => (/* binding */ getNestedValue),
+/* harmony export */   Pr: () => (/* binding */ filterTimelineEvents),
+/* harmony export */   Z9: () => (/* binding */ calculateRelativeDate),
+/* harmony export */   _U: () => (/* binding */ parseDate),
+/* harmony export */   de: () => (/* binding */ clearMessage),
+/* harmony export */   i1: () => (/* binding */ toggleLoader),
+/* harmony export */   rG: () => (/* binding */ showMessage),
+/* harmony export */   sg: () => (/* binding */ debounce),
+/* harmony export */   td: () => (/* binding */ normalizeTimelineData),
+/* harmony export */   ui: () => (/* binding */ showDialog)
+/* harmony export */ });
+/**
+ * Exibe um modal customizado de confirmação.
+ * @param {Object} options
+ * @param {string} options.message Mensagem a exibir
+ * @param {Function} options.onConfirm Callback para confirmação
+ * @param {Function} [options.onCancel] Callback para cancelamento
+ */
+function showDialog({
+  message,
+  onConfirm,
+  onCancel
+}) {
+  let modal = document.getElementById('custom-confirm-modal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'custom-confirm-modal';
+    modal.innerHTML = `
+      <div class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg shadow-lg p-6 max-w-md w-full">
+          <div class="mb-4 text-slate-800 text-base" id="custom-confirm-message"></div>
+          <div class="flex justify-end gap-2">
+            <button id="custom-confirm-cancel" class="px-4 py-2 rounded bg-slate-200 text-slate-700 hover:bg-slate-300">Cancelar</button>
+            <button id="custom-confirm-ok" class="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700">Confirmar</button>
+          </div>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+  }
+  modal.style.display = 'flex';
+  modal.querySelector('#custom-confirm-message').textContent = message;
+  const okBtn = modal.querySelector('#custom-confirm-ok');
+  const cancelBtn = modal.querySelector('#custom-confirm-cancel');
+  const close = () => {
+    modal.style.display = 'none';
+  };
+  okBtn.onclick = () => {
+    close();
+    onConfirm && onConfirm();
+  };
+  cancelBtn.onclick = () => {
+    close();
+    onCancel && onCancel();
+  };
+}
+/**
+ * @file Contém funções utilitárias compartilhadas em toda a extensão.
+ */
+
+/**
+ * Atraso na execução de uma função após o utilizador parar de digitar.
+ * @param {Function} func A função a ser executada.
+ * @param {number} [delay=500] O tempo de espera em milissegundos.
+ * @returns {Function} A função com debounce.
+ */
+function debounce(func, delay = 500) {
+  let timeoutId;
+  return (...args) => {
+    clearTimeout(timeoutId);
+    timeoutId = setTimeout(() => {
+      func.apply(this, args);
+    }, delay);
+  };
+}
+
+/**
+ * Mostra ou esconde o loader principal.
+ * @param {boolean} show - `true` para mostrar, `false` para esconder.
+ */
+function toggleLoader(show) {
+  const loader = document.getElementById('loader');
+  if (loader) {
+    loader.style.display = show ? 'block' : 'none';
+  }
+}
+
+/**
+ * Exibe uma mensagem na área de mensagens.
+ * @param {string} text O texto da mensagem.
+ * @param {'error' | 'success' | 'info'} [type='error'] O tipo de mensagem.
+ */
+function showMessage(text, type = 'error') {
+  const messageArea = document.getElementById('message-area');
+  if (messageArea) {
+    messageArea.textContent = text;
+    const typeClasses = {
+      error: 'bg-red-100 text-red-700',
+      success: 'bg-green-100 text-green-700',
+      info: 'bg-blue-100 text-blue-700'
+    };
+    messageArea.className = `p-3 rounded-md text-sm ${typeClasses[type] || typeClasses.error}`;
+    messageArea.style.display = 'block';
+  }
+}
+
+/**
+ * Limpa a área de mensagens.
+ */
+function clearMessage() {
+  const messageArea = document.getElementById('message-area');
+  if (messageArea) {
+    messageArea.style.display = 'none';
+  }
+}
+
+/**
+ * Converte uma string de data em vários formatos para um objeto Date.
+ * @param {string} dateString A data no formato "dd/MM/yyyy" ou "yyyy-MM-dd", podendo conter prefixos.
+ * @returns {Date|null} O objeto Date ou null se a string for inválida.
+ */
+function parseDate(dateString) {
+  if (!dateString || typeof dateString !== 'string') return null;
+
+  // Tenta extrair o primeiro padrão de data válido da string.
+  const dateMatch = dateString.match(/(\d{4}-\d{2}-\d{2})|(\d{2}\/\d{2}\/\d{2,4})/);
+  if (!dateMatch) return null;
+  const matchedDate = dateMatch[0];
+  let year, month, day;
+
+  // Tenta o formato YYYY-MM-DD
+  if (matchedDate.includes('-')) {
+    [year, month, day] = matchedDate.split('-').map(Number);
+  } else if (matchedDate.includes('/')) {
+    // Tenta o formato DD/MM/YYYY
+    [day, month, year] = matchedDate.split('/').map(Number);
+  }
+
+  // Valida se os números são válidos e se a data é real
+  if (isNaN(year) || isNaN(month) || isNaN(day)) return null;
+
+  // Lida com anos de 2 dígitos (ex: '24' -> 2024)
+  if (year >= 0 && year < 100) {
+    year += 2000;
+  }
+  const date = new Date(Date.UTC(year, month - 1, day));
+
+  // Confirma que a data não "rolou" para o mês seguinte (ex: 31 de Abril -> 1 de Maio)
+  if (date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day) {
+    return date;
+  }
+  return null; // Retorna nulo se a data for inválida (ex: 31/02/2024)
+}
+
+/**
+ * Obtém um valor aninhado de um objeto de forma segura.
+ * @param {object} obj O objeto.
+ * @param {string} path O caminho para a propriedade (ex: 'a.b.c').
+ * @returns {*} O valor encontrado ou undefined.
+ */
+const getNestedValue = (obj, path) => {
+  if (!path) return undefined;
+  return path.split('.').reduce((acc, part) => acc && acc[part], obj);
+};
+
+/**
+ * Calcula uma data relativa à data atual com base num desvio em meses.
+ * @param {number} offsetInMonths - O número de meses a adicionar ou subtrair.
+ * @returns {Date} O objeto Date resultante.
+ */
+function calculateRelativeDate(offsetInMonths) {
+  const date = new Date();
+  // setMonth lida corretamente com transições de ano e dias do mês
+  date.setMonth(date.getMonth() + offsetInMonths);
+  return date;
+}
+
+/**
+ * Retorna 'black' ou 'white' para o texto dependendo do contraste com a cor de fundo.
+ * @param {string} hexcolor - A cor de fundo em formato hexadecimal (com ou sem #).
+ * @returns {'black' | 'white'}
+ */
+function getContrastYIQ(hexcolor) {
+  hexcolor = hexcolor.replace('#', '');
+  const r = parseInt(hexcolor.substr(0, 2), 16);
+  const g = parseInt(hexcolor.substr(2, 2), 16);
+  const b = parseInt(hexcolor.substr(4, 2), 16);
+  const yiq = (r * 299 + g * 587 + b * 114) / 1000;
+  return yiq >= 128 ? 'black' : 'white';
+}
+
+/**
+ * Normaliza uma string removendo acentos, cedilha e convertendo para minúsculas.
+ * @param {string} str - A string a ser normalizada.
+ * @returns {string} A string normalizada.
+ */
+function normalizeString(str) {
+  if (!str) return '';
+  return str.toString().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+}
+
+/**
+ * Configura um sistema de abas (tabs) dentro de um container.
+ * @param {HTMLElement} container - O elemento que contém os botões e os painéis das abas.
+ */
+function setupTabs(container) {
+  if (!container) return;
+  const tabButtons = container.querySelectorAll('.tab-button');
+  const tabContents = container.querySelectorAll('.tab-content');
+  tabButtons.forEach(button => {
+    button.addEventListener('click', () => {
+      const tabName = button.dataset.tab;
+      tabButtons.forEach(btn => btn.classList.remove('active'));
+      tabContents.forEach(content => content.classList.remove('active'));
+      button.classList.add('active');
+      const activeContent = container.querySelector(`#${tabName}-tab`);
+      if (activeContent) {
+        activeContent.classList.add('active');
+      }
+    });
+  });
+}
+
+/**
+ * Normalizes data from various sources into a single, sorted timeline event list.
+ * @param {object} apiData - An object containing arrays of consultations, exams, etc.
+ * @returns {Array<object>} A sorted array of timeline event objects.
+ */
+function normalizeTimelineData(apiData) {
+  const events = [];
+
+  // Normalize Consultations
+  try {
+    (apiData.consultations || []).forEach(c => {
+      if (!c || !c.date) return;
+      const searchText = normalizeString([c.specialty, c.professional, c.unit, ...c.details.map(d => d.value)].join(' '));
+      events.push({
+        type: 'consultation',
+        date: parseDate(c.date.split('\n')[0]),
+        sortableDate: c.sortableDate || parseDate(c.date),
+        title: `Consulta: ${c.specialty || 'Especialidade não informada'}`,
+        summary: `com ${c.professional || 'Profissional não informado'}`,
+        details: c,
+        subDetails: c.details || [],
+        searchText
+      });
+    });
+  } catch (e) {
+    console.error('Failed to normalize consultation data for timeline:', e);
+  }
+
+  // Normalize Exams
+  try {
+    (apiData.exams || []).forEach(e => {
+      const eventDate = parseDate(e.date);
+      if (!e || !eventDate) return;
+      const searchText = normalizeString([e.examName, e.professional, e.specialty].filter(Boolean).join(' '));
+      events.push({
+        type: 'exam',
+        date: eventDate,
+        sortableDate: eventDate,
+        title: `Exame Solicitado: ${e.examName || 'Nome não informado'}`,
+        summary: `Solicitado por ${e.professional || 'Não informado'}`,
+        details: e,
+        subDetails: [{
+          label: 'Resultado',
+          value: e.hasResult ? 'Disponível' : 'Pendente'
+        }],
+        searchText
+      });
+    });
+  } catch (e) {
+    console.error('Failed to normalize exam data for timeline:', e);
+  }
+
+  // Normalize Appointments
+  try {
+    (apiData.appointments || []).forEach(a => {
+      if (!a || !a.date) return;
+      const searchText = normalizeString([a.specialty, a.description, a.location, a.professional].join(' '));
+      events.push({
+        type: 'appointment',
+        date: parseDate(a.date),
+        sortableDate: parseDate(a.date),
+        title: `Agendamento: ${a.specialty || a.description || 'Não descrito'}`,
+        summary: a.location || 'Local não informado',
+        details: a,
+        subDetails: [{
+          label: 'Status',
+          value: a.status || 'N/A'
+        }, {
+          label: 'Hora',
+          value: a.time || 'N/A'
+        }],
+        searchText
+      });
+    });
+  } catch (e) {
+    console.error('Failed to normalize appointment data for timeline:', e);
+  }
+
+  // Normalize Regulations
+  try {
+    (apiData.regulations || []).forEach(r => {
+      if (!r || !r.date) return;
+      const searchText = normalizeString([r.procedure, r.requester, r.provider, r.cid].join(' '));
+      events.push({
+        type: 'regulation',
+        date: parseDate(r.date),
+        sortableDate: parseDate(r.date),
+        title: `Regulação: ${r.procedure || 'Procedimento não informado'}`,
+        summary: `Solicitante: ${r.requester || 'Não informado'}`,
+        details: r,
+        subDetails: [{
+          label: 'Status',
+          value: r.status || 'N/A'
+        }, {
+          label: 'Prioridade',
+          value: r.priority || 'N/A'
+        }],
+        searchText
+      });
+    });
+  } catch (e) {
+    console.error('Failed to normalize regulation data for timeline:', e);
+  }
+
+  // --- INÍCIO DA MODIFICAÇÃO ---
+  // Normalize Documents
+  try {
+    (apiData.documents || []).forEach(doc => {
+      if (!doc || !doc.date) return;
+      const searchText = normalizeString(doc.description || '');
+      events.push({
+        type: 'document',
+        date: parseDate(doc.date),
+        sortableDate: parseDate(doc.date),
+        title: `Documento: ${doc.description || 'Sem descrição'}`,
+        summary: `Tipo: ${doc.fileType.toUpperCase()}`,
+        details: doc,
+        subDetails: [],
+        searchText
+      });
+    });
+  } catch (e) {
+    console.error('Failed to normalize document data for timeline:', e);
+  }
+  // --- FIM DA MODIFICAÇÃO ---
+
+  // Filter out events with invalid dates and sort all events by date, newest first.
+  return events.filter(event => event.sortableDate instanceof Date && !isNaN(event.sortableDate)).sort((a, b) => b.sortableDate - a.sortableDate);
+}
+
+/**
+ * Filters timeline events based on automation rule filters.
+ * @param {Array<object>} events - The full array of timeline events.
+ * @param {object} automationFilters - The filter settings from an automation rule.
+ * @returns {Array<object>} A new array with the filtered events.
+ */
+function filterTimelineEvents(events, automationFilters) {
+  if (!automationFilters) return events;
+  const checkText = (text, filterValue) => {
+    if (!filterValue) return true; // If filter is empty, it passes
+    const terms = filterValue.toLowerCase().split(',').map(t => t.trim()).filter(Boolean);
+    if (terms.length === 0) return true;
+    const normalizedText = normalizeString(text || '');
+    return terms.some(term => normalizedText.includes(term));
+  };
+  return events.filter(event => {
+    try {
+      switch (event.type) {
+        case 'consultation':
+          {
+            const consultFilters = automationFilters.consultations || {};
+            // Procura por um campo rotulado como CID ou CIAP para uma busca precisa.
+            const cidDetail = (event.details.details || []).find(d => normalizeString(d.label).includes('cid') || normalizeString(d.label).includes('ciap'));
+            const cidText = cidDetail ? cidDetail.value : '';
+            return checkText(event.details.specialty, consultFilters['consultation-filter-specialty']) && checkText(event.details.professional, consultFilters['consultation-filter-professional']) && checkText(cidText, consultFilters['consultation-filter-cid']);
+          }
+        case 'exam':
+          {
+            const examFilters = automationFilters.exams || {};
+            return checkText(event.details.examName, examFilters['exam-filter-name']) && checkText(event.details.professional, examFilters['exam-filter-professional']) && checkText(event.details.specialty, examFilters['exam-filter-specialty']);
+          }
+        case 'appointment':
+          {
+            const apptFilters = automationFilters.appointments || {};
+            const apptText = `${event.details.specialty} ${event.details.professional} ${event.details.location}`;
+            return checkText(apptText, apptFilters['appointment-filter-term']);
+          }
+        case 'regulation':
+          {
+            const regFilters = automationFilters.regulations || {};
+            return checkText(event.details.procedure, regFilters['regulation-filter-procedure']) && checkText(event.details.requester, regFilters['regulation-filter-requester']) && (regFilters['regulation-filter-status'] === 'todos' || !regFilters['regulation-filter-status'] || event.details.status.toUpperCase() === regFilters['regulation-filter-status'].toUpperCase()) && (regFilters['regulation-filter-priority'] === 'todas' || !regFilters['regulation-filter-priority'] || event.details.priority.toUpperCase() === regFilters['regulation-filter-priority'].toUpperCase());
+          }
+        default:
+          return true;
+      }
+    } catch (e) {
+      console.warn('Error filtering timeline event, it will be included by default:', event, e);
+      return true;
+    }
+  });
+}
+
+/***/ }),
+
+/***/ 627:
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   T: () => (/* binding */ init)
+/* harmony export */ });
+/* harmony import */ var _store_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(335);
+/* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(239);
+/**
+ * @file Módulo para gerir o card de "Dados do Paciente".
+ */
+
+
+let patientDetailsSection, patientMainInfoDiv, patientAdditionalInfoDiv, toggleDetailsBtn, patientCardFooter, cadsusTimestamp, refreshCadsusBtn;
+let fieldConfigLayout = [];
+let onForceRefresh; // Callback para forçar a atualização
+
+/**
+ * Renderiza os detalhes do paciente no card.
+ * @param {object} patientData - O objeto completo do paciente vindo do store.
+ */
+function render(patientData) {
+  if (!patientDetailsSection || !patientData || !patientData.ficha) {
+    hide();
+    return;
+  }
+  const {
+    ficha,
+    cadsus,
+    lastCadsusCheck,
+    isUpdating
+  } = patientData;
+  patientMainInfoDiv.innerHTML = '';
+  patientAdditionalInfoDiv.innerHTML = '';
+  const getLocalValue = (field, data) => {
+    if (typeof field.key === 'function') return field.key(data);
+    return _utils_js__WEBPACK_IMPORTED_MODULE_1__/* .getNestedValue */ .LJ(data, field.key);
+  };
+  const getCadsusValue = (field, data) => {
+    if (!data || field.cadsusKey === null) return null;
+    if (typeof field.cadsusKey === 'function') return field.cadsusKey(data);
+    return data[field.cadsusKey];
+  };
+  const sortedFields = [...fieldConfigLayout].sort((a, b) => a.order - b.order);
+  sortedFields.forEach(field => {
+    if (!field.enabled) return;
+    let localValue = getLocalValue(field, ficha);
+    if (field.formatter) localValue = field.formatter(localValue);
+    let cadsusValue = getCadsusValue(field, cadsus);
+    if (field.formatter) cadsusValue = field.formatter(cadsusValue);
+    const v1 = String(localValue || '').trim();
+    const v2 = String(cadsusValue || '').trim();
+    let icon = '';
+    if (cadsus && field.cadsusKey !== null) {
+      let compareV1 = v1;
+      let compareV2 = v2;
+      if (field.id === 'telefone') {
+        compareV1 = v1.replace(/\D/g, '').replace(/^55/, '');
+        compareV2 = v2.replace(/\D/g, '').replace(/^55/, '');
+      } else {
+        compareV1 = _utils_js__WEBPACK_IMPORTED_MODULE_1__/* .normalizeString */ .J2(v1);
+        compareV2 = _utils_js__WEBPACK_IMPORTED_MODULE_1__/* .normalizeString */ .J2(v2);
+      }
+      if (compareV1 && compareV1 === compareV2) {
+        icon = '<span class="comparison-icon" title="Dado confere com o CADSUS">✅</span>';
+      } else {
+        const tooltipText = `Ficha: ${v1 || 'Vazio'}\nCADSUS: ${v2 || 'Vazio'}`;
+        icon = `<span class="comparison-icon" data-tooltip="${tooltipText}">⚠️</span>`;
+      }
+    }
+    const valueClass = field.id.toLowerCase().includes('alerg') && v1 && v1 !== '-' ? 'text-red-600 font-bold' : 'text-slate-900';
+    const copyIcon = v1 ? `<span class="copy-icon" title="Copiar" data-copy-text="${v1}">📄</span>` : '';
+    const rowHtml = `<div class="flex justify-between items-center py-1"><span class="font-medium text-slate-600">${field.label}:</span><span class="${valueClass} text-right flex items-center">${v1 || '-'}${icon}${copyIcon}</span></div>`;
+    if (field.section === 'main') {
+      patientMainInfoDiv.innerHTML += rowHtml;
+    } else {
+      patientAdditionalInfoDiv.innerHTML += rowHtml;
+    }
+  });
+  if (lastCadsusCheck) {
+    cadsusTimestamp.textContent = `CADSUS verificado em: ${lastCadsusCheck.toLocaleString()}`;
+    patientCardFooter.style.display = 'flex';
+  } else {
+    cadsusTimestamp.textContent = 'Não foi possível verificar dados do CADSUS.';
+    patientCardFooter.style.display = 'flex';
+  }
+  refreshCadsusBtn.querySelector('.refresh-icon').classList.toggle('spinning', isUpdating);
+  refreshCadsusBtn.disabled = isUpdating;
+  toggleDetailsBtn.style.display = sortedFields.some(f => f.enabled && f.section === 'more') ? 'block' : 'none';
+  patientDetailsSection.style.display = 'block';
+}
+function hide() {
+  if (patientDetailsSection) patientDetailsSection.style.display = 'none';
+}
+function handleToggleDetails() {
+  patientAdditionalInfoDiv.classList.toggle('show');
+  toggleDetailsBtn.textContent = patientAdditionalInfoDiv.classList.contains('show') ? 'Mostrar menos' : 'Mostrar mais';
+}
+function handleForceRefresh() {
+  const patient = _store_js__WEBPACK_IMPORTED_MODULE_0__/* .store */ .M.getPatient();
+  if (patient && patient.ficha && onForceRefresh) {
+    onForceRefresh({
+      idp: patient.ficha.isenPK.idp,
+      ids: patient.ficha.isenPK.ids
+    }, true);
+  }
+}
+function onStateChange() {
+  const patient = _store_js__WEBPACK_IMPORTED_MODULE_0__/* .store */ .M.getPatient();
+  if (patient) {
+    render(patient);
+  } else {
+    hide();
+  }
+}
+
+/**
+ * Inicializa o módulo do card de paciente.
+ * @param {Array<object>} config - A configuração dos campos da ficha.
+ * @param {object} callbacks - Funções de callback.
+ * @param {Function} callbacks.onForceRefresh - Função para forçar a atualização.
+ */
+function init(config, callbacks) {
+  patientDetailsSection = document.getElementById('patient-details-section');
+  patientMainInfoDiv = document.getElementById('patient-main-info');
+  patientAdditionalInfoDiv = document.getElementById('patient-additional-info');
+  toggleDetailsBtn = document.getElementById('toggle-details-btn');
+  patientCardFooter = document.getElementById('patient-card-footer');
+  cadsusTimestamp = document.getElementById('cadsus-timestamp');
+  refreshCadsusBtn = document.getElementById('refresh-cadsus-btn');
+  fieldConfigLayout = config;
+  onForceRefresh = callbacks.onForceRefresh;
+  toggleDetailsBtn.addEventListener('click', handleToggleDetails);
+  refreshCadsusBtn.addEventListener('click', handleForceRefresh);
+  _store_js__WEBPACK_IMPORTED_MODULE_0__/* .store */ .M.subscribe(onStateChange);
+}
+
+/***/ }),
+
+/***/ 778:
+/***/ ((__unused_webpack___webpack_module__, __unused_webpack___webpack_exports__, __webpack_require__) => {
+
+/* harmony import */ var _api_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(574);
+/* harmony import */ var _browser_polyfill_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(64);
+/* harmony import */ var _field_config_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(869);
+/* harmony import */ var _renderers_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(690);
+/* harmony import */ var _SectionManager_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(338);
+/* harmony import */ var _store_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(335);
+/* harmony import */ var _TimelineManager_js__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(968);
+/* harmony import */ var _ui_patient_card_js__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(627);
+/* harmony import */ var _ui_search_js__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(889);
+/* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(239);
 
 
 
@@ -52,10 +601,10 @@ const sectionManagers = {}; // Objeto para armazenar instâncias de SectionManag
  * @returns {Array} O array de itens filtrado.
  */
 const applyNormalizedTextFilter = (items, text, getFieldContent) => {
-  const searchTerms = _utils_js__WEBPACK_IMPORTED_MODULE_9__.normalizeString(text).split(',').map(t => t.trim()).filter(Boolean);
+  const searchTerms = _utils_js__WEBPACK_IMPORTED_MODULE_9__/* .normalizeString */ .J2(text).split(',').map(t => t.trim()).filter(Boolean);
   if (searchTerms.length === 0) return items;
   return items.filter(item => {
-    const content = _utils_js__WEBPACK_IMPORTED_MODULE_9__.normalizeString(getFieldContent(item));
+    const content = _utils_js__WEBPACK_IMPORTED_MODULE_9__/* .normalizeString */ .J2(getFieldContent(item));
     return searchTerms.some(term => content.includes(term));
   });
 };
@@ -117,19 +666,19 @@ const documentFilterLogic = (data, filters) => {
   const startDateValue = (_document$getElementB = document.getElementById('document-date-initial')) === null || _document$getElementB === void 0 ? void 0 : _document$getElementB.value;
   const endDateValue = (_document$getElementB2 = document.getElementById('document-date-final')) === null || _document$getElementB2 === void 0 ? void 0 : _document$getElementB2.value;
   if (startDateValue) {
-    const start = _utils_js__WEBPACK_IMPORTED_MODULE_9__.parseDate(startDateValue);
+    const start = _utils_js__WEBPACK_IMPORTED_MODULE_9__/* .parseDate */ ._U(startDateValue);
     if (start) {
       filteredData = filteredData.filter(doc => {
-        const docDate = _utils_js__WEBPACK_IMPORTED_MODULE_9__.parseDate(doc.date.split(' ')[0]);
+        const docDate = _utils_js__WEBPACK_IMPORTED_MODULE_9__/* .parseDate */ ._U(doc.date.split(' ')[0]);
         return docDate && docDate >= start;
       });
     }
   }
   if (endDateValue) {
-    const end = _utils_js__WEBPACK_IMPORTED_MODULE_9__.parseDate(endDateValue);
+    const end = _utils_js__WEBPACK_IMPORTED_MODULE_9__/* .parseDate */ ._U(endDateValue);
     if (end) {
       filteredData = filteredData.filter(doc => {
-        const docDate = _utils_js__WEBPACK_IMPORTED_MODULE_9__.parseDate(doc.date.split(' ')[0]);
+        const docDate = _utils_js__WEBPACK_IMPORTED_MODULE_9__/* .parseDate */ ._U(doc.date.split(' ')[0]);
         return docDate && docDate <= end;
       });
     }
@@ -145,8 +694,8 @@ const sectionConfigurations = {
   timeline: {},
   // Configuração da Timeline será tratada pelo seu próprio gestor
   consultations: {
-    fetchFunction: _api_js__WEBPACK_IMPORTED_MODULE_0__.fetchAllConsultations,
-    renderFunction: _renderers_js__WEBPACK_IMPORTED_MODULE_3__.renderConsultations,
+    fetchFunction: _api_js__WEBPACK_IMPORTED_MODULE_0__/* .fetchAllConsultations */ .wF,
+    renderFunction: _renderers_js__WEBPACK_IMPORTED_MODULE_3__/* .renderConsultations */ .rX,
     initialSortState: {
       key: 'sortableDate',
       order: 'desc'
@@ -154,8 +703,8 @@ const sectionConfigurations = {
     filterLogic: consultationFilterLogic
   },
   exams: {
-    fetchFunction: _api_js__WEBPACK_IMPORTED_MODULE_0__.fetchExamesSolicitados,
-    renderFunction: _renderers_js__WEBPACK_IMPORTED_MODULE_3__.renderExams,
+    fetchFunction: _api_js__WEBPACK_IMPORTED_MODULE_0__/* .fetchExamesSolicitados */ .K4,
+    renderFunction: _renderers_js__WEBPACK_IMPORTED_MODULE_3__/* .renderExams */ .Rb,
     initialSortState: {
       key: 'date',
       order: 'desc'
@@ -163,8 +712,8 @@ const sectionConfigurations = {
     filterLogic: examFilterLogic
   },
   appointments: {
-    fetchFunction: _api_js__WEBPACK_IMPORTED_MODULE_0__.fetchAppointments,
-    renderFunction: _renderers_js__WEBPACK_IMPORTED_MODULE_3__.renderAppointments,
+    fetchFunction: _api_js__WEBPACK_IMPORTED_MODULE_0__/* .fetchAppointments */ .Ns,
+    renderFunction: _renderers_js__WEBPACK_IMPORTED_MODULE_3__/* .renderAppointments */ .lT,
     initialSortState: {
       key: 'date',
       order: 'desc'
@@ -172,8 +721,8 @@ const sectionConfigurations = {
     filterLogic: appointmentFilterLogic
   },
   regulations: {
-    fetchFunction: _api_js__WEBPACK_IMPORTED_MODULE_0__.fetchAllRegulations,
-    renderFunction: _renderers_js__WEBPACK_IMPORTED_MODULE_3__.renderRegulations,
+    fetchFunction: _api_js__WEBPACK_IMPORTED_MODULE_0__/* .fetchAllRegulations */ .v0,
+    renderFunction: _renderers_js__WEBPACK_IMPORTED_MODULE_3__/* .renderRegulations */ .IC,
     initialSortState: {
       key: 'date',
       order: 'desc'
@@ -181,8 +730,8 @@ const sectionConfigurations = {
     filterLogic: regulationFilterLogic
   },
   documents: {
-    fetchFunction: _api_js__WEBPACK_IMPORTED_MODULE_0__.fetchDocuments,
-    renderFunction: _renderers_js__WEBPACK_IMPORTED_MODULE_3__.renderDocuments,
+    fetchFunction: _api_js__WEBPACK_IMPORTED_MODULE_0__/* .fetchDocuments */ .P_,
+    renderFunction: _renderers_js__WEBPACK_IMPORTED_MODULE_3__/* .renderDocuments */ .zL,
     initialSortState: {
       key: 'date',
       order: 'desc'
@@ -241,17 +790,17 @@ function applyCustomHeaderStyles(styles) {
   }
 }
 async function selectPatient(patientInfo, forceRefresh = false) {
-  const currentPatient = _store_js__WEBPACK_IMPORTED_MODULE_5__.store.getPatient();
+  const currentPatient = _store_js__WEBPACK_IMPORTED_MODULE_5__/* .store */ .M.getPatient();
   if (currentPatient && currentPatient.ficha.isenPK.idp === patientInfo.idp && !forceRefresh) {
     return;
   }
-  _utils_js__WEBPACK_IMPORTED_MODULE_9__.toggleLoader(true);
-  _utils_js__WEBPACK_IMPORTED_MODULE_9__.clearMessage();
-  _store_js__WEBPACK_IMPORTED_MODULE_5__.store.setPatientUpdating();
+  _utils_js__WEBPACK_IMPORTED_MODULE_9__/* .toggleLoader */ .i1(true);
+  _utils_js__WEBPACK_IMPORTED_MODULE_9__/* .clearMessage */ .de();
+  _store_js__WEBPACK_IMPORTED_MODULE_5__/* .store */ .M.setPatientUpdating();
   try {
-    const ficha = await _api_js__WEBPACK_IMPORTED_MODULE_0__.fetchVisualizaUsuario(patientInfo);
-    const cadsus = await _api_js__WEBPACK_IMPORTED_MODULE_0__.fetchCadsusData({
-      cpf: _utils_js__WEBPACK_IMPORTED_MODULE_9__.getNestedValue(ficha, 'entidadeFisica.entfCPF'),
+    const ficha = await _api_js__WEBPACK_IMPORTED_MODULE_0__/* .fetchVisualizaUsuario */ .Tp(patientInfo);
+    const cadsus = await _api_js__WEBPACK_IMPORTED_MODULE_0__/* .fetchCadsusData */ .GP({
+      cpf: _utils_js__WEBPACK_IMPORTED_MODULE_9__/* .getNestedValue */ .LJ(ficha, 'entidadeFisica.entfCPF'),
       cns: ficha.isenNumCadSus
     });
     Object.values(sectionManagers).forEach(manager => {
@@ -261,20 +810,20 @@ async function selectPatient(patientInfo, forceRefresh = false) {
         manager.clearAutomation();
       }
     });
-    _store_js__WEBPACK_IMPORTED_MODULE_5__.store.setPatient(ficha, cadsus);
-    await updateRecentPatients(_store_js__WEBPACK_IMPORTED_MODULE_5__.store.getPatient());
+    _store_js__WEBPACK_IMPORTED_MODULE_5__/* .store */ .M.setPatient(ficha, cadsus);
+    await updateRecentPatients(_store_js__WEBPACK_IMPORTED_MODULE_5__/* .store */ .M.getPatient());
   } catch (error) {
-    _utils_js__WEBPACK_IMPORTED_MODULE_9__.showMessage(error.message, 'error');
+    _utils_js__WEBPACK_IMPORTED_MODULE_9__/* .showMessage */ .rG(error.message, 'error');
     console.error(error);
-    _store_js__WEBPACK_IMPORTED_MODULE_5__.store.clearPatient();
+    _store_js__WEBPACK_IMPORTED_MODULE_5__/* .store */ .M.clearPatient();
   } finally {
-    _utils_js__WEBPACK_IMPORTED_MODULE_9__.toggleLoader(false);
+    _utils_js__WEBPACK_IMPORTED_MODULE_9__/* .toggleLoader */ .i1(false);
   }
 }
 async function init() {
   let baseUrlConfigured = true;
   try {
-    await _api_js__WEBPACK_IMPORTED_MODULE_0__.getBaseUrl();
+    await _api_js__WEBPACK_IMPORTED_MODULE_0__/* .getBaseUrl */ .$_();
   } catch (error) {
     if ((error === null || error === void 0 ? void 0 : error.message) === 'URL_BASE_NOT_CONFIGURED') {
       baseUrlConfigured = false;
@@ -294,15 +843,15 @@ async function init() {
       // **não retornamos mais aqui**, apenas marcamos que deu “fallback”
     } else {
       console.error('Initialization failed:', error);
-      _utils_js__WEBPACK_IMPORTED_MODULE_9__.showMessage('Ocorreu um erro inesperado ao iniciar a extensão.', 'error');
+      _utils_js__WEBPACK_IMPORTED_MODULE_9__/* .showMessage */ .rG('Ocorreu um erro inesperado ao iniciar a extensão.', 'error');
       // nesse caso você pode querer return ou throw de verdade
       return;
     }
   }
 
   // === setup das abas: sempre rodar, mesmo sem baseURL ===
-  _utils_js__WEBPACK_IMPORTED_MODULE_9__.setupTabs(document.getElementById('layout-tabs-container'));
-  _utils_js__WEBPACK_IMPORTED_MODULE_9__.setupTabs(document.getElementById('patterns-tabs-container'));
+  _utils_js__WEBPACK_IMPORTED_MODULE_9__/* .setupTabs */ .AQ(document.getElementById('layout-tabs-container'));
+  _utils_js__WEBPACK_IMPORTED_MODULE_9__/* .setupTabs */ .AQ(document.getElementById('patterns-tabs-container'));
   // (adicione aqui quaisquer outros containers de aba que tenha)
 
   // === só o resto do fluxo principal depende de baseUrlConfigured ===
@@ -312,15 +861,15 @@ async function init() {
   }
 
   // agora vem tudo o que precisa de baseURL
-  const [globalSettings, regulationPriorities] = await Promise.all([loadConfigAndData(), _api_js__WEBPACK_IMPORTED_MODULE_0__.fetchRegulationPriorities()]);
+  const [globalSettings, regulationPriorities] = await Promise.all([loadConfigAndData(), _api_js__WEBPACK_IMPORTED_MODULE_0__/* .fetchRegulationPriorities */ .$4()]);
   globalSettings.regulationPriorities = regulationPriorities;
   applySectionIcons();
   applyCustomHeaderStyles(globalSettings.sectionHeaderStyles);
   applySectionOrder(globalSettings.sidebarSectionOrder);
-  _ui_search_js__WEBPACK_IMPORTED_MODULE_8__.init({
+  _ui_search_js__WEBPACK_IMPORTED_MODULE_8__/* .init */ .T({
     onSelectPatient: selectPatient
   });
-  _ui_patient_card_js__WEBPACK_IMPORTED_MODULE_7__.init(globalSettings.fieldConfigLayout, {
+  _ui_patient_card_js__WEBPACK_IMPORTED_MODULE_7__/* .init */ .T(globalSettings.fieldConfigLayout, {
     onForceRefresh: selectPatient
   });
   initializeSections(globalSettings);
@@ -331,7 +880,7 @@ async function init() {
 }
 async function loadConfigAndData() {
   const syncData = await browser.storage.sync.get({
-    patientFields: _field_config_js__WEBPACK_IMPORTED_MODULE_2__.defaultFieldConfig,
+    patientFields: _field_config_js__WEBPACK_IMPORTED_MODULE_2__/* .defaultFieldConfig */ .Q,
     filterLayout: {},
     autoLoadExams: false,
     autoLoadConsultations: false,
@@ -348,10 +897,10 @@ async function loadConfigAndData() {
     savedFilterSets: {},
     automationRules: []
   });
-  _store_js__WEBPACK_IMPORTED_MODULE_5__.store.setRecentPatients(localData.recentPatients);
-  _store_js__WEBPACK_IMPORTED_MODULE_5__.store.setSavedFilterSets(localData.savedFilterSets);
+  _store_js__WEBPACK_IMPORTED_MODULE_5__/* .store */ .M.setRecentPatients(localData.recentPatients);
+  _store_js__WEBPACK_IMPORTED_MODULE_5__/* .store */ .M.setSavedFilterSets(localData.savedFilterSets);
   return {
-    fieldConfigLayout: _field_config_js__WEBPACK_IMPORTED_MODULE_2__.defaultFieldConfig.map(defaultField => {
+    fieldConfigLayout: _field_config_js__WEBPACK_IMPORTED_MODULE_2__/* .defaultFieldConfig */ .Q.map(defaultField => {
       const savedField = syncData.patientFields.find(f => f.id === defaultField.id);
       return savedField ? {
         ...defaultField,
@@ -416,10 +965,10 @@ function initializeSections(globalSettings) {
   Object.keys(sectionConfigurations).forEach(key => {
     if (key === 'patient-details') return;
     if (key === 'timeline') {
-      sectionManagers[key] = new _TimelineManager_js__WEBPACK_IMPORTED_MODULE_6__.TimelineManager(key, sectionConfigurations[key], globalSettings);
+      sectionManagers[key] = new _TimelineManager_js__WEBPACK_IMPORTED_MODULE_6__/* .TimelineManager */ .l(key, sectionConfigurations[key], globalSettings);
       return;
     }
-    sectionManagers[key] = new _SectionManager_js__WEBPACK_IMPORTED_MODULE_4__.SectionManager(key, sectionConfigurations[key], globalSettings);
+    sectionManagers[key] = new _SectionManager_js__WEBPACK_IMPORTED_MODULE_4__/* .SectionManager */ .N(key, sectionConfigurations[key], globalSettings);
   });
 }
 function applyUserPreferences(globalSettings) {
@@ -458,8 +1007,8 @@ function applyUserPreferences(globalSettings) {
     const prefix = section.replace(/s$/, '');
     const initialEl = document.getElementById(`${prefix}-date-initial`);
     const finalEl = document.getElementById(`${prefix}-date-final`);
-    if (initialEl) initialEl.valueAsDate = _utils_js__WEBPACK_IMPORTED_MODULE_9__.calculateRelativeDate(range.start);
-    if (finalEl) finalEl.valueAsDate = _utils_js__WEBPACK_IMPORTED_MODULE_9__.calculateRelativeDate(range.end);
+    if (initialEl) initialEl.valueAsDate = _utils_js__WEBPACK_IMPORTED_MODULE_9__/* .calculateRelativeDate */ .Z9(range.start);
+    if (finalEl) finalEl.valueAsDate = _utils_js__WEBPACK_IMPORTED_MODULE_9__/* .calculateRelativeDate */ .Z9(range.end);
   });
   Object.values(filterLayout).flat().forEach(filterSetting => {
     const el = document.getElementById(filterSetting.id);
@@ -490,7 +1039,7 @@ function setupAutoModeToggle() {
   });
 }
 async function handleRegulationLoaded(regulationData) {
-  _utils_js__WEBPACK_IMPORTED_MODULE_9__.toggleLoader(true);
+  _utils_js__WEBPACK_IMPORTED_MODULE_9__/* .toggleLoader */ .i1(true);
   try {
     currentRegulationData = regulationData;
     if (regulationData && regulationData.isenPKIdp && regulationData.isenPKIds) {
@@ -506,14 +1055,14 @@ async function handleRegulationLoaded(regulationData) {
       await applyAutomationRules(regulationData);
     } else {
       currentRegulationData = null;
-      _utils_js__WEBPACK_IMPORTED_MODULE_9__.showMessage('Não foi possível extrair os dados do paciente da regulação.', 'error');
+      _utils_js__WEBPACK_IMPORTED_MODULE_9__/* .showMessage */ .rG('Não foi possível extrair os dados do paciente da regulação.', 'error');
     }
   } catch (error) {
     currentRegulationData = null;
-    _utils_js__WEBPACK_IMPORTED_MODULE_9__.showMessage(`Erro ao processar a regulação: ${error.message}`, 'error');
+    _utils_js__WEBPACK_IMPORTED_MODULE_9__/* .showMessage */ .rG(`Erro ao processar a regulação: ${error.message}`, 'error');
     console.error('Erro ao processar a regulação:', error);
   } finally {
-    _utils_js__WEBPACK_IMPORTED_MODULE_9__.toggleLoader(false);
+    _utils_js__WEBPACK_IMPORTED_MODULE_9__/* .toggleLoader */ .i1(false);
   }
 }
 async function applyAutomationRules(regulationData) {
@@ -541,7 +1090,7 @@ async function applyAutomationRules(regulationData) {
 }
 function handleShowRegulationInfo() {
   if (!currentRegulationData) {
-    _utils_js__WEBPACK_IMPORTED_MODULE_9__.showMessage('Nenhuma informação de regulação carregada.', 'info');
+    _utils_js__WEBPACK_IMPORTED_MODULE_9__/* .showMessage */ .rG('Nenhuma informação de regulação carregada.', 'info');
     return;
   }
   const modalTitle = document.getElementById('modal-title');
@@ -560,12 +1109,12 @@ function addGlobalEventListeners() {
   const reloadBtn = document.getElementById('reload-sidebar-btn');
   if (reloadBtn) {
     reloadBtn.addEventListener('click', () => {
-      const patient = _store_js__WEBPACK_IMPORTED_MODULE_5__.store.getPatient();
+      const patient = _store_js__WEBPACK_IMPORTED_MODULE_5__/* .store */ .M.getPatient();
       if (patient && patient.ficha) {
-        const confirmation = window.confirm('Um paciente está selecionado e o estado atual será perdido. Deseja realmente recarregar o assistente?');
-        if (confirmation) {
-          window.location.reload();
-        }
+        _utils_js__WEBPACK_IMPORTED_MODULE_9__/* .showDialog */ .ui({
+          message: 'Um paciente está selecionado e o estado atual será perdido. Deseja realmente recarregar o assistente?',
+          onConfirm: () => window.location.reload()
+        });
       } else {
         window.location.reload();
       }
@@ -665,13 +1214,13 @@ async function updateRecentPatients(patientData) {
   const newRecent = {
     ...patientData
   };
-  const currentRecents = _store_js__WEBPACK_IMPORTED_MODULE_5__.store.getRecentPatients();
+  const currentRecents = _store_js__WEBPACK_IMPORTED_MODULE_5__/* .store */ .M.getRecentPatients();
   const filtered = (currentRecents || []).filter(p => p.ficha.isenPK.idp !== newRecent.ficha.isenPK.idp);
   const updatedRecents = [newRecent, ...filtered].slice(0, 5);
   await browser.storage.local.set({
     recentPatients: updatedRecents
   });
-  _store_js__WEBPACK_IMPORTED_MODULE_5__.store.setRecentPatients(updatedRecents);
+  _store_js__WEBPACK_IMPORTED_MODULE_5__/* .store */ .M.setRecentPatients(updatedRecents);
 }
 async function handleViewExamResult(button) {
   const {
@@ -681,11 +1230,11 @@ async function handleViewExamResult(button) {
   const newTab = window.open('', '_blank');
   newTab.document.write('Carregando resultado do exame...');
   try {
-    const filePath = await _api_js__WEBPACK_IMPORTED_MODULE_0__.fetchResultadoExame({
+    const filePath = await _api_js__WEBPACK_IMPORTED_MODULE_0__/* .fetchResultadoExame */ .Sp({
       idp,
       ids
     });
-    const baseUrl = await _api_js__WEBPACK_IMPORTED_MODULE_0__.getBaseUrl();
+    const baseUrl = await _api_js__WEBPACK_IMPORTED_MODULE_0__/* .getBaseUrl */ .$_();
     if (filePath) {
       const fullUrl = filePath.startsWith('http') ? filePath : `${baseUrl}${filePath}`;
       newTab.location.href = fullUrl;
@@ -704,7 +1253,7 @@ async function handleViewDocument(button) {
   const newTab = window.open('', '_blank');
   newTab.document.write('Carregando documento...');
   try {
-    const docUrl = await _api_js__WEBPACK_IMPORTED_MODULE_0__.fetchDocumentUrl({
+    const docUrl = await _api_js__WEBPACK_IMPORTED_MODULE_0__/* .fetchDocumentUrl */ .pP({
       idp,
       ids
     });
@@ -724,7 +1273,7 @@ async function handleViewRegulationAttachment(button) {
     ids
   } = button.dataset;
   try {
-    const fileUrl = await _api_js__WEBPACK_IMPORTED_MODULE_0__.fetchRegulationAttachmentUrl({
+    const fileUrl = await _api_js__WEBPACK_IMPORTED_MODULE_0__/* .fetchRegulationAttachmentUrl */ .DM({
       idp,
       ids
     });
@@ -816,7 +1365,7 @@ async function handleShowRegulationDetailsModal(button) {
   } = button.dataset;
   showModal('Detalhes da Regulação', '<p>Carregando...</p>');
   try {
-    const data = await _api_js__WEBPACK_IMPORTED_MODULE_0__.fetchRegulationDetails({
+    const data = await _api_js__WEBPACK_IMPORTED_MODULE_0__/* .fetchRegulationDetails */ .hr({
       reguIdp: idp,
       reguIds: ids
     });
@@ -839,13 +1388,13 @@ async function handleShowAppointmentDetailsModal(button) {
     let data;
     let content;
     if (isExam) {
-      data = await _api_js__WEBPACK_IMPORTED_MODULE_0__.fetchExamAppointmentDetails({
+      data = await _api_js__WEBPACK_IMPORTED_MODULE_0__/* .fetchExamAppointmentDetails */ .Pn({
         idp,
         ids
       });
       content = formatExamAppointmentDetailsForModal(data);
     } else {
-      data = await _api_js__WEBPACK_IMPORTED_MODULE_0__.fetchAppointmentDetails({
+      data = await _api_js__WEBPACK_IMPORTED_MODULE_0__/* .fetchAppointmentDetails */ .EI({
         idp,
         ids
       });
@@ -888,6 +1437,376 @@ async function checkForPendingRegulation() {
   }
 }
 document.addEventListener('DOMContentLoaded', init);
+
+/***/ }),
+
+/***/ 889:
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   T: () => (/* binding */ init)
+/* harmony export */ });
+/* harmony import */ var _api_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(574);
+/* harmony import */ var _store_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(335);
+/* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(239);
+/**
+ * @file Módulo para gerir a funcionalidade de busca de pacientes.
+ */
+
+
+
+let searchInput;
+let searchResultsList;
+let recentPatientsList;
+let onSelectPatient; // Callback para notificar o sidebar sobre a seleção
+
+function renderSearchResults(patients) {
+  if (!searchResultsList) return;
+  if (patients.length === 0) {
+    searchResultsList.innerHTML = '<li class="px-4 py-3 text-sm text-slate-500">Nenhum paciente encontrado.</li>';
+    return;
+  }
+  searchResultsList.innerHTML = patients.map(p => `<li class="px-4 py-3 border-b border-slate-100 hover:bg-slate-50 cursor-pointer transition" data-idp="${p.idp}" data-ids="${p.ids}">${renderPatientListItem(p)}</li>`).join('');
+}
+
+/**
+ * Renderiza a lista de pacientes recentes a partir do store.
+ */
+function renderRecentPatients() {
+  if (!recentPatientsList) return;
+  const recents = _store_js__WEBPACK_IMPORTED_MODULE_1__/* .store */ .M.getRecentPatients() || [];
+  recentPatientsList.innerHTML = '<li class="px-4 pt-3 pb-1 text-xs font-semibold text-slate-400">PACIENTES RECENTES</li>' + (recents.length === 0 ? '<li class="px-4 py-3 text-sm text-slate-500">Nenhum paciente recente.</li>' : recents.map(p => {
+    var _fichaData$isenPK, _fichaData$isenPK2;
+    // CORREÇÃO: Lida com a estrutura de dados antiga e nova dos pacientes recentes.
+    const fichaData = p.ficha || p; // Se p.ficha não existe, 'p' é o próprio objeto da ficha.
+    const idp = ((_fichaData$isenPK = fichaData.isenPK) === null || _fichaData$isenPK === void 0 ? void 0 : _fichaData$isenPK.idp) || fichaData.idp;
+    const ids = ((_fichaData$isenPK2 = fichaData.isenPK) === null || _fichaData$isenPK2 === void 0 ? void 0 : _fichaData$isenPK2.ids) || fichaData.ids;
+    if (!idp || !ids) return ''; // Pula a renderização se o item estiver malformado.
+
+    return `<li class="px-4 py-3 border-b border-slate-100 hover:bg-slate-50 cursor-pointer transition recent-patient-item" data-idp="${idp}" data-ids="${ids}">${renderPatientListItem(fichaData)}</li>`;
+  }).join(''));
+}
+function renderPatientListItem(patient) {
+  var _patient$isenPK, _patient$isenPK2;
+  const nome = patient.value || _utils_js__WEBPACK_IMPORTED_MODULE_2__/* .getNestedValue */ .LJ(patient, 'entidadeFisica.entidade.entiNome') || 'Nome não informado';
+  const idp = patient.idp || ((_patient$isenPK = patient.isenPK) === null || _patient$isenPK === void 0 ? void 0 : _patient$isenPK.idp);
+  const ids = patient.ids || ((_patient$isenPK2 = patient.isenPK) === null || _patient$isenPK2 === void 0 ? void 0 : _patient$isenPK2.ids);
+  const dataNascimento = patient.dataNascimento || _utils_js__WEBPACK_IMPORTED_MODULE_2__/* .getNestedValue */ .LJ(patient, 'entidadeFisica.entfDtNasc');
+  const cpf = patient.cpf || _utils_js__WEBPACK_IMPORTED_MODULE_2__/* .getNestedValue */ .LJ(patient, 'entidadeFisica.entfCPF');
+  const cns = patient.cns || patient.isenNumCadSus;
+  return `
+      <div class="font-medium text-slate-800">${nome}</div>
+      <div class="grid grid-cols-2 gap-x-4 text-xs text-slate-500 mt-1">
+        <span><strong class="font-semibold">Cód:</strong> ${idp}-${ids}</span>
+        <span><strong class="font-semibold">Nasc:</strong> ${dataNascimento || '-'}</span>
+        <span><strong class="font-semibold">CPF:</strong> ${cpf || '-'}</span>
+        <span><strong class="font-semibold">CNS:</strong> ${cns || '-'}</span>
+      </div>
+    `;
+}
+const handleSearchInput = _utils_js__WEBPACK_IMPORTED_MODULE_2__/* .debounce */ .sg(async () => {
+  const searchTerm = searchInput.value.trim();
+  _store_js__WEBPACK_IMPORTED_MODULE_1__/* .store */ .M.clearPatient();
+  recentPatientsList.classList.add('hidden');
+  searchResultsList.classList.remove('hidden');
+  if (searchTerm.length < 1) {
+    searchResultsList.innerHTML = '';
+    return;
+  }
+  _utils_js__WEBPACK_IMPORTED_MODULE_2__/* .toggleLoader */ .i1(true);
+  try {
+    const patients = await _api_js__WEBPACK_IMPORTED_MODULE_0__/* .searchPatients */ .bW(searchTerm);
+    renderSearchResults(patients);
+  } catch {
+    _utils_js__WEBPACK_IMPORTED_MODULE_2__/* .showMessage */ .rG('Erro ao buscar pacientes.');
+  } finally {
+    _utils_js__WEBPACK_IMPORTED_MODULE_2__/* .toggleLoader */ .i1(false);
+  }
+}, 500);
+function handleSearchFocus() {
+  if (searchInput.value.length > 0) return;
+  renderRecentPatients();
+  searchResultsList.classList.add('hidden');
+  recentPatientsList.classList.remove('hidden');
+}
+function handleSearchBlur() {
+  setTimeout(() => {
+    searchResultsList.classList.add('hidden');
+    recentPatientsList.classList.add('hidden');
+  }, 200);
+}
+async function handleResultClick(event) {
+  const listItem = event.target.closest('li[data-idp]');
+  if (!listItem) return;
+  const {
+    idp,
+    ids
+  } = listItem.dataset;
+  if (listItem.classList.contains('recent-patient-item')) {
+    const recentPatient = _store_js__WEBPACK_IMPORTED_MODULE_1__/* .store */ .M.getRecentPatients().find(p => {
+      // CORREÇÃO: Lida com a estrutura de dados antiga e nova.
+      const patientIdp = p.ficha ? p.ficha.isenPK.idp : p.idp;
+      return patientIdp == idp;
+    });
+
+    // Se o paciente foi encontrado e tem a nova estrutura (com cache), usa os dados do cache.
+    if (recentPatient && recentPatient.ficha) {
+      _store_js__WEBPACK_IMPORTED_MODULE_1__/* .store */ .M.setPatient(recentPatient.ficha, recentPatient.cadsus);
+      searchInput.value = '';
+      searchResultsList.classList.add('hidden');
+      recentPatientsList.classList.add('hidden');
+      return;
+    }
+  }
+
+  // Para pacientes novos ou pacientes recentes com a estrutura antiga (que precisam ser re-buscados).
+  if (onSelectPatient) {
+    onSelectPatient({
+      idp,
+      ids
+    });
+  }
+  searchInput.value = '';
+  searchResultsList.classList.add('hidden');
+  recentPatientsList.classList.add('hidden');
+}
+function init(config) {
+  searchInput = document.getElementById('patient-search-input');
+  searchResultsList = document.getElementById('search-results');
+  recentPatientsList = document.getElementById('recent-patients-list');
+  onSelectPatient = config.onSelectPatient;
+  _store_js__WEBPACK_IMPORTED_MODULE_1__/* .store */ .M.subscribe(() => {
+    if (!recentPatientsList.classList.contains('hidden')) {
+      renderRecentPatients();
+    }
+  });
+  searchInput.addEventListener('input', handleSearchInput);
+  searchInput.addEventListener('focus', handleSearchFocus);
+  searchInput.addEventListener('blur', handleSearchBlur);
+  searchResultsList.addEventListener('click', handleResultClick);
+  recentPatientsList.addEventListener('click', handleResultClick);
+}
+
+/***/ }),
+
+/***/ 968:
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   l: () => (/* binding */ TimelineManager)
+/* harmony export */ });
+/* harmony import */ var _api_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(574);
+/* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(239);
+/* harmony import */ var _renderers_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(690);
+/* harmony import */ var _store_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(335);
+/**
+ * @file Módulo TimelineManager, responsável por gerir a secção da Linha do Tempo.
+ */
+
+
+
+
+class TimelineManager {
+  constructor(sectionKey, config, globalSettings) {
+    this.sectionKey = sectionKey;
+    this.config = config;
+    this.globalSettings = globalSettings;
+    this.allData = [];
+    this.currentPatient = null;
+    this.isLoading = false;
+
+    // State for automation filters
+    this.activeRuleFilters = null;
+    this.activeRuleName = null;
+    this.isFilteredView = false;
+    this.elements = {};
+    this.init();
+  }
+  init() {
+    this.cacheDomElements();
+    this.addEventListeners();
+    _store_js__WEBPACK_IMPORTED_MODULE_3__/* .store */ .M.subscribe(() => this.onStateChange());
+  }
+  cacheDomElements() {
+    this.elements = {
+      section: document.getElementById('timeline-section'),
+      wrapper: document.getElementById('timeline-wrapper'),
+      content: document.getElementById('timeline-content'),
+      fetchBtn: document.getElementById('fetch-timeline-btn'),
+      toggleBtn: document.getElementById('toggle-timeline-list-btn'),
+      automationFeedback: document.getElementById('timeline-automation-feedback'),
+      dateInitial: document.getElementById('timeline-date-initial'),
+      dateFinal: document.getElementById('timeline-date-final'),
+      searchKeyword: document.getElementById('timeline-search-keyword')
+    };
+  }
+  addEventListeners() {
+    var _this$elements$fetchB, _this$elements$toggle, _this$elements$search, _this$elements$dateIn, _this$elements$dateFi, _this$elements$sectio;
+    (_this$elements$fetchB = this.elements.fetchBtn) === null || _this$elements$fetchB === void 0 ? void 0 : _this$elements$fetchB.addEventListener('click', () => this.fetchData());
+    (_this$elements$toggle = this.elements.toggleBtn) === null || _this$elements$toggle === void 0 ? void 0 : _this$elements$toggle.addEventListener('click', () => this.toggleSection());
+    (_this$elements$search = this.elements.searchKeyword) === null || _this$elements$search === void 0 ? void 0 : _this$elements$search.addEventListener('input', _utils_js__WEBPACK_IMPORTED_MODULE_1__/* .debounce */ .sg(() => this.render(), 300));
+    (_this$elements$dateIn = this.elements.dateInitial) === null || _this$elements$dateIn === void 0 ? void 0 : _this$elements$dateIn.addEventListener('change', () => this.render());
+    (_this$elements$dateFi = this.elements.dateFinal) === null || _this$elements$dateFi === void 0 ? void 0 : _this$elements$dateFi.addEventListener('change', () => this.render());
+    (_this$elements$sectio = this.elements.section) === null || _this$elements$sectio === void 0 ? void 0 : _this$elements$sectio.addEventListener('click', event => {
+      const header = event.target.closest('.timeline-header');
+      if (header) {
+        const details = header.nextElementSibling;
+        if (details && details.classList.contains('timeline-details-body')) {
+          details.classList.toggle('show');
+        }
+        return;
+      }
+      const toggleDetailsBtn = event.target.closest('.timeline-toggle-details-btn');
+      if (toggleDetailsBtn) {
+        const timelineItem = toggleDetailsBtn.closest('.timeline-item');
+        const details = timelineItem === null || timelineItem === void 0 ? void 0 : timelineItem.querySelector('.timeline-details-body');
+        if (details) {
+          details.classList.toggle('show');
+        }
+        return;
+      }
+      const toggleFilterBtn = event.target.closest('#timeline-toggle-filter-btn');
+      if (toggleFilterBtn) {
+        this.toggleFilteredView();
+      }
+    });
+  }
+  onStateChange() {
+    var _this$currentPatient, _this$currentPatient$, _newPatient$isenPK;
+    const patientState = _store_js__WEBPACK_IMPORTED_MODULE_3__/* .store */ .M.getPatient();
+    const newPatient = patientState ? patientState.ficha : null;
+    if (((_this$currentPatient = this.currentPatient) === null || _this$currentPatient === void 0 ? void 0 : (_this$currentPatient$ = _this$currentPatient.isenPK) === null || _this$currentPatient$ === void 0 ? void 0 : _this$currentPatient$.idp) !== (newPatient === null || newPatient === void 0 ? void 0 : (_newPatient$isenPK = newPatient.isenPK) === null || _newPatient$isenPK === void 0 ? void 0 : _newPatient$isenPK.idp)) {
+      this.setPatient(newPatient);
+    }
+  }
+  setPatient(patient) {
+    this.currentPatient = patient;
+    this.allData = [];
+    this.clearAutomation();
+    this.elements.content.innerHTML = '';
+    if (this.elements.searchKeyword) {
+      this.elements.searchKeyword.value = '';
+    }
+    this.applyDefaultDateRange();
+    if (this.elements.section) {
+      this.elements.section.style.display = patient ? 'block' : 'none';
+    }
+  }
+  applyDefaultDateRange() {
+    const dateRangeDefaults = this.globalSettings.userPreferences.dateRangeDefaults;
+    const range = dateRangeDefaults.timeline || {
+      start: -12,
+      end: 0
+    };
+    if (this.elements.dateInitial) this.elements.dateInitial.valueAsDate = _utils_js__WEBPACK_IMPORTED_MODULE_1__/* .calculateRelativeDate */ .Z9(range.start);
+    if (this.elements.dateFinal) this.elements.dateFinal.valueAsDate = _utils_js__WEBPACK_IMPORTED_MODULE_1__/* .calculateRelativeDate */ .Z9(range.end);
+  }
+  async fetchData() {
+    if (!this.currentPatient || this.isLoading) {
+      return;
+    }
+    this.isLoading = true;
+    _renderers_js__WEBPACK_IMPORTED_MODULE_2__/* .renderTimeline */ .s8([], 'loading');
+    try {
+      const params = {
+        isenPK: `${this.currentPatient.isenPK.idp}-${this.currentPatient.isenPK.ids}`,
+        isenFullPKCrypto: this.currentPatient.isenFullPKCrypto,
+        dataInicial: '01/01/1900',
+        // Busca sempre o histórico completo
+        dataFinal: new Date().toLocaleDateString('pt-BR')
+      };
+      const apiData = await _api_js__WEBPACK_IMPORTED_MODULE_0__/* .fetchAllTimelineData */ .lQ(params);
+      const normalizedData = _utils_js__WEBPACK_IMPORTED_MODULE_1__/* .normalizeTimelineData */ .td(apiData);
+      this.allData = normalizedData;
+      this.render();
+    } catch (error) {
+      console.error('Erro ao buscar dados para a Linha do Tempo:', error);
+      _renderers_js__WEBPACK_IMPORTED_MODULE_2__/* .renderTimeline */ .s8([], 'error');
+    } finally {
+      this.isLoading = false;
+    }
+  }
+  getFilterValues() {
+    var _this$elements$dateIn2, _this$elements$dateFi2, _this$elements$search2;
+    return {
+      startDate: (_this$elements$dateIn2 = this.elements.dateInitial) === null || _this$elements$dateIn2 === void 0 ? void 0 : _this$elements$dateIn2.value,
+      endDate: (_this$elements$dateFi2 = this.elements.dateFinal) === null || _this$elements$dateFi2 === void 0 ? void 0 : _this$elements$dateFi2.value,
+      keyword: _utils_js__WEBPACK_IMPORTED_MODULE_1__/* .normalizeString */ .J2(((_this$elements$search2 = this.elements.searchKeyword) === null || _this$elements$search2 === void 0 ? void 0 : _this$elements$search2.value) || '')
+    };
+  }
+  render() {
+    if (this.allData.length === 0 && !this.isLoading) {
+      _renderers_js__WEBPACK_IMPORTED_MODULE_2__/* .renderTimeline */ .s8([], 'empty');
+      return;
+    }
+    let dataToRender = this.allData;
+    const filters = this.getFilterValues();
+
+    // Client-side filtering
+    if (filters.startDate) {
+      const startDate = new Date(filters.startDate);
+      dataToRender = dataToRender.filter(event => event.sortableDate >= startDate);
+    }
+    if (filters.endDate) {
+      const endDate = new Date(filters.endDate);
+      endDate.setHours(23, 59, 59, 999); // Garante que o dia final seja incluído
+      dataToRender = dataToRender.filter(event => event.sortableDate <= endDate);
+    }
+    if (filters.keyword) {
+      dataToRender = dataToRender.filter(event => event.searchText.includes(filters.keyword));
+    }
+
+    // Automation rule filtering
+    if (this.isFilteredView && this.activeRuleFilters) {
+      dataToRender = _utils_js__WEBPACK_IMPORTED_MODULE_1__/* .filterTimelineEvents */ .Pr(dataToRender, this.activeRuleFilters);
+    }
+    _renderers_js__WEBPACK_IMPORTED_MODULE_2__/* .renderTimeline */ .s8(dataToRender, 'success');
+  }
+  toggleSection() {
+    var _this$elements$wrappe;
+    (_this$elements$wrappe = this.elements.wrapper) === null || _this$elements$wrappe === void 0 ? void 0 : _this$elements$wrappe.classList.toggle('show');
+    this.elements.toggleBtn.textContent = this.elements.wrapper.classList.contains('show') ? 'Recolher' : 'Expandir';
+  }
+  applyAutomationFilters(filters, ruleName) {
+    this.activeRuleFilters = filters;
+    this.activeRuleName = ruleName;
+    this.isFilteredView = false;
+    if (this.elements.automationFeedback) {
+      this.elements.automationFeedback.innerHTML = `
+            <div class="flex justify-between items-center text-sm">
+                <span>Regra '<strong>${ruleName}</strong>' ativa.</span>
+                <button id="timeline-toggle-filter-btn" class="font-semibold text-blue-600 hover:underline">
+                    Ver timeline focada
+                </button>
+            </div>
+        `;
+      this.elements.automationFeedback.classList.remove('hidden');
+    }
+    if (this.allData.length > 0) {
+      this.render();
+    }
+  }
+  clearAutomation() {
+    this.activeRuleFilters = null;
+    this.activeRuleName = null;
+    this.isFilteredView = false;
+    if (this.elements.automationFeedback) {
+      this.elements.automationFeedback.classList.add('hidden');
+      this.elements.automationFeedback.innerHTML = '';
+    }
+    if (this.allData.length > 0) {
+      this.render();
+    }
+  }
+  toggleFilteredView() {
+    this.isFilteredView = !this.isFilteredView;
+    const button = document.getElementById('timeline-toggle-filter-btn');
+    if (button) {
+      button.textContent = this.isFilteredView ? 'Ver timeline completa' : 'Ver timeline focada';
+    }
+    this.render();
+  }
+}
 
 /***/ })
 
@@ -970,15 +1889,9 @@ document.addEventListener('DOMContentLoaded', init);
 /******/ 		__webpack_require__.o = (obj, prop) => (Object.prototype.hasOwnProperty.call(obj, prop))
 /******/ 	})();
 /******/ 	
-/******/ 	/* webpack/runtime/make namespace object */
+/******/ 	/* webpack/runtime/runtimeId */
 /******/ 	(() => {
-/******/ 		// define __esModule on exports
-/******/ 		__webpack_require__.r = (exports) => {
-/******/ 			if(typeof Symbol !== 'undefined' && Symbol.toStringTag) {
-/******/ 				Object.defineProperty(exports, Symbol.toStringTag, { value: 'Module' });
-/******/ 			}
-/******/ 			Object.defineProperty(exports, '__esModule', { value: true });
-/******/ 		};
+/******/ 		__webpack_require__.j = 61;
 /******/ 	})();
 /******/ 	
 /******/ 	/* webpack/runtime/jsonp chunk loading */
@@ -989,7 +1902,11 @@ document.addEventListener('DOMContentLoaded', init);
 /******/ 		// undefined = chunk not loaded, null = chunk preloaded/prefetched
 /******/ 		// [resolve, reject, Promise] = chunk loading, 0 = chunk loaded
 /******/ 		var installedChunks = {
-/******/ 			"sidebar": 0
+/******/ 			61: 0,
+/******/ 			312: 0,
+/******/ 			434: 0,
+/******/ 			583: 0,
+/******/ 			738: 0
 /******/ 		};
 /******/ 		
 /******/ 		// no chunk on demand loading
@@ -1039,9 +1956,8 @@ document.addEventListener('DOMContentLoaded', init);
 /******/ 	// startup
 /******/ 	// Load entry module and return exports
 /******/ 	// This entry module depends on other loaded chunks and execution need to be delayed
-/******/ 	var __webpack_exports__ = __webpack_require__.O(undefined, ["common"], () => (__webpack_require__("./sidebar.js")))
+/******/ 	var __webpack_exports__ = __webpack_require__.O(undefined, [76], () => (__webpack_require__(778)))
 /******/ 	__webpack_exports__ = __webpack_require__.O(__webpack_exports__);
 /******/ 	
 /******/ })()
 ;
-//# sourceMappingURL=sidebar.js.map

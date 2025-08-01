@@ -61,18 +61,13 @@ const consultationFilterLogic = (data, filters) => {
     filteredData,
     filters['consultation-filter-keyword'],
     (c) =>
-      [
-        c.specialty,
-        c.professional,
-        c.unit,
-        ...c.details.map((d) => `${d.label} ${d.value}`),
-      ].join(' ')
+      [c.specialty, c.professional, c.unit, ...c.details.map((d) => `${d.label} ${d.value}`)].join(
+        ' '
+      )
   );
 
-  filteredData = applyNormalizedTextFilter(
-    filteredData,
-    filters['consultation-filter-cid'],
-    (c) => c.details.map((d) => d.value).join(' ')
+  filteredData = applyNormalizedTextFilter(filteredData, filters['consultation-filter-cid'], (c) =>
+    c.details.map((d) => d.value).join(' ')
   );
 
   filteredData = applyNormalizedTextFilter(
@@ -127,19 +122,13 @@ const appointmentFilterLogic = (data, filters, fetchType) => {
   }
 
   if (fetchType === 'consultas') {
-    filteredData = filteredData.filter(
-      (a) => !a.type.toUpperCase().includes('EXAME')
-    );
+    filteredData = filteredData.filter((a) => !a.type.toUpperCase().includes('EXAME'));
   } else if (fetchType === 'exames') {
-    filteredData = filteredData.filter((a) =>
-      a.type.toUpperCase().includes('EXAME')
-    );
+    filteredData = filteredData.filter((a) => a.type.toUpperCase().includes('EXAME'));
   }
 
-  filteredData = applyNormalizedTextFilter(
-    filteredData,
-    filters['appointment-filter-term'],
-    (a) => [a.professional, a.specialty, a.description].join(' ')
+  filteredData = applyNormalizedTextFilter(filteredData, filters['appointment-filter-term'], (a) =>
+    [a.professional, a.specialty, a.description].join(' ')
   );
   filteredData = applyNormalizedTextFilter(
     filteredData,
@@ -185,9 +174,7 @@ const documentFilterLogic = (data, filters) => {
   let filteredData = [...data];
 
   // Filtro por data (client-side)
-  const startDateValue = document.getElementById(
-    'document-date-initial'
-  )?.value;
+  const startDateValue = document.getElementById('document-date-initial')?.value;
   const endDateValue = document.getElementById('document-date-final')?.value;
 
   if (startDateValue) {
@@ -287,9 +274,7 @@ function applyCustomHeaderStyles(styles) {
 
   for (const sectionKey in sectionIcons) {
     const sectionId =
-      sectionKey === 'patient-details'
-        ? 'patient-details-section'
-        : `${sectionKey}-section`;
+      sectionKey === 'patient-details' ? 'patient-details-section' : `${sectionKey}-section`;
 
     const sectionElement = document.getElementById(sectionId);
     if (!sectionElement) continue;
@@ -300,29 +285,16 @@ function applyCustomHeaderStyles(styles) {
     const finalStyle = { ...defaultStyles, ...savedStyle };
 
     // Define as variáveis CSS no elemento da seção.
-    sectionElement.style.setProperty(
-      '--section-bg-color',
-      finalStyle.backgroundColor
-    );
+    sectionElement.style.setProperty('--section-bg-color', finalStyle.backgroundColor);
     sectionElement.style.setProperty('--section-font-color', finalStyle.color);
-    sectionElement.style.setProperty(
-      '--section-icon-color',
-      finalStyle.iconColor
-    );
-    sectionElement.style.setProperty(
-      '--section-font-size',
-      finalStyle.fontSize
-    );
+    sectionElement.style.setProperty('--section-icon-color', finalStyle.iconColor);
+    sectionElement.style.setProperty('--section-font-size', finalStyle.fontSize);
   }
 }
 
 async function selectPatient(patientInfo, forceRefresh = false) {
   const currentPatient = store.getPatient();
-  if (
-    currentPatient &&
-    currentPatient.ficha.isenPK.idp === patientInfo.idp &&
-    !forceRefresh
-  ) {
+  if (currentPatient && currentPatient.ficha.isenPK.idp === patientInfo.idp && !forceRefresh) {
     return;
   }
   Utils.toggleLoader(true);
@@ -364,17 +336,13 @@ async function init() {
       const mainContent = document.getElementById('main-content');
       const urlWarning = document.getElementById('url-config-warning');
       const openOptions = document.getElementById('open-options-from-warning');
-      const reloadSidebar = document.getElementById(
-        'reload-sidebar-from-warning'
-      );
+      const reloadSidebar = document.getElementById('reload-sidebar-from-warning');
 
       if (mainContent) mainContent.classList.add('hidden');
       if (urlWarning) urlWarning.classList.remove('hidden');
 
       if (openOptions) {
-        openOptions.addEventListener('click', () =>
-          browser.runtime.openOptionsPage()
-        );
+        openOptions.addEventListener('click', () => browser.runtime.openOptionsPage());
       }
       if (reloadSidebar) {
         reloadSidebar.addEventListener('click', () => {
@@ -386,10 +354,7 @@ async function init() {
       // **não retornamos mais aqui**, apenas marcamos que deu “fallback”
     } else {
       console.error('Initialization failed:', error);
-      Utils.showMessage(
-        'Ocorreu um erro inesperado ao iniciar a extensão.',
-        'error'
-      );
+      Utils.showMessage('Ocorreu um erro inesperado ao iniciar a extensão.', 'error');
       // nesse caso você pode querer return ou throw de verdade
       return;
     }
@@ -454,9 +419,7 @@ async function loadConfigAndData() {
 
   return {
     fieldConfigLayout: defaultFieldConfig.map((defaultField) => {
-      const savedField = syncData.patientFields.find(
-        (f) => f.id === defaultField.id
-      );
+      const savedField = syncData.patientFields.find((f) => f.id === defaultField.id);
       return savedField ? { ...defaultField, ...savedField } : defaultField;
     }),
     filterLayout: syncData.filterLayout,
@@ -491,8 +454,7 @@ function applySectionOrder(order) {
   const patientCardId = 'patient-details';
 
   // Pega a ordem salva ou a ordem padrão do DOM
-  const savedOrder =
-    order && order.length > 0 ? order : Object.keys(sectionMap);
+  const savedOrder = order && order.length > 0 ? order : Object.keys(sectionMap);
 
   // Garante que a ficha do paciente esteja sempre no topo
   // 1. Remove a ficha da ordem atual, não importa onde esteja.
@@ -522,18 +484,10 @@ function initializeSections(globalSettings) {
   Object.keys(sectionConfigurations).forEach((key) => {
     if (key === 'patient-details') return;
     if (key === 'timeline') {
-      sectionManagers[key] = new TimelineManager(
-        key,
-        sectionConfigurations[key],
-        globalSettings
-      );
+      sectionManagers[key] = new TimelineManager(key, sectionConfigurations[key], globalSettings);
       return;
     }
-    sectionManagers[key] = new SectionManager(
-      key,
-      sectionConfigurations[key],
-      globalSettings
-    );
+    sectionManagers[key] = new SectionManager(key, sectionConfigurations[key], globalSettings);
   });
 }
 
@@ -541,13 +495,7 @@ function applyUserPreferences(globalSettings) {
   const { userPreferences, filterLayout } = globalSettings;
   const { dateRangeDefaults } = userPreferences;
 
-  const sections = [
-    'consultations',
-    'exams',
-    'appointments',
-    'regulations',
-    'documents',
-  ];
+  const sections = ['consultations', 'exams', 'appointments', 'regulations', 'documents'];
   const defaultSystemRanges = {
     consultations: { start: -6, end: 0 },
     exams: { start: -6, end: 0 },
@@ -563,8 +511,7 @@ function applyUserPreferences(globalSettings) {
     const initialEl = document.getElementById(`${prefix}-date-initial`);
     const finalEl = document.getElementById(`${prefix}-date-final`);
 
-    if (initialEl)
-      initialEl.valueAsDate = Utils.calculateRelativeDate(range.start);
+    if (initialEl) initialEl.valueAsDate = Utils.calculateRelativeDate(range.start);
     if (finalEl) finalEl.valueAsDate = Utils.calculateRelativeDate(range.end);
   });
 
@@ -572,11 +519,7 @@ function applyUserPreferences(globalSettings) {
     .flat()
     .forEach((filterSetting) => {
       const el = document.getElementById(filterSetting.id);
-      if (
-        el &&
-        filterSetting.defaultValue !== undefined &&
-        filterSetting.defaultValue !== null
-      ) {
+      if (el && filterSetting.defaultValue !== undefined && filterSetting.defaultValue !== null) {
         if (el.type === 'checkbox') {
           el.checked = filterSetting.defaultValue;
         } else {
@@ -590,12 +533,10 @@ function setupAutoModeToggle() {
   const toggle = document.getElementById('auto-mode-toggle');
   const label = document.getElementById('auto-mode-label');
 
-  browser.storage.sync
-    .get({ enableAutomaticDetection: true })
-    .then((settings) => {
-      toggle.checked = settings.enableAutomaticDetection;
-      label.textContent = settings.enableAutomaticDetection ? 'Auto' : 'Manual';
-    });
+  browser.storage.sync.get({ enableAutomaticDetection: true }).then((settings) => {
+    toggle.checked = settings.enableAutomaticDetection;
+    label.textContent = settings.enableAutomaticDetection ? 'Auto' : 'Manual';
+  });
 
   toggle.addEventListener('change', (event) => {
     const isEnabled = event.target.checked;
@@ -609,19 +550,14 @@ async function handleRegulationLoaded(regulationData) {
   try {
     currentRegulationData = regulationData;
 
-    if (
-      regulationData &&
-      regulationData.isenPKIdp &&
-      regulationData.isenPKIds
-    ) {
+    if (regulationData && regulationData.isenPKIdp && regulationData.isenPKIds) {
       const patientInfo = {
         idp: regulationData.isenPKIdp,
         ids: regulationData.isenPKIds,
       };
       await selectPatient(patientInfo);
 
-      const contextName =
-        regulationData.apcnNome || regulationData.prciNome || 'Contexto';
+      const contextName = regulationData.apcnNome || regulationData.prciNome || 'Contexto';
       const infoBtn = document.getElementById('context-info-btn');
       infoBtn.title = `Contexto: ${contextName.trim()}`;
       infoBtn.classList.remove('hidden');
@@ -629,17 +565,11 @@ async function handleRegulationLoaded(regulationData) {
       await applyAutomationRules(regulationData);
     } else {
       currentRegulationData = null;
-      Utils.showMessage(
-        'Não foi possível extrair os dados do paciente da regulação.',
-        'error'
-      );
+      Utils.showMessage('Não foi possível extrair os dados do paciente da regulação.', 'error');
     }
   } catch (error) {
     currentRegulationData = null;
-    Utils.showMessage(
-      `Erro ao processar a regulação: ${error.message}`,
-      'error'
-    );
+    Utils.showMessage(`Erro ao processar a regulação: ${error.message}`, 'error');
     console.error('Erro ao processar a regulação:', error);
   } finally {
     Utils.toggleLoader(false);
@@ -670,10 +600,7 @@ async function applyAutomationRules(regulationData) {
       if (hasMatch) {
         // Aplicar filtros nas seções existentes E na nova timeline
         Object.entries(sectionManagers).forEach(([key, manager]) => {
-          if (
-            rule.filterSettings[key] &&
-            typeof manager.applyAutomationFilters === 'function'
-          ) {
+          if (rule.filterSettings[key] && typeof manager.applyAutomationFilters === 'function') {
             manager.applyAutomationFilters(rule.filterSettings[key], rule.name);
           }
         });
@@ -712,11 +639,12 @@ function addGlobalEventListeners() {
       const patient = store.getPatient();
       if (patient && patient.ficha) {
         Utils.showDialog({
-          message: 'Um paciente está selecionado e o estado atual será perdido. Deseja realmente recarregar o assistente?',
+          message:
+            'Um paciente está selecionado e o estado atual será perdido. Deseja realmente recarregar o assistente?',
           onConfirm: () => {
             const api = browser || chrome;
             api.runtime.reload();
-          }
+          },
         });
       } else {
         const api = browser || chrome;
@@ -725,9 +653,7 @@ function addGlobalEventListeners() {
     });
   }
 
-  modalCloseBtn.addEventListener('click', () =>
-    infoModal.classList.add('hidden')
-  );
+  modalCloseBtn.addEventListener('click', () => infoModal.classList.add('hidden'));
   infoModal.addEventListener('click', (e) => {
     if (e.target === infoModal) infoModal.classList.add('hidden');
   });
@@ -737,21 +663,19 @@ function addGlobalEventListeners() {
   browser.storage.onChanged.addListener((changes, areaName) => {
     if (areaName === 'local' && changes.pendingRegulation) {
       // Apenas processa se a detecção automática estiver LIGADA
-      browser.storage.sync
-        .get({ enableAutomaticDetection: true })
-        .then((settings) => {
-          if (settings.enableAutomaticDetection) {
-            const { newValue } = changes.pendingRegulation;
-            if (newValue && newValue.isenPKIdp) {
-              console.log(
-                '[Assistente Sidebar] Nova regulação detectada via storage.onChanged:',
-                newValue
-              );
-              handleRegulationLoaded(newValue);
-              browser.storage.local.remove('pendingRegulation');
-            }
+      browser.storage.sync.get({ enableAutomaticDetection: true }).then((settings) => {
+        if (settings.enableAutomaticDetection) {
+          const { newValue } = changes.pendingRegulation;
+          if (newValue && newValue.isenPKIdp) {
+            console.log(
+              '[Assistente Sidebar] Nova regulação detectada via storage.onChanged:',
+              newValue
+            );
+            handleRegulationLoaded(newValue);
+            browser.storage.local.remove('pendingRegulation');
           }
-        });
+        }
+      });
     }
 
     if (areaName === 'sync' && changes.sectionHeaderStyles) {
@@ -802,9 +726,7 @@ async function handleGlobalActions(event) {
     return;
   }
 
-  const regulationAttachmentBtn = target.closest(
-    '.view-regulation-attachment-btn'
-  );
+  const regulationAttachmentBtn = target.closest('.view-regulation-attachment-btn');
   if (regulationAttachmentBtn) {
     await handleViewRegulationAttachment(regulationAttachmentBtn);
     return;
@@ -908,10 +830,7 @@ function formatRegulationDetailsForModal(data) {
   if (!data) return '<p>Dados da regulação não encontrados.</p>';
   let content = '';
   content += createDetailRow('Status', data.reguStatus);
-  content += createDetailRow(
-    'Tipo',
-    data.reguTipo === 'ENC' ? 'Consulta' : 'Exame'
-  );
+  content += createDetailRow('Tipo', data.reguTipo === 'ENC' ? 'Consulta' : 'Exame');
   content += createDetailRow('Data Solicitação', data.reguDataStr);
   content += createDetailRow('Procedimento', data.prciNome);
   content += createDetailRow('CID', `${data.tcidCod} - ${data.tcidDescricao}`);
@@ -923,9 +842,9 @@ function formatRegulationDetailsForModal(data) {
     content += `<div class="py-2">
                       <span class="font-semibold text-slate-600">Justificativa:</span>
                       <p class="text-slate-800 whitespace-pre-wrap mt-1 p-2 bg-slate-50 rounded">${data.reguJustificativa.replace(
-    /\\n/g,
-    '\n'
-  )}</p>
+                        /\\n/g,
+                        '\n'
+                      )}</p>
                   </div>`;
   }
   return content;
@@ -941,22 +860,13 @@ function formatAppointmentDetailsForModal(data) {
 
   let content = '';
   content += createDetailRow('Status', status);
-  content += createDetailRow(
-    'Data',
-    `${data.agcoData} às ${data.agcoHoraPrevista}`
-  );
-  content += createDetailRow(
-    'Local',
-    data.unidadeSaudeDestino?.entidade?.entiNome
-  );
+  content += createDetailRow('Data', `${data.agcoData} às ${data.agcoHoraPrevista}`);
+  content += createDetailRow('Local', data.unidadeSaudeDestino?.entidade?.entiNome);
   content += createDetailRow(
     'Profissional',
     data.profissionalDestino?.entidadeFisica?.entidade?.entiNome
   );
-  content += createDetailRow(
-    'Especialidade',
-    data.atividadeProfissionalCnes?.apcnNome
-  );
+  content += createDetailRow('Especialidade', data.atividadeProfissionalCnes?.apcnNome);
   content += createDetailRow('Procedimento', data.procedimento?.prciNome);
   content += createDetailRow('Convênio', data.convenio?.entidade?.entiNome);
   if (data.agcoObs) {
@@ -973,14 +883,8 @@ function formatExamAppointmentDetailsForModal(data) {
 
   let content = '';
   content += createDetailRow('Data Agendamento', data.examDataCad);
-  content += createDetailRow(
-    'Unidade Origem',
-    data.ligacaoModularOrigem?.limoNome
-  );
-  content += createDetailRow(
-    'Unidade Destino',
-    data.ligacaoModularDestino?.limoNome
-  );
+  content += createDetailRow('Unidade Origem', data.ligacaoModularOrigem?.limoNome);
+  content += createDetailRow('Unidade Destino', data.ligacaoModularDestino?.limoNome);
   content += createDetailRow(
     'Profissional Sol.',
     data.profissional?.entidadeFisica?.entidade?.entiNome
@@ -1002,19 +906,14 @@ async function handleShowRegulationDetailsModal(button) {
     const content = formatRegulationDetailsForModal(data);
     showModal('Detalhes da Regulação', content);
   } catch (error) {
-    showModal(
-      'Erro',
-      `<p>Não foi possível carregar os detalhes: ${error.message}</p>`
-    );
+    showModal('Erro', `<p>Não foi possível carregar os detalhes: ${error.message}</p>`);
   }
 }
 
 async function handleShowAppointmentDetailsModal(button) {
   const { idp, ids, type } = button.dataset;
   const isExam = type.toUpperCase().includes('EXAME');
-  const title = isExam
-    ? 'Detalhes do Agendamento de Exame'
-    : 'Detalhes da Consulta Agendada';
+  const title = isExam ? 'Detalhes do Agendamento de Exame' : 'Detalhes da Consulta Agendada';
 
   showModal(title, '<p>Carregando...</p>');
 
@@ -1030,10 +929,7 @@ async function handleShowAppointmentDetailsModal(button) {
     }
     showModal(title, content);
   } catch (error) {
-    showModal(
-      'Erro',
-      `<p>Não foi possível carregar os detalhes: ${error.message}</p>`
-    );
+    showModal('Erro', `<p>Não foi possível carregar os detalhes: ${error.message}</p>`);
   }
 }
 
@@ -1046,12 +942,8 @@ function handleShowAppointmentInfo(button) {
   modalContent.innerHTML = `
         <p><strong>ID:</strong> ${data.id}</p>
         <p><strong>Tipo:</strong> ${
-  data.isSpecialized
-    ? 'Especializada'
-    : data.isOdonto
-      ? 'Odontológica'
-      : data.type
-}</p>
+          data.isSpecialized ? 'Especializada' : data.isOdonto ? 'Odontológica' : data.type
+        }</p>
         <p><strong>Status:</strong> ${data.status}</p>
         <p><strong>Data:</strong> ${data.date} às ${data.time}</p>
         <p><strong>Local:</strong> ${data.location}</p>
@@ -1064,9 +956,7 @@ function handleShowAppointmentInfo(button) {
 
 async function checkForPendingRegulation() {
   try {
-    const { pendingRegulation } = await browser.storage.local.get(
-      'pendingRegulation'
-    );
+    const { pendingRegulation } = await browser.storage.local.get('pendingRegulation');
     if (pendingRegulation && pendingRegulation.isenPKIdp) {
       await handleRegulationLoaded(pendingRegulation);
       await browser.storage.local.remove('pendingRegulation');

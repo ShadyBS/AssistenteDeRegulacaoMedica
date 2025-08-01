@@ -38,9 +38,7 @@ export class TimelineManager {
       content: document.getElementById('timeline-content'),
       fetchBtn: document.getElementById('fetch-timeline-btn'),
       toggleBtn: document.getElementById('toggle-timeline-list-btn'),
-      automationFeedback: document.getElementById(
-        'timeline-automation-feedback'
-      ),
+      automationFeedback: document.getElementById('timeline-automation-feedback'),
       dateInitial: document.getElementById('timeline-date-initial'),
       dateFinal: document.getElementById('timeline-date-final'),
       searchKeyword: document.getElementById('timeline-search-keyword'),
@@ -49,9 +47,7 @@ export class TimelineManager {
 
   addEventListeners() {
     this.elements.fetchBtn?.addEventListener('click', () => this.fetchData());
-    this.elements.toggleBtn?.addEventListener('click', () =>
-      this.toggleSection()
-    );
+    this.elements.toggleBtn?.addEventListener('click', () => this.toggleSection());
 
     this.elements.searchKeyword?.addEventListener(
       'input',
@@ -80,9 +76,7 @@ export class TimelineManager {
         return;
       }
 
-      const toggleFilterBtn = event.target.closest(
-        '#timeline-toggle-filter-btn'
-      );
+      const toggleFilterBtn = event.target.closest('#timeline-toggle-filter-btn');
       if (toggleFilterBtn) {
         this.toggleFilteredView();
       }
@@ -114,18 +108,13 @@ export class TimelineManager {
   }
 
   applyDefaultDateRange() {
-    const dateRangeDefaults =
-      this.globalSettings.userPreferences.dateRangeDefaults;
+    const dateRangeDefaults = this.globalSettings.userPreferences.dateRangeDefaults;
     const range = dateRangeDefaults.timeline || { start: -12, end: 0 };
 
     if (this.elements.dateInitial)
-      this.elements.dateInitial.valueAsDate = Utils.calculateRelativeDate(
-        range.start
-      );
+      this.elements.dateInitial.valueAsDate = Utils.calculateRelativeDate(range.start);
     if (this.elements.dateFinal)
-      this.elements.dateFinal.valueAsDate = Utils.calculateRelativeDate(
-        range.end
-      );
+      this.elements.dateFinal.valueAsDate = Utils.calculateRelativeDate(range.end);
   }
 
   async fetchData() {
@@ -177,29 +166,20 @@ export class TimelineManager {
     // Client-side filtering
     if (filters.startDate) {
       const startDate = new Date(filters.startDate);
-      dataToRender = dataToRender.filter(
-        (event) => event.sortableDate >= startDate
-      );
+      dataToRender = dataToRender.filter((event) => event.sortableDate >= startDate);
     }
     if (filters.endDate) {
       const endDate = new Date(filters.endDate);
       endDate.setHours(23, 59, 59, 999); // Garante que o dia final seja incluído
-      dataToRender = dataToRender.filter(
-        (event) => event.sortableDate <= endDate
-      );
+      dataToRender = dataToRender.filter((event) => event.sortableDate <= endDate);
     }
     if (filters.keyword) {
-      dataToRender = dataToRender.filter((event) =>
-        event.searchText.includes(filters.keyword)
-      );
+      dataToRender = dataToRender.filter((event) => event.searchText.includes(filters.keyword));
     }
 
     // Automation rule filtering
     if (this.isFilteredView && this.activeRuleFilters) {
-      dataToRender = Utils.filterTimelineEvents(
-        dataToRender,
-        this.activeRuleFilters
-      );
+      dataToRender = Utils.filterTimelineEvents(dataToRender, this.activeRuleFilters);
     }
 
     Renderers.renderTimeline(dataToRender, 'success');
@@ -207,10 +187,9 @@ export class TimelineManager {
 
   toggleSection() {
     this.elements.wrapper?.classList.toggle('show');
-    this.elements.toggleBtn.textContent =
-      this.elements.wrapper.classList.contains('show')
-        ? 'Recolher'
-        : 'Expandir';
+    this.elements.toggleBtn.textContent = this.elements.wrapper.classList.contains('show')
+      ? 'Recolher'
+      : 'Expandir';
   }
 
   applyAutomationFilters(filters, ruleName) {
@@ -252,9 +231,7 @@ export class TimelineManager {
     this.isFilteredView = !this.isFilteredView;
     const button = document.getElementById('timeline-toggle-filter-btn');
     if (button) {
-      button.textContent = this.isFilteredView
-        ? 'Ver timeline completa'
-        : 'Ver timeline focada';
+      button.textContent = this.isFilteredView ? 'Ver timeline completa' : 'Ver timeline focada';
     }
     this.render();
   }

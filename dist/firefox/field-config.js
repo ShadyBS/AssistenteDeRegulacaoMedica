@@ -1,67 +1,9 @@
 /******/ (() => { // webpackBootstrap
 /******/ 	"use strict";
-/******/ 	var __webpack_modules__ = ({});
-/************************************************************************/
-/******/ 	// The module cache
-/******/ 	var __webpack_module_cache__ = {};
-/******/ 	
-/******/ 	// The require function
-/******/ 	function __webpack_require__(moduleId) {
-/******/ 		// Check if module is in cache
-/******/ 		var cachedModule = __webpack_module_cache__[moduleId];
-/******/ 		if (cachedModule !== undefined) {
-/******/ 			return cachedModule.exports;
-/******/ 		}
-/******/ 		// Create a new module (and put it into the cache)
-/******/ 		var module = __webpack_module_cache__[moduleId] = {
-/******/ 			// no module.id needed
-/******/ 			// no module.loaded needed
-/******/ 			exports: {}
-/******/ 		};
-/******/ 	
-/******/ 		// Execute the module function
-/******/ 		__webpack_modules__[moduleId](module, module.exports, __webpack_require__);
-/******/ 	
-/******/ 		// Return the exports of the module
-/******/ 		return module.exports;
-/******/ 	}
-/******/ 	
-/******/ 	// expose the modules object (__webpack_modules__)
-/******/ 	__webpack_require__.m = __webpack_modules__;
+/******/ 	// The require scope
+/******/ 	var __webpack_require__ = {};
 /******/ 	
 /************************************************************************/
-/******/ 	/* webpack/runtime/chunk loaded */
-/******/ 	(() => {
-/******/ 		var deferred = [];
-/******/ 		__webpack_require__.O = (result, chunkIds, fn, priority) => {
-/******/ 			if(chunkIds) {
-/******/ 				priority = priority || 0;
-/******/ 				for(var i = deferred.length; i > 0 && deferred[i - 1][2] > priority; i--) deferred[i] = deferred[i - 1];
-/******/ 				deferred[i] = [chunkIds, fn, priority];
-/******/ 				return;
-/******/ 			}
-/******/ 			var notFulfilled = Infinity;
-/******/ 			for (var i = 0; i < deferred.length; i++) {
-/******/ 				var [chunkIds, fn, priority] = deferred[i];
-/******/ 				var fulfilled = true;
-/******/ 				for (var j = 0; j < chunkIds.length; j++) {
-/******/ 					if ((priority & 1 === 0 || notFulfilled >= priority) && Object.keys(__webpack_require__.O).every((key) => (__webpack_require__.O[key](chunkIds[j])))) {
-/******/ 						chunkIds.splice(j--, 1);
-/******/ 					} else {
-/******/ 						fulfilled = false;
-/******/ 						if(priority < notFulfilled) notFulfilled = priority;
-/******/ 					}
-/******/ 				}
-/******/ 				if(fulfilled) {
-/******/ 					deferred.splice(i--, 1)
-/******/ 					var r = fn();
-/******/ 					if (r !== undefined) result = r;
-/******/ 				}
-/******/ 			}
-/******/ 			return result;
-/******/ 		};
-/******/ 	})();
-/******/ 	
 /******/ 	/* webpack/runtime/define property getters */
 /******/ 	(() => {
 /******/ 		// define getter functions for harmony exports
@@ -79,78 +21,349 @@
 /******/ 		__webpack_require__.o = (obj, prop) => (Object.prototype.hasOwnProperty.call(obj, prop))
 /******/ 	})();
 /******/ 	
-/******/ 	/* webpack/runtime/make namespace object */
-/******/ 	(() => {
-/******/ 		// define __esModule on exports
-/******/ 		__webpack_require__.r = (exports) => {
-/******/ 			if(typeof Symbol !== 'undefined' && Symbol.toStringTag) {
-/******/ 				Object.defineProperty(exports, Symbol.toStringTag, { value: 'Module' });
-/******/ 			}
-/******/ 			Object.defineProperty(exports, '__esModule', { value: true });
-/******/ 		};
-/******/ 	})();
-/******/ 	
-/******/ 	/* webpack/runtime/jsonp chunk loading */
-/******/ 	(() => {
-/******/ 		// no baseURI
-/******/ 		
-/******/ 		// object to store loaded and loading chunks
-/******/ 		// undefined = chunk not loaded, null = chunk preloaded/prefetched
-/******/ 		// [resolve, reject, Promise] = chunk loading, 0 = chunk loaded
-/******/ 		var installedChunks = {
-/******/ 			"field-config": 0
-/******/ 		};
-/******/ 		
-/******/ 		// no chunk on demand loading
-/******/ 		
-/******/ 		// no prefetching
-/******/ 		
-/******/ 		// no preloaded
-/******/ 		
-/******/ 		// no HMR
-/******/ 		
-/******/ 		// no HMR manifest
-/******/ 		
-/******/ 		__webpack_require__.O.j = (chunkId) => (installedChunks[chunkId] === 0);
-/******/ 		
-/******/ 		// install a JSONP callback for chunk loading
-/******/ 		var webpackJsonpCallback = (parentChunkLoadingFunction, data) => {
-/******/ 			var [chunkIds, moreModules, runtime] = data;
-/******/ 			// add "moreModules" to the modules object,
-/******/ 			// then flag all "chunkIds" as loaded and fire callback
-/******/ 			var moduleId, chunkId, i = 0;
-/******/ 			if(chunkIds.some((id) => (installedChunks[id] !== 0))) {
-/******/ 				for(moduleId in moreModules) {
-/******/ 					if(__webpack_require__.o(moreModules, moduleId)) {
-/******/ 						__webpack_require__.m[moduleId] = moreModules[moduleId];
-/******/ 					}
-/******/ 				}
-/******/ 				if(runtime) var result = runtime(__webpack_require__);
-/******/ 			}
-/******/ 			if(parentChunkLoadingFunction) parentChunkLoadingFunction(data);
-/******/ 			for(;i < chunkIds.length; i++) {
-/******/ 				chunkId = chunkIds[i];
-/******/ 				if(__webpack_require__.o(installedChunks, chunkId) && installedChunks[chunkId]) {
-/******/ 					installedChunks[chunkId][0]();
-/******/ 				}
-/******/ 				installedChunks[chunkId] = 0;
-/******/ 			}
-/******/ 			return __webpack_require__.O(result);
-/******/ 		}
-/******/ 		
-/******/ 		var chunkLoadingGlobal = self["webpackChunkassistente_de_regulacao_medica"] = self["webpackChunkassistente_de_regulacao_medica"] || [];
-/******/ 		chunkLoadingGlobal.forEach(webpackJsonpCallback.bind(null, 0));
-/******/ 		chunkLoadingGlobal.push = webpackJsonpCallback.bind(null, chunkLoadingGlobal.push.bind(chunkLoadingGlobal));
-/******/ 	})();
-/******/ 	
 /************************************************************************/
-/******/ 	
-/******/ 	// startup
-/******/ 	// Load entry module and return exports
-/******/ 	// This entry module depends on other loaded chunks and execution need to be delayed
-/******/ 	var __webpack_exports__ = __webpack_require__.O(undefined, ["common"], () => (__webpack_require__("./field-config.js")))
-/******/ 	__webpack_exports__ = __webpack_require__.O(__webpack_exports__);
-/******/ 	
+var __webpack_exports__ = {};
+/* unused harmony exports defaultFieldConfig, getNestedValue */
+/**
+ * Define a configuração padrão para os campos da ficha do paciente.
+ * Este é o "molde" que a extensão usará se nenhuma configuração personalizada for encontrada.
+ *
+ * Estrutura de cada objeto de campo:
+ * - id: Um identificador único para o campo (usado no HTML).
+ * - key: O caminho para acessar o dado no objeto da ficha LOCAL (ex: 'entidadeFisica.entidade.entiNome').
+ * - cadsusKey: O índice do dado correspondente no array 'cell' do CADSUS. Null se não houver correspondência.
+ * - label: O nome do campo exibido na interface (pode ser editado pelo usuário).
+ * - enabled: Se o campo deve ser exibido por padrão.
+ * - section: Onde o campo aparece por padrão ('main' para sempre visível, 'more' para "Mostrar Mais").
+ * - formatter: (Opcional) Uma função para formatar o valor antes da exibição e comparação.
+ */
+
+// Função para obter um valor aninhado de um objeto de forma segura
+const getNestedValue = (obj, path) => {
+  if (!path) return undefined;
+  return path.split('.').reduce((acc, part) => acc && acc[part], obj);
+};
+
+// Função para normalizar e formatar telefones para exibição
+const formatPhone = value => {
+  if (!value) return '';
+  // Remove todos os caracteres não numéricos, incluindo o DDI 55 que pode vir do CADSUS
+  const digits = String(value).replace(/\D/g, '').replace(/^55/, '');
+  if (digits.length === 11) {
+    // (XX) XXXXX-XXXX
+    return digits.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
+  }
+  if (digits.length === 10) {
+    // (XX) XXXX-XXXX
+    return digits.replace(/(\d{2})(\d{4})(\d{4})/, '($1) $2-$3');
+  }
+  return value; // Retorna original se não corresponder
+};
+
+// Formatter para valores 't' (true) e 'f' (false)
+const formatBoolean = value => {
+  if (value === 't' || value === true) return 'Sim';
+  if (value === 'f' || value === false) return 'Não';
+  return value;
+};
+const defaultFieldConfig = [
+// --- Seção Principal (Main) ---
+{
+  id: 'nomeCompleto',
+  key: 'entidadeFisica.entidade.entiNome',
+  cadsusKey: 2,
+  label: 'Nome',
+  enabled: true,
+  section: 'main',
+  order: 1
+}, {
+  id: 'cpf',
+  key: 'entidadeFisica.entfCPF',
+  cadsusKey: 50,
+  label: 'CPF',
+  enabled: true,
+  section: 'main',
+  order: 2,
+  formatter: value => String(value || '').replace(/\D/g, '') // Normaliza para comparação
+}, {
+  id: 'cns',
+  key: 'isenNumCadSus',
+  cadsusKey: cell => (String(cell[1]) || '').split('\n')[0].replace(/\s*\(.*\)/, '').trim(),
+  label: 'CNS',
+  enabled: true,
+  section: 'main',
+  order: 3
+}, {
+  id: 'nomeMae',
+  key: 'entidadeFisica.entfNomeMae',
+  cadsusKey: 7,
+  label: 'Nome da Mãe',
+  enabled: true,
+  section: 'main',
+  order: 4
+}, {
+  id: 'dtNasc',
+  key: 'entidadeFisica.entfDtNasc',
+  cadsusKey: 3,
+  label: 'Nascimento',
+  enabled: true,
+  section: 'main',
+  order: 5
+}, {
+  id: 'telefone',
+  key: data => {
+    var _data$entidadeFisica, _data$entidadeFisica$, _data$entidadeFisica2, _data$entidadeFisica3;
+    return `${((_data$entidadeFisica = data.entidadeFisica) === null || _data$entidadeFisica === void 0 ? void 0 : (_data$entidadeFisica$ = _data$entidadeFisica.entidade) === null || _data$entidadeFisica$ === void 0 ? void 0 : _data$entidadeFisica$.entiTel1Pre) || ''}${((_data$entidadeFisica2 = data.entidadeFisica) === null || _data$entidadeFisica2 === void 0 ? void 0 : (_data$entidadeFisica3 = _data$entidadeFisica2.entidade) === null || _data$entidadeFisica3 === void 0 ? void 0 : _data$entidadeFisica3.entiTel1) || ''}`;
+  },
+  cadsusKey: 16,
+  label: 'Telefone',
+  enabled: true,
+  section: 'main',
+  order: 6,
+  formatter: formatPhone
+},
+// --- Seção "Mostrar Mais" (More) ---
+{
+  id: 'nomeSocial',
+  key: 'entidadeFisica.entidade.entiNomeSocial',
+  cadsusKey: null,
+  label: 'Nome Social',
+  enabled: true,
+  section: 'more',
+  order: 1
+}, {
+  id: 'rg',
+  key: 'entidadeFisica.entfRG',
+  cadsusKey: 51,
+  // CORRIGIDO
+  label: 'RG',
+  enabled: true,
+  section: 'more',
+  order: 2
+}, {
+  id: 'endereco',
+  key: data => {
+    var _data$entidadeFisica4, _data$entidadeFisica5, _data$entidadeFisica6, _data$entidadeFisica7, _data$entidadeFisica8, _data$entidadeFisica9, _data$entidadeFisica0;
+    return `${((_data$entidadeFisica4 = data.entidadeFisica) === null || _data$entidadeFisica4 === void 0 ? void 0 : (_data$entidadeFisica5 = _data$entidadeFisica4.entidade) === null || _data$entidadeFisica5 === void 0 ? void 0 : (_data$entidadeFisica6 = _data$entidadeFisica5.logradouro) === null || _data$entidadeFisica6 === void 0 ? void 0 : (_data$entidadeFisica7 = _data$entidadeFisica6.tipoLogradouro) === null || _data$entidadeFisica7 === void 0 ? void 0 : _data$entidadeFisica7.tiloNome) || ''} ${String(((_data$entidadeFisica8 = data.entidadeFisica) === null || _data$entidadeFisica8 === void 0 ? void 0 : (_data$entidadeFisica9 = _data$entidadeFisica8.entidade) === null || _data$entidadeFisica9 === void 0 ? void 0 : (_data$entidadeFisica0 = _data$entidadeFisica9.logradouro) === null || _data$entidadeFisica0 === void 0 ? void 0 : _data$entidadeFisica0.logrNome) || '').split('/')[0].trim()}`.trim();
+  },
+  cadsusKey: cell => `${String(cell[35] || '')} ${String(cell[34] || '').split('/')[0].trim()}`.trim(),
+  label: 'Endereço',
+  enabled: true,
+  section: 'more',
+  order: 3
+}, {
+  id: 'bairro',
+  key: 'entidadeFisica.entidade.localidade.locaNome',
+  cadsusKey: 30,
+  label: 'Bairro',
+  enabled: true,
+  section: 'more',
+  order: 4
+}, {
+  id: 'cidade',
+  key: 'entidadeFisica.entidade.localidade.cidade.cidaNome',
+  cadsusKey: 29,
+  label: 'Cidade',
+  enabled: true,
+  section: 'more',
+  order: 5
+}, {
+  id: 'cep',
+  key: 'entidadeFisica.entidade.entiEndeCEP',
+  cadsusKey: 41,
+  label: 'CEP',
+  enabled: true,
+  section: 'more',
+  order: 6,
+  formatter: value => String(value || '').replace(/\D/g, '') // Normaliza para comparação
+}, {
+  id: 'alergiaMedicamentos',
+  key: 'isenAlergMedicamentos',
+  cadsusKey: null,
+  label: 'Alergia a Medicamentos',
+  enabled: true,
+  section: 'more',
+  order: 7
+}, {
+  id: 'alergiaAlimentos',
+  key: 'isenAlergAlimentos',
+  cadsusKey: null,
+  label: 'Alergia a Alimentos',
+  enabled: true,
+  section: 'more',
+  order: 8
+}, {
+  id: 'alergiaQuimicos',
+  key: 'isenAlergElementosQuimicos',
+  cadsusKey: null,
+  label: 'Alergia a Químicos',
+  enabled: true,
+  section: 'more',
+  order: 9
+}, {
+  id: 'acamado',
+  key: 'isenIsAcamado',
+  cadsusKey: null,
+  label: 'Acamado',
+  enabled: true,
+  section: 'more',
+  order: 10,
+  formatter: formatBoolean
+}, {
+  id: 'deficiente',
+  key: 'isenPessoaDeficiente',
+  cadsusKey: null,
+  label: 'Pessoa com Deficiência',
+  enabled: true,
+  section: 'more',
+  order: 11,
+  formatter: formatBoolean
+}, {
+  id: 'gemeo',
+  key: 'isenPossuiIrmaoGemeo',
+  cadsusKey: null,
+  label: 'Possui Irmão Gêmeo',
+  enabled: true,
+  section: 'more',
+  order: 12,
+  formatter: formatBoolean
+}, {
+  id: 'statusCadastro',
+  key: 'status.valor',
+  cadsusKey: null,
+  label: 'Status do Cadastro',
+  enabled: true,
+  section: 'more',
+  order: 13
+}, {
+  id: 'unidadeSaude',
+  key: 'unidadeSaude.entidade.entiNome',
+  cadsusKey: null,
+  label: 'Unidade de Saúde',
+  enabled: true,
+  section: 'more',
+  order: 14
+}, {
+  id: 'observacao',
+  key: 'entidadeFisica.entidade.entiObs',
+  cadsusKey: null,
+  label: 'Observação do Cadastro',
+  enabled: true,
+  section: 'more',
+  order: 15
+}, {
+  id: 'nomePai',
+  key: 'entidadeFisica.entfNomePai',
+  cadsusKey: 8,
+  // CORRIGIDO
+  label: 'Nome do Pai',
+  enabled: false,
+  section: 'more',
+  order: 16
+}, {
+  id: 'racaCor',
+  key: 'entidadeFisica.racaCor.racoNome',
+  cadsusKey: 11,
+  // CORRIGIDO
+  label: 'Raça/Cor',
+  enabled: false,
+  section: 'more',
+  order: 17
+}, {
+  id: 'grauInstrucao',
+  key: 'entidadeFisica.grauInstrucao.grinNome',
+  cadsusKey: null,
+  label: 'Grau de Instrução',
+  enabled: false,
+  section: 'more',
+  order: 18
+}, {
+  id: 'cidadeNascimento',
+  key: 'entidadeFisica.cidadeNasc.cidaNome',
+  cadsusKey: 45,
+  // CORRIGIDO
+  label: 'Cidade de Nascimento',
+  enabled: false,
+  section: 'more',
+  order: 19
+}, {
+  id: 'nacionalidade',
+  key: 'entidadeFisica.nacionalidade.naciDescricao',
+  cadsusKey: 23,
+  // CORRIGIDO
+  label: 'Nacionalidade',
+  enabled: false,
+  section: 'more',
+  order: 20
+}, {
+  id: 'religiao',
+  key: 'entidadeFisica.religiao.reliNome',
+  cadsusKey: null,
+  label: 'Religião',
+  enabled: false,
+  section: 'more',
+  order: 21
+}, {
+  id: 'cbo',
+  key: 'entidadeFisica.cbo.dcboNome',
+  cadsusKey: null,
+  label: 'Profissão (CBO)',
+  enabled: false,
+  section: 'more',
+  order: 22
+}, {
+  id: 'pis',
+  key: 'entidadeFisica.entfPis',
+  cadsusKey: 55,
+  // CORRIGIDO
+  label: 'PIS',
+  enabled: false,
+  section: 'more',
+  order: 23
+}, {
+  id: 'ctps',
+  key: data => {
+    var _data$entidadeFisica1, _data$entidadeFisica10;
+    const ctps = ((_data$entidadeFisica1 = data.entidadeFisica) === null || _data$entidadeFisica1 === void 0 ? void 0 : _data$entidadeFisica1.entfCTPS) || '';
+    const serie = ((_data$entidadeFisica10 = data.entidadeFisica) === null || _data$entidadeFisica10 === void 0 ? void 0 : _data$entidadeFisica10.entfCTPSSerie) || '';
+    if (!ctps) return '';
+    return `${ctps} (Série: ${serie})`;
+  },
+  cadsusKey: null,
+  label: 'CTPS',
+  enabled: false,
+  section: 'more',
+  order: 24
+}, {
+  id: 'convulsivo',
+  key: 'isenIsConvulsivo',
+  cadsusKey: null,
+  label: 'É Convulsivo',
+  enabled: true,
+  section: 'more',
+  order: 25,
+  formatter: formatBoolean
+}, {
+  id: 'bpc',
+  key: 'isenRecebeBPC',
+  cadsusKey: null,
+  label: 'Recebe BPC',
+  enabled: true,
+  section: 'more',
+  order: 26,
+  formatter: formatBoolean
+}, {
+  id: 'autista',
+  key: 'isenEspectroAutista',
+  cadsusKey: null,
+  label: 'Espectro Autista',
+  enabled: true,
+  section: 'more',
+  order: 27,
+  formatter: formatBoolean
+}];
+
+// Exporta a função para obter valores, será útil no sidebar.js
+
 /******/ })()
 ;
-//# sourceMappingURL=field-config.js.map

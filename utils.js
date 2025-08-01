@@ -27,9 +27,17 @@ export function showDialog({ message, onConfirm, onCancel }) {
   modal.querySelector('#custom-confirm-message').textContent = message;
   const okBtn = modal.querySelector('#custom-confirm-ok');
   const cancelBtn = modal.querySelector('#custom-confirm-cancel');
-  const close = () => { modal.style.display = 'none'; };
-  okBtn.onclick = () => { close(); onConfirm && onConfirm(); };
-  cancelBtn.onclick = () => { close(); onCancel && onCancel(); };
+  const close = () => {
+    modal.style.display = 'none';
+  };
+  okBtn.onclick = () => {
+    close();
+    onConfirm && onConfirm();
+  };
+  cancelBtn.onclick = () => {
+    close();
+    onCancel && onCancel();
+  };
 }
 /**
  * @file Contém funções utilitárias compartilhadas em toda a extensão.
@@ -76,9 +84,7 @@ export function showMessage(text, type = 'error') {
       success: 'bg-green-100 text-green-700',
       info: 'bg-blue-100 text-blue-700',
     };
-    messageArea.className = `p-3 rounded-md text-sm ${
-      typeClasses[type] || typeClasses.error
-    }`;
+    messageArea.className = `p-3 rounded-md text-sm ${typeClasses[type] || typeClasses.error}`;
     messageArea.style.display = 'block';
   }
 }
@@ -102,9 +108,7 @@ export function parseDate(dateString) {
   if (!dateString || typeof dateString !== 'string') return null;
 
   // Tenta extrair o primeiro padrão de data válido da string.
-  const dateMatch = dateString.match(
-    /(\d{4}-\d{2}-\d{2})|(\d{2}\/\d{2}\/\d{2,4})/
-  );
+  const dateMatch = dateString.match(/(\d{4}-\d{2}-\d{2})|(\d{2}\/\d{2}\/\d{2,4})/);
   if (!dateMatch) return null;
 
   const matchedDate = dateMatch[0];
@@ -228,12 +232,7 @@ export function normalizeTimelineData(apiData) {
     (apiData.consultations || []).forEach((c) => {
       if (!c || !c.date) return;
       const searchText = normalizeString(
-        [
-          c.specialty,
-          c.professional,
-          c.unit,
-          ...c.details.map((d) => d.value),
-        ].join(' ')
+        [c.specialty, c.professional, c.unit, ...c.details.map((d) => d.value)].join(' ')
       );
       events.push({
         type: 'consultation',
@@ -307,9 +306,7 @@ export function normalizeTimelineData(apiData) {
   try {
     (apiData.regulations || []).forEach((r) => {
       if (!r || !r.date) return;
-      const searchText = normalizeString(
-        [r.procedure, r.requester, r.provider, r.cid].join(' ')
-      );
+      const searchText = normalizeString([r.procedure, r.requester, r.provider, r.cid].join(' '));
       events.push({
         type: 'regulation',
         date: parseDate(r.date),
@@ -352,10 +349,7 @@ export function normalizeTimelineData(apiData) {
 
   // Filter out events with invalid dates and sort all events by date, newest first.
   return events
-    .filter(
-      (event) =>
-        event.sortableDate instanceof Date && !isNaN(event.sortableDate)
-    )
+    .filter((event) => event.sortableDate instanceof Date && !isNaN(event.sortableDate))
     .sort((a, b) => b.sortableDate - a.sortableDate);
 }
 
@@ -383,63 +377,44 @@ export function filterTimelineEvents(events, automationFilters) {
   return events.filter((event) => {
     try {
       switch (event.type) {
-      case 'consultation': {
-        const consultFilters = automationFilters.consultations || {};
-        // Procura por um campo rotulado como CID ou CIAP para uma busca precisa.
-        const cidDetail = (event.details.details || []).find(
-          (d) =>
-            normalizeString(d.label).includes('cid') ||
-              normalizeString(d.label).includes('ciap')
-        );
-        const cidText = cidDetail ? cidDetail.value : '';
-        return (
-          checkText(
-            event.details.specialty,
-            consultFilters['consultation-filter-specialty']
-          ) &&
+        case 'consultation': {
+          const consultFilters = automationFilters.consultations || {};
+          // Procura por um campo rotulado como CID ou CIAP para uma busca precisa.
+          const cidDetail = (event.details.details || []).find(
+            (d) =>
+              normalizeString(d.label).includes('cid') || normalizeString(d.label).includes('ciap')
+          );
+          const cidText = cidDetail ? cidDetail.value : '';
+          return (
+            checkText(event.details.specialty, consultFilters['consultation-filter-specialty']) &&
             checkText(
               event.details.professional,
               consultFilters['consultation-filter-professional']
             ) &&
             checkText(cidText, consultFilters['consultation-filter-cid'])
-        );
-      }
+          );
+        }
 
-      case 'exam': {
-        const examFilters = automationFilters.exams || {};
-        return (
-          checkText(
-            event.details.examName,
-            examFilters['exam-filter-name']
-          ) &&
-            checkText(
-              event.details.professional,
-              examFilters['exam-filter-professional']
-            ) &&
-            checkText(
-              event.details.specialty,
-              examFilters['exam-filter-specialty']
-            )
-        );
-      }
+        case 'exam': {
+          const examFilters = automationFilters.exams || {};
+          return (
+            checkText(event.details.examName, examFilters['exam-filter-name']) &&
+            checkText(event.details.professional, examFilters['exam-filter-professional']) &&
+            checkText(event.details.specialty, examFilters['exam-filter-specialty'])
+          );
+        }
 
-      case 'appointment': {
-        const apptFilters = automationFilters.appointments || {};
-        const apptText = `${event.details.specialty} ${event.details.professional} ${event.details.location}`;
-        return checkText(apptText, apptFilters['appointment-filter-term']);
-      }
+        case 'appointment': {
+          const apptFilters = automationFilters.appointments || {};
+          const apptText = `${event.details.specialty} ${event.details.professional} ${event.details.location}`;
+          return checkText(apptText, apptFilters['appointment-filter-term']);
+        }
 
-      case 'regulation': {
-        const regFilters = automationFilters.regulations || {};
-        return (
-          checkText(
-            event.details.procedure,
-            regFilters['regulation-filter-procedure']
-          ) &&
-            checkText(
-              event.details.requester,
-              regFilters['regulation-filter-requester']
-            ) &&
+        case 'regulation': {
+          const regFilters = automationFilters.regulations || {};
+          return (
+            checkText(event.details.procedure, regFilters['regulation-filter-procedure']) &&
+            checkText(event.details.requester, regFilters['regulation-filter-requester']) &&
             (regFilters['regulation-filter-status'] === 'todos' ||
               !regFilters['regulation-filter-status'] ||
               event.details.status.toUpperCase() ===
@@ -448,18 +423,14 @@ export function filterTimelineEvents(events, automationFilters) {
               !regFilters['regulation-filter-priority'] ||
               event.details.priority.toUpperCase() ===
                 regFilters['regulation-filter-priority'].toUpperCase())
-        );
-      }
+          );
+        }
 
-      default:
-        return true;
+        default:
+          return true;
       }
     } catch (e) {
-      console.warn(
-        'Error filtering timeline event, it will be included by default:',
-        event,
-        e
-      );
+      console.warn('Error filtering timeline event, it will be included by default:', event, e);
       return true;
     }
   });

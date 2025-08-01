@@ -1,125 +1,143 @@
 "use strict";
-(self["webpackChunkassistente_de_regulacao_medica"] = self["webpackChunkassistente_de_regulacao_medica"] || []).push([["common"],{
+(self["webpackChunkassistente_de_regulacao_medica"] = self["webpackChunkassistente_de_regulacao_medica"] || []).push([[76,984],{
 
-/***/ "./KeepAliveManager.js":
-/*!*****************************!*\
-  !*** ./KeepAliveManager.js ***!
-  \*****************************/
-/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+/***/ 64:
+/***/ (() => {
 
-__webpack_require__.r(__webpack_exports__);
-/* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   KeepAliveManager: () => (/* binding */ KeepAliveManager)
-/* harmony export */ });
-/* harmony import */ var _api_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./api.js */ "./api.js");
-/**
- * @file Gerenciador de Keep-Alive para manter a sessão ativa
+/*
+ * Copyright (c) 2016-2019, 2021-2022  Mozilla Foundation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
-class KeepAliveManager {
-  constructor() {
-    this.intervalId = null;
-    this.isActive = false;
-    this.intervalMinutes = 10; // Padrão: 10 minutos
 
-    this.init();
-  }
-  async init() {
-    // Carrega as configurações salvas
-    await this.loadSettings();
 
-    // Escuta mudanças nas configurações
-    if (typeof browser !== 'undefined') {
-      browser.storage.onChanged.addListener((changes, areaName) => {
-        if (areaName === 'sync' && changes.keepSessionAliveInterval) {
-          this.updateInterval(changes.keepSessionAliveInterval.newValue);
-        }
-      });
-    }
-  }
-  async loadSettings() {
-    try {
-      const api = typeof browser !== 'undefined' ? browser : chrome;
-      const result = await api.storage.sync.get({
-        keepSessionAliveInterval: 10
-      });
-      this.updateInterval(result.keepSessionAliveInterval);
-    } catch (error) {
-      console.error('Erro ao carregar configurações do keep-alive:', error);
-    }
-  }
-  updateInterval(minutes) {
-    const newMinutes = parseInt(minutes, 10) || 0;
-    this.intervalMinutes = newMinutes;
-
-    // Para o timer atual
-    this.stop();
-
-    // Inicia novo timer se o valor for maior que 0
-    if (this.intervalMinutes > 0) {
-      this.start();
-    }
-  }
-  start() {
-    if (this.intervalMinutes <= 0) {
-      console.log('Keep-alive desativado (intervalo = 0)');
-      return;
-    }
-    if (this.isActive) {
-      console.log('Keep-alive já está ativo');
-      return;
-    }
-    const intervalMs = this.intervalMinutes * 60 * 1000; // Converte minutos para milissegundos
-
-    this.intervalId = setInterval(async () => {
-      try {
-        const success = await _api_js__WEBPACK_IMPORTED_MODULE_0__.keepSessionAlive();
-        if (success) {
-          console.log(`Keep-alive executado com sucesso (${new Date().toLocaleTimeString()})`);
-        } else {
-          console.warn(`Keep-alive falhou (${new Date().toLocaleTimeString()})`);
-        }
-      } catch (error) {
-        console.error('Erro no keep-alive:', error);
-      }
-    }, intervalMs);
-    this.isActive = true;
-    console.log(`Keep-alive iniciado: ${this.intervalMinutes} minutos (${intervalMs}ms)`);
-  }
-  stop() {
-    if (this.intervalId) {
-      clearInterval(this.intervalId);
-      this.intervalId = null;
-    }
-    this.isActive = false;
-    console.log('Keep-alive parado');
-  }
-  getStatus() {
-    return {
-      isActive: this.isActive,
-      intervalMinutes: this.intervalMinutes,
-      nextExecution: this.isActive ? new Date(Date.now() + this.intervalMinutes * 60 * 1000) : null
-    };
-  }
+if (typeof browser === 'undefined' && typeof chrome !== 'undefined') {
+  var browser = chrome;
 }
 
 /***/ }),
 
-/***/ "./SectionManager.js":
-/*!***************************!*\
-  !*** ./SectionManager.js ***!
-  \***************************/
+/***/ 335:
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-__webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   SectionManager: () => (/* binding */ SectionManager),
-/* harmony export */   getSortIndicator: () => (/* binding */ getSortIndicator)
+/* harmony export */   M: () => (/* binding */ store)
 /* harmony export */ });
-/* harmony import */ var _filter_config_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./filter-config.js */ "./filter-config.js");
-/* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./utils.js */ "./utils.js");
-/* harmony import */ var _api_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./api.js */ "./api.js");
-/* harmony import */ var _store_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./store.js */ "./store.js");
+/**
+ * @file store.js - Gestor de estado centralizado para a aplicação.
+ * Implementa um padrão simples de "publish-subscribe" para gerir o estado global.
+ */
+
+const state = {
+  currentPatient: {
+    ficha: null,
+    cadsus: null,
+    lastCadsusCheck: null,
+    isUpdating: false
+  },
+  recentPatients: [],
+  savedFilterSets: {}
+};
+const listeners = [];
+const store = {
+  /**
+   * Adiciona uma função de callback à lista de listeners.
+   * @param {Function} listener A função a ser adicionada.
+   * @returns {Function} Uma função para remover o listener (unsubscribe).
+   */
+  subscribe(listener) {
+    listeners.push(listener);
+    // PASSO 3.3: Retorna uma função de unsubscribe para melhor gestão de memória.
+    return () => {
+      const index = listeners.indexOf(listener);
+      if (index > -1) {
+        listeners.splice(index, 1);
+      }
+    };
+  },
+  _notify() {
+    for (const listener of listeners) {
+      try {
+        listener();
+      } catch (error) {
+        console.error('Erro num listener do store:', error);
+      }
+    }
+  },
+  setPatient(fichaData, cadsusData) {
+    state.currentPatient.ficha = fichaData;
+    state.currentPatient.cadsus = cadsusData;
+    state.currentPatient.lastCadsusCheck = cadsusData ? new Date() : null;
+    state.currentPatient.isUpdating = false;
+    this._notify();
+  },
+  clearPatient() {
+    state.currentPatient.ficha = null;
+    state.currentPatient.cadsus = null;
+    state.currentPatient.lastCadsusCheck = null;
+    state.currentPatient.isUpdating = false;
+    this._notify();
+  },
+  setPatientUpdating() {
+    state.currentPatient.isUpdating = true;
+    this._notify();
+  },
+  getPatient() {
+    return state.currentPatient.ficha ? state.currentPatient : null;
+  },
+  setRecentPatients(patients) {
+    state.recentPatients = patients;
+    this._notify();
+  },
+  getRecentPatients() {
+    return state.recentPatients;
+  },
+  setSavedFilterSets(sets) {
+    state.savedFilterSets = sets;
+    this._notify();
+  },
+  getSavedFilterSets() {
+    return state.savedFilterSets;
+  },
+  getState() {
+    return {
+      currentPatient: {
+        ...state.currentPatient
+      },
+      recentPatients: [...state.recentPatients],
+      savedFilterSets: {
+        ...state.savedFilterSets
+      }
+    };
+  }
+};
+
+/***/ }),
+
+/***/ 338:
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   N: () => (/* binding */ SectionManager),
+/* harmony export */   Q: () => (/* binding */ getSortIndicator)
+/* harmony export */ });
+/* harmony import */ var _filter_config_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(733);
+if (61 == __webpack_require__.j) {
+	/* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(239);
+}
+/* harmony import */ var _api_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(574);
+/* harmony import */ var _store_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(335);
 /**
  * @file Módulo SectionManager, responsável por gerir uma secção inteira da sidebar.
  */
@@ -177,11 +195,11 @@ class SectionManager {
     this.cacheDomElements();
     this.renderFilterControls();
     this.addEventListeners();
-    _store_js__WEBPACK_IMPORTED_MODULE_3__.store.subscribe(() => this.onStateChange());
+    _store_js__WEBPACK_IMPORTED_MODULE_3__/* .store */ .M.subscribe(() => this.onStateChange());
   }
   onStateChange() {
     var _this$currentPatient, _this$currentPatient$, _newPatient$isenPK;
-    const patientState = _store_js__WEBPACK_IMPORTED_MODULE_3__.store.getPatient();
+    const patientState = _store_js__WEBPACK_IMPORTED_MODULE_3__/* .store */ .M.getPatient();
     const newPatient = patientState ? patientState.ficha : null;
     if (((_this$currentPatient = this.currentPatient) === null || _this$currentPatient === void 0 ? void 0 : (_this$currentPatient$ = _this$currentPatient.isenPK) === null || _this$currentPatient$ === void 0 ? void 0 : _this$currentPatient$.idp) !== (newPatient === null || newPatient === void 0 ? void 0 : (_newPatient$isenPK = newPatient.isenPK) === null || _newPatient$isenPK === void 0 ? void 0 : _newPatient$isenPK.idp)) {
       this.setPatient(newPatient);
@@ -212,7 +230,7 @@ class SectionManager {
     (_this$elements$toggle = this.elements.toggleBtn) === null || _this$elements$toggle === void 0 ? void 0 : _this$elements$toggle.addEventListener('click', () => this.toggleSection());
     (_this$elements$toggle2 = this.elements.toggleMoreBtn) === null || _this$elements$toggle2 === void 0 ? void 0 : _this$elements$toggle2.addEventListener('click', () => this.toggleMoreFilters());
     (_this$elements$clearB = this.elements.clearBtn) === null || _this$elements$clearB === void 0 ? void 0 : _this$elements$clearB.addEventListener('click', () => this.clearFilters());
-    (_this$elements$sectio = this.elements.section) === null || _this$elements$sectio === void 0 ? void 0 : _this$elements$sectio.addEventListener('input', _utils_js__WEBPACK_IMPORTED_MODULE_1__.debounce(e => {
+    (_this$elements$sectio = this.elements.section) === null || _this$elements$sectio === void 0 ? void 0 : _this$elements$sectio.addEventListener('input', _utils_js__WEBPACK_IMPORTED_MODULE_1__/* .debounce */ .sg(e => {
       if (e.target.matches("input[type='text'], input[type='date']")) this.applyFiltersAndRender();
     }, 300));
     (_this$elements$sectio2 = this.elements.section) === null || _this$elements$sectio2 === void 0 ? void 0 : _this$elements$sectio2.addEventListener('change', e => {
@@ -251,7 +269,7 @@ class SectionManager {
   }
   async fetchData() {
     if (!this.currentPatient) {
-      if (this.elements.section.style.display !== 'none') _utils_js__WEBPACK_IMPORTED_MODULE_1__.showMessage('Nenhum paciente selecionado.');
+      if (this.elements.section.style.display !== 'none') _utils_js__WEBPACK_IMPORTED_MODULE_1__/* .showMessage */ .rG('Nenhum paciente selecionado.');
       return;
     }
     if (this.isLoading) return;
@@ -288,7 +306,7 @@ class SectionManager {
         documents: 'documentos'
       };
       const friendlyName = sectionNameMap[this.sectionKey] || this.sectionKey;
-      _utils_js__WEBPACK_IMPORTED_MODULE_1__.showMessage(`Erro ao buscar ${friendlyName}. Verifique a conexão e a URL base.`);
+      _utils_js__WEBPACK_IMPORTED_MODULE_1__/* .showMessage */ .rG(`Erro ao buscar ${friendlyName}. Verifique a conexão e a URL base.`);
       this.allData = [];
     } finally {
       this.isLoading = false;
@@ -312,8 +330,8 @@ class SectionManager {
     return [...data].sort((a, b) => {
       let valA, valB;
       if (key === 'date' || key === 'sortableDate') {
-        valA = a.sortableDate || _utils_js__WEBPACK_IMPORTED_MODULE_1__.parseDate(a.date);
-        valB = b.sortableDate || _utils_js__WEBPACK_IMPORTED_MODULE_1__.parseDate(b.date);
+        valA = a.sortableDate || _utils_js__WEBPACK_IMPORTED_MODULE_1__/* .parseDate */ ._U(a.date);
+        valB = b.sortableDate || _utils_js__WEBPACK_IMPORTED_MODULE_1__/* .parseDate */ ._U(b.date);
       } else {
         valA = (a[key] || '').toString().toLowerCase();
         valB = (b[key] || '').toString().toLowerCase();
@@ -325,7 +343,7 @@ class SectionManager {
   }
   getFilterValues() {
     const values = {};
-    const filters = _filter_config_js__WEBPACK_IMPORTED_MODULE_0__.filterConfig[this.sectionKey] || [];
+    const filters = _filter_config_js__WEBPACK_IMPORTED_MODULE_0__/* .filterConfig */ .J[this.sectionKey] || [];
     filters.forEach(filter => {
       if (filter.type === 'component') return;
       const el = document.getElementById(filter.id);
@@ -376,11 +394,11 @@ class SectionManager {
       }
     };
     const range = dateRangeDefaults[this.sectionKey] || defaultRanges[this.sectionKey];
-    if (this.elements.dateInitial) this.elements.dateInitial.valueAsDate = _utils_js__WEBPACK_IMPORTED_MODULE_1__.calculateRelativeDate(range.start);
-    if (this.elements.dateFinal) this.elements.dateFinal.valueAsDate = _utils_js__WEBPACK_IMPORTED_MODULE_1__.calculateRelativeDate(range.end);
+    if (this.elements.dateInitial) this.elements.dateInitial.valueAsDate = _utils_js__WEBPACK_IMPORTED_MODULE_1__/* .calculateRelativeDate */ .Z9(range.start);
+    if (this.elements.dateFinal) this.elements.dateFinal.valueAsDate = _utils_js__WEBPACK_IMPORTED_MODULE_1__/* .calculateRelativeDate */ .Z9(range.end);
     // --- FIM DA CORREÇÃO ---
 
-    (_filter_config_js__WEBPACK_IMPORTED_MODULE_0__.filterConfig[this.sectionKey] || []).forEach(filter => {
+    (_filter_config_js__WEBPACK_IMPORTED_MODULE_0__/* .filterConfig */ .J[this.sectionKey] || []).forEach(filter => {
       if (filter.type === 'component') return;
       const el = document.getElementById(filter.id);
       if (el) {
@@ -439,10 +457,10 @@ class SectionManager {
   saveFilterSet() {
     const name = window.prompt('Digite um nome para o conjunto de filtros:');
     if (!name || name.trim() === '') {
-      _utils_js__WEBPACK_IMPORTED_MODULE_1__.showMessage('Nome inválido. O filtro não foi salvo.');
+      _utils_js__WEBPACK_IMPORTED_MODULE_1__/* .showMessage */ .rG('Nome inválido. O filtro não foi salvo.');
       return;
     }
-    const savedSets = _store_js__WEBPACK_IMPORTED_MODULE_3__.store.getSavedFilterSets();
+    const savedSets = _store_js__WEBPACK_IMPORTED_MODULE_3__/* .store */ .M.getSavedFilterSets();
     if (!savedSets[this.sectionKey]) {
       savedSets[this.sectionKey] = [];
     }
@@ -460,14 +478,14 @@ class SectionManager {
     browser.storage.local.set({
       savedFilterSets: savedSets
     });
-    _store_js__WEBPACK_IMPORTED_MODULE_3__.store.setSavedFilterSets(savedSets);
-    _utils_js__WEBPACK_IMPORTED_MODULE_1__.showMessage(`Filtro "${name}" salvo com sucesso.`, 'success');
+    _store_js__WEBPACK_IMPORTED_MODULE_3__/* .store */ .M.setSavedFilterSets(savedSets);
+    _utils_js__WEBPACK_IMPORTED_MODULE_1__/* .showMessage */ .rG(`Filtro "${name}" salvo com sucesso.`, 'success');
   }
   loadFilterSet() {
     const select = document.getElementById(`${this.prefix}-saved-filters-select`);
     const name = select.value;
     if (!name) return;
-    const set = (_store_js__WEBPACK_IMPORTED_MODULE_3__.store.getSavedFilterSets()[this.sectionKey] || []).find(s => s.name === name);
+    const set = (_store_js__WEBPACK_IMPORTED_MODULE_3__/* .store */ .M.getSavedFilterSets()[this.sectionKey] || []).find(s => s.name === name);
     if (!set) return;
     Object.entries(set.values).forEach(([id, value]) => {
       const el = document.getElementById(id);
@@ -484,25 +502,25 @@ class SectionManager {
     const select = document.getElementById(`${this.prefix}-saved-filters-select`);
     const name = select.value;
     if (!name) {
-      _utils_js__WEBPACK_IMPORTED_MODULE_1__.showMessage('Selecione um filtro para apagar.');
+      _utils_js__WEBPACK_IMPORTED_MODULE_1__/* .showMessage */ .rG('Selecione um filtro para apagar.');
       return;
     }
     const confirmation = window.confirm(`Tem certeza que deseja apagar o filtro "${name}"?`);
     if (!confirmation) return;
-    const savedSets = _store_js__WEBPACK_IMPORTED_MODULE_3__.store.getSavedFilterSets();
+    const savedSets = _store_js__WEBPACK_IMPORTED_MODULE_3__/* .store */ .M.getSavedFilterSets();
     savedSets[this.sectionKey] = (savedSets[this.sectionKey] || []).filter(set => set.name !== name);
     browser.storage.local.set({
       savedFilterSets: savedSets
     });
-    _store_js__WEBPACK_IMPORTED_MODULE_3__.store.setSavedFilterSets(savedSets);
-    _utils_js__WEBPACK_IMPORTED_MODULE_1__.showMessage(`Filtro "${name}" apagado.`, 'success');
+    _store_js__WEBPACK_IMPORTED_MODULE_3__/* .store */ .M.setSavedFilterSets(savedSets);
+    _utils_js__WEBPACK_IMPORTED_MODULE_1__/* .showMessage */ .rG(`Filtro "${name}" apagado.`, 'success');
   }
   populateSavedFilterDropdown() {
     const select = document.getElementById(`${this.prefix}-saved-filters-select`);
     if (!select) return;
     const currentSelection = select.value;
     select.innerHTML = '<option value="">Carregar filtro...</option>';
-    const sets = _store_js__WEBPACK_IMPORTED_MODULE_3__.store.getSavedFilterSets()[this.sectionKey] || [];
+    const sets = _store_js__WEBPACK_IMPORTED_MODULE_3__/* .store */ .M.getSavedFilterSets()[this.sectionKey] || [];
     sets.forEach(set => {
       const option = document.createElement('option');
       option.value = set.name;
@@ -513,7 +531,7 @@ class SectionManager {
   }
   renderFilterControls() {
     try {
-      const sectionFilters = _filter_config_js__WEBPACK_IMPORTED_MODULE_0__.filterConfig[this.sectionKey] || [];
+      const sectionFilters = _filter_config_js__WEBPACK_IMPORTED_MODULE_0__/* .filterConfig */ .J[this.sectionKey] || [];
       const sectionLayout = this.globalSettings.filterLayout[this.sectionKey] || [];
       const layoutMap = new Map(sectionLayout.map(f => [f.id, f]));
       const sortedItems = [...sectionFilters].sort((a, b) => {
@@ -638,10 +656,10 @@ class SectionManager {
         end
       } = filterSettings.dateRange;
       if (this.elements.dateInitial && start !== null && !isNaN(start)) {
-        this.elements.dateInitial.valueAsDate = _utils_js__WEBPACK_IMPORTED_MODULE_1__.calculateRelativeDate(start);
+        this.elements.dateInitial.valueAsDate = _utils_js__WEBPACK_IMPORTED_MODULE_1__/* .calculateRelativeDate */ .Z9(start);
       }
       if (this.elements.dateFinal && end !== null && !isNaN(end)) {
-        this.elements.dateFinal.valueAsDate = _utils_js__WEBPACK_IMPORTED_MODULE_1__.calculateRelativeDate(end);
+        this.elements.dateFinal.valueAsDate = _utils_js__WEBPACK_IMPORTED_MODULE_1__/* .calculateRelativeDate */ .Z9(end);
       }
     }
     // --- FIM DA CORREÇÃO ---
@@ -683,263 +701,31 @@ class SectionManager {
 
 /***/ }),
 
-/***/ "./TimelineManager.js":
-/*!****************************!*\
-  !*** ./TimelineManager.js ***!
-  \****************************/
+/***/ 574:
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-__webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   TimelineManager: () => (/* binding */ TimelineManager)
+/* harmony export */   $4: () => (/* binding */ fetchRegulationPriorities),
+/* harmony export */   $_: () => (/* binding */ getBaseUrl),
+/* harmony export */   DM: () => (/* binding */ fetchRegulationAttachmentUrl),
+/* harmony export */   EI: () => (/* binding */ fetchAppointmentDetails),
+/* harmony export */   GP: () => (/* binding */ fetchCadsusData),
+/* harmony export */   JA: () => (/* binding */ keepSessionAlive),
+/* harmony export */   K4: () => (/* binding */ fetchExamesSolicitados),
+/* harmony export */   Ns: () => (/* binding */ fetchAppointments),
+/* harmony export */   P_: () => (/* binding */ fetchDocuments),
+/* harmony export */   Pn: () => (/* binding */ fetchExamAppointmentDetails),
+/* harmony export */   Sp: () => (/* binding */ fetchResultadoExame),
+/* harmony export */   Tp: () => (/* binding */ fetchVisualizaUsuario),
+/* harmony export */   bW: () => (/* binding */ searchPatients),
+/* harmony export */   hr: () => (/* binding */ fetchRegulationDetails),
+/* harmony export */   lQ: () => (/* binding */ fetchAllTimelineData),
+/* harmony export */   pP: () => (/* binding */ fetchDocumentUrl),
+/* harmony export */   v0: () => (/* binding */ fetchAllRegulations),
+/* harmony export */   wF: () => (/* binding */ fetchAllConsultations)
 /* harmony export */ });
-/* harmony import */ var _api_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./api.js */ "./api.js");
-/* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./utils.js */ "./utils.js");
-/* harmony import */ var _renderers_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./renderers.js */ "./renderers.js");
-/* harmony import */ var _store_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./store.js */ "./store.js");
-/**
- * @file Módulo TimelineManager, responsável por gerir a secção da Linha do Tempo.
- */
-
-
-
-
-class TimelineManager {
-  constructor(sectionKey, config, globalSettings) {
-    this.sectionKey = sectionKey;
-    this.config = config;
-    this.globalSettings = globalSettings;
-    this.allData = [];
-    this.currentPatient = null;
-    this.isLoading = false;
-
-    // State for automation filters
-    this.activeRuleFilters = null;
-    this.activeRuleName = null;
-    this.isFilteredView = false;
-    this.elements = {};
-    this.init();
-  }
-  init() {
-    this.cacheDomElements();
-    this.addEventListeners();
-    _store_js__WEBPACK_IMPORTED_MODULE_3__.store.subscribe(() => this.onStateChange());
-  }
-  cacheDomElements() {
-    this.elements = {
-      section: document.getElementById('timeline-section'),
-      wrapper: document.getElementById('timeline-wrapper'),
-      content: document.getElementById('timeline-content'),
-      fetchBtn: document.getElementById('fetch-timeline-btn'),
-      toggleBtn: document.getElementById('toggle-timeline-list-btn'),
-      automationFeedback: document.getElementById('timeline-automation-feedback'),
-      dateInitial: document.getElementById('timeline-date-initial'),
-      dateFinal: document.getElementById('timeline-date-final'),
-      searchKeyword: document.getElementById('timeline-search-keyword')
-    };
-  }
-  addEventListeners() {
-    var _this$elements$fetchB, _this$elements$toggle, _this$elements$search, _this$elements$dateIn, _this$elements$dateFi, _this$elements$sectio;
-    (_this$elements$fetchB = this.elements.fetchBtn) === null || _this$elements$fetchB === void 0 ? void 0 : _this$elements$fetchB.addEventListener('click', () => this.fetchData());
-    (_this$elements$toggle = this.elements.toggleBtn) === null || _this$elements$toggle === void 0 ? void 0 : _this$elements$toggle.addEventListener('click', () => this.toggleSection());
-    (_this$elements$search = this.elements.searchKeyword) === null || _this$elements$search === void 0 ? void 0 : _this$elements$search.addEventListener('input', _utils_js__WEBPACK_IMPORTED_MODULE_1__.debounce(() => this.render(), 300));
-    (_this$elements$dateIn = this.elements.dateInitial) === null || _this$elements$dateIn === void 0 ? void 0 : _this$elements$dateIn.addEventListener('change', () => this.render());
-    (_this$elements$dateFi = this.elements.dateFinal) === null || _this$elements$dateFi === void 0 ? void 0 : _this$elements$dateFi.addEventListener('change', () => this.render());
-    (_this$elements$sectio = this.elements.section) === null || _this$elements$sectio === void 0 ? void 0 : _this$elements$sectio.addEventListener('click', event => {
-      const header = event.target.closest('.timeline-header');
-      if (header) {
-        const details = header.nextElementSibling;
-        if (details && details.classList.contains('timeline-details-body')) {
-          details.classList.toggle('show');
-        }
-        return;
-      }
-      const toggleDetailsBtn = event.target.closest('.timeline-toggle-details-btn');
-      if (toggleDetailsBtn) {
-        const timelineItem = toggleDetailsBtn.closest('.timeline-item');
-        const details = timelineItem === null || timelineItem === void 0 ? void 0 : timelineItem.querySelector('.timeline-details-body');
-        if (details) {
-          details.classList.toggle('show');
-        }
-        return;
-      }
-      const toggleFilterBtn = event.target.closest('#timeline-toggle-filter-btn');
-      if (toggleFilterBtn) {
-        this.toggleFilteredView();
-      }
-    });
-  }
-  onStateChange() {
-    var _this$currentPatient, _this$currentPatient$, _newPatient$isenPK;
-    const patientState = _store_js__WEBPACK_IMPORTED_MODULE_3__.store.getPatient();
-    const newPatient = patientState ? patientState.ficha : null;
-    if (((_this$currentPatient = this.currentPatient) === null || _this$currentPatient === void 0 ? void 0 : (_this$currentPatient$ = _this$currentPatient.isenPK) === null || _this$currentPatient$ === void 0 ? void 0 : _this$currentPatient$.idp) !== (newPatient === null || newPatient === void 0 ? void 0 : (_newPatient$isenPK = newPatient.isenPK) === null || _newPatient$isenPK === void 0 ? void 0 : _newPatient$isenPK.idp)) {
-      this.setPatient(newPatient);
-    }
-  }
-  setPatient(patient) {
-    this.currentPatient = patient;
-    this.allData = [];
-    this.clearAutomation();
-    this.elements.content.innerHTML = '';
-    if (this.elements.searchKeyword) {
-      this.elements.searchKeyword.value = '';
-    }
-    this.applyDefaultDateRange();
-    if (this.elements.section) {
-      this.elements.section.style.display = patient ? 'block' : 'none';
-    }
-  }
-  applyDefaultDateRange() {
-    const dateRangeDefaults = this.globalSettings.userPreferences.dateRangeDefaults;
-    const range = dateRangeDefaults.timeline || {
-      start: -12,
-      end: 0
-    };
-    if (this.elements.dateInitial) this.elements.dateInitial.valueAsDate = _utils_js__WEBPACK_IMPORTED_MODULE_1__.calculateRelativeDate(range.start);
-    if (this.elements.dateFinal) this.elements.dateFinal.valueAsDate = _utils_js__WEBPACK_IMPORTED_MODULE_1__.calculateRelativeDate(range.end);
-  }
-  async fetchData() {
-    if (!this.currentPatient || this.isLoading) {
-      return;
-    }
-    this.isLoading = true;
-    _renderers_js__WEBPACK_IMPORTED_MODULE_2__.renderTimeline([], 'loading');
-    try {
-      const params = {
-        isenPK: `${this.currentPatient.isenPK.idp}-${this.currentPatient.isenPK.ids}`,
-        isenFullPKCrypto: this.currentPatient.isenFullPKCrypto,
-        dataInicial: '01/01/1900',
-        // Busca sempre o histórico completo
-        dataFinal: new Date().toLocaleDateString('pt-BR')
-      };
-      const apiData = await _api_js__WEBPACK_IMPORTED_MODULE_0__.fetchAllTimelineData(params);
-      const normalizedData = _utils_js__WEBPACK_IMPORTED_MODULE_1__.normalizeTimelineData(apiData);
-      this.allData = normalizedData;
-      this.render();
-    } catch (error) {
-      console.error('Erro ao buscar dados para a Linha do Tempo:', error);
-      _renderers_js__WEBPACK_IMPORTED_MODULE_2__.renderTimeline([], 'error');
-    } finally {
-      this.isLoading = false;
-    }
-  }
-  getFilterValues() {
-    var _this$elements$dateIn2, _this$elements$dateFi2, _this$elements$search2;
-    return {
-      startDate: (_this$elements$dateIn2 = this.elements.dateInitial) === null || _this$elements$dateIn2 === void 0 ? void 0 : _this$elements$dateIn2.value,
-      endDate: (_this$elements$dateFi2 = this.elements.dateFinal) === null || _this$elements$dateFi2 === void 0 ? void 0 : _this$elements$dateFi2.value,
-      keyword: _utils_js__WEBPACK_IMPORTED_MODULE_1__.normalizeString(((_this$elements$search2 = this.elements.searchKeyword) === null || _this$elements$search2 === void 0 ? void 0 : _this$elements$search2.value) || '')
-    };
-  }
-  render() {
-    if (this.allData.length === 0 && !this.isLoading) {
-      _renderers_js__WEBPACK_IMPORTED_MODULE_2__.renderTimeline([], 'empty');
-      return;
-    }
-    let dataToRender = this.allData;
-    const filters = this.getFilterValues();
-
-    // Client-side filtering
-    if (filters.startDate) {
-      const startDate = new Date(filters.startDate);
-      dataToRender = dataToRender.filter(event => event.sortableDate >= startDate);
-    }
-    if (filters.endDate) {
-      const endDate = new Date(filters.endDate);
-      endDate.setHours(23, 59, 59, 999); // Garante que o dia final seja incluído
-      dataToRender = dataToRender.filter(event => event.sortableDate <= endDate);
-    }
-    if (filters.keyword) {
-      dataToRender = dataToRender.filter(event => event.searchText.includes(filters.keyword));
-    }
-
-    // Automation rule filtering
-    if (this.isFilteredView && this.activeRuleFilters) {
-      dataToRender = _utils_js__WEBPACK_IMPORTED_MODULE_1__.filterTimelineEvents(dataToRender, this.activeRuleFilters);
-    }
-    _renderers_js__WEBPACK_IMPORTED_MODULE_2__.renderTimeline(dataToRender, 'success');
-  }
-  toggleSection() {
-    var _this$elements$wrappe;
-    (_this$elements$wrappe = this.elements.wrapper) === null || _this$elements$wrappe === void 0 ? void 0 : _this$elements$wrappe.classList.toggle('show');
-    this.elements.toggleBtn.textContent = this.elements.wrapper.classList.contains('show') ? 'Recolher' : 'Expandir';
-  }
-  applyAutomationFilters(filters, ruleName) {
-    this.activeRuleFilters = filters;
-    this.activeRuleName = ruleName;
-    this.isFilteredView = false;
-    if (this.elements.automationFeedback) {
-      this.elements.automationFeedback.innerHTML = `
-            <div class="flex justify-between items-center text-sm">
-                <span>Regra '<strong>${ruleName}</strong>' ativa.</span>
-                <button id="timeline-toggle-filter-btn" class="font-semibold text-blue-600 hover:underline">
-                    Ver timeline focada
-                </button>
-            </div>
-        `;
-      this.elements.automationFeedback.classList.remove('hidden');
-    }
-    if (this.allData.length > 0) {
-      this.render();
-    }
-  }
-  clearAutomation() {
-    this.activeRuleFilters = null;
-    this.activeRuleName = null;
-    this.isFilteredView = false;
-    if (this.elements.automationFeedback) {
-      this.elements.automationFeedback.classList.add('hidden');
-      this.elements.automationFeedback.innerHTML = '';
-    }
-    if (this.allData.length > 0) {
-      this.render();
-    }
-  }
-  toggleFilteredView() {
-    this.isFilteredView = !this.isFilteredView;
-    const button = document.getElementById('timeline-toggle-filter-btn');
-    if (button) {
-      button.textContent = this.isFilteredView ? 'Ver timeline completa' : 'Ver timeline focada';
-    }
-    this.render();
-  }
-}
-
-/***/ }),
-
-/***/ "./api.js":
-/*!****************!*\
-  !*** ./api.js ***!
-  \****************/
-/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
-
-__webpack_require__.r(__webpack_exports__);
-/* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   fetchAllConsultations: () => (/* binding */ fetchAllConsultations),
-/* harmony export */   fetchAllRegulations: () => (/* binding */ fetchAllRegulations),
-/* harmony export */   fetchAllTimelineData: () => (/* binding */ fetchAllTimelineData),
-/* harmony export */   fetchAppointmentDetails: () => (/* binding */ fetchAppointmentDetails),
-/* harmony export */   fetchAppointments: () => (/* binding */ fetchAppointments),
-/* harmony export */   fetchCadsusData: () => (/* binding */ fetchCadsusData),
-/* harmony export */   fetchConsultasBasicas: () => (/* binding */ fetchConsultasBasicas),
-/* harmony export */   fetchConsultasEspecializadas: () => (/* binding */ fetchConsultasEspecializadas),
-/* harmony export */   fetchDocumentUrl: () => (/* binding */ fetchDocumentUrl),
-/* harmony export */   fetchDocuments: () => (/* binding */ fetchDocuments),
-/* harmony export */   fetchExamAppointmentDetails: () => (/* binding */ fetchExamAppointmentDetails),
-/* harmony export */   fetchExamesSolicitados: () => (/* binding */ fetchExamesSolicitados),
-/* harmony export */   fetchProntuarioHash: () => (/* binding */ fetchProntuarioHash),
-/* harmony export */   fetchRegulationAttachmentUrl: () => (/* binding */ fetchRegulationAttachmentUrl),
-/* harmony export */   fetchRegulationAttachments: () => (/* binding */ fetchRegulationAttachments),
-/* harmony export */   fetchRegulationDetails: () => (/* binding */ fetchRegulationDetails),
-/* harmony export */   fetchRegulationPriorities: () => (/* binding */ fetchRegulationPriorities),
-/* harmony export */   fetchResultadoExame: () => (/* binding */ fetchResultadoExame),
-/* harmony export */   fetchVisualizaUsuario: () => (/* binding */ fetchVisualizaUsuario),
-/* harmony export */   getBaseUrl: () => (/* binding */ getBaseUrl),
-/* harmony export */   keepSessionAlive: () => (/* binding */ keepSessionAlive),
-/* harmony export */   searchPatients: () => (/* binding */ searchPatients)
-/* harmony export */ });
-/* harmony import */ var _browser_polyfill_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./browser-polyfill.js */ "./browser-polyfill.js");
+/* unused harmony exports fetchProntuarioHash, fetchConsultasEspecializadas, fetchConsultasBasicas, fetchRegulationAttachments */
+/* harmony import */ var _browser_polyfill_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(64);
 
 const api = typeof browser !== 'undefined' ? browser : chrome;
 
@@ -1946,48 +1732,775 @@ async function keepSessionAlive() {
 
 /***/ }),
 
-/***/ "./browser-polyfill.js":
-/*!*****************************!*\
-  !*** ./browser-polyfill.js ***!
-  \*****************************/
+/***/ 690:
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-__webpack_require__.r(__webpack_exports__);
-/*
- * Copyright (c) 2016-2019, 2021-2022  Mozilla Foundation.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   IC: () => (/* binding */ renderRegulations),
+/* harmony export */   Rb: () => (/* binding */ renderExams),
+/* harmony export */   lT: () => (/* binding */ renderAppointments),
+/* harmony export */   rX: () => (/* binding */ renderConsultations),
+/* harmony export */   s8: () => (/* binding */ renderTimeline),
+/* harmony export */   zL: () => (/* binding */ renderDocuments)
+/* harmony export */ });
+/* harmony import */ var _SectionManager_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(338);
+if (61 == __webpack_require__.j) {
+	/* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(239);
+}
+/**
+ * @file Contém todas as funções responsáveis por gerar o HTML dos resultados.
  */
 
 
 
-if (typeof browser === 'undefined' && typeof chrome !== 'undefined') {
-  var browser = chrome;
+function renderConsultations(consultations, sortState) {
+  const contentDiv = document.getElementById('consultations-content');
+  if (!contentDiv) return;
+  if (consultations.length === 0) {
+    contentDiv.innerHTML = '<p class="text-slate-500">Nenhuma consulta encontrada para os filtros aplicados.</p>';
+    return;
+  }
+  const headers = `
+    <div class="flex justify-between text-xs font-bold text-slate-500 mb-2 px-3">
+        <span class="sort-header w-2/3" data-sort-key="specialty">Especialidade/Profissional <span class="sort-indicator">${(0,_SectionManager_js__WEBPACK_IMPORTED_MODULE_0__/* .getSortIndicator */ .Q)('specialty', sortState)}</span></span>
+        <span class="sort-header w-1/3 text-right" data-sort-key="sortableDate">Data <span class="sort-indicator">${(0,_SectionManager_js__WEBPACK_IMPORTED_MODULE_0__/* .getSortIndicator */ .Q)('sortableDate', sortState)}</span></span>
+    </div>
+  `;
+  contentDiv.innerHTML = headers + consultations.map(c => `
+        <div class="p-3 mb-3 border rounded-lg ${c.isNoShow ? 'bg-red-50 border-red-200' : 'bg-white'} consultation-item">
+            <div class="flex justify-between items-start cursor-pointer consultation-header">
+                <div>
+                    <p class="font-bold text-blue-700 pointer-events-none">${c.specialty}</p>
+                    <p class="text-sm text-slate-600 pointer-events-none">${c.professional}</p>
+                </div>
+                <p class="text-sm font-medium text-slate-800 bg-slate-100 px-2 py-1 rounded whitespace-pre-wrap text-right pointer-events-none">${c.date.replace(/\n/g, '<br>')}</p>
+            </div>
+            <div class="consultation-body collapse-section show">
+                ${c.isNoShow ? '<p class="text-center font-bold text-red-600 mt-2">PACIENTE FALTOU</p>' : `
+                <p class="text-sm text-slate-500 mt-1">${c.unit}</p>
+                <div class="mt-3 pt-3 border-t border-slate-200 space-y-2">
+                    ${c.details.map(d => `<p class="text-xs font-semibold text-slate-500 uppercase">${d.label}</p><p class="text-sm text-slate-700 whitespace-pre-wrap">${d.value.replace(/\n/g, '<br>')} <span class="copy-icon" title="Copiar" data-copy-text="${d.value}">📄</span></p>`).join('')}
+                </div>`}
+            </div>
+        </div>
+    `).join('');
+}
+function renderExams(exams, sortState) {
+  const contentDiv = document.getElementById('exams-content');
+  if (!contentDiv) return;
+  if (exams.length === 0) {
+    contentDiv.innerHTML = '<p class="text-slate-500">Nenhum exame encontrado para os filtros aplicados.</p>';
+    return;
+  }
+  const headers = `
+    <div class="flex justify-between text-xs font-bold text-slate-500 mb-2 px-3">
+        <span class="sort-header w-2/3" data-sort-key="examName">Nome do Exame <span class="sort-indicator">${(0,_SectionManager_js__WEBPACK_IMPORTED_MODULE_0__/* .getSortIndicator */ .Q)('examName', sortState)}</span></span>
+        <span class="sort-header w-1/3 text-right" data-sort-key="date">Data <span class="sort-indicator">${(0,_SectionManager_js__WEBPACK_IMPORTED_MODULE_0__/* .getSortIndicator */ .Q)('date', sortState)}</span></span>
+    </div>
+  `;
+  contentDiv.innerHTML = headers + exams.map(exam => {
+    const idp = exam.resultIdp;
+    const ids = exam.resultIds;
+    const idpStr = idp !== null && idp !== undefined ? String(idp) : '';
+    const idsStr = ids !== null && ids !== undefined ? String(ids) : '';
+    const showBtn = exam.hasResult && idp !== null && idp !== undefined && ids !== null && ids !== undefined && idpStr !== '' && idsStr !== '';
+    return `
+        <div class="p-3 mb-3 border rounded-lg bg-white">
+            <p class="font-semibold text-indigo-700">${exam.examName || 'Nome do exame não informado'} <span class="copy-icon" title="Copiar" data-copy-text="${exam.examName}">📄</span></p>
+            <div class="text-sm text-slate-500 mt-1">
+                <p>Solicitado por: ${exam.professional || 'Não informado'} (${exam.specialty || 'N/A'})</p>
+                <p>Data: ${exam.date || 'Não informada'}</p>
+            </div>
+            ${showBtn ? `<button class="view-exam-result-btn mt-2 w-full text-sm bg-green-100 text-green-800 py-1 rounded hover:bg-green-200" data-idp="${idpStr}" data-ids="${idsStr}">Visualizar Resultado</button>` : ''}
+        </div>
+      `;
+  }).join('');
+}
+function renderAppointments(appointments, sortState) {
+  const contentDiv = document.getElementById('appointments-content');
+  if (!contentDiv) return;
+  const statusStyles = {
+    AGENDADO: 'bg-blue-100 text-blue-800',
+    PRESENTE: 'bg-green-100 text-green-800',
+    FALTOU: 'bg-red-100 text-red-800',
+    CANCELADO: 'bg-yellow-100 text-yellow-800',
+    ATENDIDO: 'bg-purple-100 text-purple-800'
+  };
+  if (appointments.length === 0) {
+    contentDiv.innerHTML = '<p class="text-slate-500">Nenhum agendamento encontrado para o filtro selecionado.</p>';
+    return;
+  }
+  const headers = `
+    <div class="flex justify-between text-xs font-bold text-slate-500 mb-2 px-3">
+        <span class="sort-header w-1/2" data-sort-key="specialty">Especialidade <span class="sort-indicator">${(0,_SectionManager_js__WEBPACK_IMPORTED_MODULE_0__/* .getSortIndicator */ .Q)('specialty', sortState)}</span></span>
+        <span class="sort-header w-1/4 text-center" data-sort-key="status">Status <span class="sort-indicator">${(0,_SectionManager_js__WEBPACK_IMPORTED_MODULE_0__/* .getSortIndicator */ .Q)('status', sortState)}</span></span>
+        <span class="sort-header w-1/4 text-right" data-sort-key="date">Data <span class="sort-indicator">${(0,_SectionManager_js__WEBPACK_IMPORTED_MODULE_0__/* .getSortIndicator */ .Q)('date', sortState)}</span></span>
+    </div>
+  `;
+  contentDiv.innerHTML = headers + appointments.map(item => {
+    const style = statusStyles[item.status] || 'bg-gray-100 text-gray-800';
+    let typeText = item.type;
+    if (item.isSpecialized) {
+      typeText = 'CONSULTA ESPECIALIZADA';
+    } else if (item.isOdonto) {
+      typeText = 'CONSULTA ODONTO';
+    } else if (item.type.toUpperCase().includes('EXAME')) {
+      typeText = 'EXAME';
+    }
+    const [idp, ids] = item.id.split('-');
+    return `
+        <div class="p-3 mb-3 border rounded-lg bg-white">
+            <div class="flex justify-between items-start">
+                <div>
+                    <p class="font-semibold text-gray-800">${typeText}</p>
+                    <p class="text-sm text-indigo-600 font-medium">${item.specialty || 'Sem especialidade'}</p>
+                </div>
+                <span class="text-xs font-bold px-2 py-1 rounded-full ${style}">${item.status}</span>
+            </div>
+            <div class="text-sm text-slate-500 mt-2 border-t pt-2">
+                <p><strong>Data:</strong> ${item.date} às ${item.time}</p>
+                <p><strong>Local:</strong> ${item.location}</p>
+                <p><strong>Profissional:</strong> ${item.professional}</p>
+            </div>
+            <div class="flex items-center justify-between mt-2 pt-2 border-t">
+                 <button class="view-appointment-details-btn text-sm bg-gray-100 text-gray-800 py-1 px-3 rounded hover:bg-gray-200" data-idp="${idp || ''}" data-ids="${ids || ''}" data-type="${item.type}">
+                    Ver Detalhes
+                </button>
+            </div>
+        </div>
+      `;
+  }).join('');
+}
+function renderRegulations(regulations, sortState, globalSettings) {
+  const contentDiv = document.getElementById('regulations-content');
+  if (!contentDiv) return;
+  const priorityNameMap = new Map();
+  const priorityColorMap = new Map();
+  if (globalSettings && globalSettings.regulationPriorities) {
+    globalSettings.regulationPriorities.forEach(prio => {
+      priorityNameMap.set(prio.coreDescricao, prio.coreDescricao);
+      priorityColorMap.set(prio.coreDescricao, prio.coreCor);
+    });
+  }
+  const statusStyles = {
+    AUTORIZADO: 'bg-green-100 text-green-800',
+    PENDENTE: 'bg-yellow-100 text-yellow-800',
+    NEGADO: 'bg-red-100 text-red-800',
+    DEVOLVIDO: 'bg-orange-100 text-orange-800',
+    CANCELADA: 'bg-gray-100 text-gray-800',
+    'EM ANÁLISE': 'bg-blue-100 text-blue-800'
+  };
+  if (regulations.length === 0) {
+    contentDiv.innerHTML = '<p class="text-slate-500">Nenhum resultado encontrado para os filtros aplicados.</p>';
+    return;
+  }
+  const headers = `
+    <div class="flex justify-between text-xs font-bold text-slate-500 mb-2 px-3">
+        <span class="sort-header w-1/2" data-sort-key="procedure">Procedimento <span class="sort-indicator">${(0,_SectionManager_js__WEBPACK_IMPORTED_MODULE_0__/* .getSortIndicator */ .Q)('procedure', sortState)}</span></span>
+        <span class="sort-header w-1/4 text-center" data-sort-key="status">Status <span class="sort-indicator">${(0,_SectionManager_js__WEBPACK_IMPORTED_MODULE_0__/* .getSortIndicator */ .Q)('status', sortState)}</span></span>
+        <span class="sort-header w-1/4 text-right" data-sort-key="date">Data <span class="sort-indicator">${(0,_SectionManager_js__WEBPACK_IMPORTED_MODULE_0__/* .getSortIndicator */ .Q)('date', sortState)}</span></span>
+    </div>
+  `;
+  contentDiv.innerHTML = headers + regulations.map(item => {
+    const statusKey = (item.status || '').toUpperCase();
+    const style = statusStyles[statusKey] || 'bg-gray-100 text-gray-800';
+    const priorityKey = (item.priority || '').toUpperCase();
+    const priorityColor = priorityColorMap.get(priorityKey) || 'CCCCCC';
+    const textColor = _utils_js__WEBPACK_IMPORTED_MODULE_1__/* .getContrastYIQ */ .Eg(priorityColor);
+    const priorityStyle = `background-color: #${priorityColor}; color: ${textColor};`;
+    const priorityText = priorityNameMap.get(priorityKey) || item.priority;
+    const typeText = (item.type || '').startsWith('CON') ? 'CONSULTA' : 'EXAME';
+    const typeColor = typeText === 'CONSULTA' ? 'text-cyan-700' : 'text-fuchsia-700';
+    const attachmentsHtml = item.attachments && item.attachments.length > 0 ? `
+            <div class="mt-2 pt-2 border-t border-slate-100">
+                <p class="text-xs font-semibold text-slate-500 mb-1">ANEXOS:</p>
+                <div class="space-y-1">
+                    ${item.attachments.map(att => `
+                        <button class="view-regulation-attachment-btn w-full text-left text-sm bg-gray-50 text-gray-700 py-1 px-2 rounded hover:bg-gray-100 flex justify-between items-center" data-idp="${att.idp}" data-ids="${att.ids}">
+                            <div class="flex items-center gap-2 overflow-hidden">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="flex-shrink-0" viewBox="0 0 16 16"><path d="M4 0h8a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2zM2 2a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H2z"/><path d="M4.5 12.5a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7a.5.5 0 0 1-.5-.5zm0-2a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7a.5.5 0 0 1-.5-.5zm0-2a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7a.5.5 0 0 1-.5-.5z"/></svg>
+                                <span class="truncate" title="${att.description} (${att.fileType.toUpperCase()})">${att.description} (${att.fileType.toUpperCase()})</span>
+                            </div>
+                            <span class="text-xs text-slate-400 flex-shrink-0 ml-2">${att.date}</span>
+                        </button>`).join('')}
+                </div>
+            </div>
+            ` : '';
+    return `
+            <div class="p-3 mb-3 border rounded-lg bg-white">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <div class="flex items-center gap-2 mb-1">
+                           <p class="font-bold ${typeColor}">${typeText}</p>
+                           <span class="text-xs font-bold px-2 py-0.5 rounded-full" style="${priorityStyle}">${priorityText}</span>
+                        </div>
+                        <p class="text-sm text-slate-800 font-medium">${item.procedure} <span class="copy-icon" title="Copiar" data-copy-text="${item.procedure}">📄</span></p>
+                        <p class="text-xs text-slate-500">${item.cid} <span class="copy-icon" title="Copiar" data-copy-text="${item.cid}">📄</span></p>
+                    </div>
+                    <span class="text-xs font-bold px-2 py-1 rounded-full ${style}">${item.status}</span>
+                </div>
+                <div class="text-sm text-slate-500 mt-2 border-t pt-2 space-y-1">
+                    <p><strong>Data:</strong> ${item.date}</p>
+                    <p><strong>Solicitante:</strong> ${item.requester}</p>
+                    <p><strong>Executante:</strong> ${item.provider || 'Não definido'}</p>
+                </div>
+                <div class="mt-2 pt-2 border-t">
+                     <button class="view-regulation-details-btn w-full text-sm bg-gray-100 text-gray-800 py-1 px-3 rounded hover:bg-gray-200" data-idp="${item.idp}" data-ids="${item.ids}">
+                        Visualizar Detalhes
+                    </button>
+                </div>
+                ${attachmentsHtml}
+            </div>
+      `;
+  }).join('');
+}
+function renderDocuments(documents, sortState) {
+  const contentDiv = document.getElementById('documents-content');
+  if (!contentDiv) return;
+  if (!documents || documents.length === 0) {
+    contentDiv.innerHTML = '<p class="text-slate-500">Nenhum documento encontrado.</p>';
+    return;
+  }
+  const headers = `
+    <div class="flex justify-between text-xs font-bold text-slate-500 mb-2 px-3">
+        <span class="sort-header w-2/3" data-sort-key="description">Descrição <span class="sort-indicator">${(0,_SectionManager_js__WEBPACK_IMPORTED_MODULE_0__/* .getSortIndicator */ .Q)('description', sortState)}</span></span>
+        <span class="sort-header w-1/3 text-right" data-sort-key="date">Data <span class="sort-indicator">${(0,_SectionManager_js__WEBPACK_IMPORTED_MODULE_0__/* .getSortIndicator */ .Q)('date', sortState)}</span></span>
+    </div>
+  `;
+  contentDiv.innerHTML = headers + documents.map(doc => `
+        <div class="p-3 mb-2 border rounded-lg bg-white">
+            <p class="font-semibold text-gray-800">${doc.description}</p>
+            <div class="text-sm text-slate-500 mt-1">
+                <span>Data: ${doc.date}</span> |
+                <span class="font-medium">Tipo: ${doc.fileType.toUpperCase()}</span>
+            </div>
+            <button class="view-document-btn mt-2 w-full text-sm bg-gray-100 text-gray-800 py-1 rounded hover:bg-gray-200" data-idp="${doc.idp}" data-ids="${doc.ids}">
+                Visualizar Documento
+            </button>
+        </div>
+      `).join('');
+}
+
+/**
+ * Renders the timeline based on the provided events and status.
+ * @param {Array<object>} events - The array of timeline event objects.
+ * @param {'loading'|'empty'|'error'|'success'} status - The current status of the timeline.
+ */
+function renderTimeline(events, status) {
+  const contentDiv = document.getElementById('timeline-content');
+  if (!contentDiv) return;
+  const eventTypeStyles = {
+    consultation: {
+      label: 'Consulta',
+      color: 'blue',
+      bgColorClass: 'bg-blue-100',
+      iconColorClass: 'text-blue-600',
+      icon: 'M11 2v2M5 2v2M5 3H4a2 2 0 0 0-2 2v4a6 6 0 0 0 12 0V5a2 2 0 0 0-2-2h-1M8 15a6 6 0 0 0 12 0v-3m-6-5a2 2 0 1 0 0 4 2 2 0 0 0 0-4Z'
+    },
+    exam: {
+      label: 'Exame',
+      color: 'green',
+      bgColorClass: 'bg-green-100',
+      iconColorClass: 'text-green-600',
+      icon: 'M6 18h8M3 22h18M14 22a7 7 0 1 0 0-14h-1M9 14h2M9 12a2 2 0 0 1-2-2V6h6v4a2 2 0 0 1-2 2ZM12 6V3a1 1 0 0 0-1-1H9a1 1 0 0 0-1 1v3'
+    },
+    appointment: {
+      label: 'Agendamento',
+      color: 'purple',
+      bgColorClass: 'bg-purple-100',
+      iconColorClass: 'text-purple-600',
+      icon: 'M8 2v4M16 2v4M3 10h18M3 4h18v16H3zM9 16l2 2 4-4'
+    },
+    regulation: {
+      label: 'Regulação',
+      color: 'red',
+      bgColorClass: 'bg-red-100',
+      iconColorClass: 'text-red-600',
+      icon: 'M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1zM9 12l2 2 4-4'
+    },
+    // --- INÍCIO DA MODIFICAÇÃO ---
+    document: {
+      label: 'Documento',
+      color: 'gray',
+      bgColorClass: 'bg-gray-100',
+      iconColorClass: 'text-gray-600',
+      icon: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z M14 2v6h6'
+    }
+    // --- FIM DA MODIFICAÇÃO ---
+  };
+  let contentHtml = '';
+  switch (status) {
+    case 'loading':
+      contentHtml = '<p class="text-slate-500 text-center">A carregar linha do tempo...</p>';
+      break;
+    case 'empty':
+      contentHtml = '<p class="text-slate-500 text-center">Nenhum evento encontrado para este paciente.</p>';
+      break;
+    case 'error':
+      contentHtml = '<p class="text-red-500 text-center">Ocorreu um erro ao carregar os dados. Tente novamente.</p>';
+      break;
+    case 'success':
+      if (events.length === 0) {
+        contentHtml = '<p class="text-slate-500 text-center">Nenhum evento encontrado para os filtros aplicados.</p>';
+        break;
+      }
+      contentHtml = '<div class="relative space-y-4">';
+      contentHtml += '<div class="absolute left-4 top-2 bottom-2 w-0.5 bg-slate-200"></div>';
+      contentHtml += events.map(event => {
+        const style = eventTypeStyles[event.type] || {
+          label: 'Evento',
+          color: 'gray',
+          icon: ''
+        };
+        const dateString = event.date instanceof Date && !isNaN(event.date) ? event.date.toLocaleDateString('pt-BR') : 'Data Inválida';
+        let topRightDetailsHtml = '';
+        let extraInfoHtml = '';
+        if (event.type === 'appointment') {
+          const a = event.details;
+          const [idp, ids] = a.id.split('-');
+          const statusStyles = {
+            AGENDADO: 'text-blue-600',
+            PRESENTE: 'text-green-600',
+            FALTOU: 'text-red-600',
+            CANCELADO: 'text-yellow-600',
+            ATENDIDO: 'text-purple-600'
+          };
+          const statusClass = statusStyles[a.status] || 'text-slate-600';
+          const timeHtml = `<div class="text-xs text-slate-500">às ${a.time}</div>`;
+          const statusHtml = `<div class="mt-1 text-xs font-semibold ${statusClass}">${a.status}</div>`;
+          const icon = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-search-2"><path d="M14 2v6h6"/><path d="M4 22h14a2 2 0 0 0 2-2V7.5L14.5 2H6a2 2 0 0 0-2 2v4"/><path d="M5 17a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/><path d="m9 21-1.5-1.5"/></svg>';
+          const detailsButtonHtml = `<button class="view-appointment-details-btn mt-2 text-xs bg-gray-100 text-gray-800 py-1 px-3 rounded hover:bg-gray-200 flex items-center gap-1" data-idp="${idp}" data-ids="${ids}" data-type="${a.type}">${icon}<span>Detalhes</span></button>`;
+          topRightDetailsHtml = timeHtml + statusHtml + detailsButtonHtml;
+        } else if (event.type === 'exam') {
+          const statusText = event.details.hasResult ? 'Com Resultado' : 'Sem Resultado';
+          const statusClass = event.details.hasResult ? 'text-green-600' : 'text-yellow-600';
+          topRightDetailsHtml = `<div class="mt-1 text-xs font-semibold ${statusClass}">${statusText}</div>`;
+          if (event.details.hasResult && event.details.resultIdp && event.details.resultIds) {
+            topRightDetailsHtml += `<button class="view-exam-result-btn mt-2 text-xs bg-green-100 text-green-800 py-1 px-3 rounded hover:bg-green-200" data-idp="${event.details.resultIdp}" data-ids="${event.details.resultIds}">Visualizar Resultado</button>`;
+          }
+        } else if (event.type === 'regulation') {
+          const r = event.details;
+          if (r.idp && r.ids) {
+            const icon = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-search-2"><path d="M14 2v6h6"/><path d="M4 22h14a2 2 0 0 0 2-2V7.5L14.5 2H6a2 2 0 0 0-2 2v4"/><path d="M5 17a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/><path d="m9 21-1.5-1.5"/></svg>';
+            topRightDetailsHtml = `<button class="view-regulation-details-btn mt-2 text-xs bg-gray-100 text-gray-800 py-1 px-3 rounded hover:bg-gray-200 flex items-center gap-1" data-idp="${r.idp}" data-ids="${r.ids}">${icon}<span>Detalhes</span></button>`;
+          }
+        }
+        if (event.type === 'consultation') {
+          const c = event.details;
+          const icon = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-search-2"><path d="M14 2v6h6"/><path d="M4 22h14a2 2 0 0 0 2-2V7.5L14.5 2H6a2 2 0 0 0-2 2v4"/><path d="M5 17a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/><path d="m9 21-1.5-1.5"/></svg>';
+          topRightDetailsHtml = `<button class="timeline-toggle-details-btn mt-2 text-xs bg-gray-100 text-gray-800 py-1 px-3 rounded hover:bg-gray-200 flex items-center gap-1">${icon}<span>Detalhes</span></button>`;
+          extraInfoHtml = `
+                <div class="timeline-details-body mt-2 pt-2 border-t border-slate-200">
+                    <p class="text-sm text-slate-500 mb-2">${c.unit}</p>
+                    ${c.details.map(d => `
+                        <p class="text-xs font-semibold text-slate-500 uppercase mb-1">${d.label}</p>
+                        <p class="text-sm text-slate-700 mb-2">${d.value.replace(/\n/g, '<br>')} <span class="copy-icon" title="Copiar" data-copy-text="${d.value}">📄</span></p>
+                    `).join('')}
+                </div>
+            `;
+        } else if (event.type === 'regulation') {
+          const r = event.details;
+          const attachmentsHtml = r.attachments && r.attachments.length > 0 ? `
+                <div class="mt-2 pt-2 border-t border-slate-100">
+                    <p class="text-xs font-semibold text-slate-500 mb-1">ANEXOS:</p>
+                    <div class="space-y-1">
+                        ${r.attachments.map(att => `
+                            <button class="view-regulation-attachment-btn w-full text-left text-sm bg-gray-50 text-gray-700 py-1 px-2 rounded hover:bg-gray-100 flex justify-between items-center" data-idp="${att.idp}" data-ids="${att.ids}">
+                                <div class="flex items-center gap-2 overflow-hidden">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="flex-shrink-0" viewBox="0 0 16 16"><path d="M4 0h8a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2zM2 2a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H2z"/><path d="M4.5 12.5a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7a.5.5 0 0 1-.5-.5zm0-2a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7a.5.5 0 0 1-.5-.5zm0-2a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7a.5.5 0 0 1-.5-.5z"/></svg>
+                                    <span class="truncate" title="${att.description} (${att.fileType.toUpperCase()})">${att.description} (${att.fileType.toUpperCase()})</span>
+                                </div>
+                                <span class="text-xs text-slate-400 flex-shrink-0 ml-2">${att.date}</span>
+                            </button>
+                        `).join('')}
+                    </div>
+                </div>
+                ` : '';
+          extraInfoHtml = `
+                <div class="timeline-details-body mt-2 pt-2 border-t border-slate-200 text-sm">
+                    <p class="mb-1"><strong>Status:</strong> ${r.status}</p>
+                    <p class="mb-1"><strong>Prioridade:</strong> ${r.priority}</p>
+                    <p class="mb-1"><strong>CID:</strong> ${r.cid}</p>
+                    <p class="mb-2"><strong>Executante:</strong> ${r.provider || 'Não definido'}</p>
+                    ${attachmentsHtml}
+                </div>
+            `;
+          // --- INÍCIO DA MODIFICAÇÃO ---
+        } else if (event.type === 'document') {
+          const doc = event.details;
+          extraInfoHtml = `
+                <div class="timeline-details-body mt-2 pt-2 border-t border-slate-200">
+                    <button class="view-document-btn w-full text-sm bg-gray-100 text-gray-800 py-1 rounded hover:bg-gray-200" data-idp="${doc.idp}" data-ids="${doc.ids}">
+                        Visualizar Documento
+                    </button>
+                </div>
+            `;
+        }
+        // --- FIM DA MODIFICAÇÃO ---
+
+        return `
+                    <div class="relative pl-10 timeline-item" data-event-type="${event.type}">
+                        <div class="absolute left-4 top-2 -ml-[15px] h-[30px] w-[30px] rounded-full ${style.bgColorClass} border-2 border-white flex items-center justify-center ${style.iconColorClass}" title="${style.label}">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="${style.icon}" />
+                            </svg>
+                        </div>
+                        <div class="bg-slate-50 p-3 rounded-lg border border-slate-200">
+                            <div class="timeline-header cursor-pointer">
+                                <div class="flex justify-between items-start">
+                                    <div>
+                                        <p class="text-sm font-semibold text-${style.color}-700">${event.title}</p>
+                                        <p class="text-xs text-slate-600">${event.summary}</p>
+                                    </div>
+                                    <div class="text-right flex-shrink-0 ml-2">
+                                        <p class="text-xs font-medium text-slate-500">${dateString}</p>
+                                        ${topRightDetailsHtml}
+                                    </div>
+                                </div>
+                            </div>
+                            ${extraInfoHtml}
+                        </div>
+                    </div>
+                `;
+      }).join('');
+      contentHtml += '</div>';
+      break;
+  }
+  contentDiv.innerHTML = contentHtml;
 }
 
 /***/ }),
 
-/***/ "./field-config.js":
-/*!*************************!*\
-  !*** ./field-config.js ***!
-  \*************************/
+/***/ 733:
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-__webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   defaultFieldConfig: () => (/* binding */ defaultFieldConfig),
-/* harmony export */   getNestedValue: () => (/* binding */ getNestedValue)
+/* harmony export */   J: () => (/* binding */ filterConfig)
 /* harmony export */ });
+/**
+ * Define a configuração padrão para todos os filtros disponíveis na extensão.
+ * Este arquivo centraliza a definição de cada filtro, que será usado tanto
+ * na página de opções (para configurar a disposição) quanto na barra lateral
+ * (para renderização e funcionamento).
+ *
+ * Estrutura de cada objeto de filtro:
+ * - id: Identificador único do elemento HTML.
+ * - label: O texto que descreve o filtro na interface.
+ * - type: O tipo de elemento ('text', 'select', 'checkbox', 'selectGroup', 'component').
+ * - section: A qual seção principal o filtro pertence.
+ * - defaultLocation: Onde o filtro aparece por padrão ('main' ou 'more').
+ * - componentName: (Apenas para type 'component') O nome do componente a ser renderizado.
+ * - placeholder: (Opcional) Texto de exemplo para campos de texto.
+ * - options: (Opcional) Um array de objetos {value, text} para 'select' ou 'selectGroup'.
+ * - defaultChecked: (Opcional) Estado padrão para 'checkbox'.
+ */
+
+const filterConfig = {
+  consultations: [{
+    id: 'consultation-date-range',
+    label: 'Filtro de Datas',
+    type: 'component',
+    componentName: 'date-range',
+    section: 'consultations',
+    defaultLocation: 'main'
+  }, {
+    id: 'consultation-filter-keyword',
+    label: 'Busca por Palavra-chave',
+    type: 'text',
+    section: 'consultations',
+    defaultLocation: 'main',
+    placeholder: 'Busque em todo o conteúdo...'
+  }, {
+    id: 'hide-no-show-checkbox',
+    label: 'Ocultar faltas',
+    type: 'checkbox',
+    section: 'consultations',
+    defaultLocation: 'main',
+    defaultChecked: false
+  }, {
+    id: 'fetch-type-buttons',
+    label: 'Tipo de Consulta',
+    type: 'selectGroup',
+    section: 'consultations',
+    defaultLocation: 'more',
+    options: [{
+      value: 'all',
+      text: 'Todas'
+    }, {
+      value: 'basic',
+      text: 'Básicas'
+    }, {
+      value: 'specialized',
+      text: 'Especializadas'
+    }]
+  }, {
+    id: 'consultation-filter-cid',
+    label: 'CID/CIAP',
+    type: 'text',
+    section: 'consultations',
+    defaultLocation: 'more',
+    placeholder: 'Ex: A09, Z00...'
+  }, {
+    id: 'consultation-filter-specialty',
+    label: 'Especialidade',
+    type: 'text',
+    section: 'consultations',
+    defaultLocation: 'more',
+    placeholder: 'Digite especialidades, separe por vírgula...'
+  }, {
+    id: 'consultation-filter-professional',
+    label: 'Profissional',
+    type: 'text',
+    section: 'consultations',
+    defaultLocation: 'more',
+    placeholder: 'Digite nomes, separe por vírgula...'
+  }, {
+    id: 'consultation-filter-unit',
+    label: 'Unidade de Saúde',
+    type: 'text',
+    section: 'consultations',
+    defaultLocation: 'more',
+    placeholder: 'Digite unidades, separe por vírgula...'
+  }, {
+    id: 'consultation-saved-filters',
+    label: 'Filtros Salvos',
+    type: 'component',
+    componentName: 'saved-filters',
+    section: 'consultations',
+    defaultLocation: 'more'
+  }],
+  exams: [{
+    id: 'exam-date-range',
+    label: 'Filtro de Datas',
+    type: 'component',
+    componentName: 'date-range',
+    section: 'exams',
+    defaultLocation: 'main'
+  }, {
+    id: 'exam-fetch-type-buttons',
+    label: 'Status do Resultado',
+    type: 'selectGroup',
+    section: 'exams',
+    defaultLocation: 'main',
+    options: [{
+      value: 'all',
+      text: 'Todos'
+    }, {
+      value: 'withResult',
+      text: 'Com Resultado'
+    }, {
+      value: 'withoutResult',
+      text: 'Sem Resultado'
+    }]
+  }, {
+    id: 'exam-filter-name',
+    label: 'Nome do Exame',
+    type: 'text',
+    section: 'exams',
+    defaultLocation: 'main',
+    placeholder: 'Digite nomes, separe por vírgula...'
+  }, {
+    id: 'exam-filter-professional',
+    label: 'Profissional Solicitante',
+    type: 'text',
+    section: 'exams',
+    defaultLocation: 'more',
+    placeholder: 'Digite nomes, separe por vírgula...'
+  }, {
+    id: 'exam-filter-specialty',
+    label: 'Especialidade Solicitante',
+    type: 'text',
+    section: 'exams',
+    defaultLocation: 'more',
+    placeholder: 'Digite especialidades, separe por vírgula...'
+  }, {
+    id: 'exam-saved-filters',
+    label: 'Filtros Salvos',
+    type: 'component',
+    componentName: 'saved-filters',
+    section: 'exams',
+    defaultLocation: 'more'
+  }],
+  appointments: [{
+    id: 'appointment-date-range',
+    label: 'Filtro de Datas',
+    type: 'component',
+    componentName: 'date-range',
+    section: 'appointments',
+    defaultLocation: 'main'
+  }, {
+    id: 'appointment-fetch-type-buttons',
+    label: 'Tipo de Agendamento',
+    type: 'selectGroup',
+    section: 'appointments',
+    defaultLocation: 'main',
+    options: [{
+      value: 'all',
+      text: 'Todos'
+    }, {
+      value: 'consultas',
+      text: 'Consultas'
+    }, {
+      value: 'exames',
+      text: 'Exames'
+    }]
+  }, {
+    id: 'appointment-filter-status',
+    label: 'Status',
+    type: 'select',
+    section: 'appointments',
+    defaultLocation: 'main',
+    options: [{
+      value: 'todos',
+      text: 'Todos'
+    }, {
+      value: 'AGENDADO',
+      text: 'Agendado'
+    }, {
+      value: 'PRESENTE',
+      text: 'Presente'
+    }, {
+      value: 'FALTOU',
+      text: 'Faltou'
+    }, {
+      value: 'CANCELADO',
+      text: 'Cancelado'
+    }, {
+      value: 'ATENDIDO',
+      text: 'Atendido'
+    }]
+  }, {
+    id: 'appointment-filter-term',
+    label: 'Busca por Termo',
+    type: 'text',
+    section: 'appointments',
+    defaultLocation: 'more',
+    placeholder: 'Profissional, especialidade...'
+  }, {
+    id: 'appointment-filter-location',
+    label: 'Local',
+    type: 'text',
+    section: 'appointments',
+    defaultLocation: 'more',
+    placeholder: 'Digite locais, separe por vírgula...'
+  }, {
+    id: 'appointment-saved-filters',
+    label: 'Filtros Salvos',
+    type: 'component',
+    componentName: 'saved-filters',
+    section: 'appointments',
+    defaultLocation: 'more'
+  }],
+  regulations: [{
+    id: 'regulation-date-range',
+    label: 'Filtro de Datas',
+    type: 'component',
+    componentName: 'date-range',
+    section: 'regulations',
+    defaultLocation: 'main'
+  }, {
+    id: 'regulation-fetch-type-buttons',
+    label: 'Modalidade',
+    type: 'selectGroup',
+    section: 'regulations',
+    defaultLocation: 'main',
+    options: [{
+      value: 'all',
+      text: 'Todos'
+    }, {
+      value: 'ENC',
+      text: 'Consultas'
+    }, {
+      value: 'EXA',
+      text: 'Exames'
+    }]
+  }, {
+    id: 'regulation-filter-status',
+    label: 'Status',
+    type: 'select',
+    section: 'regulations',
+    defaultLocation: 'main',
+    options: [{
+      value: 'todos',
+      text: 'Todos'
+    }, {
+      value: 'AUTORIZADO',
+      text: 'Autorizado'
+    }, {
+      value: 'PENDENTE',
+      text: 'Pendente'
+    }, {
+      value: 'NEGADO',
+      text: 'Negado'
+    }, {
+      value: 'DEVOLVIDO',
+      text: 'Devolvido'
+    }, {
+      value: 'CANCELADA',
+      text: 'Cancelada'
+    }, {
+      value: 'EM ANÁLISE',
+      text: 'Em Análise'
+    }]
+  }, {
+    id: 'regulation-filter-priority',
+    label: 'Prioridade',
+    type: 'select',
+    section: 'regulations',
+    defaultLocation: 'more',
+    options: [{
+      value: 'todas',
+      text: 'Todas'
+    } // Opções serão populadas dinamicamente
+    ]
+  }, {
+    id: 'regulation-filter-procedure',
+    label: 'Procedimento/Especialidade',
+    type: 'text',
+    section: 'regulations',
+    defaultLocation: 'more',
+    placeholder: 'Ex: Ortopedia, Raio X...'
+  }, {
+    id: 'regulation-filter-requester',
+    label: 'Profissional/Unidade Solicitante',
+    type: 'text',
+    section: 'regulations',
+    defaultLocation: 'more',
+    placeholder: 'Digite nomes, separe por vírgula...'
+  }, {
+    id: 'regulation-saved-filters',
+    label: 'Filtros Salvos',
+    type: 'component',
+    componentName: 'saved-filters',
+    section: 'regulations',
+    defaultLocation: 'more'
+  }],
+  documents: [{
+    id: 'document-date-range',
+    label: 'Filtro de Datas',
+    type: 'component',
+    componentName: 'date-range',
+    section: 'documents',
+    defaultLocation: 'main'
+  }, {
+    id: 'document-filter-keyword',
+    label: 'Busca por Palavra-chave',
+    type: 'text',
+    section: 'documents',
+    defaultLocation: 'main',
+    placeholder: 'Busque na descrição do documento...'
+  }]
+};
+
+/***/ }),
+
+/***/ 869:
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   Q: () => (/* binding */ defaultFieldConfig)
+/* harmony export */ });
+/* unused harmony export getNestedValue */
 /**
  * Define a configuração padrão para os campos da ficha do paciente.
  * Este é o "molde" que a extensão usará se nenhuma configuração personalizada for encontrada.
@@ -2330,1544 +2843,6 @@ const defaultFieldConfig = [
 // Exporta a função para obter valores, será útil no sidebar.js
 
 
-/***/ }),
-
-/***/ "./filter-config.js":
-/*!**************************!*\
-  !*** ./filter-config.js ***!
-  \**************************/
-/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
-
-__webpack_require__.r(__webpack_exports__);
-/* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   filterConfig: () => (/* binding */ filterConfig)
-/* harmony export */ });
-/**
- * Define a configuração padrão para todos os filtros disponíveis na extensão.
- * Este arquivo centraliza a definição de cada filtro, que será usado tanto
- * na página de opções (para configurar a disposição) quanto na barra lateral
- * (para renderização e funcionamento).
- *
- * Estrutura de cada objeto de filtro:
- * - id: Identificador único do elemento HTML.
- * - label: O texto que descreve o filtro na interface.
- * - type: O tipo de elemento ('text', 'select', 'checkbox', 'selectGroup', 'component').
- * - section: A qual seção principal o filtro pertence.
- * - defaultLocation: Onde o filtro aparece por padrão ('main' ou 'more').
- * - componentName: (Apenas para type 'component') O nome do componente a ser renderizado.
- * - placeholder: (Opcional) Texto de exemplo para campos de texto.
- * - options: (Opcional) Um array de objetos {value, text} para 'select' ou 'selectGroup'.
- * - defaultChecked: (Opcional) Estado padrão para 'checkbox'.
- */
-
-const filterConfig = {
-  consultations: [{
-    id: 'consultation-date-range',
-    label: 'Filtro de Datas',
-    type: 'component',
-    componentName: 'date-range',
-    section: 'consultations',
-    defaultLocation: 'main'
-  }, {
-    id: 'consultation-filter-keyword',
-    label: 'Busca por Palavra-chave',
-    type: 'text',
-    section: 'consultations',
-    defaultLocation: 'main',
-    placeholder: 'Busque em todo o conteúdo...'
-  }, {
-    id: 'hide-no-show-checkbox',
-    label: 'Ocultar faltas',
-    type: 'checkbox',
-    section: 'consultations',
-    defaultLocation: 'main',
-    defaultChecked: false
-  }, {
-    id: 'fetch-type-buttons',
-    label: 'Tipo de Consulta',
-    type: 'selectGroup',
-    section: 'consultations',
-    defaultLocation: 'more',
-    options: [{
-      value: 'all',
-      text: 'Todas'
-    }, {
-      value: 'basic',
-      text: 'Básicas'
-    }, {
-      value: 'specialized',
-      text: 'Especializadas'
-    }]
-  }, {
-    id: 'consultation-filter-cid',
-    label: 'CID/CIAP',
-    type: 'text',
-    section: 'consultations',
-    defaultLocation: 'more',
-    placeholder: 'Ex: A09, Z00...'
-  }, {
-    id: 'consultation-filter-specialty',
-    label: 'Especialidade',
-    type: 'text',
-    section: 'consultations',
-    defaultLocation: 'more',
-    placeholder: 'Digite especialidades, separe por vírgula...'
-  }, {
-    id: 'consultation-filter-professional',
-    label: 'Profissional',
-    type: 'text',
-    section: 'consultations',
-    defaultLocation: 'more',
-    placeholder: 'Digite nomes, separe por vírgula...'
-  }, {
-    id: 'consultation-filter-unit',
-    label: 'Unidade de Saúde',
-    type: 'text',
-    section: 'consultations',
-    defaultLocation: 'more',
-    placeholder: 'Digite unidades, separe por vírgula...'
-  }, {
-    id: 'consultation-saved-filters',
-    label: 'Filtros Salvos',
-    type: 'component',
-    componentName: 'saved-filters',
-    section: 'consultations',
-    defaultLocation: 'more'
-  }],
-  exams: [{
-    id: 'exam-date-range',
-    label: 'Filtro de Datas',
-    type: 'component',
-    componentName: 'date-range',
-    section: 'exams',
-    defaultLocation: 'main'
-  }, {
-    id: 'exam-fetch-type-buttons',
-    label: 'Status do Resultado',
-    type: 'selectGroup',
-    section: 'exams',
-    defaultLocation: 'main',
-    options: [{
-      value: 'all',
-      text: 'Todos'
-    }, {
-      value: 'withResult',
-      text: 'Com Resultado'
-    }, {
-      value: 'withoutResult',
-      text: 'Sem Resultado'
-    }]
-  }, {
-    id: 'exam-filter-name',
-    label: 'Nome do Exame',
-    type: 'text',
-    section: 'exams',
-    defaultLocation: 'main',
-    placeholder: 'Digite nomes, separe por vírgula...'
-  }, {
-    id: 'exam-filter-professional',
-    label: 'Profissional Solicitante',
-    type: 'text',
-    section: 'exams',
-    defaultLocation: 'more',
-    placeholder: 'Digite nomes, separe por vírgula...'
-  }, {
-    id: 'exam-filter-specialty',
-    label: 'Especialidade Solicitante',
-    type: 'text',
-    section: 'exams',
-    defaultLocation: 'more',
-    placeholder: 'Digite especialidades, separe por vírgula...'
-  }, {
-    id: 'exam-saved-filters',
-    label: 'Filtros Salvos',
-    type: 'component',
-    componentName: 'saved-filters',
-    section: 'exams',
-    defaultLocation: 'more'
-  }],
-  appointments: [{
-    id: 'appointment-date-range',
-    label: 'Filtro de Datas',
-    type: 'component',
-    componentName: 'date-range',
-    section: 'appointments',
-    defaultLocation: 'main'
-  }, {
-    id: 'appointment-fetch-type-buttons',
-    label: 'Tipo de Agendamento',
-    type: 'selectGroup',
-    section: 'appointments',
-    defaultLocation: 'main',
-    options: [{
-      value: 'all',
-      text: 'Todos'
-    }, {
-      value: 'consultas',
-      text: 'Consultas'
-    }, {
-      value: 'exames',
-      text: 'Exames'
-    }]
-  }, {
-    id: 'appointment-filter-status',
-    label: 'Status',
-    type: 'select',
-    section: 'appointments',
-    defaultLocation: 'main',
-    options: [{
-      value: 'todos',
-      text: 'Todos'
-    }, {
-      value: 'AGENDADO',
-      text: 'Agendado'
-    }, {
-      value: 'PRESENTE',
-      text: 'Presente'
-    }, {
-      value: 'FALTOU',
-      text: 'Faltou'
-    }, {
-      value: 'CANCELADO',
-      text: 'Cancelado'
-    }, {
-      value: 'ATENDIDO',
-      text: 'Atendido'
-    }]
-  }, {
-    id: 'appointment-filter-term',
-    label: 'Busca por Termo',
-    type: 'text',
-    section: 'appointments',
-    defaultLocation: 'more',
-    placeholder: 'Profissional, especialidade...'
-  }, {
-    id: 'appointment-filter-location',
-    label: 'Local',
-    type: 'text',
-    section: 'appointments',
-    defaultLocation: 'more',
-    placeholder: 'Digite locais, separe por vírgula...'
-  }, {
-    id: 'appointment-saved-filters',
-    label: 'Filtros Salvos',
-    type: 'component',
-    componentName: 'saved-filters',
-    section: 'appointments',
-    defaultLocation: 'more'
-  }],
-  regulations: [{
-    id: 'regulation-date-range',
-    label: 'Filtro de Datas',
-    type: 'component',
-    componentName: 'date-range',
-    section: 'regulations',
-    defaultLocation: 'main'
-  }, {
-    id: 'regulation-fetch-type-buttons',
-    label: 'Modalidade',
-    type: 'selectGroup',
-    section: 'regulations',
-    defaultLocation: 'main',
-    options: [{
-      value: 'all',
-      text: 'Todos'
-    }, {
-      value: 'ENC',
-      text: 'Consultas'
-    }, {
-      value: 'EXA',
-      text: 'Exames'
-    }]
-  }, {
-    id: 'regulation-filter-status',
-    label: 'Status',
-    type: 'select',
-    section: 'regulations',
-    defaultLocation: 'main',
-    options: [{
-      value: 'todos',
-      text: 'Todos'
-    }, {
-      value: 'AUTORIZADO',
-      text: 'Autorizado'
-    }, {
-      value: 'PENDENTE',
-      text: 'Pendente'
-    }, {
-      value: 'NEGADO',
-      text: 'Negado'
-    }, {
-      value: 'DEVOLVIDO',
-      text: 'Devolvido'
-    }, {
-      value: 'CANCELADA',
-      text: 'Cancelada'
-    }, {
-      value: 'EM ANÁLISE',
-      text: 'Em Análise'
-    }]
-  }, {
-    id: 'regulation-filter-priority',
-    label: 'Prioridade',
-    type: 'select',
-    section: 'regulations',
-    defaultLocation: 'more',
-    options: [{
-      value: 'todas',
-      text: 'Todas'
-    } // Opções serão populadas dinamicamente
-    ]
-  }, {
-    id: 'regulation-filter-procedure',
-    label: 'Procedimento/Especialidade',
-    type: 'text',
-    section: 'regulations',
-    defaultLocation: 'more',
-    placeholder: 'Ex: Ortopedia, Raio X...'
-  }, {
-    id: 'regulation-filter-requester',
-    label: 'Profissional/Unidade Solicitante',
-    type: 'text',
-    section: 'regulations',
-    defaultLocation: 'more',
-    placeholder: 'Digite nomes, separe por vírgula...'
-  }, {
-    id: 'regulation-saved-filters',
-    label: 'Filtros Salvos',
-    type: 'component',
-    componentName: 'saved-filters',
-    section: 'regulations',
-    defaultLocation: 'more'
-  }],
-  documents: [{
-    id: 'document-date-range',
-    label: 'Filtro de Datas',
-    type: 'component',
-    componentName: 'date-range',
-    section: 'documents',
-    defaultLocation: 'main'
-  }, {
-    id: 'document-filter-keyword',
-    label: 'Busca por Palavra-chave',
-    type: 'text',
-    section: 'documents',
-    defaultLocation: 'main',
-    placeholder: 'Busque na descrição do documento...'
-  }]
-};
-
-/***/ }),
-
-/***/ "./renderers.js":
-/*!**********************!*\
-  !*** ./renderers.js ***!
-  \**********************/
-/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
-
-__webpack_require__.r(__webpack_exports__);
-/* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   renderAppointments: () => (/* binding */ renderAppointments),
-/* harmony export */   renderConsultations: () => (/* binding */ renderConsultations),
-/* harmony export */   renderDocuments: () => (/* binding */ renderDocuments),
-/* harmony export */   renderExams: () => (/* binding */ renderExams),
-/* harmony export */   renderRegulations: () => (/* binding */ renderRegulations),
-/* harmony export */   renderTimeline: () => (/* binding */ renderTimeline)
-/* harmony export */ });
-/* harmony import */ var _SectionManager_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./SectionManager.js */ "./SectionManager.js");
-/* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./utils.js */ "./utils.js");
-/**
- * @file Contém todas as funções responsáveis por gerar o HTML dos resultados.
- */
-
-
-
-function renderConsultations(consultations, sortState) {
-  const contentDiv = document.getElementById('consultations-content');
-  if (!contentDiv) return;
-  if (consultations.length === 0) {
-    contentDiv.innerHTML = '<p class="text-slate-500">Nenhuma consulta encontrada para os filtros aplicados.</p>';
-    return;
-  }
-  const headers = `
-    <div class="flex justify-between text-xs font-bold text-slate-500 mb-2 px-3">
-        <span class="sort-header w-2/3" data-sort-key="specialty">Especialidade/Profissional <span class="sort-indicator">${(0,_SectionManager_js__WEBPACK_IMPORTED_MODULE_0__.getSortIndicator)('specialty', sortState)}</span></span>
-        <span class="sort-header w-1/3 text-right" data-sort-key="sortableDate">Data <span class="sort-indicator">${(0,_SectionManager_js__WEBPACK_IMPORTED_MODULE_0__.getSortIndicator)('sortableDate', sortState)}</span></span>
-    </div>
-  `;
-  contentDiv.innerHTML = headers + consultations.map(c => `
-        <div class="p-3 mb-3 border rounded-lg ${c.isNoShow ? 'bg-red-50 border-red-200' : 'bg-white'} consultation-item">
-            <div class="flex justify-between items-start cursor-pointer consultation-header">
-                <div>
-                    <p class="font-bold text-blue-700 pointer-events-none">${c.specialty}</p>
-                    <p class="text-sm text-slate-600 pointer-events-none">${c.professional}</p>
-                </div>
-                <p class="text-sm font-medium text-slate-800 bg-slate-100 px-2 py-1 rounded whitespace-pre-wrap text-right pointer-events-none">${c.date.replace(/\n/g, '<br>')}</p>
-            </div>
-            <div class="consultation-body collapse-section show">
-                ${c.isNoShow ? '<p class="text-center font-bold text-red-600 mt-2">PACIENTE FALTOU</p>' : `
-                <p class="text-sm text-slate-500 mt-1">${c.unit}</p>
-                <div class="mt-3 pt-3 border-t border-slate-200 space-y-2">
-                    ${c.details.map(d => `<p class="text-xs font-semibold text-slate-500 uppercase">${d.label}</p><p class="text-sm text-slate-700 whitespace-pre-wrap">${d.value.replace(/\n/g, '<br>')} <span class="copy-icon" title="Copiar" data-copy-text="${d.value}">📄</span></p>`).join('')}
-                </div>`}
-            </div>
-        </div>
-    `).join('');
-}
-function renderExams(exams, sortState) {
-  const contentDiv = document.getElementById('exams-content');
-  if (!contentDiv) return;
-  if (exams.length === 0) {
-    contentDiv.innerHTML = '<p class="text-slate-500">Nenhum exame encontrado para os filtros aplicados.</p>';
-    return;
-  }
-  const headers = `
-    <div class="flex justify-between text-xs font-bold text-slate-500 mb-2 px-3">
-        <span class="sort-header w-2/3" data-sort-key="examName">Nome do Exame <span class="sort-indicator">${(0,_SectionManager_js__WEBPACK_IMPORTED_MODULE_0__.getSortIndicator)('examName', sortState)}</span></span>
-        <span class="sort-header w-1/3 text-right" data-sort-key="date">Data <span class="sort-indicator">${(0,_SectionManager_js__WEBPACK_IMPORTED_MODULE_0__.getSortIndicator)('date', sortState)}</span></span>
-    </div>
-  `;
-  contentDiv.innerHTML = headers + exams.map(exam => {
-    const idp = exam.resultIdp;
-    const ids = exam.resultIds;
-    const idpStr = idp !== null && idp !== undefined ? String(idp) : '';
-    const idsStr = ids !== null && ids !== undefined ? String(ids) : '';
-    const showBtn = exam.hasResult && idp !== null && idp !== undefined && ids !== null && ids !== undefined && idpStr !== '' && idsStr !== '';
-    return `
-        <div class="p-3 mb-3 border rounded-lg bg-white">
-            <p class="font-semibold text-indigo-700">${exam.examName || 'Nome do exame não informado'} <span class="copy-icon" title="Copiar" data-copy-text="${exam.examName}">📄</span></p>
-            <div class="text-sm text-slate-500 mt-1">
-                <p>Solicitado por: ${exam.professional || 'Não informado'} (${exam.specialty || 'N/A'})</p>
-                <p>Data: ${exam.date || 'Não informada'}</p>
-            </div>
-            ${showBtn ? `<button class="view-exam-result-btn mt-2 w-full text-sm bg-green-100 text-green-800 py-1 rounded hover:bg-green-200" data-idp="${idpStr}" data-ids="${idsStr}">Visualizar Resultado</button>` : ''}
-        </div>
-      `;
-  }).join('');
-}
-function renderAppointments(appointments, sortState) {
-  const contentDiv = document.getElementById('appointments-content');
-  if (!contentDiv) return;
-  const statusStyles = {
-    AGENDADO: 'bg-blue-100 text-blue-800',
-    PRESENTE: 'bg-green-100 text-green-800',
-    FALTOU: 'bg-red-100 text-red-800',
-    CANCELADO: 'bg-yellow-100 text-yellow-800',
-    ATENDIDO: 'bg-purple-100 text-purple-800'
-  };
-  if (appointments.length === 0) {
-    contentDiv.innerHTML = '<p class="text-slate-500">Nenhum agendamento encontrado para o filtro selecionado.</p>';
-    return;
-  }
-  const headers = `
-    <div class="flex justify-between text-xs font-bold text-slate-500 mb-2 px-3">
-        <span class="sort-header w-1/2" data-sort-key="specialty">Especialidade <span class="sort-indicator">${(0,_SectionManager_js__WEBPACK_IMPORTED_MODULE_0__.getSortIndicator)('specialty', sortState)}</span></span>
-        <span class="sort-header w-1/4 text-center" data-sort-key="status">Status <span class="sort-indicator">${(0,_SectionManager_js__WEBPACK_IMPORTED_MODULE_0__.getSortIndicator)('status', sortState)}</span></span>
-        <span class="sort-header w-1/4 text-right" data-sort-key="date">Data <span class="sort-indicator">${(0,_SectionManager_js__WEBPACK_IMPORTED_MODULE_0__.getSortIndicator)('date', sortState)}</span></span>
-    </div>
-  `;
-  contentDiv.innerHTML = headers + appointments.map(item => {
-    const style = statusStyles[item.status] || 'bg-gray-100 text-gray-800';
-    let typeText = item.type;
-    if (item.isSpecialized) {
-      typeText = 'CONSULTA ESPECIALIZADA';
-    } else if (item.isOdonto) {
-      typeText = 'CONSULTA ODONTO';
-    } else if (item.type.toUpperCase().includes('EXAME')) {
-      typeText = 'EXAME';
-    }
-    const [idp, ids] = item.id.split('-');
-    return `
-        <div class="p-3 mb-3 border rounded-lg bg-white">
-            <div class="flex justify-between items-start">
-                <div>
-                    <p class="font-semibold text-gray-800">${typeText}</p>
-                    <p class="text-sm text-indigo-600 font-medium">${item.specialty || 'Sem especialidade'}</p>
-                </div>
-                <span class="text-xs font-bold px-2 py-1 rounded-full ${style}">${item.status}</span>
-            </div>
-            <div class="text-sm text-slate-500 mt-2 border-t pt-2">
-                <p><strong>Data:</strong> ${item.date} às ${item.time}</p>
-                <p><strong>Local:</strong> ${item.location}</p>
-                <p><strong>Profissional:</strong> ${item.professional}</p>
-            </div>
-            <div class="flex items-center justify-between mt-2 pt-2 border-t">
-                 <button class="view-appointment-details-btn text-sm bg-gray-100 text-gray-800 py-1 px-3 rounded hover:bg-gray-200" data-idp="${idp || ''}" data-ids="${ids || ''}" data-type="${item.type}">
-                    Ver Detalhes
-                </button>
-            </div>
-        </div>
-      `;
-  }).join('');
-}
-function renderRegulations(regulations, sortState, globalSettings) {
-  const contentDiv = document.getElementById('regulations-content');
-  if (!contentDiv) return;
-  const priorityNameMap = new Map();
-  const priorityColorMap = new Map();
-  if (globalSettings && globalSettings.regulationPriorities) {
-    globalSettings.regulationPriorities.forEach(prio => {
-      priorityNameMap.set(prio.coreDescricao, prio.coreDescricao);
-      priorityColorMap.set(prio.coreDescricao, prio.coreCor);
-    });
-  }
-  const statusStyles = {
-    AUTORIZADO: 'bg-green-100 text-green-800',
-    PENDENTE: 'bg-yellow-100 text-yellow-800',
-    NEGADO: 'bg-red-100 text-red-800',
-    DEVOLVIDO: 'bg-orange-100 text-orange-800',
-    CANCELADA: 'bg-gray-100 text-gray-800',
-    'EM ANÁLISE': 'bg-blue-100 text-blue-800'
-  };
-  if (regulations.length === 0) {
-    contentDiv.innerHTML = '<p class="text-slate-500">Nenhum resultado encontrado para os filtros aplicados.</p>';
-    return;
-  }
-  const headers = `
-    <div class="flex justify-between text-xs font-bold text-slate-500 mb-2 px-3">
-        <span class="sort-header w-1/2" data-sort-key="procedure">Procedimento <span class="sort-indicator">${(0,_SectionManager_js__WEBPACK_IMPORTED_MODULE_0__.getSortIndicator)('procedure', sortState)}</span></span>
-        <span class="sort-header w-1/4 text-center" data-sort-key="status">Status <span class="sort-indicator">${(0,_SectionManager_js__WEBPACK_IMPORTED_MODULE_0__.getSortIndicator)('status', sortState)}</span></span>
-        <span class="sort-header w-1/4 text-right" data-sort-key="date">Data <span class="sort-indicator">${(0,_SectionManager_js__WEBPACK_IMPORTED_MODULE_0__.getSortIndicator)('date', sortState)}</span></span>
-    </div>
-  `;
-  contentDiv.innerHTML = headers + regulations.map(item => {
-    const statusKey = (item.status || '').toUpperCase();
-    const style = statusStyles[statusKey] || 'bg-gray-100 text-gray-800';
-    const priorityKey = (item.priority || '').toUpperCase();
-    const priorityColor = priorityColorMap.get(priorityKey) || 'CCCCCC';
-    const textColor = _utils_js__WEBPACK_IMPORTED_MODULE_1__.getContrastYIQ(priorityColor);
-    const priorityStyle = `background-color: #${priorityColor}; color: ${textColor};`;
-    const priorityText = priorityNameMap.get(priorityKey) || item.priority;
-    const typeText = (item.type || '').startsWith('CON') ? 'CONSULTA' : 'EXAME';
-    const typeColor = typeText === 'CONSULTA' ? 'text-cyan-700' : 'text-fuchsia-700';
-    const attachmentsHtml = item.attachments && item.attachments.length > 0 ? `
-            <div class="mt-2 pt-2 border-t border-slate-100">
-                <p class="text-xs font-semibold text-slate-500 mb-1">ANEXOS:</p>
-                <div class="space-y-1">
-                    ${item.attachments.map(att => `
-                        <button class="view-regulation-attachment-btn w-full text-left text-sm bg-gray-50 text-gray-700 py-1 px-2 rounded hover:bg-gray-100 flex justify-between items-center" data-idp="${att.idp}" data-ids="${att.ids}">
-                            <div class="flex items-center gap-2 overflow-hidden">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="flex-shrink-0" viewBox="0 0 16 16"><path d="M4 0h8a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2zM2 2a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H2z"/><path d="M4.5 12.5a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7a.5.5 0 0 1-.5-.5zm0-2a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7a.5.5 0 0 1-.5-.5zm0-2a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7a.5.5 0 0 1-.5-.5z"/></svg>
-                                <span class="truncate" title="${att.description} (${att.fileType.toUpperCase()})">${att.description} (${att.fileType.toUpperCase()})</span>
-                            </div>
-                            <span class="text-xs text-slate-400 flex-shrink-0 ml-2">${att.date}</span>
-                        </button>`).join('')}
-                </div>
-            </div>
-            ` : '';
-    return `
-            <div class="p-3 mb-3 border rounded-lg bg-white">
-                <div class="flex justify-between items-start">
-                    <div>
-                        <div class="flex items-center gap-2 mb-1">
-                           <p class="font-bold ${typeColor}">${typeText}</p>
-                           <span class="text-xs font-bold px-2 py-0.5 rounded-full" style="${priorityStyle}">${priorityText}</span>
-                        </div>
-                        <p class="text-sm text-slate-800 font-medium">${item.procedure} <span class="copy-icon" title="Copiar" data-copy-text="${item.procedure}">📄</span></p>
-                        <p class="text-xs text-slate-500">${item.cid} <span class="copy-icon" title="Copiar" data-copy-text="${item.cid}">📄</span></p>
-                    </div>
-                    <span class="text-xs font-bold px-2 py-1 rounded-full ${style}">${item.status}</span>
-                </div>
-                <div class="text-sm text-slate-500 mt-2 border-t pt-2 space-y-1">
-                    <p><strong>Data:</strong> ${item.date}</p>
-                    <p><strong>Solicitante:</strong> ${item.requester}</p>
-                    <p><strong>Executante:</strong> ${item.provider || 'Não definido'}</p>
-                </div>
-                <div class="mt-2 pt-2 border-t">
-                     <button class="view-regulation-details-btn w-full text-sm bg-gray-100 text-gray-800 py-1 px-3 rounded hover:bg-gray-200" data-idp="${item.idp}" data-ids="${item.ids}">
-                        Visualizar Detalhes
-                    </button>
-                </div>
-                ${attachmentsHtml}
-            </div>
-      `;
-  }).join('');
-}
-function renderDocuments(documents, sortState) {
-  const contentDiv = document.getElementById('documents-content');
-  if (!contentDiv) return;
-  if (!documents || documents.length === 0) {
-    contentDiv.innerHTML = '<p class="text-slate-500">Nenhum documento encontrado.</p>';
-    return;
-  }
-  const headers = `
-    <div class="flex justify-between text-xs font-bold text-slate-500 mb-2 px-3">
-        <span class="sort-header w-2/3" data-sort-key="description">Descrição <span class="sort-indicator">${(0,_SectionManager_js__WEBPACK_IMPORTED_MODULE_0__.getSortIndicator)('description', sortState)}</span></span>
-        <span class="sort-header w-1/3 text-right" data-sort-key="date">Data <span class="sort-indicator">${(0,_SectionManager_js__WEBPACK_IMPORTED_MODULE_0__.getSortIndicator)('date', sortState)}</span></span>
-    </div>
-  `;
-  contentDiv.innerHTML = headers + documents.map(doc => `
-        <div class="p-3 mb-2 border rounded-lg bg-white">
-            <p class="font-semibold text-gray-800">${doc.description}</p>
-            <div class="text-sm text-slate-500 mt-1">
-                <span>Data: ${doc.date}</span> |
-                <span class="font-medium">Tipo: ${doc.fileType.toUpperCase()}</span>
-            </div>
-            <button class="view-document-btn mt-2 w-full text-sm bg-gray-100 text-gray-800 py-1 rounded hover:bg-gray-200" data-idp="${doc.idp}" data-ids="${doc.ids}">
-                Visualizar Documento
-            </button>
-        </div>
-      `).join('');
-}
-
-/**
- * Renders the timeline based on the provided events and status.
- * @param {Array<object>} events - The array of timeline event objects.
- * @param {'loading'|'empty'|'error'|'success'} status - The current status of the timeline.
- */
-function renderTimeline(events, status) {
-  const contentDiv = document.getElementById('timeline-content');
-  if (!contentDiv) return;
-  const eventTypeStyles = {
-    consultation: {
-      label: 'Consulta',
-      color: 'blue',
-      bgColorClass: 'bg-blue-100',
-      iconColorClass: 'text-blue-600',
-      icon: 'M11 2v2M5 2v2M5 3H4a2 2 0 0 0-2 2v4a6 6 0 0 0 12 0V5a2 2 0 0 0-2-2h-1M8 15a6 6 0 0 0 12 0v-3m-6-5a2 2 0 1 0 0 4 2 2 0 0 0 0-4Z'
-    },
-    exam: {
-      label: 'Exame',
-      color: 'green',
-      bgColorClass: 'bg-green-100',
-      iconColorClass: 'text-green-600',
-      icon: 'M6 18h8M3 22h18M14 22a7 7 0 1 0 0-14h-1M9 14h2M9 12a2 2 0 0 1-2-2V6h6v4a2 2 0 0 1-2 2ZM12 6V3a1 1 0 0 0-1-1H9a1 1 0 0 0-1 1v3'
-    },
-    appointment: {
-      label: 'Agendamento',
-      color: 'purple',
-      bgColorClass: 'bg-purple-100',
-      iconColorClass: 'text-purple-600',
-      icon: 'M8 2v4M16 2v4M3 10h18M3 4h18v16H3zM9 16l2 2 4-4'
-    },
-    regulation: {
-      label: 'Regulação',
-      color: 'red',
-      bgColorClass: 'bg-red-100',
-      iconColorClass: 'text-red-600',
-      icon: 'M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1zM9 12l2 2 4-4'
-    },
-    // --- INÍCIO DA MODIFICAÇÃO ---
-    document: {
-      label: 'Documento',
-      color: 'gray',
-      bgColorClass: 'bg-gray-100',
-      iconColorClass: 'text-gray-600',
-      icon: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z M14 2v6h6'
-    }
-    // --- FIM DA MODIFICAÇÃO ---
-  };
-  let contentHtml = '';
-  switch (status) {
-    case 'loading':
-      contentHtml = '<p class="text-slate-500 text-center">A carregar linha do tempo...</p>';
-      break;
-    case 'empty':
-      contentHtml = '<p class="text-slate-500 text-center">Nenhum evento encontrado para este paciente.</p>';
-      break;
-    case 'error':
-      contentHtml = '<p class="text-red-500 text-center">Ocorreu um erro ao carregar os dados. Tente novamente.</p>';
-      break;
-    case 'success':
-      if (events.length === 0) {
-        contentHtml = '<p class="text-slate-500 text-center">Nenhum evento encontrado para os filtros aplicados.</p>';
-        break;
-      }
-      contentHtml = '<div class="relative space-y-4">';
-      contentHtml += '<div class="absolute left-4 top-2 bottom-2 w-0.5 bg-slate-200"></div>';
-      contentHtml += events.map(event => {
-        const style = eventTypeStyles[event.type] || {
-          label: 'Evento',
-          color: 'gray',
-          icon: ''
-        };
-        const dateString = event.date instanceof Date && !isNaN(event.date) ? event.date.toLocaleDateString('pt-BR') : 'Data Inválida';
-        let topRightDetailsHtml = '';
-        let extraInfoHtml = '';
-        if (event.type === 'appointment') {
-          const a = event.details;
-          const [idp, ids] = a.id.split('-');
-          const statusStyles = {
-            AGENDADO: 'text-blue-600',
-            PRESENTE: 'text-green-600',
-            FALTOU: 'text-red-600',
-            CANCELADO: 'text-yellow-600',
-            ATENDIDO: 'text-purple-600'
-          };
-          const statusClass = statusStyles[a.status] || 'text-slate-600';
-          const timeHtml = `<div class="text-xs text-slate-500">às ${a.time}</div>`;
-          const statusHtml = `<div class="mt-1 text-xs font-semibold ${statusClass}">${a.status}</div>`;
-          const icon = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-search-2"><path d="M14 2v6h6"/><path d="M4 22h14a2 2 0 0 0 2-2V7.5L14.5 2H6a2 2 0 0 0-2 2v4"/><path d="M5 17a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/><path d="m9 21-1.5-1.5"/></svg>';
-          const detailsButtonHtml = `<button class="view-appointment-details-btn mt-2 text-xs bg-gray-100 text-gray-800 py-1 px-3 rounded hover:bg-gray-200 flex items-center gap-1" data-idp="${idp}" data-ids="${ids}" data-type="${a.type}">${icon}<span>Detalhes</span></button>`;
-          topRightDetailsHtml = timeHtml + statusHtml + detailsButtonHtml;
-        } else if (event.type === 'exam') {
-          const statusText = event.details.hasResult ? 'Com Resultado' : 'Sem Resultado';
-          const statusClass = event.details.hasResult ? 'text-green-600' : 'text-yellow-600';
-          topRightDetailsHtml = `<div class="mt-1 text-xs font-semibold ${statusClass}">${statusText}</div>`;
-          if (event.details.hasResult && event.details.resultIdp && event.details.resultIds) {
-            topRightDetailsHtml += `<button class="view-exam-result-btn mt-2 text-xs bg-green-100 text-green-800 py-1 px-3 rounded hover:bg-green-200" data-idp="${event.details.resultIdp}" data-ids="${event.details.resultIds}">Visualizar Resultado</button>`;
-          }
-        } else if (event.type === 'regulation') {
-          const r = event.details;
-          if (r.idp && r.ids) {
-            const icon = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-search-2"><path d="M14 2v6h6"/><path d="M4 22h14a2 2 0 0 0 2-2V7.5L14.5 2H6a2 2 0 0 0-2 2v4"/><path d="M5 17a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/><path d="m9 21-1.5-1.5"/></svg>';
-            topRightDetailsHtml = `<button class="view-regulation-details-btn mt-2 text-xs bg-gray-100 text-gray-800 py-1 px-3 rounded hover:bg-gray-200 flex items-center gap-1" data-idp="${r.idp}" data-ids="${r.ids}">${icon}<span>Detalhes</span></button>`;
-          }
-        }
-        if (event.type === 'consultation') {
-          const c = event.details;
-          const icon = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-search-2"><path d="M14 2v6h6"/><path d="M4 22h14a2 2 0 0 0 2-2V7.5L14.5 2H6a2 2 0 0 0-2 2v4"/><path d="M5 17a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/><path d="m9 21-1.5-1.5"/></svg>';
-          topRightDetailsHtml = `<button class="timeline-toggle-details-btn mt-2 text-xs bg-gray-100 text-gray-800 py-1 px-3 rounded hover:bg-gray-200 flex items-center gap-1">${icon}<span>Detalhes</span></button>`;
-          extraInfoHtml = `
-                <div class="timeline-details-body mt-2 pt-2 border-t border-slate-200">
-                    <p class="text-sm text-slate-500 mb-2">${c.unit}</p>
-                    ${c.details.map(d => `
-                        <p class="text-xs font-semibold text-slate-500 uppercase mb-1">${d.label}</p>
-                        <p class="text-sm text-slate-700 mb-2">${d.value.replace(/\n/g, '<br>')} <span class="copy-icon" title="Copiar" data-copy-text="${d.value}">📄</span></p>
-                    `).join('')}
-                </div>
-            `;
-        } else if (event.type === 'regulation') {
-          const r = event.details;
-          const attachmentsHtml = r.attachments && r.attachments.length > 0 ? `
-                <div class="mt-2 pt-2 border-t border-slate-100">
-                    <p class="text-xs font-semibold text-slate-500 mb-1">ANEXOS:</p>
-                    <div class="space-y-1">
-                        ${r.attachments.map(att => `
-                            <button class="view-regulation-attachment-btn w-full text-left text-sm bg-gray-50 text-gray-700 py-1 px-2 rounded hover:bg-gray-100 flex justify-between items-center" data-idp="${att.idp}" data-ids="${att.ids}">
-                                <div class="flex items-center gap-2 overflow-hidden">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="flex-shrink-0" viewBox="0 0 16 16"><path d="M4 0h8a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2zM2 2a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H2z"/><path d="M4.5 12.5a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7a.5.5 0 0 1-.5-.5zm0-2a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7a.5.5 0 0 1-.5-.5zm0-2a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7a.5.5 0 0 1-.5-.5z"/></svg>
-                                    <span class="truncate" title="${att.description} (${att.fileType.toUpperCase()})">${att.description} (${att.fileType.toUpperCase()})</span>
-                                </div>
-                                <span class="text-xs text-slate-400 flex-shrink-0 ml-2">${att.date}</span>
-                            </button>
-                        `).join('')}
-                    </div>
-                </div>
-                ` : '';
-          extraInfoHtml = `
-                <div class="timeline-details-body mt-2 pt-2 border-t border-slate-200 text-sm">
-                    <p class="mb-1"><strong>Status:</strong> ${r.status}</p>
-                    <p class="mb-1"><strong>Prioridade:</strong> ${r.priority}</p>
-                    <p class="mb-1"><strong>CID:</strong> ${r.cid}</p>
-                    <p class="mb-2"><strong>Executante:</strong> ${r.provider || 'Não definido'}</p>
-                    ${attachmentsHtml}
-                </div>
-            `;
-          // --- INÍCIO DA MODIFICAÇÃO ---
-        } else if (event.type === 'document') {
-          const doc = event.details;
-          extraInfoHtml = `
-                <div class="timeline-details-body mt-2 pt-2 border-t border-slate-200">
-                    <button class="view-document-btn w-full text-sm bg-gray-100 text-gray-800 py-1 rounded hover:bg-gray-200" data-idp="${doc.idp}" data-ids="${doc.ids}">
-                        Visualizar Documento
-                    </button>
-                </div>
-            `;
-        }
-        // --- FIM DA MODIFICAÇÃO ---
-
-        return `
-                    <div class="relative pl-10 timeline-item" data-event-type="${event.type}">
-                        <div class="absolute left-4 top-2 -ml-[15px] h-[30px] w-[30px] rounded-full ${style.bgColorClass} border-2 border-white flex items-center justify-center ${style.iconColorClass}" title="${style.label}">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="${style.icon}" />
-                            </svg>
-                        </div>
-                        <div class="bg-slate-50 p-3 rounded-lg border border-slate-200">
-                            <div class="timeline-header cursor-pointer">
-                                <div class="flex justify-between items-start">
-                                    <div>
-                                        <p class="text-sm font-semibold text-${style.color}-700">${event.title}</p>
-                                        <p class="text-xs text-slate-600">${event.summary}</p>
-                                    </div>
-                                    <div class="text-right flex-shrink-0 ml-2">
-                                        <p class="text-xs font-medium text-slate-500">${dateString}</p>
-                                        ${topRightDetailsHtml}
-                                    </div>
-                                </div>
-                            </div>
-                            ${extraInfoHtml}
-                        </div>
-                    </div>
-                `;
-      }).join('');
-      contentHtml += '</div>';
-      break;
-  }
-  contentDiv.innerHTML = contentHtml;
-}
-
-/***/ }),
-
-/***/ "./store.js":
-/*!******************!*\
-  !*** ./store.js ***!
-  \******************/
-/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
-
-__webpack_require__.r(__webpack_exports__);
-/* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   store: () => (/* binding */ store)
-/* harmony export */ });
-/**
- * @file store.js - Gestor de estado centralizado para a aplicação.
- * Implementa um padrão simples de "publish-subscribe" para gerir o estado global.
- */
-
-const state = {
-  currentPatient: {
-    ficha: null,
-    cadsus: null,
-    lastCadsusCheck: null,
-    isUpdating: false
-  },
-  recentPatients: [],
-  savedFilterSets: {}
-};
-const listeners = [];
-const store = {
-  /**
-   * Adiciona uma função de callback à lista de listeners.
-   * @param {Function} listener A função a ser adicionada.
-   * @returns {Function} Uma função para remover o listener (unsubscribe).
-   */
-  subscribe(listener) {
-    listeners.push(listener);
-    // PASSO 3.3: Retorna uma função de unsubscribe para melhor gestão de memória.
-    return () => {
-      const index = listeners.indexOf(listener);
-      if (index > -1) {
-        listeners.splice(index, 1);
-      }
-    };
-  },
-  _notify() {
-    for (const listener of listeners) {
-      try {
-        listener();
-      } catch (error) {
-        console.error('Erro num listener do store:', error);
-      }
-    }
-  },
-  setPatient(fichaData, cadsusData) {
-    state.currentPatient.ficha = fichaData;
-    state.currentPatient.cadsus = cadsusData;
-    state.currentPatient.lastCadsusCheck = cadsusData ? new Date() : null;
-    state.currentPatient.isUpdating = false;
-    this._notify();
-  },
-  clearPatient() {
-    state.currentPatient.ficha = null;
-    state.currentPatient.cadsus = null;
-    state.currentPatient.lastCadsusCheck = null;
-    state.currentPatient.isUpdating = false;
-    this._notify();
-  },
-  setPatientUpdating() {
-    state.currentPatient.isUpdating = true;
-    this._notify();
-  },
-  getPatient() {
-    return state.currentPatient.ficha ? state.currentPatient : null;
-  },
-  setRecentPatients(patients) {
-    state.recentPatients = patients;
-    this._notify();
-  },
-  getRecentPatients() {
-    return state.recentPatients;
-  },
-  setSavedFilterSets(sets) {
-    state.savedFilterSets = sets;
-    this._notify();
-  },
-  getSavedFilterSets() {
-    return state.savedFilterSets;
-  },
-  getState() {
-    return {
-      currentPatient: {
-        ...state.currentPatient
-      },
-      recentPatients: [...state.recentPatients],
-      savedFilterSets: {
-        ...state.savedFilterSets
-      }
-    };
-  }
-};
-
-/***/ }),
-
-/***/ "./ui/patient-card.js":
-/*!****************************!*\
-  !*** ./ui/patient-card.js ***!
-  \****************************/
-/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
-
-__webpack_require__.r(__webpack_exports__);
-/* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   init: () => (/* binding */ init)
-/* harmony export */ });
-/* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../utils.js */ "./utils.js");
-/* harmony import */ var _store_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../store.js */ "./store.js");
-/**
- * @file Módulo para gerir o card de "Dados do Paciente".
- */
-
-
-let patientDetailsSection, patientMainInfoDiv, patientAdditionalInfoDiv, toggleDetailsBtn, patientCardFooter, cadsusTimestamp, refreshCadsusBtn;
-let fieldConfigLayout = [];
-let onForceRefresh; // Callback para forçar a atualização
-
-/**
- * Renderiza os detalhes do paciente no card.
- * @param {object} patientData - O objeto completo do paciente vindo do store.
- */
-function render(patientData) {
-  if (!patientDetailsSection || !patientData || !patientData.ficha) {
-    hide();
-    return;
-  }
-  const {
-    ficha,
-    cadsus,
-    lastCadsusCheck,
-    isUpdating
-  } = patientData;
-  patientMainInfoDiv.innerHTML = '';
-  patientAdditionalInfoDiv.innerHTML = '';
-  const getLocalValue = (field, data) => {
-    if (typeof field.key === 'function') return field.key(data);
-    return _utils_js__WEBPACK_IMPORTED_MODULE_0__.getNestedValue(data, field.key);
-  };
-  const getCadsusValue = (field, data) => {
-    if (!data || field.cadsusKey === null) return null;
-    if (typeof field.cadsusKey === 'function') return field.cadsusKey(data);
-    return data[field.cadsusKey];
-  };
-  const sortedFields = [...fieldConfigLayout].sort((a, b) => a.order - b.order);
-  sortedFields.forEach(field => {
-    if (!field.enabled) return;
-    let localValue = getLocalValue(field, ficha);
-    if (field.formatter) localValue = field.formatter(localValue);
-    let cadsusValue = getCadsusValue(field, cadsus);
-    if (field.formatter) cadsusValue = field.formatter(cadsusValue);
-    const v1 = String(localValue || '').trim();
-    const v2 = String(cadsusValue || '').trim();
-    let icon = '';
-    if (cadsus && field.cadsusKey !== null) {
-      let compareV1 = v1;
-      let compareV2 = v2;
-      if (field.id === 'telefone') {
-        compareV1 = v1.replace(/\D/g, '').replace(/^55/, '');
-        compareV2 = v2.replace(/\D/g, '').replace(/^55/, '');
-      } else {
-        compareV1 = _utils_js__WEBPACK_IMPORTED_MODULE_0__.normalizeString(v1);
-        compareV2 = _utils_js__WEBPACK_IMPORTED_MODULE_0__.normalizeString(v2);
-      }
-      if (compareV1 && compareV1 === compareV2) {
-        icon = '<span class="comparison-icon" title="Dado confere com o CADSUS">✅</span>';
-      } else {
-        const tooltipText = `Ficha: ${v1 || 'Vazio'}\nCADSUS: ${v2 || 'Vazio'}`;
-        icon = `<span class="comparison-icon" data-tooltip="${tooltipText}">⚠️</span>`;
-      }
-    }
-    const valueClass = field.id.toLowerCase().includes('alerg') && v1 && v1 !== '-' ? 'text-red-600 font-bold' : 'text-slate-900';
-    const copyIcon = v1 ? `<span class="copy-icon" title="Copiar" data-copy-text="${v1}">📄</span>` : '';
-    const rowHtml = `<div class="flex justify-between items-center py-1"><span class="font-medium text-slate-600">${field.label}:</span><span class="${valueClass} text-right flex items-center">${v1 || '-'}${icon}${copyIcon}</span></div>`;
-    if (field.section === 'main') {
-      patientMainInfoDiv.innerHTML += rowHtml;
-    } else {
-      patientAdditionalInfoDiv.innerHTML += rowHtml;
-    }
-  });
-  if (lastCadsusCheck) {
-    cadsusTimestamp.textContent = `CADSUS verificado em: ${lastCadsusCheck.toLocaleString()}`;
-    patientCardFooter.style.display = 'flex';
-  } else {
-    cadsusTimestamp.textContent = 'Não foi possível verificar dados do CADSUS.';
-    patientCardFooter.style.display = 'flex';
-  }
-  refreshCadsusBtn.querySelector('.refresh-icon').classList.toggle('spinning', isUpdating);
-  refreshCadsusBtn.disabled = isUpdating;
-  toggleDetailsBtn.style.display = sortedFields.some(f => f.enabled && f.section === 'more') ? 'block' : 'none';
-  patientDetailsSection.style.display = 'block';
-}
-function hide() {
-  if (patientDetailsSection) patientDetailsSection.style.display = 'none';
-}
-function handleToggleDetails() {
-  patientAdditionalInfoDiv.classList.toggle('show');
-  toggleDetailsBtn.textContent = patientAdditionalInfoDiv.classList.contains('show') ? 'Mostrar menos' : 'Mostrar mais';
-}
-function handleForceRefresh() {
-  const patient = _store_js__WEBPACK_IMPORTED_MODULE_1__.store.getPatient();
-  if (patient && patient.ficha && onForceRefresh) {
-    onForceRefresh({
-      idp: patient.ficha.isenPK.idp,
-      ids: patient.ficha.isenPK.ids
-    }, true);
-  }
-}
-function onStateChange() {
-  const patient = _store_js__WEBPACK_IMPORTED_MODULE_1__.store.getPatient();
-  if (patient) {
-    render(patient);
-  } else {
-    hide();
-  }
-}
-
-/**
- * Inicializa o módulo do card de paciente.
- * @param {Array<object>} config - A configuração dos campos da ficha.
- * @param {object} callbacks - Funções de callback.
- * @param {Function} callbacks.onForceRefresh - Função para forçar a atualização.
- */
-function init(config, callbacks) {
-  patientDetailsSection = document.getElementById('patient-details-section');
-  patientMainInfoDiv = document.getElementById('patient-main-info');
-  patientAdditionalInfoDiv = document.getElementById('patient-additional-info');
-  toggleDetailsBtn = document.getElementById('toggle-details-btn');
-  patientCardFooter = document.getElementById('patient-card-footer');
-  cadsusTimestamp = document.getElementById('cadsus-timestamp');
-  refreshCadsusBtn = document.getElementById('refresh-cadsus-btn');
-  fieldConfigLayout = config;
-  onForceRefresh = callbacks.onForceRefresh;
-  toggleDetailsBtn.addEventListener('click', handleToggleDetails);
-  refreshCadsusBtn.addEventListener('click', handleForceRefresh);
-  _store_js__WEBPACK_IMPORTED_MODULE_1__.store.subscribe(onStateChange);
-}
-
-/***/ }),
-
-/***/ "./ui/search.js":
-/*!**********************!*\
-  !*** ./ui/search.js ***!
-  \**********************/
-/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
-
-__webpack_require__.r(__webpack_exports__);
-/* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   init: () => (/* binding */ init)
-/* harmony export */ });
-/* harmony import */ var _api_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../api.js */ "./api.js");
-/* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../utils.js */ "./utils.js");
-/* harmony import */ var _store_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../store.js */ "./store.js");
-/**
- * @file Módulo para gerir a funcionalidade de busca de pacientes.
- */
-
-
-
-let searchInput;
-let searchResultsList;
-let recentPatientsList;
-let onSelectPatient; // Callback para notificar o sidebar sobre a seleção
-
-function renderSearchResults(patients) {
-  if (!searchResultsList) return;
-  if (patients.length === 0) {
-    searchResultsList.innerHTML = '<li class="px-4 py-3 text-sm text-slate-500">Nenhum paciente encontrado.</li>';
-    return;
-  }
-  searchResultsList.innerHTML = patients.map(p => `<li class="px-4 py-3 border-b border-slate-100 hover:bg-slate-50 cursor-pointer transition" data-idp="${p.idp}" data-ids="${p.ids}">${renderPatientListItem(p)}</li>`).join('');
-}
-
-/**
- * Renderiza a lista de pacientes recentes a partir do store.
- */
-function renderRecentPatients() {
-  if (!recentPatientsList) return;
-  const recents = _store_js__WEBPACK_IMPORTED_MODULE_2__.store.getRecentPatients() || [];
-  recentPatientsList.innerHTML = '<li class="px-4 pt-3 pb-1 text-xs font-semibold text-slate-400">PACIENTES RECENTES</li>' + (recents.length === 0 ? '<li class="px-4 py-3 text-sm text-slate-500">Nenhum paciente recente.</li>' : recents.map(p => {
-    var _fichaData$isenPK, _fichaData$isenPK2;
-    // CORREÇÃO: Lida com a estrutura de dados antiga e nova dos pacientes recentes.
-    const fichaData = p.ficha || p; // Se p.ficha não existe, 'p' é o próprio objeto da ficha.
-    const idp = ((_fichaData$isenPK = fichaData.isenPK) === null || _fichaData$isenPK === void 0 ? void 0 : _fichaData$isenPK.idp) || fichaData.idp;
-    const ids = ((_fichaData$isenPK2 = fichaData.isenPK) === null || _fichaData$isenPK2 === void 0 ? void 0 : _fichaData$isenPK2.ids) || fichaData.ids;
-    if (!idp || !ids) return ''; // Pula a renderização se o item estiver malformado.
-
-    return `<li class="px-4 py-3 border-b border-slate-100 hover:bg-slate-50 cursor-pointer transition recent-patient-item" data-idp="${idp}" data-ids="${ids}">${renderPatientListItem(fichaData)}</li>`;
-  }).join(''));
-}
-function renderPatientListItem(patient) {
-  var _patient$isenPK, _patient$isenPK2;
-  const nome = patient.value || _utils_js__WEBPACK_IMPORTED_MODULE_1__.getNestedValue(patient, 'entidadeFisica.entidade.entiNome') || 'Nome não informado';
-  const idp = patient.idp || ((_patient$isenPK = patient.isenPK) === null || _patient$isenPK === void 0 ? void 0 : _patient$isenPK.idp);
-  const ids = patient.ids || ((_patient$isenPK2 = patient.isenPK) === null || _patient$isenPK2 === void 0 ? void 0 : _patient$isenPK2.ids);
-  const dataNascimento = patient.dataNascimento || _utils_js__WEBPACK_IMPORTED_MODULE_1__.getNestedValue(patient, 'entidadeFisica.entfDtNasc');
-  const cpf = patient.cpf || _utils_js__WEBPACK_IMPORTED_MODULE_1__.getNestedValue(patient, 'entidadeFisica.entfCPF');
-  const cns = patient.cns || patient.isenNumCadSus;
-  return `
-      <div class="font-medium text-slate-800">${nome}</div>
-      <div class="grid grid-cols-2 gap-x-4 text-xs text-slate-500 mt-1">
-        <span><strong class="font-semibold">Cód:</strong> ${idp}-${ids}</span>
-        <span><strong class="font-semibold">Nasc:</strong> ${dataNascimento || '-'}</span>
-        <span><strong class="font-semibold">CPF:</strong> ${cpf || '-'}</span>
-        <span><strong class="font-semibold">CNS:</strong> ${cns || '-'}</span>
-      </div>
-    `;
-}
-const handleSearchInput = _utils_js__WEBPACK_IMPORTED_MODULE_1__.debounce(async () => {
-  const searchTerm = searchInput.value.trim();
-  _store_js__WEBPACK_IMPORTED_MODULE_2__.store.clearPatient();
-  recentPatientsList.classList.add('hidden');
-  searchResultsList.classList.remove('hidden');
-  if (searchTerm.length < 1) {
-    searchResultsList.innerHTML = '';
-    return;
-  }
-  _utils_js__WEBPACK_IMPORTED_MODULE_1__.toggleLoader(true);
-  try {
-    const patients = await _api_js__WEBPACK_IMPORTED_MODULE_0__.searchPatients(searchTerm);
-    renderSearchResults(patients);
-  } catch (error) {
-    _utils_js__WEBPACK_IMPORTED_MODULE_1__.showMessage('Erro ao buscar pacientes.');
-  } finally {
-    _utils_js__WEBPACK_IMPORTED_MODULE_1__.toggleLoader(false);
-  }
-}, 500);
-function handleSearchFocus() {
-  if (searchInput.value.length > 0) return;
-  renderRecentPatients();
-  searchResultsList.classList.add('hidden');
-  recentPatientsList.classList.remove('hidden');
-}
-function handleSearchBlur() {
-  setTimeout(() => {
-    searchResultsList.classList.add('hidden');
-    recentPatientsList.classList.add('hidden');
-  }, 200);
-}
-async function handleResultClick(event) {
-  const listItem = event.target.closest('li[data-idp]');
-  if (!listItem) return;
-  const {
-    idp,
-    ids
-  } = listItem.dataset;
-  if (listItem.classList.contains('recent-patient-item')) {
-    const recentPatient = _store_js__WEBPACK_IMPORTED_MODULE_2__.store.getRecentPatients().find(p => {
-      // CORREÇÃO: Lida com a estrutura de dados antiga e nova.
-      const patientIdp = p.ficha ? p.ficha.isenPK.idp : p.idp;
-      return patientIdp == idp;
-    });
-
-    // Se o paciente foi encontrado e tem a nova estrutura (com cache), usa os dados do cache.
-    if (recentPatient && recentPatient.ficha) {
-      _store_js__WEBPACK_IMPORTED_MODULE_2__.store.setPatient(recentPatient.ficha, recentPatient.cadsus);
-      searchInput.value = '';
-      searchResultsList.classList.add('hidden');
-      recentPatientsList.classList.add('hidden');
-      return;
-    }
-  }
-
-  // Para pacientes novos ou pacientes recentes com a estrutura antiga (que precisam ser re-buscados).
-  if (onSelectPatient) {
-    onSelectPatient({
-      idp,
-      ids
-    });
-  }
-  searchInput.value = '';
-  searchResultsList.classList.add('hidden');
-  recentPatientsList.classList.add('hidden');
-}
-function init(config) {
-  searchInput = document.getElementById('patient-search-input');
-  searchResultsList = document.getElementById('search-results');
-  recentPatientsList = document.getElementById('recent-patients-list');
-  onSelectPatient = config.onSelectPatient;
-  _store_js__WEBPACK_IMPORTED_MODULE_2__.store.subscribe(() => {
-    if (!recentPatientsList.classList.contains('hidden')) {
-      renderRecentPatients();
-    }
-  });
-  searchInput.addEventListener('input', handleSearchInput);
-  searchInput.addEventListener('focus', handleSearchFocus);
-  searchInput.addEventListener('blur', handleSearchBlur);
-  searchResultsList.addEventListener('click', handleResultClick);
-  recentPatientsList.addEventListener('click', handleResultClick);
-}
-
-/***/ }),
-
-/***/ "./utils.js":
-/*!******************!*\
-  !*** ./utils.js ***!
-  \******************/
-/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
-
-__webpack_require__.r(__webpack_exports__);
-/* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   calculateRelativeDate: () => (/* binding */ calculateRelativeDate),
-/* harmony export */   clearMessage: () => (/* binding */ clearMessage),
-/* harmony export */   debounce: () => (/* binding */ debounce),
-/* harmony export */   filterTimelineEvents: () => (/* binding */ filterTimelineEvents),
-/* harmony export */   getContrastYIQ: () => (/* binding */ getContrastYIQ),
-/* harmony export */   getNestedValue: () => (/* binding */ getNestedValue),
-/* harmony export */   normalizeString: () => (/* binding */ normalizeString),
-/* harmony export */   normalizeTimelineData: () => (/* binding */ normalizeTimelineData),
-/* harmony export */   parseDate: () => (/* binding */ parseDate),
-/* harmony export */   setupTabs: () => (/* binding */ setupTabs),
-/* harmony export */   showMessage: () => (/* binding */ showMessage),
-/* harmony export */   toggleLoader: () => (/* binding */ toggleLoader)
-/* harmony export */ });
-/**
- * @file Contém funções utilitárias compartilhadas em toda a extensão.
- */
-
-/**
- * Atraso na execução de uma função após o utilizador parar de digitar.
- * @param {Function} func A função a ser executada.
- * @param {number} [delay=500] O tempo de espera em milissegundos.
- * @returns {Function} A função com debounce.
- */
-function debounce(func, delay = 500) {
-  let timeoutId;
-  return (...args) => {
-    clearTimeout(timeoutId);
-    timeoutId = setTimeout(() => {
-      func.apply(this, args);
-    }, delay);
-  };
-}
-
-/**
- * Mostra ou esconde o loader principal.
- * @param {boolean} show - `true` para mostrar, `false` para esconder.
- */
-function toggleLoader(show) {
-  const loader = document.getElementById('loader');
-  if (loader) {
-    loader.style.display = show ? 'block' : 'none';
-  }
-}
-
-/**
- * Exibe uma mensagem na área de mensagens.
- * @param {string} text O texto da mensagem.
- * @param {'error' | 'success' | 'info'} [type='error'] O tipo de mensagem.
- */
-function showMessage(text, type = 'error') {
-  const messageArea = document.getElementById('message-area');
-  if (messageArea) {
-    messageArea.textContent = text;
-    const typeClasses = {
-      error: 'bg-red-100 text-red-700',
-      success: 'bg-green-100 text-green-700',
-      info: 'bg-blue-100 text-blue-700'
-    };
-    messageArea.className = `p-3 rounded-md text-sm ${typeClasses[type] || typeClasses.error}`;
-    messageArea.style.display = 'block';
-  }
-}
-
-/**
- * Limpa a área de mensagens.
- */
-function clearMessage() {
-  const messageArea = document.getElementById('message-area');
-  if (messageArea) {
-    messageArea.style.display = 'none';
-  }
-}
-
-/**
- * Converte uma string de data em vários formatos para um objeto Date.
- * @param {string} dateString A data no formato "dd/MM/yyyy" ou "yyyy-MM-dd", podendo conter prefixos.
- * @returns {Date|null} O objeto Date ou null se a string for inválida.
- */
-function parseDate(dateString) {
-  if (!dateString || typeof dateString !== 'string') return null;
-
-  // Tenta extrair o primeiro padrão de data válido da string.
-  const dateMatch = dateString.match(/(\d{4}-\d{2}-\d{2})|(\d{2}\/\d{2}\/\d{2,4})/);
-  if (!dateMatch) return null;
-  const matchedDate = dateMatch[0];
-  let year, month, day;
-
-  // Tenta o formato YYYY-MM-DD
-  if (matchedDate.includes('-')) {
-    [year, month, day] = matchedDate.split('-').map(Number);
-  } else if (matchedDate.includes('/')) {
-    // Tenta o formato DD/MM/YYYY
-    [day, month, year] = matchedDate.split('/').map(Number);
-  }
-
-  // Valida se os números são válidos e se a data é real
-  if (isNaN(year) || isNaN(month) || isNaN(day)) return null;
-
-  // Lida com anos de 2 dígitos (ex: '24' -> 2024)
-  if (year >= 0 && year < 100) {
-    year += 2000;
-  }
-  const date = new Date(Date.UTC(year, month - 1, day));
-
-  // Confirma que a data não "rolou" para o mês seguinte (ex: 31 de Abril -> 1 de Maio)
-  if (date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day) {
-    return date;
-  }
-  return null; // Retorna nulo se a data for inválida (ex: 31/02/2024)
-}
-
-/**
- * Obtém um valor aninhado de um objeto de forma segura.
- * @param {object} obj O objeto.
- * @param {string} path O caminho para a propriedade (ex: 'a.b.c').
- * @returns {*} O valor encontrado ou undefined.
- */
-const getNestedValue = (obj, path) => {
-  if (!path) return undefined;
-  return path.split('.').reduce((acc, part) => acc && acc[part], obj);
-};
-
-/**
- * Calcula uma data relativa à data atual com base num desvio em meses.
- * @param {number} offsetInMonths - O número de meses a adicionar ou subtrair.
- * @returns {Date} O objeto Date resultante.
- */
-function calculateRelativeDate(offsetInMonths) {
-  const date = new Date();
-  // setMonth lida corretamente com transições de ano e dias do mês
-  date.setMonth(date.getMonth() + offsetInMonths);
-  return date;
-}
-
-/**
- * Retorna 'black' ou 'white' para o texto dependendo do contraste com a cor de fundo.
- * @param {string} hexcolor - A cor de fundo em formato hexadecimal (com ou sem #).
- * @returns {'black' | 'white'}
- */
-function getContrastYIQ(hexcolor) {
-  hexcolor = hexcolor.replace('#', '');
-  const r = parseInt(hexcolor.substr(0, 2), 16);
-  const g = parseInt(hexcolor.substr(2, 2), 16);
-  const b = parseInt(hexcolor.substr(4, 2), 16);
-  const yiq = (r * 299 + g * 587 + b * 114) / 1000;
-  return yiq >= 128 ? 'black' : 'white';
-}
-
-/**
- * Normaliza uma string removendo acentos, cedilha e convertendo para minúsculas.
- * @param {string} str - A string a ser normalizada.
- * @returns {string} A string normalizada.
- */
-function normalizeString(str) {
-  if (!str) return '';
-  return str.toString().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-}
-
-/**
- * Configura um sistema de abas (tabs) dentro de um container.
- * @param {HTMLElement} container - O elemento que contém os botões e os painéis das abas.
- */
-function setupTabs(container) {
-  if (!container) return;
-  const tabButtons = container.querySelectorAll('.tab-button');
-  const tabContents = container.querySelectorAll('.tab-content');
-  tabButtons.forEach(button => {
-    button.addEventListener('click', () => {
-      const tabName = button.dataset.tab;
-      tabButtons.forEach(btn => btn.classList.remove('active'));
-      tabContents.forEach(content => content.classList.remove('active'));
-      button.classList.add('active');
-      const activeContent = container.querySelector(`#${tabName}-tab`);
-      if (activeContent) {
-        activeContent.classList.add('active');
-      }
-    });
-  });
-}
-
-/**
- * Normalizes data from various sources into a single, sorted timeline event list.
- * @param {object} apiData - An object containing arrays of consultations, exams, etc.
- * @returns {Array<object>} A sorted array of timeline event objects.
- */
-function normalizeTimelineData(apiData) {
-  const events = [];
-
-  // Normalize Consultations
-  try {
-    (apiData.consultations || []).forEach(c => {
-      if (!c || !c.date) return;
-      const searchText = normalizeString([c.specialty, c.professional, c.unit, ...c.details.map(d => d.value)].join(' '));
-      events.push({
-        type: 'consultation',
-        date: parseDate(c.date.split('\n')[0]),
-        sortableDate: c.sortableDate || parseDate(c.date),
-        title: `Consulta: ${c.specialty || 'Especialidade não informada'}`,
-        summary: `com ${c.professional || 'Profissional não informado'}`,
-        details: c,
-        subDetails: c.details || [],
-        searchText
-      });
-    });
-  } catch (e) {
-    console.error('Failed to normalize consultation data for timeline:', e);
-  }
-
-  // Normalize Exams
-  try {
-    (apiData.exams || []).forEach(e => {
-      const eventDate = parseDate(e.date);
-      if (!e || !eventDate) return;
-      const searchText = normalizeString([e.examName, e.professional, e.specialty].filter(Boolean).join(' '));
-      events.push({
-        type: 'exam',
-        date: eventDate,
-        sortableDate: eventDate,
-        title: `Exame Solicitado: ${e.examName || 'Nome não informado'}`,
-        summary: `Solicitado por ${e.professional || 'Não informado'}`,
-        details: e,
-        subDetails: [{
-          label: 'Resultado',
-          value: e.hasResult ? 'Disponível' : 'Pendente'
-        }],
-        searchText
-      });
-    });
-  } catch (e) {
-    console.error('Failed to normalize exam data for timeline:', e);
-  }
-
-  // Normalize Appointments
-  try {
-    (apiData.appointments || []).forEach(a => {
-      if (!a || !a.date) return;
-      const searchText = normalizeString([a.specialty, a.description, a.location, a.professional].join(' '));
-      events.push({
-        type: 'appointment',
-        date: parseDate(a.date),
-        sortableDate: parseDate(a.date),
-        title: `Agendamento: ${a.specialty || a.description || 'Não descrito'}`,
-        summary: a.location || 'Local não informado',
-        details: a,
-        subDetails: [{
-          label: 'Status',
-          value: a.status || 'N/A'
-        }, {
-          label: 'Hora',
-          value: a.time || 'N/A'
-        }],
-        searchText
-      });
-    });
-  } catch (e) {
-    console.error('Failed to normalize appointment data for timeline:', e);
-  }
-
-  // Normalize Regulations
-  try {
-    (apiData.regulations || []).forEach(r => {
-      if (!r || !r.date) return;
-      const searchText = normalizeString([r.procedure, r.requester, r.provider, r.cid].join(' '));
-      events.push({
-        type: 'regulation',
-        date: parseDate(r.date),
-        sortableDate: parseDate(r.date),
-        title: `Regulação: ${r.procedure || 'Procedimento não informado'}`,
-        summary: `Solicitante: ${r.requester || 'Não informado'}`,
-        details: r,
-        subDetails: [{
-          label: 'Status',
-          value: r.status || 'N/A'
-        }, {
-          label: 'Prioridade',
-          value: r.priority || 'N/A'
-        }],
-        searchText
-      });
-    });
-  } catch (e) {
-    console.error('Failed to normalize regulation data for timeline:', e);
-  }
-
-  // --- INÍCIO DA MODIFICAÇÃO ---
-  // Normalize Documents
-  try {
-    (apiData.documents || []).forEach(doc => {
-      if (!doc || !doc.date) return;
-      const searchText = normalizeString(doc.description || '');
-      events.push({
-        type: 'document',
-        date: parseDate(doc.date),
-        sortableDate: parseDate(doc.date),
-        title: `Documento: ${doc.description || 'Sem descrição'}`,
-        summary: `Tipo: ${doc.fileType.toUpperCase()}`,
-        details: doc,
-        subDetails: [],
-        searchText
-      });
-    });
-  } catch (e) {
-    console.error('Failed to normalize document data for timeline:', e);
-  }
-  // --- FIM DA MODIFICAÇÃO ---
-
-  // Filter out events with invalid dates and sort all events by date, newest first.
-  return events.filter(event => event.sortableDate instanceof Date && !isNaN(event.sortableDate)).sort((a, b) => b.sortableDate - a.sortableDate);
-}
-
-/**
- * Filters timeline events based on automation rule filters.
- * @param {Array<object>} events - The full array of timeline events.
- * @param {object} automationFilters - The filter settings from an automation rule.
- * @returns {Array<object>} A new array with the filtered events.
- */
-function filterTimelineEvents(events, automationFilters) {
-  if (!automationFilters) return events;
-  const checkText = (text, filterValue) => {
-    if (!filterValue) return true; // If filter is empty, it passes
-    const terms = filterValue.toLowerCase().split(',').map(t => t.trim()).filter(Boolean);
-    if (terms.length === 0) return true;
-    const normalizedText = normalizeString(text || '');
-    return terms.some(term => normalizedText.includes(term));
-  };
-  return events.filter(event => {
-    try {
-      switch (event.type) {
-        case 'consultation':
-          {
-            const consultFilters = automationFilters.consultations || {};
-            // Procura por um campo rotulado como CID ou CIAP para uma busca precisa.
-            const cidDetail = (event.details.details || []).find(d => normalizeString(d.label).includes('cid') || normalizeString(d.label).includes('ciap'));
-            const cidText = cidDetail ? cidDetail.value : '';
-            return checkText(event.details.specialty, consultFilters['consultation-filter-specialty']) && checkText(event.details.professional, consultFilters['consultation-filter-professional']) && checkText(cidText, consultFilters['consultation-filter-cid']);
-          }
-        case 'exam':
-          {
-            const examFilters = automationFilters.exams || {};
-            return checkText(event.details.examName, examFilters['exam-filter-name']) && checkText(event.details.professional, examFilters['exam-filter-professional']) && checkText(event.details.specialty, examFilters['exam-filter-specialty']);
-          }
-        case 'appointment':
-          {
-            const apptFilters = automationFilters.appointments || {};
-            const apptText = `${event.details.specialty} ${event.details.professional} ${event.details.location}`;
-            return checkText(apptText, apptFilters['appointment-filter-term']);
-          }
-        case 'regulation':
-          {
-            const regFilters = automationFilters.regulations || {};
-            return checkText(event.details.procedure, regFilters['regulation-filter-procedure']) && checkText(event.details.requester, regFilters['regulation-filter-requester']) && (regFilters['regulation-filter-status'] === 'todos' || !regFilters['regulation-filter-status'] || event.details.status.toUpperCase() === regFilters['regulation-filter-status'].toUpperCase()) && (regFilters['regulation-filter-priority'] === 'todas' || !regFilters['regulation-filter-priority'] || event.details.priority.toUpperCase() === regFilters['regulation-filter-priority'].toUpperCase());
-          }
-        default:
-          return true;
-      }
-    } catch (e) {
-      console.warn('Error filtering timeline event, it will be included by default:', event, e);
-      return true;
-    }
-  });
-}
-
 /***/ })
 
 }]);
-//# sourceMappingURL=common.js.map

@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pt-br">
   <head>
     <meta charset="UTF-8" />
@@ -14,7 +14,7 @@
     />
     <style>
       body {
-        font-family: "Inter", sans-serif;
+        font-family: 'Inter', sans-serif;
       }
       .hidden {
         display: none !important;
@@ -97,7 +97,9 @@
         padding: 0.75rem 1rem;
         margin-bottom: 1rem;
         border-radius: 0.375rem;
-        transition: background-color 0.2s, color 0.2s;
+        transition:
+          background-color 0.2s,
+          color 0.2s;
         /* As classes do Tailwind (flex, justify-between, etc.) continuam no HTML */
       }
       .section-header h2 {
@@ -127,7 +129,7 @@
       .timeline-details-body .whitespace-pre-wrap {
         white-space: pre-wrap;
       }
-          </style>
+    </style>
   </head>
   <body class="bg-slate-50 text-slate-800 antialiased flex flex-col h-screen">
     <header
@@ -148,9 +150,7 @@
         >
           <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
         </svg>
-        <h1 class="text-lg font-bold text-slate-900">
-          Assistente de Regulação
-        </h1>
+        <h1 class="text-lg font-bold text-slate-900">Assistente de Regulação</h1>
       </div>
       <div class="flex items-center gap-2">
         <button
@@ -171,13 +171,8 @@
           </svg>
         </button>
         <div class="flex items-center space-x-1 text-xs">
-          <span id="auto-mode-label" class="font-medium text-slate-500"
-            >Auto</span
-          >
-          <label
-            for="auto-mode-toggle"
-            class="relative inline-flex items-center cursor-pointer"
-          >
+          <span id="auto-mode-label" class="font-medium text-slate-500">Auto</span>
+          <label for="auto-mode-toggle" class="relative inline-flex items-center cursor-pointer">
             <input type="checkbox" id="auto-mode-toggle" class="sr-only peer" />
             <div
               class="w-9 h-5 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"
@@ -223,12 +218,7 @@
           </svg>
         </a>
         <a href="help.html" title="Ajuda" target="_blank" class="ml-1">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="20"
-            height="20"
-            viewBox="0 0 20 20"
-          >
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20">
             <circle cx="10" cy="10" r="10" fill="#2563eb" />
             <text
               x="10"
@@ -265,12 +255,9 @@
             d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"
           />
         </svg>
-        <h2 class="text-lg font-semibold text-slate-800 mt-4">
-          URL Base Não Configurada
-        </h2>
+        <h2 class="text-lg font-semibold text-slate-800 mt-4">URL Base Não Configurada</h2>
         <p class="text-slate-600 mt-2 text-sm">
-          Para que a extensão funcione, você precisa configurar a URL base do
-          seu sistema de gestão.
+          Para que a extensão funcione, você precisa configurar a URL base do seu sistema de gestão.
         </p>
         <div class="mt-6 flex flex-col gap-3">
           <button
@@ -294,9 +281,7 @@
         id="search-section"
         class="bg-white p-4 rounded-lg border border-slate-200 shadow-sm"
       >
-        <h2 class="text-md font-semibold text-slate-700 mb-3">
-          Buscar Paciente
-        </h2>
+        <h2 class="text-md font-semibold text-slate-700 mb-3">Buscar Paciente</h2>
         <div class="relative">
           <input
             type="search"
@@ -331,14 +316,8 @@
             </svg>
           </div>
         </div>
-        <ul
-          id="search-results"
-          class="mt-2 border-t border-slate-200 -mx-4"
-        ></ul>
-        <ul
-          id="recent-patients-list"
-          class="hidden mt-2 border-t border-slate-200 -mx-4"
-        ></ul>
+        <ul id="search-results" class="mt-2 border-t border-slate-200 -mx-4"></ul>
+        <ul id="recent-patients-list" class="hidden mt-2 border-t border-slate-200 -mx-4"></ul>
       </section>
 
       <section
@@ -402,10 +381,7 @@
             <span id="timeline-section-icon" class="section-icon"></span>
             <span>Linha do Tempo</span>
           </h2>
-          <button
-            id="toggle-timeline-list-btn"
-            class="text-xs text-slate-500 hover:text-blue-600"
-          >
+          <button id="toggle-timeline-list-btn" class="text-xs text-slate-500 hover:text-blue-600">
             Recolher
           </button>
         </div>
@@ -418,9 +394,7 @@
           <div id="timeline-filters" class="space-y-4 mt-4">
             <div class="grid grid-cols-2 gap-4 text-sm">
               <div>
-                <label for="timeline-date-initial" class="block font-medium"
-                  >Data Inicial</label
-                >
+                <label for="timeline-date-initial" class="block font-medium">Data Inicial</label>
                 <input
                   type="date"
                   id="timeline-date-initial"
@@ -428,9 +402,7 @@
                 />
               </div>
               <div>
-                <label for="timeline-date-final" class="block font-medium"
-                  >Data Final</label
-                >
+                <label for="timeline-date-final" class="block font-medium">Data Final</label>
                 <input
                   type="date"
                   id="timeline-date-final"
@@ -439,9 +411,7 @@
               </div>
             </div>
             <div>
-              <label
-                for="timeline-search-keyword"
-                class="block font-medium text-sm"
+              <label for="timeline-search-keyword" class="block font-medium text-sm"
                 >Buscar na Linha do Tempo</label
               >
               <input
@@ -459,10 +429,7 @@
           >
             Buscar na Linha do Tempo
           </button>
-          <div
-            id="timeline-content"
-            class="pt-4 mt-4 border-t border-slate-200"
-          >
+          <div id="timeline-content" class="pt-4 mt-4 border-t border-slate-200">
             <!-- O conteúdo da linha do tempo, incluindo estados de carregamento/vazio/erro, será renderizado aqui -->
           </div>
         </div>
@@ -499,26 +466,17 @@
           </button>
           <div class="mt-2 py-2 border-t border-slate-200 space-y-2">
             <div class="flex justify-between items-center text-sm">
-              <button
-                id="toggle-more-regulation-filters-btn"
-                class="text-blue-600 hover:underline"
-              >
+              <button id="toggle-more-regulation-filters-btn" class="text-blue-600 hover:underline">
                 <span class="button-text">Mais filtros</span
                 ><span
                   class="hidden ml-1 text-xs bg-blue-500 text-white rounded-full px-1.5 py-0.5"
                 ></span>
               </button>
-              <button
-                id="clear-regulation-filters-btn"
-                class="text-slate-500 hover:text-red-600"
-              >
+              <button id="clear-regulation-filters-btn" class="text-slate-500 hover:text-red-600">
                 Limpar
               </button>
             </div>
-            <div
-              id="regulation-more-filters"
-              class="collapse-section space-y-3 text-sm"
-            ></div>
+            <div id="regulation-more-filters" class="collapse-section space-y-3 text-sm"></div>
           </div>
           <div id="regulations-content" class="pt-2 border-t"></div>
         </div>
@@ -564,17 +522,11 @@
                   class="hidden ml-1 text-xs bg-blue-500 text-white rounded-full px-1.5 py-0.5"
                 ></span>
               </button>
-              <button
-                id="clear-consultation-filters-btn"
-                class="text-slate-500 hover:text-red-600"
-              >
+              <button id="clear-consultation-filters-btn" class="text-slate-500 hover:text-red-600">
                 Limpar
               </button>
             </div>
-            <div
-              id="consultation-more-filters"
-              class="collapse-section space-y-3 text-sm"
-            ></div>
+            <div id="consultation-more-filters" class="collapse-section space-y-3 text-sm"></div>
           </div>
           <div id="consultations-content" class="pt-2 border-t"></div>
         </div>
@@ -590,10 +542,7 @@
             <span id="exams-section-icon" class="section-icon"></span>
             <span>Exames Solicitados</span>
           </h2>
-          <button
-            id="toggle-exams-list-btn"
-            class="text-xs text-slate-500 hover:text-blue-600"
-          >
+          <button id="toggle-exams-list-btn" class="text-xs text-slate-500 hover:text-blue-600">
             Recolher
           </button>
         </div>
@@ -611,26 +560,17 @@
           </button>
           <div class="mt-2 py-2 border-t border-slate-200 space-y-2">
             <div class="flex justify-between items-center text-sm">
-              <button
-                id="toggle-more-exam-filters-btn"
-                class="text-blue-600 hover:underline"
-              >
+              <button id="toggle-more-exam-filters-btn" class="text-blue-600 hover:underline">
                 <span class="button-text">Mais filtros</span
                 ><span
                   class="hidden ml-1 text-xs bg-blue-500 text-white rounded-full px-1.5 py-0.5"
                 ></span>
               </button>
-              <button
-                id="clear-exam-filters-btn"
-                class="text-slate-500 hover:text-red-600"
-              >
+              <button id="clear-exam-filters-btn" class="text-slate-500 hover:text-red-600">
                 Limpar
               </button>
             </div>
-            <div
-              id="exam-more-filters"
-              class="collapse-section space-y-3 text-sm"
-            ></div>
+            <div id="exam-more-filters" class="collapse-section space-y-3 text-sm"></div>
           </div>
           <div
             id="exams-content"
@@ -680,17 +620,11 @@
                   class="hidden ml-1 text-xs bg-blue-500 text-white rounded-full px-1.5 py-0.5"
                 ></span>
               </button>
-              <button
-                id="clear-appointment-filters-btn"
-                class="text-slate-500 hover:text-red-600"
-              >
+              <button id="clear-appointment-filters-btn" class="text-slate-500 hover:text-red-600">
                 Limpar
               </button>
             </div>
-            <div
-              id="appointment-more-filters"
-              class="collapse-section space-y-3 text-sm"
-            ></div>
+            <div id="appointment-more-filters" class="collapse-section space-y-3 text-sm"></div>
           </div>
           <div id="appointments-content" class="pt-2 border-t"></div>
         </div>
@@ -706,10 +640,7 @@
             <span id="documents-section-icon" class="section-icon"></span>
             <span>Documentos</span>
           </h2>
-          <button
-            id="toggle-documents-list-btn"
-            class="text-xs text-slate-500 hover:text-blue-600"
-          >
+          <button id="toggle-documents-list-btn" class="text-xs text-slate-500 hover:text-blue-600">
             Recolher
           </button>
         </div>
@@ -727,49 +658,32 @@
           </button>
           <div class="mt-2 py-2 border-t border-slate-200 space-y-2">
             <div class="flex justify-between items-center text-sm">
-              <button
-                id="toggle-more-document-filters-btn"
-                class="text-blue-600 hover:underline"
-              >
+              <button id="toggle-more-document-filters-btn" class="text-blue-600 hover:underline">
                 <span class="button-text">Mais filtros</span
                 ><span
                   class="hidden ml-1 text-xs bg-blue-500 text-white rounded-full px-1.5 py-0.5"
                 ></span>
               </button>
-              <button
-                id="clear-document-filters-btn"
-                class="text-slate-500 hover:text-red-600"
-              >
+              <button id="clear-document-filters-btn" class="text-slate-500 hover:text-red-600">
                 Limpar
               </button>
             </div>
-            <div
-              id="document-more-filters"
-              class="collapse-section space-y-3 text-sm"
-            ></div>
+            <div id="document-more-filters" class="collapse-section space-y-3 text-sm"></div>
           </div>
           <div id="documents-content" class="pt-2 border-t"></div>
         </div>
       </section>
 
-      <div
-        id="message-area"
-        class="p-3 rounded-md text-sm"
-        style="display: none"
-      ></div>
+      <div id="message-area" class="p-3 rounded-md text-sm" style="display: none"></div>
     </main>
 
     <div
       id="info-modal"
       class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4"
     >
-      <div
-        class="bg-white rounded-lg shadow-xl p-6 w-full max-w-md max-h-full overflow-y-auto"
-      >
+      <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-md max-h-full overflow-y-auto">
         <div class="flex justify-between items-center mb-4">
-          <h3 id="modal-title" class="text-lg font-bold text-slate-800">
-            Detalhes
-          </h3>
+          <h3 id="modal-title" class="text-lg font-bold text-slate-800">Detalhes</h3>
           <button
             id="modal-close-btn"
             class="text-gray-500 hover:text-gray-800 text-2xl leading-none"

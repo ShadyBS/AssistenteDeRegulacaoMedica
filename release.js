@@ -41,11 +41,7 @@ function updateManifestVersion(newVersion) {
       content = content.replace(/^\uFEFF/, '');
       const manifest = JSON.parse(content);
       manifest.version = newVersion;
-      fs.writeFileSync(
-        manifestPath,
-        JSON.stringify(manifest, null, 2) + '\n',
-        'utf8'
-      );
+      fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + '\n', 'utf8');
       console.log(`✅ Atualizado ${file} para versão ${newVersion}`);
     } catch (err) {
       console.error(`❌ Erro ao processar ${file}:`, err.message);
@@ -99,14 +95,10 @@ async function createRelease(newVersion, changelog) {
     // Upload dos assets
     const release_id = releaseResponse.data.id;
     const DIST_ZIPS_DIR = path.join(__dirname, 'dist-zips');
-    const zipFiles = fs
-      .readdirSync(DIST_ZIPS_DIR)
-      .filter((f) => f.endsWith('.zip'));
+    const zipFiles = fs.readdirSync(DIST_ZIPS_DIR).filter((f) => f.endsWith('.zip'));
 
     if (zipFiles.length === 0) {
-      console.warn(
-        '⚠️ Nenhum arquivo .zip encontrado em dist-zips para fazer upload.'
-      );
+      console.warn('⚠️ Nenhum arquivo .zip encontrado em dist-zips para fazer upload.');
       return;
     }
 
@@ -124,9 +116,7 @@ async function createRelease(newVersion, changelog) {
     }
     console.log('✅ Todos os ZIPs foram enviados com sucesso.');
   } catch (err) {
-    console.error(
-      `❌ Falha ao criar release ou fazer upload de assets no GitHub: ${err.message}`
-    );
+    console.error(`❌ Falha ao criar release ou fazer upload de assets no GitHub: ${err.message}`);
     console.error(
       '→ Verifique se o GITHUB_TOKEN possui permissões de "contents: write" e se está configurado corretamente.'
     );
@@ -138,9 +128,7 @@ async function createRelease(newVersion, changelog) {
 async function run() {
   const newVersion = process.argv[2];
   if (!newVersion) {
-    console.error(
-      '⚠️ Você precisa passar a nova versão. Ex: node release.js 3.2.12'
-    );
+    console.error('⚠️ Você precisa passar a nova versão. Ex: node release.js 3.2.12');
     process.exit(1);
   }
 
@@ -148,12 +136,8 @@ async function run() {
   console.log('🔍 Executando verificações de segurança...');
   const status = await git.status();
   if (!status.isClean()) {
-    console.error(
-      '❌ Seu diretório de trabalho tem modificações não commitadas.'
-    );
-    console.error(
-      "   Faça o commit ou 'git stash' de suas alterações antes de criar uma release."
-    );
+    console.error('❌ Seu diretório de trabalho tem modificações não commitadas.');
+    console.error("   Faça o commit ou 'git stash' de suas alterações antes de criar uma release.");
     process.exit(1);
   }
 

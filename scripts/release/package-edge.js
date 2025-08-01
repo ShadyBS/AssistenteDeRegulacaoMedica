@@ -102,24 +102,15 @@ class EdgePackager {
 
       // 2. Background scripts para Edge
       if (manifest.manifest_version === 2) {
-        if (
-          !manifest.background ||
-          (!manifest.background.scripts && !manifest.background.page)
-        ) {
-          errors.push(
-            'background.scripts ou background.page necessário para Edge Manifest v2'
-          );
+        if (!manifest.background || (!manifest.background.scripts && !manifest.background.page)) {
+          errors.push('background.scripts ou background.page necessário para Edge Manifest v2');
         }
         if (manifest.background.persistent === undefined) {
-          warnings.push(
-            'background.persistent não definido (recomendado: false)'
-          );
+          warnings.push('background.persistent não definido (recomendado: false)');
         }
       } else {
         if (!manifest.background || !manifest.background.service_worker) {
-          errors.push(
-            'background.service_worker necessário para Edge Manifest v3'
-          );
+          errors.push('background.service_worker necessário para Edge Manifest v3');
         }
       }
 
@@ -135,25 +126,16 @@ class EdgePackager {
         );
 
         if (edgeSpecificPerms.length > 0) {
-          console.log(
-            `ℹ️  Permissões específicas do Edge: ${edgeSpecificPerms.join(
-              ', '
-            )}`
-          );
+          console.log(`ℹ️  Permissões específicas do Edge: ${edgeSpecificPerms.join(', ')}`);
         }
 
         // Verificar permissões de host válidas
         const hostPerms = manifest.permissions.filter(
-          (perm) =>
-            perm.includes('://') &&
-            !perm.startsWith('*://') &&
-            !perm.includes('*')
+          (perm) => perm.includes('://') && !perm.startsWith('*://') && !perm.includes('*')
         );
 
         if (hostPerms.length > 0) {
-          warnings.push(
-            `Permissões de host específicas: ${hostPerms.join(', ')}`
-          );
+          warnings.push(`Permissões de host específicas: ${hostPerms.join(', ')}`);
         }
       }
 
@@ -177,9 +159,7 @@ class EdgePackager {
       // 6. Verificar ícones
       if (manifest.icons) {
         const requiredSizes = ['16', '48', '128'];
-        const missingIcons = requiredSizes.filter(
-          (size) => !manifest.icons[size]
-        );
+        const missingIcons = requiredSizes.filter((size) => !manifest.icons[size]);
 
         if (missingIcons.length > 0) {
           warnings.push(`Ícones ausentes: ${missingIcons.join(', ')}`);
@@ -250,9 +230,7 @@ class EdgePackager {
     console.log(`📊 Tamanho do build: ${sizeMB.toFixed(2)} MB`);
 
     if (sizeMB > maxSizeMB) {
-      console.error(
-        `❌ Build muito grande: ${sizeMB.toFixed(2)} MB > ${maxSizeMB} MB`
-      );
+      console.error(`❌ Build muito grande: ${sizeMB.toFixed(2)} MB > ${maxSizeMB} MB`);
       process.exit(1);
     }
 
@@ -310,15 +288,11 @@ class EdgePackager {
 
     // Verificar políticas de privacidade
     const hasPrivacyPolicy = files.some(
-      (file) =>
-        file.toLowerCase().includes('privacy') ||
-        file.toLowerCase().includes('policy')
+      (file) => file.toLowerCase().includes('privacy') || file.toLowerCase().includes('policy')
     );
 
     if (!hasPrivacyPolicy) {
-      issues.push(
-        'Política de privacidade não encontrada (recomendado para extensões médicas)'
-      );
+      issues.push('Política de privacidade não encontrada (recomendado para extensões médicas)');
     }
 
     if (issues.length > 0) {
@@ -466,7 +440,7 @@ class EdgePackager {
             "`,
         { stdio: 'pipe' }
       );
-    } catch (error) {
+    } catch {
       console.warn('⚠️  Não foi possível validar ZIP completamente');
     }
 
@@ -488,8 +462,7 @@ class EdgePackager {
       edge_store: {
         compatible_edge_version: '88.0.0.0',
         category: 'productivity',
-        upload_notes:
-          'Medical regulation assistant extension for healthcare professionals',
+        upload_notes: 'Medical regulation assistant extension for healthcare professionals',
         submission_date: new Date().toISOString(),
         review_required: true,
         target_audience: 'healthcare_professionals',
@@ -515,10 +488,7 @@ class EdgePackager {
       },
     };
 
-    const metadataPath = path.join(
-      this.packageDir,
-      `edge-metadata-v${this.metadata.version}.json`
-    );
+    const metadataPath = path.join(this.packageDir, `edge-metadata-v${this.metadata.version}.json`);
     await fs.writeFile(metadataPath, JSON.stringify(metadata, null, 2));
 
     console.log(`✅ Metadata salvo: ${path.basename(metadataPath)}`);
@@ -583,9 +553,7 @@ class EdgePackager {
       console.log('   2. Faça upload para Edge Add-ons Developer Dashboard');
       console.log('   3. Complete o processo de certificação');
       console.log(`   4. Use o metadata em: ${path.basename(metadataPath)}`);
-      console.log(
-        '   5. Para teste local: edge://extensions/ > "Carregar sem compactação"'
-      );
+      console.log('   5. Para teste local: edge://extensions/ > "Carregar sem compactação"');
 
       return {
         success: true,
@@ -593,15 +561,8 @@ class EdgePackager {
         metadata: metadataPath,
         manifest: manifest,
       };
-    } catch (error) {
-      console.error('\n❌ Erro no packaging Edge:');
-      console.error(error.message);
-
-      if (error.stack) {
-        console.error('\n📍 Stack trace:');
-        console.error(error.stack);
-      }
-
+    } catch {
+      console.error('\n❌ Erro no packaging Edge');
       process.exit(1);
     }
   }
@@ -612,12 +573,12 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   const packager = new EdgePackager();
   packager
     .package()
-    .then((result) => {
+    .then(() => {
       console.log('\n✅ Edge package criado com sucesso!');
       process.exit(0);
     })
-    .catch((error) => {
-      console.error('\n❌ Falha no packaging:', error.message);
+    .catch(() => {
+      console.error('\n❌ Falha no packaging');
       process.exit(1);
     });
 }

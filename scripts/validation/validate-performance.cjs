@@ -39,9 +39,9 @@ function validateBundleSizes() {
 
   for (const browser of browsers) {
     console.log(chalk.cyan(`\n${browser.toUpperCase()} Distribution:`));
-    
+
     const distDir = path.join(__dirname, '..', '..', 'dist', browser);
-    
+
     if (!fs.existsSync(distDir)) {
       console.log(chalk.yellow(`⚠️  ${browser}: Distribution not found`));
       continue;
@@ -49,7 +49,7 @@ function validateBundleSizes() {
 
     // Check main bundles
     const mainBundles = ['common.js', 'sidebar.js', 'background.js', 'options.js'];
-    
+
     for (const bundle of mainBundles) {
       const bundlePath = path.join(distDir, bundle);
       const isValid = checkFileSize(bundlePath, MAX_BUNDLE_SIZE, `${bundle}`);
@@ -57,9 +57,9 @@ function validateBundleSizes() {
     }
 
     // Check CSS
-    const cssFiles = fs.readdirSync(distDir)
-      .filter(file => file.endsWith('.css'))
-      .forEach(cssFile => {
+    fs.readdirSync(distDir)
+      .filter((file) => file.endsWith('.css'))
+      .forEach((cssFile) => {
         const cssPath = path.join(distDir, cssFile);
         const isValid = checkFileSize(cssPath, MAX_CSS_SIZE, `${cssFile}`);
         if (!isValid) allValid = false;
@@ -71,33 +71,39 @@ function validateBundleSizes() {
 
 function validateMemoryUsage() {
   console.log(chalk.blue('\n🧠 Memory usage validation...\n'));
-  
+
   // Check for potential memory leaks in source code
-  const sourceFiles = [
-    'sidebar.js',
-    'background.js',
-    'content-script.js'
-  ];
+  const sourceFiles = ['sidebar.js', 'background.js', 'content-script.js'];
 
   let hasIssues = false;
 
   for (const file of sourceFiles) {
     const filePath = path.join(__dirname, '..', '..', file);
-    
+
     if (!fs.existsSync(filePath)) continue;
 
     const content = fs.readFileSync(filePath, 'utf8');
-    
+
     // Check for common memory leak patterns
     const patterns = [
-      { pattern: /setInterval\(/g, message: 'Potential memory leak: setInterval without clearInterval' },
-      { pattern: /addEventListener\(/g, message: 'Potential memory leak: addEventListener without removeEventListener' },
-      { pattern: /new MutationObserver\(/g, message: 'Potential memory leak: MutationObserver without disconnect' }
+      {
+        pattern: /setInterval\(/g,
+        message: 'Potential memory leak: setInterval without clearInterval',
+      },
+      {
+        pattern: /addEventListener\(/g,
+        message: 'Potential memory leak: addEventListener without removeEventListener',
+      },
+      {
+        pattern: /new MutationObserver\(/g,
+        message: 'Potential memory leak: MutationObserver without disconnect',
+      },
     ];
 
     for (const { pattern, message } of patterns) {
       const matches = content.match(pattern);
-      if (matches && matches.length > 2) { // Allow a few instances
+      if (matches && matches.length > 2) {
+        // Allow a few instances
         console.log(chalk.yellow(`⚠️  ${file}: ${message} (${matches.length} instances)`));
         hasIssues = true;
       }
@@ -119,7 +125,7 @@ function main() {
   const memoryValidation = validateMemoryUsage();
 
   console.log(chalk.blue('\n📋 Performance Summary:'));
-  
+
   if (bundleValidation && memoryValidation) {
     console.log(chalk.green('✅ All performance checks passed!'));
     process.exit(0);
@@ -139,5 +145,5 @@ if (require.main === module) {
 
 module.exports = {
   validateBundleSizes,
-  validateMemoryUsage
+  validateMemoryUsage,
 };

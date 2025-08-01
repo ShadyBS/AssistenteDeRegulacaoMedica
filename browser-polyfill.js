@@ -16,6 +16,4 @@
 
 'use strict';
 
-if (typeof browser === 'undefined' && typeof chrome !== 'undefined') {
-  var browser = chrome;
-}
+// ...existing code...

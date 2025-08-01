@@ -2,25 +2,21 @@
 /******/ 	"use strict";
 /******/ 	var __webpack_modules__ = ({
 
-/***/ "./background.js":
-/*!***********************!*\
-  !*** ./background.js ***!
-  \***********************/
-/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+/***/ 40:
+/***/ ((__unused_webpack___webpack_module__, __unused_webpack___webpack_exports__, __webpack_require__) => {
 
-__webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _browser_polyfill_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./browser-polyfill.js */ "./browser-polyfill.js");
-/* harmony import */ var _api_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./api.js */ "./api.js");
-/* harmony import */ var _KeepAliveManager_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./KeepAliveManager.js */ "./KeepAliveManager.js");
+/* harmony import */ var _api_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(574);
+/* harmony import */ var _browser_polyfill_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(64);
+/* harmony import */ var _KeepAliveManager_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(657);
 
 
 
 const api = typeof browser !== 'undefined' ? browser : chrome;
-api.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
+api.runtime.onMessage.addListener(async message => {
   if (message.type === 'SAVE_REGULATION_DATA') {
     console.log('[Assistente Background] Recebido pedido para salvar dados da regulação:', message.payload);
     try {
-      const regulationDetails = await (0,_api_js__WEBPACK_IMPORTED_MODULE_1__.fetchRegulationDetails)(message.payload);
+      const regulationDetails = await (0,_api_js__WEBPACK_IMPORTED_MODULE_0__/* .fetchRegulationDetails */ .hr)(message.payload);
       if (regulationDetails) {
         // CORREÇÃO: Usando storage.local em vez de storage.session para maior compatibilidade.
         await api.storage.local.set({
@@ -46,7 +42,7 @@ async function openSidebar(tab) {
   }
 }
 api.action.onClicked.addListener(openSidebar);
-new _KeepAliveManager_js__WEBPACK_IMPORTED_MODULE_2__.KeepAliveManager();
+new _KeepAliveManager_js__WEBPACK_IMPORTED_MODULE_2__/* .KeepAliveManager */ .E();
 api.runtime.onInstalled.addListener(details => {
   if (api.sidePanel) {
     api.sidePanel.setPanelBehavior({
@@ -69,6 +65,106 @@ api.runtime.onInstalled.addListener(details => {
     });
   }
 });
+
+/***/ }),
+
+/***/ 657:
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   E: () => (/* binding */ KeepAliveManager)
+/* harmony export */ });
+/* harmony import */ var _api_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(574);
+/**
+ * @file Gerenciador de Keep-Alive para manter a sessão ativa
+ */
+
+class KeepAliveManager {
+  constructor() {
+    this.intervalId = null;
+    this.isActive = false;
+    this.intervalMinutes = 10; // Padrão: 10 minutos
+
+    this.init();
+  }
+  async init() {
+    // Carrega as configurações salvas
+    await this.loadSettings();
+
+    // Escuta mudanças nas configurações
+    if (typeof browser !== 'undefined') {
+      browser.storage.onChanged.addListener((changes, areaName) => {
+        if (areaName === 'sync' && changes.keepSessionAliveInterval) {
+          this.updateInterval(changes.keepSessionAliveInterval.newValue);
+        }
+      });
+    }
+  }
+  async loadSettings() {
+    try {
+      const api = typeof browser !== 'undefined' ? browser : chrome;
+      const result = await api.storage.sync.get({
+        keepSessionAliveInterval: 10
+      });
+      this.updateInterval(result.keepSessionAliveInterval);
+    } catch (error) {
+      console.error('Erro ao carregar configurações do keep-alive:', error);
+    }
+  }
+  updateInterval(minutes) {
+    const newMinutes = parseInt(minutes, 10) || 0;
+    this.intervalMinutes = newMinutes;
+
+    // Para o timer atual
+    this.stop();
+
+    // Inicia novo timer se o valor for maior que 0
+    if (this.intervalMinutes > 0) {
+      this.start();
+    }
+  }
+  start() {
+    if (this.intervalMinutes <= 0) {
+      console.log('Keep-alive desativado (intervalo = 0)');
+      return;
+    }
+    if (this.isActive) {
+      console.log('Keep-alive já está ativo');
+      return;
+    }
+    const intervalMs = this.intervalMinutes * 60 * 1000; // Converte minutos para milissegundos
+
+    this.intervalId = setInterval(async () => {
+      try {
+        const success = await _api_js__WEBPACK_IMPORTED_MODULE_0__/* .keepSessionAlive */ .JA();
+        if (success) {
+          console.log(`Keep-alive executado com sucesso (${new Date().toLocaleTimeString()})`);
+        } else {
+          console.warn(`Keep-alive falhou (${new Date().toLocaleTimeString()})`);
+        }
+      } catch (error) {
+        console.error('Erro no keep-alive:', error);
+      }
+    }, intervalMs);
+    this.isActive = true;
+    console.log(`Keep-alive iniciado: ${this.intervalMinutes} minutos (${intervalMs}ms)`);
+  }
+  stop() {
+    if (this.intervalId) {
+      clearInterval(this.intervalId);
+      this.intervalId = null;
+    }
+    this.isActive = false;
+    console.log('Keep-alive parado');
+  }
+  getStatus() {
+    return {
+      isActive: this.isActive,
+      intervalMinutes: this.intervalMinutes,
+      nextExecution: this.isActive ? new Date(Date.now() + this.intervalMinutes * 60 * 1000) : null
+    };
+  }
+}
 
 /***/ })
 
@@ -151,15 +247,9 @@ api.runtime.onInstalled.addListener(details => {
 /******/ 		__webpack_require__.o = (obj, prop) => (Object.prototype.hasOwnProperty.call(obj, prop))
 /******/ 	})();
 /******/ 	
-/******/ 	/* webpack/runtime/make namespace object */
+/******/ 	/* webpack/runtime/runtimeId */
 /******/ 	(() => {
-/******/ 		// define __esModule on exports
-/******/ 		__webpack_require__.r = (exports) => {
-/******/ 			if(typeof Symbol !== 'undefined' && Symbol.toStringTag) {
-/******/ 				Object.defineProperty(exports, Symbol.toStringTag, { value: 'Module' });
-/******/ 			}
-/******/ 			Object.defineProperty(exports, '__esModule', { value: true });
-/******/ 		};
+/******/ 		__webpack_require__.j = 771;
 /******/ 	})();
 /******/ 	
 /******/ 	/* webpack/runtime/jsonp chunk loading */
@@ -170,7 +260,8 @@ api.runtime.onInstalled.addListener(details => {
 /******/ 		// undefined = chunk not loaded, null = chunk preloaded/prefetched
 /******/ 		// [resolve, reject, Promise] = chunk loading, 0 = chunk loaded
 /******/ 		var installedChunks = {
-/******/ 			"service-worker": 0
+/******/ 			424: 0,
+/******/ 			771: 0
 /******/ 		};
 /******/ 		
 /******/ 		// no chunk on demand loading
@@ -220,9 +311,8 @@ api.runtime.onInstalled.addListener(details => {
 /******/ 	// startup
 /******/ 	// Load entry module and return exports
 /******/ 	// This entry module depends on other loaded chunks and execution need to be delayed
-/******/ 	var __webpack_exports__ = __webpack_require__.O(undefined, ["common"], () => (__webpack_require__("./background.js")))
+/******/ 	var __webpack_exports__ = __webpack_require__.O(undefined, [76], () => (__webpack_require__(40)))
 /******/ 	__webpack_exports__ = __webpack_require__.O(__webpack_exports__);
 /******/ 	
 /******/ })()
 ;
-//# sourceMappingURL=service-worker.js.map

@@ -34,14 +34,9 @@ class StoreUploader {
 
     try {
       // Chrome Web Store
-      const chromeConfigPath = path.join(
-        this.configDir,
-        'chrome-web-store.json'
-      );
+      const chromeConfigPath = path.join(this.configDir, 'chrome-web-store.json');
       if (await fs.pathExists(chromeConfigPath)) {
-        configs.chrome = JSON.parse(
-          await fs.readFile(chromeConfigPath, 'utf8')
-        );
+        configs.chrome = JSON.parse(await fs.readFile(chromeConfigPath, 'utf8'));
         console.log('✅ Config Chrome Web Store carregada');
       } else {
         console.warn('⚠️  Config Chrome Web Store não encontrada');
@@ -50,9 +45,7 @@ class StoreUploader {
       // Firefox Add-ons (AMO)
       const firefoxConfigPath = path.join(this.configDir, 'firefox-amo.json');
       if (await fs.pathExists(firefoxConfigPath)) {
-        configs.firefox = JSON.parse(
-          await fs.readFile(firefoxConfigPath, 'utf8')
-        );
+        configs.firefox = JSON.parse(await fs.readFile(firefoxConfigPath, 'utf8'));
         console.log('✅ Config Firefox AMO carregada');
       } else {
         console.warn('⚠️  Config Firefox AMO não encontrada');
@@ -83,9 +76,7 @@ class StoreUploader {
     const files = await fs.readdir(this.packageDir);
 
     // Chrome package
-    const chromeFiles = files.filter(
-      (f) => f.includes('chrome') && f.endsWith('.zip')
-    );
+    const chromeFiles = files.filter((f) => f.includes('chrome') && f.endsWith('.zip'));
     if (chromeFiles.length > 0) {
       const latestChrome = chromeFiles.sort().pop();
       packages.chrome = {
@@ -97,9 +88,7 @@ class StoreUploader {
     }
 
     // Firefox package
-    const firefoxFiles = files.filter(
-      (f) => f.includes('firefox') && f.endsWith('.xpi')
-    );
+    const firefoxFiles = files.filter((f) => f.includes('firefox') && f.endsWith('.xpi'));
     if (firefoxFiles.length > 0) {
       const latestFirefox = firefoxFiles.sort().pop();
       packages.firefox = {
@@ -111,9 +100,7 @@ class StoreUploader {
     }
 
     // Edge package
-    const edgeFiles = files.filter(
-      (f) => f.includes('edge') && f.endsWith('.zip')
-    );
+    const edgeFiles = files.filter((f) => f.includes('edge') && f.endsWith('.zip'));
     if (edgeFiles.length > 0) {
       const latestEdge = edgeFiles.sort().pop();
       packages.edge = {
@@ -139,9 +126,7 @@ class StoreUploader {
       pkg.hash = hash;
       pkg.size = Math.round(stats.size / 1024); // KB
 
-      console.log(
-        `🔐 ${store.toUpperCase()} SHA256: ${hash.substring(0, 16)}...`
-      );
+      console.log(`🔐 ${store.toUpperCase()} SHA256: ${hash.substring(0, 16)}...`);
     }
 
     return packages;
@@ -152,9 +137,7 @@ class StoreUploader {
 
     if (!config || !config.client_id || !config.refresh_token) {
       console.warn('⚠️  Configuração Chrome Web Store incompleta');
-      console.log(
-        '💡 Configure as credenciais em config/stores/chrome-web-store.json'
-      );
+      console.log('💡 Configure as credenciais em config/stores/chrome-web-store.json');
       return { success: false, reason: 'config_missing' };
     }
 
@@ -162,7 +145,7 @@ class StoreUploader {
       // Verificar se chrome-webstore-upload-cli está disponível
       try {
         execSync('npx chrome-webstore-upload-cli --version', { stdio: 'pipe' });
-      } catch (error) {
+      } catch {
         console.log('📦 Instalando chrome-webstore-upload-cli...');
         execSync('npm install -g chrome-webstore-upload-cli', {
           stdio: 'inherit',
@@ -220,9 +203,7 @@ class StoreUploader {
 
     if (!config || !config.api_key || !config.api_secret) {
       console.warn('⚠️  Configuração Firefox AMO incompleta');
-      console.log(
-        '💡 Configure as credenciais em config/stores/firefox-amo.json'
-      );
+      console.log('💡 Configure as credenciais em config/stores/firefox-amo.json');
       return { success: false, reason: 'config_missing' };
     }
 
@@ -230,7 +211,7 @@ class StoreUploader {
       // Verificar se web-ext está disponível
       try {
         execSync('npx web-ext --version', { stdio: 'pipe' });
-      } catch (error) {
+      } catch {
         console.log('📦 Instalando web-ext...');
         execSync('npm install -g web-ext', { stdio: 'inherit' });
       }
@@ -268,9 +249,7 @@ class StoreUploader {
         store: 'firefox',
         package: packageInfo.file,
         response: result.trim(),
-        url: config.addon_id
-          ? `https://addons.mozilla.org/addon/${config.addon_id}/`
-          : null,
+        url: config.addon_id ? `https://addons.mozilla.org/addon/${config.addon_id}/` : null,
       };
     } catch (error) {
       console.error('❌ Erro no upload Firefox AMO:', error.message);
@@ -287,12 +266,8 @@ class StoreUploader {
 
     if (!config || !config.product_id || !config.client_id) {
       console.warn('⚠️  Configuração Edge Add-ons incompleta');
-      console.log(
-        '💡 Configure as credenciais em config/stores/edge-addons.json'
-      );
-      console.log(
-        '💡 Edge Add-ons ainda não tem API oficial - upload manual necessário'
-      );
+      console.log('💡 Configure as credenciais em config/stores/edge-addons.json');
+      console.log('💡 Edge Add-ons ainda não tem API oficial - upload manual necessário');
 
       return {
         success: false,
@@ -311,9 +286,7 @@ class StoreUploader {
     try {
       // Edge Add-ons não tem CLI oficial ainda
       // Implementar API REST quando disponível
-      console.log(
-        '🔧 Edge Add-ons API não disponível - preparando para upload manual'
-      );
+      console.log('🔧 Edge Add-ons API não disponível - preparando para upload manual');
 
       // Criar instruções detalhadas
       const instructions = {
@@ -332,18 +305,10 @@ class StoreUploader {
         ],
       };
 
-      const instructionsPath = path.join(
-        this.packageDir,
-        'edge-upload-instructions.json'
-      );
-      await fs.writeFile(
-        instructionsPath,
-        JSON.stringify(instructions, null, 2)
-      );
+      const instructionsPath = path.join(this.packageDir, 'edge-upload-instructions.json');
+      await fs.writeFile(instructionsPath, JSON.stringify(instructions, null, 2));
 
-      console.log(
-        '📋 Instruções de upload salvas em: edge-upload-instructions.json'
-      );
+      console.log('📋 Instruções de upload salvas em: edge-upload-instructions.json');
 
       return {
         success: true,
@@ -381,27 +346,18 @@ class StoreUploader {
     results.forEach((result) => {
       if (result.success) {
         if (result.manual_upload) {
-          report.next_steps.push(
-            `${result.store.toUpperCase()}: Complete o upload manual`
-          );
+          report.next_steps.push(`${result.store.toUpperCase()}: Complete o upload manual`);
         } else {
-          report.next_steps.push(
-            `${result.store.toUpperCase()}: Monitore o status da revisão`
-          );
+          report.next_steps.push(`${result.store.toUpperCase()}: Monitore o status da revisão`);
         }
       } else {
         report.next_steps.push(
-          `${result.store.toUpperCase()}: Corrigir erro: ${
-            result.error || result.reason
-          }`
+          `${result.store.toUpperCase()}: Corrigir erro: ${result.error || result.reason}`
         );
       }
     });
 
-    const reportPath = path.join(
-      this.packageDir,
-      `upload-report-${Date.now()}.json`
-    );
+    const reportPath = path.join(this.packageDir, `upload-report-${Date.now()}.json`);
     await fs.writeFile(reportPath, JSON.stringify(report, null, 2));
 
     console.log(`📋 Relatório salvo: ${path.basename(reportPath)}`);
@@ -438,26 +394,17 @@ class StoreUploader {
 
         let result;
         switch (store) {
-        case 'chrome':
-          result = await this.uploadToChromeWebStore(
-            packages[store],
-            configs[store]
-          );
-          break;
-        case 'firefox':
-          result = await this.uploadToFirefoxAMO(
-            packages[store],
-            configs[store]
-          );
-          break;
-        case 'edge':
-          result = await this.uploadToEdgeAddons(
-            packages[store],
-            configs[store]
-          );
-          break;
-        default:
-          result = { success: false, store: store, reason: 'unknown_store' };
+          case 'chrome':
+            result = await this.uploadToChromeWebStore(packages[store], configs[store]);
+            break;
+          case 'firefox':
+            result = await this.uploadToFirefoxAMO(packages[store], configs[store]);
+            break;
+          case 'edge':
+            result = await this.uploadToEdgeAddons(packages[store], configs[store]);
+            break;
+          default:
+            result = { success: false, store: store, reason: 'unknown_store' };
         }
 
         results.push(result);
@@ -478,11 +425,7 @@ class StoreUploader {
       if (successful.length > 0) {
         console.log('\n✅ Uploads bem-sucedidos:');
         successful.forEach((result) => {
-          console.log(
-            `   - ${result.store.toUpperCase()}: ${
-              result.package || 'Preparado'
-            }`
-          );
+          console.log(`   - ${result.store.toUpperCase()}: ${result.package || 'Preparado'}`);
           if (result.url) {
             console.log(`     URL: ${result.url}`);
           }
@@ -492,11 +435,7 @@ class StoreUploader {
       if (failed.length > 0) {
         console.log('\n❌ Uploads com problemas:');
         failed.forEach((result) => {
-          console.log(
-            `   - ${result.store.toUpperCase()}: ${
-              result.reason || result.error
-            }`
-          );
+          console.log(`   - ${result.store.toUpperCase()}: ${result.reason || result.error}`);
         });
       }
 
@@ -536,9 +475,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
         console.log('\n🎉 Todos os uploads foram processados com sucesso!');
         process.exit(0);
       } else {
-        console.log(
-          '\n⚠️  Alguns uploads tiveram problemas. Verifique o relatório.'
-        );
+        console.log('\n⚠️  Alguns uploads tiveram problemas. Verifique o relatório.');
         process.exit(1);
       }
     })

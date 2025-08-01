@@ -30,9 +30,7 @@ function checkFileSize(filePath, maxSize, label) {
     console.log(chalk.red(`❌ ${label}: ${sizeKB}KB exceeds ${maxKB}KB limit`));
     return false;
   } else {
-    console.log(
-      chalk.green(`✅ ${label}: ${sizeKB}KB (within ${maxKB}KB limit)`)
-    );
+    console.log(chalk.green(`✅ ${label}: ${sizeKB}KB (within ${maxKB}KB limit)`));
     return true;
   }
 }
@@ -54,12 +52,7 @@ function validateBundleSizes() {
     }
 
     // Check main bundles
-    const mainBundles = [
-      'common.js',
-      'sidebar.js',
-      'background.js',
-      'options.js',
-    ];
+    const mainBundles = ['common.js', 'sidebar.js', 'background.js', 'options.js'];
 
     for (const bundle of mainBundles) {
       const bundlePath = path.join(distDir, bundle);
@@ -68,8 +61,7 @@ function validateBundleSizes() {
     }
 
     // Check CSS
-    const cssFiles = fs
-      .readdirSync(distDir)
+    fs.readdirSync(distDir)
       .filter((file) => file.endsWith('.css'))
       .forEach((cssFile) => {
         const cssPath = path.join(distDir, cssFile);
@@ -104,8 +96,7 @@ function validateMemoryUsage() {
       },
       {
         pattern: /addEventListener\(/g,
-        message:
-          'Potential memory leak: addEventListener without removeEventListener',
+        message: 'Potential memory leak: addEventListener without removeEventListener',
       },
       {
         pattern: /new MutationObserver\(/g,
@@ -117,9 +108,7 @@ function validateMemoryUsage() {
       const matches = content.match(pattern);
       if (matches && matches.length > 2) {
         // Allow a few instances
-        console.log(
-          chalk.yellow(`⚠️  ${file}: ${message} (${matches.length} instances)`)
-        );
+        console.log(chalk.yellow(`⚠️  ${file}: ${message} (${matches.length} instances)`));
         hasIssues = true;
       }
     }

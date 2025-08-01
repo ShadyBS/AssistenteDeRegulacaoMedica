@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pt-br">
   <head>
     <meta charset="UTF-8" />
@@ -14,7 +14,7 @@
     />
     <style>
       body {
-        font-family: "Inter", sans-serif;
+        font-family: 'Inter', sans-serif;
       }
       /* Força a classe hidden a funcionar em ambientes de pré-visualização */
       .hidden {
@@ -89,7 +89,7 @@
         border-bottom-color: #2563eb;
       }
       /* Estilos para arrastar e soltar abas */
-      .tab-button[draggable="true"] {
+      .tab-button[draggable='true'] {
         cursor: grab;
       }
       .tab-button.dragging {
@@ -124,7 +124,8 @@
       .modal-container {
         background-color: white;
         border-radius: 0.5rem;
-        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
+        box-shadow:
+          0 10px 15px -3px rgba(0, 0, 0, 0.1),
           0 4px 6px -2px rgba(0, 0, 0, 0.05);
         width: 90%;
         max-width: 800px;
@@ -150,7 +151,7 @@
         justify-content: flex-end;
         gap: 0.75rem;
       }
-      input[type="color"] {
+      input[type='color'] {
         -webkit-appearance: none;
         appearance: none;
         border: none;
@@ -161,10 +162,10 @@
         border: 1px solid #d1d5db;
         cursor: pointer;
       }
-      input[type="color"]::-webkit-color-swatch-wrapper {
+      input[type='color']::-webkit-color-swatch-wrapper {
         padding: 0;
       }
-      input[type="color"]::-webkit-color-swatch {
+      input[type='color']::-webkit-color-swatch {
         border: none;
         border-radius: 0.375rem;
       }
@@ -189,9 +190,7 @@
         >
           <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
         </svg>
-        <h1 class="text-lg font-bold text-slate-900">
-          Assistente de Regulação
-        </h1>
+        <h1 class="text-lg font-bold text-slate-900">Assistente de Regulação</h1>
       </div>
       <div class="flex items-center gap-4">
         <a
@@ -199,12 +198,7 @@
           target="_blank"
           class="text-sm font-medium text-blue-600 hover:underline flex items-center gap-1"
         >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="20"
-            height="20"
-            viewBox="0 0 20 20"
-          >
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20">
             <circle cx="10" cy="10" r="10" fill="#2563eb" />
             <text
               x="10"
@@ -232,17 +226,11 @@
 
     <main class="p-6 space-y-6 pb-24">
       <!-- Seção de Configurações Gerais (Existente) -->
-      <section
-        class="bg-white p-4 rounded-lg border border-slate-200 shadow-sm"
-      >
-        <h2 class="text-md font-semibold text-slate-700 mb-3">
-          Configurações Gerais
-        </h2>
+      <section class="bg-white p-4 rounded-lg border border-slate-200 shadow-sm">
+        <h2 class="text-md font-semibold text-slate-700 mb-3">Configurações Gerais</h2>
         <div class="space-y-4">
           <div>
-            <label for="baseUrlInput" class="block font-medium mb-1">
-              URL base do sistema:
-            </label>
+            <label for="baseUrlInput" class="block font-medium mb-1"> URL base do sistema: </label>
             <input
               type="text"
               id="baseUrlInput"
@@ -250,12 +238,8 @@
               placeholder="https://exemplo.com"
             />
           </div>
-          <div
-            class="bg-white p-4 rounded-lg border border-slate-200 shadow-sm mt-4"
-          >
-            <h2 class="text-md font-semibold text-slate-700 mb-3">
-              Preferências de Comportamento
-            </h2>
+          <div class="bg-white p-4 rounded-lg border border-slate-200 shadow-sm mt-4">
+            <h2 class="text-md font-semibold text-slate-700 mb-3">Preferências de Comportamento</h2>
             <div class="space-y-3">
               <label class="flex items-center">
                 <input
@@ -286,17 +270,15 @@
                   </div>
                 </div>
                 <p class="text-xs text-slate-400 mt-2">
-                  Use '0' para desativar. Envia uma pequena requisição
-                  periodicamente para evitar que a sessão expire.
+                  Use '0' para desativar. Envia uma pequena requisição periodicamente para evitar
+                  que a sessão expire.
                 </p>
               </div>
             </div>
             <h3 class="text-md font-medium text-slate-600 mt-4 pt-4 border-t">
               Carregamento Automático por Secção (Modo Manual)
             </h3>
-            <div
-              class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-2"
-            >
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-2">
               <label class="flex items-center">
                 <input
                   type="checkbox"
@@ -367,8 +349,8 @@
           </div>
         </div>
         <p class="text-sm text-slate-500 mb-4">
-          Crie regras para aplicar filtros automaticamente com base no contexto
-          da solicitação. Arraste para reordenar a prioridade.
+          Crie regras para aplicar filtros automaticamente com base no contexto da solicitação.
+          Arraste para reordenar a prioridade.
         </p>
         <div id="automation-rules-list" class="space-y-2">
           <!-- As regras de automação serão inseridas aqui pelo options.js -->
@@ -387,9 +369,7 @@
         class="bg-white p-4 rounded-lg border border-slate-200 shadow-sm"
       >
         <div class="flex justify-between items-center mb-3">
-          <h2 class="text-md font-semibold text-slate-700">
-            Configurar Layouts e Padrões
-          </h2>
+          <h2 class="text-md font-semibold text-slate-700">Configurar Layouts e Padrões</h2>
           <button
             id="restoreDefaultsButton"
             class="text-sm font-medium text-red-600 hover:underline"
@@ -398,24 +378,16 @@
           </button>
         </div>
         <p class="text-sm text-slate-500 mb-4">
-          Arraste as abas abaixo para reordenar as seções na barra lateral.
-          Arraste os campos e filtros para reordená-los dentro de cada seção.
+          Arraste as abas abaixo para reordenar as seções na barra lateral. Arraste os campos e
+          filtros para reordená-los dentro de cada seção.
         </p>
         <div id="filter-tabs-container">
           <div class="tabs">
-            <button class="tab-button active" data-tab="patient-card">
-              Ficha do Paciente
-            </button>
-            <button class="tab-button" data-tab="timeline">
-              Linha do Tempo
-            </button>
-            <button class="tab-button" data-tab="consultations">
-              Consultas
-            </button>
+            <button class="tab-button active" data-tab="patient-card">Ficha do Paciente</button>
+            <button class="tab-button" data-tab="timeline">Linha do Tempo</button>
+            <button class="tab-button" data-tab="consultations">Consultas</button>
             <button class="tab-button" data-tab="exams">Exames</button>
-            <button class="tab-button" data-tab="appointments">
-              Agendamentos
-            </button>
+            <button class="tab-button" data-tab="appointments">Agendamentos</button>
             <button class="tab-button" data-tab="regulations">Regulação</button>
             <button class="tab-button" data-tab="documents">Documentos</button>
           </div>
@@ -424,9 +396,7 @@
           <div id="patient-card-tab" class="tab-content active">
             <!-- Painel de Estilos do Cabeçalho -->
             <div class="p-4 bg-slate-50 rounded-lg border mb-6">
-              <h4 class="font-semibold text-slate-800 mb-3">
-                Estilo do Cabeçalho da Seção
-              </h4>
+              <h4 class="font-semibold text-slate-800 mb-3">Estilo do Cabeçalho da Seção</h4>
               <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div>
                   <label
@@ -434,11 +404,7 @@
                     class="block text-sm font-medium text-slate-600 mb-1"
                     >Cor de Fundo</label
                   >
-                  <input
-                    type="color"
-                    id="style-patient-details-bg-color"
-                    class="w-full"
-                  />
+                  <input type="color" id="style-patient-details-bg-color" class="w-full" />
                 </div>
                 <div>
                   <label
@@ -446,11 +412,7 @@
                     class="block text-sm font-medium text-slate-600 mb-1"
                     >Cor da Fonte</label
                   >
-                  <input
-                    type="color"
-                    id="style-patient-details-font-color"
-                    class="w-full"
-                  />
+                  <input type="color" id="style-patient-details-font-color" class="w-full" />
                 </div>
                 <div>
                   <label
@@ -458,11 +420,7 @@
                     class="block text-sm font-medium text-slate-600 mb-1"
                     >Cor do Ícone</label
                   >
-                  <input
-                    type="color"
-                    id="style-patient-details-icon-color"
-                    class="w-full"
-                  />
+                  <input type="color" id="style-patient-details-icon-color" class="w-full" />
                 </div>
                 <div>
                   <label
@@ -483,9 +441,7 @@
             </div>
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-4">
               <div>
-                <h3 class="font-semibold mb-2">
-                  Campos Principais (Sempre Visíveis)
-                </h3>
+                <h3 class="font-semibold mb-2">Campos Principais (Sempre Visíveis)</h3>
                 <div id="main-fields-zone" class="drop-zone"></div>
               </div>
               <div>
@@ -497,9 +453,7 @@
 
           <div id="timeline-tab" class="tab-content">
             <div class="p-4 bg-slate-50 rounded-lg border mb-6">
-              <h4 class="font-semibold text-slate-800 mb-3">
-                Estilo do Cabeçalho da Seção
-              </h4>
+              <h4 class="font-semibold text-slate-800 mb-3">Estilo do Cabeçalho da Seção</h4>
               <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div>
                   <label
@@ -507,11 +461,7 @@
                     class="block text-sm font-medium text-slate-600 mb-1"
                     >Cor de Fundo</label
                   >
-                  <input
-                    type="color"
-                    id="style-timeline-bg-color"
-                    class="w-full"
-                  />
+                  <input type="color" id="style-timeline-bg-color" class="w-full" />
                 </div>
                 <div>
                   <label
@@ -519,11 +469,7 @@
                     class="block text-sm font-medium text-slate-600 mb-1"
                     >Cor da Fonte</label
                   >
-                  <input
-                    type="color"
-                    id="style-timeline-font-color"
-                    class="w-full"
-                  />
+                  <input type="color" id="style-timeline-font-color" class="w-full" />
                 </div>
                 <div>
                   <label
@@ -531,11 +477,7 @@
                     class="block text-sm font-medium text-slate-600 mb-1"
                     >Cor do Ícone</label
                   >
-                  <input
-                    type="color"
-                    id="style-timeline-icon-color"
-                    class="w-full"
-                  />
+                  <input type="color" id="style-timeline-icon-color" class="w-full" />
                 </div>
                 <div>
                   <label
@@ -558,9 +500,7 @@
               <h4 class="font-medium text-sm mb-2">Período de Busca Padrão</h4>
               <div class="flex items-center gap-4 text-sm">
                 <div>
-                  <label for="timeline-start-offset"
-                    >Início (meses antes):</label
-                  >
+                  <label for="timeline-start-offset">Início (meses antes):</label>
                   <input
                     type="number"
                     id="timeline-start-offset"
@@ -589,9 +529,7 @@
           <div id="consultations-tab" class="tab-content">
             <!-- Painel de Estilos do Cabeçalho -->
             <div class="p-4 bg-slate-50 rounded-lg border mb-6">
-              <h4 class="font-semibold text-slate-800 mb-3">
-                Estilo do Cabeçalho da Seção
-              </h4>
+              <h4 class="font-semibold text-slate-800 mb-3">Estilo do Cabeçalho da Seção</h4>
               <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div>
                   <label
@@ -599,11 +537,7 @@
                     class="block text-sm font-medium text-slate-600 mb-1"
                     >Cor de Fundo</label
                   >
-                  <input
-                    type="color"
-                    id="style-consultations-bg-color"
-                    class="w-full"
-                  />
+                  <input type="color" id="style-consultations-bg-color" class="w-full" />
                 </div>
                 <div>
                   <label
@@ -611,11 +545,7 @@
                     class="block text-sm font-medium text-slate-600 mb-1"
                     >Cor da Fonte</label
                   >
-                  <input
-                    type="color"
-                    id="style-consultations-font-color"
-                    class="w-full"
-                  />
+                  <input type="color" id="style-consultations-font-color" class="w-full" />
                 </div>
                 <div>
                   <label
@@ -623,11 +553,7 @@
                     class="block text-sm font-medium text-slate-600 mb-1"
                     >Cor do Ícone</label
                   >
-                  <input
-                    type="color"
-                    id="style-consultations-icon-color"
-                    class="w-full"
-                  />
+                  <input type="color" id="style-consultations-icon-color" class="w-full" />
                 </div>
                 <div>
                   <label
@@ -650,9 +576,7 @@
               <h4 class="font-medium text-sm mb-2">Período de Busca Padrão</h4>
               <div class="flex items-center gap-4 text-sm">
                 <div>
-                  <label for="consultations-start-offset"
-                    >Início (meses antes):</label
-                  >
+                  <label for="consultations-start-offset">Início (meses antes):</label>
                   <input
                     type="number"
                     id="consultations-start-offset"
@@ -662,9 +586,7 @@
                   />
                 </div>
                 <div>
-                  <label for="consultations-end-offset"
-                    >Fim (meses depois):</label
-                  >
+                  <label for="consultations-end-offset">Fim (meses depois):</label>
                   <input
                     type="number"
                     id="consultations-end-offset"
@@ -700,9 +622,7 @@
           <div id="exams-tab" class="tab-content">
             <!-- Painel de Estilos do Cabeçalho -->
             <div class="p-4 bg-slate-50 rounded-lg border mb-6">
-              <h4 class="font-semibold text-slate-800 mb-3">
-                Estilo do Cabeçalho da Seção
-              </h4>
+              <h4 class="font-semibold text-slate-800 mb-3">Estilo do Cabeçalho da Seção</h4>
               <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div>
                   <label
@@ -710,11 +630,7 @@
                     class="block text-sm font-medium text-slate-600 mb-1"
                     >Cor de Fundo</label
                   >
-                  <input
-                    type="color"
-                    id="style-exams-bg-color"
-                    class="w-full"
-                  />
+                  <input type="color" id="style-exams-bg-color" class="w-full" />
                 </div>
                 <div>
                   <label
@@ -722,11 +638,7 @@
                     class="block text-sm font-medium text-slate-600 mb-1"
                     >Cor da Fonte</label
                   >
-                  <input
-                    type="color"
-                    id="style-exams-font-color"
-                    class="w-full"
-                  />
+                  <input type="color" id="style-exams-font-color" class="w-full" />
                 </div>
                 <div>
                   <label
@@ -734,11 +646,7 @@
                     class="block text-sm font-medium text-slate-600 mb-1"
                     >Cor do Ícone</label
                   >
-                  <input
-                    type="color"
-                    id="style-exams-icon-color"
-                    class="w-full"
-                  />
+                  <input type="color" id="style-exams-icon-color" class="w-full" />
                 </div>
                 <div>
                   <label
@@ -781,35 +689,23 @@
                   />
                 </div>
               </div>
-              <p class="text-xs text-slate-400 mt-2">
-                Use '0' para o mês atual.
-              </p>
+              <p class="text-xs text-slate-400 mt-2">Use '0' para o mês atual.</p>
             </div>
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-4">
               <div>
                 <h3 class="font-semibold mb-2">Filtros Principais</h3>
-                <div
-                  id="exams-main-filters-zone"
-                  class="drop-zone"
-                  data-section="exams"
-                ></div>
+                <div id="exams-main-filters-zone" class="drop-zone" data-section="exams"></div>
               </div>
               <div>
                 <h3 class="font-semibold mb-2">Demais Filtros</h3>
-                <div
-                  id="exams-more-filters-zone"
-                  class="drop-zone"
-                  data-section="exams"
-                ></div>
+                <div id="exams-more-filters-zone" class="drop-zone" data-section="exams"></div>
               </div>
             </div>
           </div>
           <div id="appointments-tab" class="tab-content">
             <!-- Painel de Estilos do Cabeçalho -->
             <div class="p-4 bg-slate-50 rounded-lg border mb-6">
-              <h4 class="font-semibold text-slate-800 mb-3">
-                Estilo do Cabeçalho da Seção
-              </h4>
+              <h4 class="font-semibold text-slate-800 mb-3">Estilo do Cabeçalho da Seção</h4>
               <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div>
                   <label
@@ -817,11 +713,7 @@
                     class="block text-sm font-medium text-slate-600 mb-1"
                     >Cor de Fundo</label
                   >
-                  <input
-                    type="color"
-                    id="style-appointments-bg-color"
-                    class="w-full"
-                  />
+                  <input type="color" id="style-appointments-bg-color" class="w-full" />
                 </div>
                 <div>
                   <label
@@ -829,11 +721,7 @@
                     class="block text-sm font-medium text-slate-600 mb-1"
                     >Cor da Fonte</label
                   >
-                  <input
-                    type="color"
-                    id="style-appointments-font-color"
-                    class="w-full"
-                  />
+                  <input type="color" id="style-appointments-font-color" class="w-full" />
                 </div>
                 <div>
                   <label
@@ -841,11 +729,7 @@
                     class="block text-sm font-medium text-slate-600 mb-1"
                     >Cor do Ícone</label
                   >
-                  <input
-                    type="color"
-                    id="style-appointments-icon-color"
-                    class="w-full"
-                  />
+                  <input type="color" id="style-appointments-icon-color" class="w-full" />
                 </div>
                 <div>
                   <label
@@ -868,9 +752,7 @@
               <h4 class="font-medium text-sm mb-2">Período de Busca Padrão</h4>
               <div class="flex items-center gap-4 text-sm">
                 <div>
-                  <label for="appointments-start-offset"
-                    >Início (meses antes):</label
-                  >
+                  <label for="appointments-start-offset">Início (meses antes):</label>
                   <input
                     type="number"
                     id="appointments-start-offset"
@@ -880,9 +762,7 @@
                   />
                 </div>
                 <div>
-                  <label for="appointments-end-offset"
-                    >Fim (meses depois):</label
-                  >
+                  <label for="appointments-end-offset">Fim (meses depois):</label>
                   <input
                     type="number"
                     id="appointments-end-offset"
@@ -892,9 +772,7 @@
                   />
                 </div>
               </div>
-              <p class="text-xs text-slate-400 mt-2">
-                Use '0' para o mês atual.
-              </p>
+              <p class="text-xs text-slate-400 mt-2">Use '0' para o mês atual.</p>
             </div>
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-4">
               <div>
@@ -918,9 +796,7 @@
           <div id="regulations-tab" class="tab-content">
             <!-- Painel de Estilos do Cabeçalho -->
             <div class="p-4 bg-slate-50 rounded-lg border mb-6">
-              <h4 class="font-semibold text-slate-800 mb-3">
-                Estilo do Cabeçalho da Seção
-              </h4>
+              <h4 class="font-semibold text-slate-800 mb-3">Estilo do Cabeçalho da Seção</h4>
               <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div>
                   <label
@@ -928,11 +804,7 @@
                     class="block text-sm font-medium text-slate-600 mb-1"
                     >Cor de Fundo</label
                   >
-                  <input
-                    type="color"
-                    id="style-regulations-bg-color"
-                    class="w-full"
-                  />
+                  <input type="color" id="style-regulations-bg-color" class="w-full" />
                 </div>
                 <div>
                   <label
@@ -940,11 +812,7 @@
                     class="block text-sm font-medium text-slate-600 mb-1"
                     >Cor da Fonte</label
                   >
-                  <input
-                    type="color"
-                    id="style-regulations-font-color"
-                    class="w-full"
-                  />
+                  <input type="color" id="style-regulations-font-color" class="w-full" />
                 </div>
                 <div>
                   <label
@@ -952,11 +820,7 @@
                     class="block text-sm font-medium text-slate-600 mb-1"
                     >Cor do Ícone</label
                   >
-                  <input
-                    type="color"
-                    id="style-regulations-icon-color"
-                    class="w-full"
-                  />
+                  <input type="color" id="style-regulations-icon-color" class="w-full" />
                 </div>
                 <div>
                   <label
@@ -979,9 +843,7 @@
               <h4 class="font-medium text-sm mb-2">Período de Busca Padrão</h4>
               <div class="flex items-center gap-4 text-sm">
                 <div>
-                  <label for="regulations-start-offset"
-                    >Início (meses antes):</label
-                  >
+                  <label for="regulations-start-offset">Início (meses antes):</label>
                   <input
                     type="number"
                     id="regulations-start-offset"
@@ -991,9 +853,7 @@
                   />
                 </div>
                 <div>
-                  <label for="regulations-end-offset"
-                    >Fim (meses depois):</label
-                  >
+                  <label for="regulations-end-offset">Fim (meses depois):</label>
                   <input
                     type="number"
                     id="regulations-end-offset"
@@ -1003,9 +863,7 @@
                   />
                 </div>
               </div>
-              <p class="text-xs text-slate-400 mt-2">
-                Use '0' para o mês atual.
-              </p>
+              <p class="text-xs text-slate-400 mt-2">Use '0' para o mês atual.</p>
             </div>
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-4">
               <div>
@@ -1029,9 +887,7 @@
           <div id="documents-tab" class="tab-content">
             <!-- Painel de Estilos do Cabeçalho -->
             <div class="p-4 bg-slate-50 rounded-lg border mb-6">
-              <h4 class="font-semibold text-slate-800 mb-3">
-                Estilo do Cabeçalho da Seção
-              </h4>
+              <h4 class="font-semibold text-slate-800 mb-3">Estilo do Cabeçalho da Seção</h4>
               <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div>
                   <label
@@ -1039,11 +895,7 @@
                     class="block text-sm font-medium text-slate-600 mb-1"
                     >Cor de Fundo</label
                   >
-                  <input
-                    type="color"
-                    id="style-documents-bg-color"
-                    class="w-full"
-                  />
+                  <input type="color" id="style-documents-bg-color" class="w-full" />
                 </div>
                 <div>
                   <label
@@ -1051,11 +903,7 @@
                     class="block text-sm font-medium text-slate-600 mb-1"
                     >Cor da Fonte</label
                   >
-                  <input
-                    type="color"
-                    id="style-documents-font-color"
-                    class="w-full"
-                  />
+                  <input type="color" id="style-documents-font-color" class="w-full" />
                 </div>
                 <div>
                   <label
@@ -1063,11 +911,7 @@
                     class="block text-sm font-medium text-slate-600 mb-1"
                     >Cor do Ícone</label
                   >
-                  <input
-                    type="color"
-                    id="style-documents-icon-color"
-                    class="w-full"
-                  />
+                  <input type="color" id="style-documents-icon-color" class="w-full" />
                 </div>
                 <div>
                   <label
@@ -1090,9 +934,7 @@
               <h4 class="font-medium text-sm mb-2">Período de Busca Padrão</h4>
               <div class="flex items-center gap-4 text-sm">
                 <div>
-                  <label for="documents-start-offset"
-                    >Início (meses antes):</label
-                  >
+                  <label for="documents-start-offset">Início (meses antes):</label>
                   <input
                     type="number"
                     id="documents-start-offset"
@@ -1143,13 +985,10 @@
         id="data-management-section"
         class="bg-white p-4 rounded-lg border border-slate-200 shadow-sm"
       >
-        <h2 class="text-md font-semibold text-slate-700 mb-3">
-          Gestão de Dados
-        </h2>
+        <h2 class="text-md font-semibold text-slate-700 mb-3">Gestão de Dados</h2>
         <p class="text-sm text-slate-500 mb-4">
-          Exporte as suas configurações para fazer um backup ou partilhar com
-          colegas. Importe um ficheiro para aplicar configurações de outra
-          pessoa.
+          Exporte as suas configurações para fazer um backup ou partilhar com colegas. Importe um
+          ficheiro para aplicar configurações de outra pessoa.
         </p>
         <div class="flex items-center gap-4">
           <button
@@ -1164,12 +1003,7 @@
           >
             Importar Configurações Gerais
           </label>
-          <input
-            type="file"
-            id="import-file-input"
-            class="hidden"
-            accept=".json"
-          />
+          <input type="file" id="import-file-input" class="hidden" accept=".json" />
         </div>
       </section>
     </main>
@@ -1193,9 +1027,7 @@
             />
           </div>
           <div>
-            <label
-              for="rule-triggers-input"
-              class="block font-medium text-sm mb-1"
+            <label for="rule-triggers-input" class="block font-medium text-sm mb-1"
               >Palavras-chave de Gatilho (separadas por vírgula)</label
             >
             <input
@@ -1206,56 +1038,31 @@
             />
           </div>
           <div class="pt-4 border-t">
-            <h4 class="font-semibold text-slate-700 mb-2">
-              Ações da Regra (Filtros a Aplicar)
-            </h4>
+            <h4 class="font-semibold text-slate-700 mb-2">Ações da Regra (Filtros a Aplicar)</h4>
             <p class="text-sm text-slate-500 mb-3">
-              Configure os filtros para cada seção que serão aplicados quando
-              esta regra for acionada.
+              Configure os filtros para cada seção que serão aplicados quando esta regra for
+              acionada.
             </p>
             <div id="rule-editor-filter-tabs">
               <!-- Abas para cada seção de filtros -->
               <div class="tabs">
-                <button
-                  class="tab-button active"
-                  data-tab="consultations-rule-editor"
-                >
+                <button class="tab-button active" data-tab="consultations-rule-editor">
                   Consultas
                 </button>
-                <button class="tab-button" data-tab="exams-rule-editor">
-                  Exames
-                </button>
-                <button class="tab-button" data-tab="appointments-rule-editor">
-                  Agendamentos
-                </button>
-                <button class="tab-button" data-tab="regulations-rule-editor">
-                  Regulação
-                </button>
-                <button class="tab-button" data-tab="documents-rule-editor">
-                  Documentos
-                </button>
+                <button class="tab-button" data-tab="exams-rule-editor">Exames</button>
+                <button class="tab-button" data-tab="appointments-rule-editor">Agendamentos</button>
+                <button class="tab-button" data-tab="regulations-rule-editor">Regulação</button>
+                <button class="tab-button" data-tab="documents-rule-editor">Documentos</button>
               </div>
               <!-- Conteúdo das abas com os filtros -->
               <div
                 id="consultations-rule-editor-tab"
                 class="tab-content active space-y-4 p-1"
               ></div>
-              <div
-                id="exams-rule-editor-tab"
-                class="tab-content space-y-4 p-1"
-              ></div>
-              <div
-                id="appointments-rule-editor-tab"
-                class="tab-content space-y-4 p-1"
-              ></div>
-              <div
-                id="regulations-rule-editor-tab"
-                class="tab-content space-y-4 p-1"
-              ></div>
-              <div
-                id="documents-rule-editor-tab"
-                class="tab-content space-y-4 p-1"
-              ></div>
+              <div id="exams-rule-editor-tab" class="tab-content space-y-4 p-1"></div>
+              <div id="appointments-rule-editor-tab" class="tab-content space-y-4 p-1"></div>
+              <div id="regulations-rule-editor-tab" class="tab-content space-y-4 p-1"></div>
+              <div id="documents-rule-editor-tab" class="tab-content space-y-4 p-1"></div>
             </div>
           </div>
         </div>

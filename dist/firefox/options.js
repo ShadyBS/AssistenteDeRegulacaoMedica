@@ -2,18 +2,419 @@
 /******/ 	"use strict";
 /******/ 	var __webpack_modules__ = ({
 
-/***/ "./options.js":
-/*!********************!*\
-  !*** ./options.js ***!
-  \********************/
+/***/ 239:
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
-__webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _api_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./api.js */ "./api.js");
-/* harmony import */ var _browser_polyfill_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./browser-polyfill.js */ "./browser-polyfill.js");
-/* harmony import */ var _field_config_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./field-config.js */ "./field-config.js");
-/* harmony import */ var _filter_config_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./filter-config.js */ "./filter-config.js");
-/* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./utils.js */ "./utils.js");
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   AQ: () => (/* binding */ setupTabs),
+/* harmony export */   rG: () => (/* binding */ showMessage),
+/* harmony export */   ui: () => (/* binding */ showDialog)
+/* harmony export */ });
+/* unused harmony exports debounce, toggleLoader, clearMessage, parseDate, getNestedValue, calculateRelativeDate, getContrastYIQ, normalizeString, normalizeTimelineData, filterTimelineEvents */
+/**
+ * Exibe um modal customizado de confirmação.
+ * @param {Object} options
+ * @param {string} options.message Mensagem a exibir
+ * @param {Function} options.onConfirm Callback para confirmação
+ * @param {Function} [options.onCancel] Callback para cancelamento
+ */
+function showDialog({
+  message,
+  onConfirm,
+  onCancel
+}) {
+  let modal = document.getElementById('custom-confirm-modal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'custom-confirm-modal';
+    modal.innerHTML = `
+      <div class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg shadow-lg p-6 max-w-md w-full">
+          <div class="mb-4 text-slate-800 text-base" id="custom-confirm-message"></div>
+          <div class="flex justify-end gap-2">
+            <button id="custom-confirm-cancel" class="px-4 py-2 rounded bg-slate-200 text-slate-700 hover:bg-slate-300">Cancelar</button>
+            <button id="custom-confirm-ok" class="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700">Confirmar</button>
+          </div>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+  }
+  modal.style.display = 'flex';
+  modal.querySelector('#custom-confirm-message').textContent = message;
+  const okBtn = modal.querySelector('#custom-confirm-ok');
+  const cancelBtn = modal.querySelector('#custom-confirm-cancel');
+  const close = () => {
+    modal.style.display = 'none';
+  };
+  okBtn.onclick = () => {
+    close();
+    onConfirm && onConfirm();
+  };
+  cancelBtn.onclick = () => {
+    close();
+    onCancel && onCancel();
+  };
+}
+/**
+ * @file Contém funções utilitárias compartilhadas em toda a extensão.
+ */
+
+/**
+ * Atraso na execução de uma função após o utilizador parar de digitar.
+ * @param {Function} func A função a ser executada.
+ * @param {number} [delay=500] O tempo de espera em milissegundos.
+ * @returns {Function} A função com debounce.
+ */
+function debounce(func, delay = 500) {
+  let timeoutId;
+  return (...args) => {
+    clearTimeout(timeoutId);
+    timeoutId = setTimeout(() => {
+      func.apply(this, args);
+    }, delay);
+  };
+}
+
+/**
+ * Mostra ou esconde o loader principal.
+ * @param {boolean} show - `true` para mostrar, `false` para esconder.
+ */
+function toggleLoader(show) {
+  const loader = document.getElementById('loader');
+  if (loader) {
+    loader.style.display = show ? 'block' : 'none';
+  }
+}
+
+/**
+ * Exibe uma mensagem na área de mensagens.
+ * @param {string} text O texto da mensagem.
+ * @param {'error' | 'success' | 'info'} [type='error'] O tipo de mensagem.
+ */
+function showMessage(text, type = 'error') {
+  const messageArea = document.getElementById('message-area');
+  if (messageArea) {
+    messageArea.textContent = text;
+    const typeClasses = {
+      error: 'bg-red-100 text-red-700',
+      success: 'bg-green-100 text-green-700',
+      info: 'bg-blue-100 text-blue-700'
+    };
+    messageArea.className = `p-3 rounded-md text-sm ${typeClasses[type] || typeClasses.error}`;
+    messageArea.style.display = 'block';
+  }
+}
+
+/**
+ * Limpa a área de mensagens.
+ */
+function clearMessage() {
+  const messageArea = document.getElementById('message-area');
+  if (messageArea) {
+    messageArea.style.display = 'none';
+  }
+}
+
+/**
+ * Converte uma string de data em vários formatos para um objeto Date.
+ * @param {string} dateString A data no formato "dd/MM/yyyy" ou "yyyy-MM-dd", podendo conter prefixos.
+ * @returns {Date|null} O objeto Date ou null se a string for inválida.
+ */
+function parseDate(dateString) {
+  if (!dateString || typeof dateString !== 'string') return null;
+
+  // Tenta extrair o primeiro padrão de data válido da string.
+  const dateMatch = dateString.match(/(\d{4}-\d{2}-\d{2})|(\d{2}\/\d{2}\/\d{2,4})/);
+  if (!dateMatch) return null;
+  const matchedDate = dateMatch[0];
+  let year, month, day;
+
+  // Tenta o formato YYYY-MM-DD
+  if (matchedDate.includes('-')) {
+    [year, month, day] = matchedDate.split('-').map(Number);
+  } else if (matchedDate.includes('/')) {
+    // Tenta o formato DD/MM/YYYY
+    [day, month, year] = matchedDate.split('/').map(Number);
+  }
+
+  // Valida se os números são válidos e se a data é real
+  if (isNaN(year) || isNaN(month) || isNaN(day)) return null;
+
+  // Lida com anos de 2 dígitos (ex: '24' -> 2024)
+  if (year >= 0 && year < 100) {
+    year += 2000;
+  }
+  const date = new Date(Date.UTC(year, month - 1, day));
+
+  // Confirma que a data não "rolou" para o mês seguinte (ex: 31 de Abril -> 1 de Maio)
+  if (date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day) {
+    return date;
+  }
+  return null; // Retorna nulo se a data for inválida (ex: 31/02/2024)
+}
+
+/**
+ * Obtém um valor aninhado de um objeto de forma segura.
+ * @param {object} obj O objeto.
+ * @param {string} path O caminho para a propriedade (ex: 'a.b.c').
+ * @returns {*} O valor encontrado ou undefined.
+ */
+const getNestedValue = (obj, path) => {
+  if (!path) return undefined;
+  return path.split('.').reduce((acc, part) => acc && acc[part], obj);
+};
+
+/**
+ * Calcula uma data relativa à data atual com base num desvio em meses.
+ * @param {number} offsetInMonths - O número de meses a adicionar ou subtrair.
+ * @returns {Date} O objeto Date resultante.
+ */
+function calculateRelativeDate(offsetInMonths) {
+  const date = new Date();
+  // setMonth lida corretamente com transições de ano e dias do mês
+  date.setMonth(date.getMonth() + offsetInMonths);
+  return date;
+}
+
+/**
+ * Retorna 'black' ou 'white' para o texto dependendo do contraste com a cor de fundo.
+ * @param {string} hexcolor - A cor de fundo em formato hexadecimal (com ou sem #).
+ * @returns {'black' | 'white'}
+ */
+function getContrastYIQ(hexcolor) {
+  hexcolor = hexcolor.replace('#', '');
+  const r = parseInt(hexcolor.substr(0, 2), 16);
+  const g = parseInt(hexcolor.substr(2, 2), 16);
+  const b = parseInt(hexcolor.substr(4, 2), 16);
+  const yiq = (r * 299 + g * 587 + b * 114) / 1000;
+  return yiq >= 128 ? 'black' : 'white';
+}
+
+/**
+ * Normaliza uma string removendo acentos, cedilha e convertendo para minúsculas.
+ * @param {string} str - A string a ser normalizada.
+ * @returns {string} A string normalizada.
+ */
+function normalizeString(str) {
+  if (!str) return '';
+  return str.toString().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+}
+
+/**
+ * Configura um sistema de abas (tabs) dentro de um container.
+ * @param {HTMLElement} container - O elemento que contém os botões e os painéis das abas.
+ */
+function setupTabs(container) {
+  if (!container) return;
+  const tabButtons = container.querySelectorAll('.tab-button');
+  const tabContents = container.querySelectorAll('.tab-content');
+  tabButtons.forEach(button => {
+    button.addEventListener('click', () => {
+      const tabName = button.dataset.tab;
+      tabButtons.forEach(btn => btn.classList.remove('active'));
+      tabContents.forEach(content => content.classList.remove('active'));
+      button.classList.add('active');
+      const activeContent = container.querySelector(`#${tabName}-tab`);
+      if (activeContent) {
+        activeContent.classList.add('active');
+      }
+    });
+  });
+}
+
+/**
+ * Normalizes data from various sources into a single, sorted timeline event list.
+ * @param {object} apiData - An object containing arrays of consultations, exams, etc.
+ * @returns {Array<object>} A sorted array of timeline event objects.
+ */
+function normalizeTimelineData(apiData) {
+  const events = [];
+
+  // Normalize Consultations
+  try {
+    (apiData.consultations || []).forEach(c => {
+      if (!c || !c.date) return;
+      const searchText = normalizeString([c.specialty, c.professional, c.unit, ...c.details.map(d => d.value)].join(' '));
+      events.push({
+        type: 'consultation',
+        date: parseDate(c.date.split('\n')[0]),
+        sortableDate: c.sortableDate || parseDate(c.date),
+        title: `Consulta: ${c.specialty || 'Especialidade não informada'}`,
+        summary: `com ${c.professional || 'Profissional não informado'}`,
+        details: c,
+        subDetails: c.details || [],
+        searchText
+      });
+    });
+  } catch (e) {
+    console.error('Failed to normalize consultation data for timeline:', e);
+  }
+
+  // Normalize Exams
+  try {
+    (apiData.exams || []).forEach(e => {
+      const eventDate = parseDate(e.date);
+      if (!e || !eventDate) return;
+      const searchText = normalizeString([e.examName, e.professional, e.specialty].filter(Boolean).join(' '));
+      events.push({
+        type: 'exam',
+        date: eventDate,
+        sortableDate: eventDate,
+        title: `Exame Solicitado: ${e.examName || 'Nome não informado'}`,
+        summary: `Solicitado por ${e.professional || 'Não informado'}`,
+        details: e,
+        subDetails: [{
+          label: 'Resultado',
+          value: e.hasResult ? 'Disponível' : 'Pendente'
+        }],
+        searchText
+      });
+    });
+  } catch (e) {
+    console.error('Failed to normalize exam data for timeline:', e);
+  }
+
+  // Normalize Appointments
+  try {
+    (apiData.appointments || []).forEach(a => {
+      if (!a || !a.date) return;
+      const searchText = normalizeString([a.specialty, a.description, a.location, a.professional].join(' '));
+      events.push({
+        type: 'appointment',
+        date: parseDate(a.date),
+        sortableDate: parseDate(a.date),
+        title: `Agendamento: ${a.specialty || a.description || 'Não descrito'}`,
+        summary: a.location || 'Local não informado',
+        details: a,
+        subDetails: [{
+          label: 'Status',
+          value: a.status || 'N/A'
+        }, {
+          label: 'Hora',
+          value: a.time || 'N/A'
+        }],
+        searchText
+      });
+    });
+  } catch (e) {
+    console.error('Failed to normalize appointment data for timeline:', e);
+  }
+
+  // Normalize Regulations
+  try {
+    (apiData.regulations || []).forEach(r => {
+      if (!r || !r.date) return;
+      const searchText = normalizeString([r.procedure, r.requester, r.provider, r.cid].join(' '));
+      events.push({
+        type: 'regulation',
+        date: parseDate(r.date),
+        sortableDate: parseDate(r.date),
+        title: `Regulação: ${r.procedure || 'Procedimento não informado'}`,
+        summary: `Solicitante: ${r.requester || 'Não informado'}`,
+        details: r,
+        subDetails: [{
+          label: 'Status',
+          value: r.status || 'N/A'
+        }, {
+          label: 'Prioridade',
+          value: r.priority || 'N/A'
+        }],
+        searchText
+      });
+    });
+  } catch (e) {
+    console.error('Failed to normalize regulation data for timeline:', e);
+  }
+
+  // --- INÍCIO DA MODIFICAÇÃO ---
+  // Normalize Documents
+  try {
+    (apiData.documents || []).forEach(doc => {
+      if (!doc || !doc.date) return;
+      const searchText = normalizeString(doc.description || '');
+      events.push({
+        type: 'document',
+        date: parseDate(doc.date),
+        sortableDate: parseDate(doc.date),
+        title: `Documento: ${doc.description || 'Sem descrição'}`,
+        summary: `Tipo: ${doc.fileType.toUpperCase()}`,
+        details: doc,
+        subDetails: [],
+        searchText
+      });
+    });
+  } catch (e) {
+    console.error('Failed to normalize document data for timeline:', e);
+  }
+  // --- FIM DA MODIFICAÇÃO ---
+
+  // Filter out events with invalid dates and sort all events by date, newest first.
+  return events.filter(event => event.sortableDate instanceof Date && !isNaN(event.sortableDate)).sort((a, b) => b.sortableDate - a.sortableDate);
+}
+
+/**
+ * Filters timeline events based on automation rule filters.
+ * @param {Array<object>} events - The full array of timeline events.
+ * @param {object} automationFilters - The filter settings from an automation rule.
+ * @returns {Array<object>} A new array with the filtered events.
+ */
+function filterTimelineEvents(events, automationFilters) {
+  if (!automationFilters) return events;
+  const checkText = (text, filterValue) => {
+    if (!filterValue) return true; // If filter is empty, it passes
+    const terms = filterValue.toLowerCase().split(',').map(t => t.trim()).filter(Boolean);
+    if (terms.length === 0) return true;
+    const normalizedText = normalizeString(text || '');
+    return terms.some(term => normalizedText.includes(term));
+  };
+  return events.filter(event => {
+    try {
+      switch (event.type) {
+        case 'consultation':
+          {
+            const consultFilters = automationFilters.consultations || {};
+            // Procura por um campo rotulado como CID ou CIAP para uma busca precisa.
+            const cidDetail = (event.details.details || []).find(d => normalizeString(d.label).includes('cid') || normalizeString(d.label).includes('ciap'));
+            const cidText = cidDetail ? cidDetail.value : '';
+            return checkText(event.details.specialty, consultFilters['consultation-filter-specialty']) && checkText(event.details.professional, consultFilters['consultation-filter-professional']) && checkText(cidText, consultFilters['consultation-filter-cid']);
+          }
+        case 'exam':
+          {
+            const examFilters = automationFilters.exams || {};
+            return checkText(event.details.examName, examFilters['exam-filter-name']) && checkText(event.details.professional, examFilters['exam-filter-professional']) && checkText(event.details.specialty, examFilters['exam-filter-specialty']);
+          }
+        case 'appointment':
+          {
+            const apptFilters = automationFilters.appointments || {};
+            const apptText = `${event.details.specialty} ${event.details.professional} ${event.details.location}`;
+            return checkText(apptText, apptFilters['appointment-filter-term']);
+          }
+        case 'regulation':
+          {
+            const regFilters = automationFilters.regulations || {};
+            return checkText(event.details.procedure, regFilters['regulation-filter-procedure']) && checkText(event.details.requester, regFilters['regulation-filter-requester']) && (regFilters['regulation-filter-status'] === 'todos' || !regFilters['regulation-filter-status'] || event.details.status.toUpperCase() === regFilters['regulation-filter-status'].toUpperCase()) && (regFilters['regulation-filter-priority'] === 'todas' || !regFilters['regulation-filter-priority'] || event.details.priority.toUpperCase() === regFilters['regulation-filter-priority'].toUpperCase());
+          }
+        default:
+          return true;
+      }
+    } catch (e) {
+      console.warn('Error filtering timeline event, it will be included by default:', event, e);
+      return true;
+    }
+  });
+}
+
+/***/ }),
+
+/***/ 640:
+/***/ ((__unused_webpack___webpack_module__, __unused_webpack___webpack_exports__, __webpack_require__) => {
+
+/* harmony import */ var _api_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(574);
+/* harmony import */ var _browser_polyfill_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(64);
+/* harmony import */ var _field_config_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(869);
+/* harmony import */ var _filter_config_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(733);
+/* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(239);
  // Importa a API para buscar prioridades
 
 
@@ -164,20 +565,20 @@ function renderPatientFields(config) {
 async function renderFilterLayout(layout) {
   let priorities = [];
   try {
-    const baseUrl = await _api_js__WEBPACK_IMPORTED_MODULE_0__.getBaseUrl();
+    const baseUrl = await _api_js__WEBPACK_IMPORTED_MODULE_0__/* .getBaseUrl */ .$_();
     if (baseUrl) {
-      priorities = await _api_js__WEBPACK_IMPORTED_MODULE_0__.fetchRegulationPriorities();
+      priorities = await _api_js__WEBPACK_IMPORTED_MODULE_0__/* .fetchRegulationPriorities */ .$4();
     }
   } catch (error) {
     console.error('Não foi possível carregar prioridades:', error);
   }
-  Object.keys(_filter_config_js__WEBPACK_IMPORTED_MODULE_3__.filterConfig).forEach(section => {
+  Object.keys(_filter_config_js__WEBPACK_IMPORTED_MODULE_3__/* .filterConfig */ .J).forEach(section => {
     const mainZone = document.getElementById(`${section}-main-filters-zone`);
     const moreZone = document.getElementById(`${section}-more-filters-zone`);
     if (mainZone) mainZone.innerHTML = '';
     if (moreZone) moreZone.innerHTML = '';
   });
-  Object.entries(_filter_config_js__WEBPACK_IMPORTED_MODULE_3__.filterConfig).forEach(([sectionKey, filters]) => {
+  Object.entries(_filter_config_js__WEBPACK_IMPORTED_MODULE_3__/* .filterConfig */ .J).forEach(([sectionKey, filters]) => {
     const sectionLayout = layout[sectionKey] || [];
     const layoutMap = new Map(sectionLayout.map(f => [f.id, f]));
     const sortedFilters = [...filters].sort((a, b) => {
@@ -244,7 +645,7 @@ async function restoreOptions() {
     autoLoadDocuments: false,
     enableAutomaticDetection: true,
     keepSessionAliveInterval: 10,
-    patientFields: _field_config_js__WEBPACK_IMPORTED_MODULE_2__.defaultFieldConfig,
+    patientFields: _field_config_js__WEBPACK_IMPORTED_MODULE_2__/* .defaultFieldConfig */ .Q,
     filterLayout: {},
     dateRangeDefaults: {},
     sidebarSectionOrder: null,
@@ -264,7 +665,7 @@ async function restoreOptions() {
   if (syncItems.sidebarSectionOrder) {
     applyTabOrder(syncItems.sidebarSectionOrder);
   }
-  const currentPatientFieldsConfig = _field_config_js__WEBPACK_IMPORTED_MODULE_2__.defaultFieldConfig.map(defaultField => {
+  const currentPatientFieldsConfig = _field_config_js__WEBPACK_IMPORTED_MODULE_2__/* .defaultFieldConfig */ .Q.map(defaultField => {
     const savedField = syncItems.patientFields.find(f => f.id === defaultField.id);
     return savedField ? {
       ...defaultField,
@@ -381,7 +782,7 @@ async function saveOptions() {
     const location = zone.id.includes('-main-') ? 'main' : 'more';
     zone.querySelectorAll('.draggable').forEach((div, index) => {
       const filterId = div.dataset.filterId;
-      const originalFilter = _filter_config_js__WEBPACK_IMPORTED_MODULE_3__.filterConfig[section].find(f => f.id === filterId);
+      const originalFilter = _filter_config_js__WEBPACK_IMPORTED_MODULE_3__/* .filterConfig */ .J[section].find(f => f.id === filterId);
       const newFilterData = {
         id: filterId,
         location: location,
@@ -440,7 +841,7 @@ async function saveOptions() {
     sidebarSectionOrder,
     sectionHeaderStyles
   });
-  _utils_js__WEBPACK_IMPORTED_MODULE_4__.showMessage('Configurações salvas! As alterações serão aplicadas ao recarregar o assistente.', 'success');
+  _utils_js__WEBPACK_IMPORTED_MODULE_4__/* .showMessage */ .rG('Configurações salvas! As alterações serão aplicadas ao recarregar o assistente.', 'success');
   setTimeout(() => {
     const statusMsg = document.getElementById('statusMessage');
     if (statusMsg) {
@@ -458,7 +859,7 @@ function handleDragStart(e) {
   e.dataTransfer.effectAllowed = 'move';
   setTimeout(() => draggedElement.classList.add('dragging'), 0);
 }
-function handleDragEnd(e) {
+function handleDragEnd() {
   if (!draggedElement) return;
   draggedElement.classList.remove('dragging');
   draggedElement = null;
@@ -553,13 +954,15 @@ function setupTabDnD(container) {
 
 // --- Lógica para Restaurar Padrões ---
 async function handleRestoreDefaults() {
-  const confirmation = window.confirm('Tem certeza de que deseja restaurar todas as configurações de layout e valores padrão? Isto também restaurará a ordem das seções e os estilos dos cabeçalhos. Esta ação não pode ser desfeita.');
-  if (confirmation) {
-    await browser.storage.sync.remove(['patientFields', 'filterLayout', 'dateRangeDefaults', 'enableAutomaticDetection', 'sidebarSectionOrder', 'sectionHeaderStyles']);
-    mainFieldsZone.innerHTML = '';
-    moreFieldsZone.innerHTML = '';
-    window.location.reload();
-  }
+  _utils_js__WEBPACK_IMPORTED_MODULE_4__/* .showDialog */ .ui({
+    message: 'Tem certeza de que deseja restaurar todas as configurações de layout e valores padrão? Isto também restaurará a ordem das seções e os estilos dos cabeçalhos. Esta ação não pode ser desfeita.',
+    onConfirm: async () => {
+      await browser.storage.sync.remove(['patientFields', 'filterLayout', 'dateRangeDefaults', 'enableAutomaticDetection', 'sidebarSectionOrder', 'sectionHeaderStyles']);
+      mainFieldsZone.innerHTML = '';
+      moreFieldsZone.innerHTML = '';
+      window.location.reload();
+    }
+  });
 }
 
 // --- Lógica de Exportação e Importação ---
@@ -580,10 +983,10 @@ async function handleExport() {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-    _utils_js__WEBPACK_IMPORTED_MODULE_4__.showMessage('Configurações exportadas com sucesso!', 'success');
+    _utils_js__WEBPACK_IMPORTED_MODULE_4__/* .showMessage */ .rG('Configurações exportadas com sucesso!', 'success');
   } catch (error) {
     console.error('Erro ao exportar configurações:', error);
-    _utils_js__WEBPACK_IMPORTED_MODULE_4__.showMessage('Erro ao exportar configurações.', 'error');
+    _utils_js__WEBPACK_IMPORTED_MODULE_4__/* .showMessage */ .rG('Erro ao exportar configurações.', 'error');
   } finally {
     setTimeout(() => {
       statusMessage.textContent = '';
@@ -601,16 +1004,24 @@ function handleImport(event) {
         throw new Error('Ficheiro de configuração inválido ou corrompido.');
       }
       if (importedSettings.configVersion.split('.')[0] !== CONFIG_VERSION.split('.')[0]) {
-        const goOn = window.confirm('A versão do ficheiro de configuração é muito diferente da versão da extensão. A importação pode causar erros. Deseja continuar mesmo assim?');
-        if (!goOn) return;
+        _utils_js__WEBPACK_IMPORTED_MODULE_4__/* .showDialog */ .ui({
+          message: 'A versão do ficheiro de configuração é muito diferente da versão da extensão. A importação pode causar erros. Deseja continuar mesmo assim?',
+          onConfirm: async () => {
+            await browser.storage.sync.clear();
+            await browser.storage.sync.set(importedSettings);
+            restoreOptions();
+            _utils_js__WEBPACK_IMPORTED_MODULE_4__/* .showMessage */ .rG('Configurações importadas e aplicadas com sucesso!', 'success');
+          }
+        });
+        return;
       }
       await browser.storage.sync.clear();
       await browser.storage.sync.set(importedSettings);
       restoreOptions();
-      _utils_js__WEBPACK_IMPORTED_MODULE_4__.showMessage('Configurações importadas e aplicadas com sucesso!', 'success');
+      _utils_js__WEBPACK_IMPORTED_MODULE_4__/* .showMessage */ .rG('Configurações importadas e aplicadas com sucesso!', 'success');
     } catch (error) {
       console.error('Erro ao importar configurações:', error);
-      _utils_js__WEBPACK_IMPORTED_MODULE_4__.showMessage(`Erro ao importar: ${error.message}`, 'error');
+      _utils_js__WEBPACK_IMPORTED_MODULE_4__/* .showMessage */ .rG(`Erro ao importar: ${error.message}`, 'error');
     } finally {
       importFileInput.value = '';
       setTimeout(() => {
@@ -673,7 +1084,7 @@ async function saveAutomationRules() {
   await browser.storage.local.set({
     automationRules
   });
-  _utils_js__WEBPACK_IMPORTED_MODULE_4__.showMessage('Regras de automação salvas.', 'success');
+  _utils_js__WEBPACK_IMPORTED_MODULE_4__/* .showMessage */ .rG('Regras de automação salvas.', 'success');
   setTimeout(() => {
     statusMessage.textContent = '';
   }, 2000);
@@ -766,7 +1177,7 @@ function closeRuleEditor() {
 function handleSaveRule() {
   const name = ruleNameInput.value.trim();
   if (!name) {
-    alert('O nome da regra é obrigatório.');
+    _utils_js__WEBPACK_IMPORTED_MODULE_4__/* .showMessage */ .rG('O nome da regra é obrigatório.', 'error');
     return;
   }
   const triggerKeywords = ruleTriggersInput.value.split(',').map(k => k.trim()).filter(Boolean);
@@ -792,7 +1203,7 @@ function handleSaveRule() {
     // --- FIM DA CORREÇÃO ---
 
     // Salva as configurações dos outros filtros
-    const sectionFilters = _filter_config_js__WEBPACK_IMPORTED_MODULE_3__.filterConfig[sectionKey] || [];
+    const sectionFilters = _filter_config_js__WEBPACK_IMPORTED_MODULE_3__/* .filterConfig */ .J[sectionKey] || [];
     sectionFilters.forEach(filter => {
       if (filter.type === 'component') return;
       const element = document.getElementById(`rule-${sectionKey}-${filter.id}`);
@@ -827,11 +1238,14 @@ function handleEditRule(ruleId) {
   openRuleEditor(ruleId);
 }
 function handleDeleteRule(ruleId) {
-  if (confirm('Tem certeza que deseja excluir esta regra?')) {
-    automationRules = automationRules.filter(r => r.id !== ruleId);
-    saveAutomationRules();
-    renderAutomationRules();
-  }
+  _utils_js__WEBPACK_IMPORTED_MODULE_4__/* .showDialog */ .ui({
+    message: 'Tem certeza que deseja excluir esta regra?',
+    onConfirm: () => {
+      automationRules = automationRules.filter(r => r.id !== ruleId);
+      saveAutomationRules();
+      renderAutomationRules();
+    }
+  });
 }
 function handleDuplicateRule(ruleId) {
   const originalRule = automationRules.find(r => r.id === ruleId);
@@ -864,9 +1278,9 @@ function reorderAutomationRules() {
 async function populateRuleEditorFilters() {
   let priorities = [];
   try {
-    const baseUrl = await _api_js__WEBPACK_IMPORTED_MODULE_0__.getBaseUrl();
+    const baseUrl = await _api_js__WEBPACK_IMPORTED_MODULE_0__/* .getBaseUrl */ .$_();
     if (baseUrl) {
-      priorities = await _api_js__WEBPACK_IMPORTED_MODULE_0__.fetchRegulationPriorities();
+      priorities = await _api_js__WEBPACK_IMPORTED_MODULE_0__/* .fetchRegulationPriorities */ .$4();
     }
   } catch (error) {
     console.error('Não foi possível carregar prioridades:', error);
@@ -880,7 +1294,7 @@ async function populateRuleEditorFilters() {
     // Adiciona o componente de data
     const dateRangeElement = createDateRangeElementForRuleEditor(sectionKey);
     container.appendChild(dateRangeElement);
-    const sectionFilters = _filter_config_js__WEBPACK_IMPORTED_MODULE_3__.filterConfig[sectionKey] || [];
+    const sectionFilters = _filter_config_js__WEBPACK_IMPORTED_MODULE_3__/* .filterConfig */ .J[sectionKey] || [];
     sectionFilters.forEach(filter => {
       if (filter.type === 'component') return;
       const filterElement = createFilterElementForRuleEditor(filter, sectionKey, priorities);
@@ -966,11 +1380,11 @@ function createDateRangeElementForRuleEditor(sectionKey) {
 document.addEventListener('DOMContentLoaded', async () => {
   await restoreOptions();
   const mainTabsContainer = document.querySelector('#filter-tabs-container .tabs');
-  _utils_js__WEBPACK_IMPORTED_MODULE_4__.setupTabs(document.getElementById('filter-tabs-container'));
+  _utils_js__WEBPACK_IMPORTED_MODULE_4__/* .setupTabs */ .AQ(document.getElementById('filter-tabs-container'));
   if (mainTabsContainer) {
     setupTabDnD(mainTabsContainer);
   }
-  _utils_js__WEBPACK_IMPORTED_MODULE_4__.setupTabs(document.getElementById('rule-editor-filter-tabs'));
+  _utils_js__WEBPACK_IMPORTED_MODULE_4__/* .setupTabs */ .AQ(document.getElementById('rule-editor-filter-tabs'));
   createNewRuleBtn.addEventListener('click', () => openRuleEditor(null));
   cancelRuleBtn.addEventListener('click', closeRuleEditor);
   saveRuleBtn.addEventListener('click', handleSaveRule);
@@ -1085,15 +1499,9 @@ allDropZones.forEach(zone => {
 /******/ 		__webpack_require__.o = (obj, prop) => (Object.prototype.hasOwnProperty.call(obj, prop))
 /******/ 	})();
 /******/ 	
-/******/ 	/* webpack/runtime/make namespace object */
+/******/ 	/* webpack/runtime/runtimeId */
 /******/ 	(() => {
-/******/ 		// define __esModule on exports
-/******/ 		__webpack_require__.r = (exports) => {
-/******/ 			if(typeof Symbol !== 'undefined' && Symbol.toStringTag) {
-/******/ 				Object.defineProperty(exports, Symbol.toStringTag, { value: 'Module' });
-/******/ 			}
-/******/ 			Object.defineProperty(exports, '__esModule', { value: true });
-/******/ 		};
+/******/ 		__webpack_require__.j = 575;
 /******/ 	})();
 /******/ 	
 /******/ 	/* webpack/runtime/jsonp chunk loading */
@@ -1104,7 +1512,8 @@ allDropZones.forEach(zone => {
 /******/ 		// undefined = chunk not loaded, null = chunk preloaded/prefetched
 /******/ 		// [resolve, reject, Promise] = chunk loading, 0 = chunk loaded
 /******/ 		var installedChunks = {
-/******/ 			"options": 0
+/******/ 			575: 0,
+/******/ 			738: 0
 /******/ 		};
 /******/ 		
 /******/ 		// no chunk on demand loading
@@ -1154,9 +1563,8 @@ allDropZones.forEach(zone => {
 /******/ 	// startup
 /******/ 	// Load entry module and return exports
 /******/ 	// This entry module depends on other loaded chunks and execution need to be delayed
-/******/ 	var __webpack_exports__ = __webpack_require__.O(undefined, ["common"], () => (__webpack_require__("./options.js")))
+/******/ 	var __webpack_exports__ = __webpack_require__.O(undefined, [76], () => (__webpack_require__(640)))
 /******/ 	__webpack_exports__ = __webpack_require__.O(__webpack_exports__);
 /******/ 	
 /******/ })()
 ;
-//# sourceMappingURL=options.js.map

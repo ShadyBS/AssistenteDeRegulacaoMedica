@@ -3,9 +3,8 @@
  */
 
 import { filterConfig } from './filter-config.js';
-import * as Utils from './utils.js';
-import * as API from './api.js';
 import { store } from './store.js';
+import * as Utils from './utils.js';
 
 /**
  * Gera o HTML para o indicador de ordenação (seta para cima/baixo).
@@ -81,29 +80,19 @@ export class SectionManager {
       content: document.getElementById(`${sectionKey}-content`),
       fetchBtn: document.getElementById(`fetch-${sectionKey}-btn`),
       toggleBtn: document.getElementById(`toggle-${sectionKey}-list-btn`),
-      toggleMoreBtn: document.getElementById(
-        `toggle-more-${prefix}-filters-btn`
-      ),
+      toggleMoreBtn: document.getElementById(`toggle-more-${prefix}-filters-btn`),
       clearBtn: document.getElementById(`clear-${prefix}-filters-btn`),
       mainFilters: document.getElementById(`${prefix}-main-filters`),
       moreFilters: document.getElementById(`${prefix}-more-filters`),
-      automationFeedback: document.getElementById(
-        `${sectionKey}-automation-feedback`
-      ),
+      automationFeedback: document.getElementById(`${sectionKey}-automation-feedback`),
     };
   }
 
   addEventListeners() {
     this.elements.fetchBtn?.addEventListener('click', () => this.fetchData());
-    this.elements.toggleBtn?.addEventListener('click', () =>
-      this.toggleSection()
-    );
-    this.elements.toggleMoreBtn?.addEventListener('click', () =>
-      this.toggleMoreFilters()
-    );
-    this.elements.clearBtn?.addEventListener('click', () =>
-      this.clearFilters()
-    );
+    this.elements.toggleBtn?.addEventListener('click', () => this.toggleSection());
+    this.elements.toggleMoreBtn?.addEventListener('click', () => this.toggleMoreFilters());
+    this.elements.clearBtn?.addEventListener('click', () => this.clearFilters());
 
     this.elements.section?.addEventListener(
       'input',
@@ -121,8 +110,7 @@ export class SectionManager {
           this.applyFiltersAndRender();
         }
       }
-      if (e.target.id === `${this.prefix}-saved-filters-select`)
-        this.loadFilterSet();
+      if (e.target.id === `${this.prefix}-saved-filters-select`) this.loadFilterSet();
     });
 
     this.elements.section?.addEventListener('click', (e) => {
@@ -130,10 +118,8 @@ export class SectionManager {
       const sortHeader = target.closest('.sort-header');
       if (sortHeader) this.handleSort(sortHeader.dataset.sortKey);
 
-      if (target.closest(`#${this.prefix}-save-filter-btn`))
-        this.saveFilterSet();
-      if (target.closest(`#${this.prefix}-delete-filter-btn`))
-        this.deleteFilterSet();
+      if (target.closest(`#${this.prefix}-save-filter-btn`)) this.saveFilterSet();
+      if (target.closest(`#${this.prefix}-delete-filter-btn`)) this.deleteFilterSet();
       if (target.closest('.clear-automation-btn')) {
         this.clearAutomationFeedbackAndFilters(true);
       }
@@ -154,9 +140,7 @@ export class SectionManager {
     if (
       patient &&
       this.globalSettings.userPreferences[
-        `autoLoad${
-          this.sectionKey.charAt(0).toUpperCase() + this.sectionKey.slice(1)
-        }`
+        `autoLoad${this.sectionKey.charAt(0).toUpperCase() + this.sectionKey.slice(1)}`
       ]
     ) {
       this.fetchData();
@@ -172,8 +156,7 @@ export class SectionManager {
     if (this.isLoading) return;
 
     this.isLoading = true;
-    this.elements.content.innerHTML =
-      '<p class="text-slate-500">Carregando...</p>';
+    this.elements.content.innerHTML = '<p class="text-slate-500">Carregando...</p>';
 
     try {
       const fetchTypeElement = this.elements.mainFilters?.querySelector(
@@ -183,12 +166,8 @@ export class SectionManager {
         this.fetchType = fetchTypeElement.value;
       }
 
-      const dataInicialValue = this.elements.dateInitial
-        ? this.elements.dateInitial.value
-        : null;
-      const dataFinalValue = this.elements.dateFinal
-        ? this.elements.dateFinal.value
-        : null;
+      const dataInicialValue = this.elements.dateInitial ? this.elements.dateInitial.value : null;
+      const dataFinalValue = this.elements.dateFinal ? this.elements.dateFinal.value : null;
 
       const params = {
         isenPK: `${this.currentPatient.isenPK.idp}-${this.currentPatient.isenPK.ids}`,
@@ -203,10 +182,8 @@ export class SectionManager {
       };
 
       if (this.sectionKey === 'exams') {
-        params.comResultado =
-          this.fetchType === 'withResult' || this.fetchType === 'all';
-        params.semResultado =
-          this.fetchType === 'withoutResult' || this.fetchType === 'all';
+        params.comResultado = this.fetchType === 'withResult' || this.fetchType === 'all';
+        params.semResultado = this.fetchType === 'withoutResult' || this.fetchType === 'all';
       }
 
       const result = await this.config.fetchFunction(params);
@@ -221,9 +198,7 @@ export class SectionManager {
         documents: 'documentos',
       };
       const friendlyName = sectionNameMap[this.sectionKey] || this.sectionKey;
-      Utils.showMessage(
-        `Erro ao buscar ${friendlyName}. Verifique a conexão e a URL base.`
-      );
+      Utils.showMessage(`Erro ao buscar ${friendlyName}. Verifique a conexão e a URL base.`);
       this.allData = [];
     } finally {
       this.isLoading = false;
@@ -234,11 +209,7 @@ export class SectionManager {
   applyFiltersAndRender() {
     let filteredData = [...this.allData];
     if (this.config.filterLogic) {
-      filteredData = this.config.filterLogic(
-        filteredData,
-        this.getFilterValues(),
-        this.fetchType
-      );
+      filteredData = this.config.filterLogic(filteredData, this.getFilterValues(), this.fetchType);
     }
     const sortedData = this.sortData(filteredData);
     this.config.renderFunction(sortedData, this.sortState, this.globalSettings);
@@ -278,29 +249,27 @@ export class SectionManager {
 
   toggleSection() {
     this.elements.wrapper?.classList.toggle('show');
-    this.elements.toggleBtn.textContent =
-      this.elements.wrapper.classList.contains('show')
-        ? 'Recolher'
-        : 'Expandir';
+    this.elements.toggleBtn.textContent = this.elements.wrapper.classList.contains('show')
+      ? 'Recolher'
+      : 'Expandir';
   }
 
   toggleMoreFilters() {
     const shouldShow = !this.elements.moreFilters.classList.contains('show');
     this.elements.moreFilters.classList.toggle('show', shouldShow);
-    this.elements.toggleMoreBtn.querySelector('.button-text').textContent =
-      shouldShow ? 'Menos filtros' : 'Mais filtros';
+    this.elements.toggleMoreBtn.querySelector('.button-text').textContent = shouldShow
+      ? 'Menos filtros'
+      : 'Mais filtros';
     this.updateActiveFiltersIndicator();
   }
 
   clearFilters(shouldRender = true) {
-    const sectionLayout =
-      this.globalSettings.filterLayout[this.sectionKey] || [];
+    const sectionLayout = this.globalSettings.filterLayout[this.sectionKey] || [];
     const layoutMap = new Map(sectionLayout.map((f) => [f.id, f]));
 
     // --- INÍCIO DA CORREÇÃO ---
     // Reseta o período de busca para o padrão global da seção
-    const dateRangeDefaults =
-      this.globalSettings.userPreferences.dateRangeDefaults;
+    const dateRangeDefaults = this.globalSettings.userPreferences.dateRangeDefaults;
     const defaultRanges = {
       consultations: { start: -6, end: 0 },
       exams: { start: -6, end: 0 },
@@ -308,16 +277,11 @@ export class SectionManager {
       regulations: { start: -12, end: 0 },
       documents: { start: -24, end: 0 },
     };
-    const range =
-      dateRangeDefaults[this.sectionKey] || defaultRanges[this.sectionKey];
+    const range = dateRangeDefaults[this.sectionKey] || defaultRanges[this.sectionKey];
     if (this.elements.dateInitial)
-      this.elements.dateInitial.valueAsDate = Utils.calculateRelativeDate(
-        range.start
-      );
+      this.elements.dateInitial.valueAsDate = Utils.calculateRelativeDate(range.start);
     if (this.elements.dateFinal)
-      this.elements.dateFinal.valueAsDate = Utils.calculateRelativeDate(
-        range.end
-      );
+      this.elements.dateFinal.valueAsDate = Utils.calculateRelativeDate(range.end);
     // --- FIM DA CORREÇÃO ---
 
     (filterConfig[this.sectionKey] || []).forEach((filter) => {
@@ -328,15 +292,10 @@ export class SectionManager {
         const savedFilterSettings = layoutMap.get(filter.id);
         let defaultValue;
 
-        if (
-          savedFilterSettings &&
-          savedFilterSettings.defaultValue !== undefined
-        ) {
+        if (savedFilterSettings && savedFilterSettings.defaultValue !== undefined) {
           defaultValue = savedFilterSettings.defaultValue;
         } else {
-          defaultValue =
-            filter.defaultChecked ??
-            (filter.options ? filter.options[0].value : '');
+          defaultValue = filter.defaultChecked ?? (filter.options ? filter.options[0].value : '');
         }
 
         if (el.type === 'checkbox') {
@@ -371,14 +330,11 @@ export class SectionManager {
   }
 
   updateActiveFiltersIndicator() {
-    const indicator = this.elements.toggleMoreBtn?.querySelector(
-      'span:not(.button-text)'
-    );
+    const indicator = this.elements.toggleMoreBtn?.querySelector('span:not(.button-text)');
     if (!indicator || !this.elements.moreFilters) return;
     const isShown = this.elements.moreFilters.classList.contains('show');
     let activeCount = 0;
-    const filterElements =
-      this.elements.moreFilters.querySelectorAll('input, select');
+    const filterElements = this.elements.moreFilters.querySelectorAll('input, select');
     filterElements.forEach((el) => {
       if (
         (el.type === 'select-one' || el.type === 'select') &&
@@ -400,6 +356,7 @@ export class SectionManager {
   }
 
   saveFilterSet() {
+    // eslint-disable-next-line no-alert
     const name = window.prompt('Digite um nome para o conjunto de filtros:');
     if (!name || name.trim() === '') {
       Utils.showMessage('Nome inválido. O filtro não foi salvo.');
@@ -410,9 +367,7 @@ export class SectionManager {
     if (!savedSets[this.sectionKey]) {
       savedSets[this.sectionKey] = [];
     }
-    const existingIndex = savedSets[this.sectionKey].findIndex(
-      (set) => set.name === name
-    );
+    const existingIndex = savedSets[this.sectionKey].findIndex((set) => set.name === name);
     const filterValues = this.getFilterValues();
     const newSet = { name, values: filterValues };
     if (existingIndex > -1) {
@@ -426,14 +381,10 @@ export class SectionManager {
   }
 
   loadFilterSet() {
-    const select = document.getElementById(
-      `${this.prefix}-saved-filters-select`
-    );
+    const select = document.getElementById(`${this.prefix}-saved-filters-select`);
     const name = select.value;
     if (!name) return;
-    const set = (store.getSavedFilterSets()[this.sectionKey] || []).find(
-      (s) => s.name === name
-    );
+    const set = (store.getSavedFilterSets()[this.sectionKey] || []).find((s) => s.name === name);
     if (!set) return;
     Object.entries(set.values).forEach(([id, value]) => {
       const el = document.getElementById(id);
@@ -450,18 +401,15 @@ export class SectionManager {
   }
 
   deleteFilterSet() {
-    const select = document.getElementById(
-      `${this.prefix}-saved-filters-select`
-    );
+    const select = document.getElementById(`${this.prefix}-saved-filters-select`);
     const name = select.value;
     if (!name) {
       Utils.showMessage('Selecione um filtro para apagar.');
       return;
     }
 
-    const confirmation = window.confirm(
-      `Tem certeza que deseja apagar o filtro "${name}"?`
-    );
+    // eslint-disable-next-line no-alert
+    const confirmation = window.confirm(`Tem certeza que deseja apagar o filtro "${name}"?`);
     if (!confirmation) return;
 
     const savedSets = store.getSavedFilterSets();
@@ -474,9 +422,7 @@ export class SectionManager {
   }
 
   populateSavedFilterDropdown() {
-    const select = document.getElementById(
-      `${this.prefix}-saved-filters-select`
-    );
+    const select = document.getElementById(`${this.prefix}-saved-filters-select`);
     if (!select) return;
     const currentSelection = select.value;
     select.innerHTML = '<option value="">Carregar filtro...</option>';
@@ -493,8 +439,7 @@ export class SectionManager {
   renderFilterControls() {
     try {
       const sectionFilters = filterConfig[this.sectionKey] || [];
-      const sectionLayout =
-        this.globalSettings.filterLayout[this.sectionKey] || [];
+      const sectionLayout = this.globalSettings.filterLayout[this.sectionKey] || [];
       const layoutMap = new Map(sectionLayout.map((f) => [f.id, f]));
 
       const sortedItems = [...sectionFilters].sort((a, b) => {
@@ -507,12 +452,9 @@ export class SectionManager {
       if (this.elements.moreFilters) this.elements.moreFilters.innerHTML = '';
 
       sortedItems.forEach((item) => {
-        const location =
-          layoutMap.get(item.id)?.location || item.defaultLocation;
+        const location = layoutMap.get(item.id)?.location || item.defaultLocation;
         const container =
-          location === 'main'
-            ? this.elements.mainFilters
-            : this.elements.moreFilters;
+          location === 'main' ? this.elements.mainFilters : this.elements.moreFilters;
 
         if (container) {
           let element;
@@ -533,12 +475,12 @@ export class SectionManager {
 
   createUiComponent(componentName) {
     switch (componentName) {
-    case 'date-range':
-      return this.renderDateRangeComponent();
-    case 'saved-filters':
-      return this.renderSavedFiltersComponent();
-    default:
-      return null;
+      case 'date-range':
+        return this.renderDateRangeComponent();
+      case 'saved-filters':
+        return this.renderSavedFiltersComponent();
+      default:
+        return null;
     }
   }
 
@@ -555,12 +497,8 @@ export class SectionManager {
             <input type="date" id="${this.prefix}-date-final" class="mt-1 w-full px-2 py-1 border border-slate-300 rounded-md"/>
         </div>
       `;
-    this.elements.dateInitial = container.querySelector(
-      `#${this.prefix}-date-initial`
-    );
-    this.elements.dateFinal = container.querySelector(
-      `#${this.prefix}-date-final`
-    );
+    this.elements.dateInitial = container.querySelector(`#${this.prefix}-date-initial`);
+    this.elements.dateFinal = container.querySelector(`#${this.prefix}-date-final`);
     return container;
   }
 
@@ -594,35 +532,35 @@ export class SectionManager {
       elementHtml += `<label for="${filter.id}" class="block font-medium mb-1 text-sm">${filter.label}</label>`;
     }
     switch (filter.type) {
-    case 'text':
-      elementHtml += `<input type="text" id="${filter.id}" placeholder="${
-        filter.placeholder || ''
-      }" class="w-full px-2 py-1 border border-slate-300 rounded-md">`;
-      break;
-    case 'select':
-    case 'selectGroup':
-      elementHtml += `<select id="${filter.id}" class="w-full px-2 py-1 border border-slate-300 rounded-md bg-white">`;
+      case 'text':
+        elementHtml += `<input type="text" id="${filter.id}" placeholder="${
+          filter.placeholder || ''
+        }" class="w-full px-2 py-1 border border-slate-300 rounded-md">`;
+        break;
+      case 'select':
+      case 'selectGroup':
+        elementHtml += `<select id="${filter.id}" class="w-full px-2 py-1 border border-slate-300 rounded-md bg-white">`;
 
-      if (
-        filter.id === 'regulation-filter-priority' &&
+        if (
+          filter.id === 'regulation-filter-priority' &&
           this.globalSettings.regulationPriorities
-      ) {
-        elementHtml += '<option value="todas">Todas</option>';
-        this.globalSettings.regulationPriorities.forEach((prio) => {
-          elementHtml += `<option value="${prio.coreDescricao}">${prio.coreDescricao}</option>`;
-        });
-      } else {
-        (filter.options || []).forEach((opt) => {
-          elementHtml += `<option value="${opt.value}">${opt.text}</option>`;
-        });
-      }
-      elementHtml += '</select>';
-      break;
-    case 'checkbox':
-      container.className = 'flex items-center';
-      elementHtml += `<input id="${filter.id}" type="checkbox" class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+        ) {
+          elementHtml += '<option value="todas">Todas</option>';
+          this.globalSettings.regulationPriorities.forEach((prio) => {
+            elementHtml += `<option value="${prio.coreDescricao}">${prio.coreDescricao}</option>`;
+          });
+        } else {
+          (filter.options || []).forEach((opt) => {
+            elementHtml += `<option value="${opt.value}">${opt.text}</option>`;
+          });
+        }
+        elementHtml += '</select>';
+        break;
+      case 'checkbox':
+        container.className = 'flex items-center';
+        elementHtml += `<input id="${filter.id}" type="checkbox" class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
                           <label for="${filter.id}" class="ml-2 block text-sm text-slate-700">${filter.label}</label>`;
-      break;
+        break;
     }
     container.innerHTML = elementHtml;
     return container;
@@ -636,8 +574,7 @@ export class SectionManager {
     if (filterSettings.dateRange) {
       const { start, end } = filterSettings.dateRange;
       if (this.elements.dateInitial && start !== null && !isNaN(start)) {
-        this.elements.dateInitial.valueAsDate =
-          Utils.calculateRelativeDate(start);
+        this.elements.dateInitial.valueAsDate = Utils.calculateRelativeDate(start);
       }
       if (this.elements.dateFinal && end !== null && !isNaN(end)) {
         this.elements.dateFinal.valueAsDate = Utils.calculateRelativeDate(end);

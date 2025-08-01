@@ -1,0 +1,30 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "🎨 Format & Lint: Auto-Fix All",
+      "type": "shell",
+      "command": "npm",
+      "args": ["run", "lint:fix"],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "🏥 Health Check: Project Status",
+      "type": "shell",
+      "command": "npm",
+      "args": ["run", "health-check"],
+      "problemMatcher": []
+    },
+    {
+      "label": "✅ Pre-Commit: Check Files",
+      "type": "shell",
+      "command": "npm",
+      "args": ["run", "pre-commit"],
+      "problemMatcher": []
+    }
+  ]
+}

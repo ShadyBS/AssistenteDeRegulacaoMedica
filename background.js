@@ -27,10 +27,7 @@ api.runtime.onMessage.addListener(async (message) => {
         );
       }
     } catch (e) {
-      console.error(
-        '[Assistente Background] Falha ao buscar ou salvar dados da regulação:',
-        e
-      );
+      console.error('[Assistente Background] Falha ao buscar ou salvar dados da regulação:', e);
     }
     return true;
   }
@@ -52,9 +49,7 @@ api.runtime.onInstalled.addListener((details) => {
   if (api.sidePanel) {
     api.sidePanel
       .setPanelBehavior({ openPanelOnActionClick: false })
-      .catch((e) =>
-        console.error('Falha ao definir o comportamento do sidePanel:', e)
-      );
+      .catch((e) => console.error('Falha ao definir o comportamento do sidePanel:', e));
   }
 
   api.contextMenus.create({
