@@ -7,6 +7,25 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased]
 
+
+### 🛠️ Refactor & Linting
+
+#### Fixed
+- Correção de todos os erros de lint (ESLint, StyleLint)
+- Padronização de aspas simples em todo o código
+- Remoção de variáveis não utilizadas
+- Refatoração de todos os diálogos (alert/confirm) para modais customizados (`Utils.showDialog`)
+- Substituição de `window.location.reload` e `window.open` por APIs seguras de extensão (`browser.runtime.reload`, `browser.tabs.create`)
+- Correção de race condition no feedback de UI do botão de copiar para área de transferência
+
+#### Changed
+- Garantia de uso de ES6 modules e padrões de projeto
+- Adequação total ao Manifest V3 e CSP
+- Melhoria da compatibilidade cross-browser (Chrome/Firefox/Edge)
+- Garantia de não exposição de dados médicos sensíveis em logs ou UI
+
+---
+
 ### 🎉 Major: Pipeline CI/CD Completo
 
 #### Added

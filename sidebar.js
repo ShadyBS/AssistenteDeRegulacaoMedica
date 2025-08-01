@@ -377,7 +377,10 @@ async function init() {
         );
       }
       if (reloadSidebar) {
-        reloadSidebar.addEventListener('click', () => window.location.reload());
+        reloadSidebar.addEventListener('click', () => {
+          const api = browser || chrome;
+          api.runtime.reload();
+        });
       }
 
       // **não retornamos mais aqui**, apenas marcamos que deu “fallback”
@@ -710,10 +713,14 @@ function addGlobalEventListeners() {
       if (patient && patient.ficha) {
         Utils.showDialog({
           message: 'Um paciente está selecionado e o estado atual será perdido. Deseja realmente recarregar o assistente?',
-          onConfirm: () => window.location.reload()
+          onConfirm: () => {
+            const api = browser || chrome;
+            api.runtime.reload();
+          }
         });
       } else {
-        window.location.reload();
+        const api = browser || chrome;
+        api.runtime.reload();
       }
     });
   }
@@ -748,7 +755,8 @@ function addGlobalEventListeners() {
     }
 
     if (areaName === 'sync' && changes.sectionHeaderStyles) {
-      window.location.reload();
+      const api = browser || chrome;
+      api.runtime.reload();
     }
 
     if (areaName === 'sync' && changes.enableAutomaticDetection) {
@@ -808,16 +816,17 @@ async function copyToClipboard(button) {
   const textToCopy = button.dataset.copyText;
   if (!textToCopy) return;
   button.dataset.inProgress = 'true';
+  const original = button;
   try {
     await navigator.clipboard.writeText(textToCopy);
-    button.textContent = '✅';
+    if (document.body.contains(original)) original.textContent = '✅';
   } catch (err) {
     console.error('Falha ao copiar texto: ', err);
-    button.textContent = '❌';
+    if (document.body.contains(original)) original.textContent = '❌';
   } finally {
     setTimeout(() => {
-      button.textContent = '📄';
-      button.dataset.inProgress = 'false';
+      if (document.body.contains(original)) original.textContent = '📄';
+      if (document.body.contains(original)) original.dataset.inProgress = 'false';
     }, 1200);
   }
 }
@@ -836,39 +845,26 @@ async function updateRecentPatients(patientData) {
 
 async function handleViewExamResult(button) {
   const { idp, ids } = button.dataset;
-  const newTab = window.open('', '_blank');
-  newTab.document.write('Carregando resultado do exame...');
-  try {
-    const filePath = await API.fetchResultadoExame({ idp, ids });
-    const baseUrl = await API.getBaseUrl();
-    if (filePath) {
-      const fullUrl = filePath.startsWith('http')
-        ? filePath
-        : `${baseUrl}${filePath}`;
-      newTab.location.href = fullUrl;
-    } else {
-      newTab.document.body.innerHTML = '<p>Resultado não encontrado.</p>';
-    }
-  } catch (error) {
-    newTab.document.body.innerHTML = `<p>Erro: ${error.message}</p>`;
+  const api = browser || chrome;
+  const filePath = await API.fetchResultadoExame({ idp, ids });
+  const baseUrl = await API.getBaseUrl();
+  let url = 'about:blank';
+  if (filePath) {
+    url = filePath.startsWith('http') ? filePath : `${baseUrl}${filePath}`;
   }
+  api.tabs.create({ url });
 }
 
 async function handleViewDocument(button) {
   const { idp, ids } = button.dataset;
-  const newTab = window.open('', '_blank');
-  newTab.document.write('Carregando documento...');
-
+  const api = browser || chrome;
   try {
     const docUrl = await API.fetchDocumentUrl({ idp, ids });
-    if (docUrl) {
-      newTab.location.href = docUrl;
-    } else {
-      newTab.document.body.innerHTML =
-        '<p>URL do documento não encontrada.</p>';
+    api.tabs.create({ url: docUrl || 'about:blank' });
+    if (!docUrl) {
+      console.warn('URL do documento não encontrada.');
     }
   } catch (error) {
-    newTab.document.body.innerHTML = `<p>Erro ao carregar documento: ${error.message}</p>`;
     console.error('Falha ao visualizar documento:', error);
   }
 }
