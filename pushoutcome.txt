@@ -79,9 +79,33 @@ EDGE Distribution:
 
    Config loaded: C:\AssistenteDeRegulacaoMedica\.htmlhintrc
 
-Scanned 12 files, no errors found (2518 ms).
+Scanned 12 files, no errors found (241 ms).
 
 > assistente-de-regulacao-medica@3.3.7 test:unit
-> jest --config config/jest/jest.unit.js
+> jest --config config/jest/jest.unit.cjs
 
+--------------------------------|---------|----------|---------|---------|-------------------
+File                            | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s 
+--------------------------------|---------|----------|---------|---------|-------------------
+All files                       |       0 |        0 |       0 |       0 |                   
+ AssistenteDeRegulacaoMedica    |       0 |        0 |       0 |       0 |                   
+  KeepAliveManager.js           |       0 |        0 |       0 |       0 | 8-97              
+  SectionManager.js             |       0 |        0 |       0 |       0 | 16-606            
+  TimelineManager.js            |       0 |        0 |       0 |       0 | 11-271            
+  api.js                        |       0 |        0 |       0 |       0 | 3-1080            
+  background.js                 |       0 |        0 |       0 |       0 | 5-68              
+  browser-polyfill.js           |       0 |        0 |       0 |       0 |                   
+  content-script.js             |       0 |        0 |       0 |       0 | 7-54              
+  field-config.js               |       0 |        0 |       0 |       0 | 16-335            
+  filter-config.js              |       0 |      100 |     100 |       0 | 19                
+  help.js                       |       0 |        0 |       0 |       0 | 1-23              
+  options.js                    |       0 |        0 |       0 |       0 | 8-1127            
+  renderers.js                  |       0 |        0 |       0 |       0 | 9-625             
+  sidebar.js                    |       0 |        0 |       0 |       0 | 10-1089           
+  store.js                      |       0 |        0 |       0 |       0 | 6-90              
+  utils.js                      |       0 |        0 |       0 |       0 | 9-434             
+ AssistenteDeRegulacaoMedica/ui |       0 |        0 |       0 |       0 |                   
+  patient-card.js               |       0 |        0 |       0 |       0 | 14-163            
+  search.js                     |       0 |        0 |       0 |       0 | 14-161            
+--------------------------------|---------|----------|---------|---------|-------------------
 husky - pre-push script failed (code 1)
