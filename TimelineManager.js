@@ -2,6 +2,7 @@
  * @file Módulo TimelineManager, responsável por gerir a secção da Linha do Tempo.
  */
 import * as API from './api.js';
+import { logError } from './ErrorHandler.js';
 import * as Renderers from './renderers.js';
 import { store } from './store.js';
 import * as Utils from './utils.js';
@@ -174,7 +175,9 @@ export class TimelineManager {
       this.allData = normalizedData;
       this.render();
     } catch (error) {
-      console.error('Erro ao buscar dados para a Linha do Tempo:', error);
+      logError('TIMELINE_DATA_FETCH', 'Erro ao buscar dados para a Linha do Tempo', {
+        errorMessage: error.message,
+      });
       Renderers.renderTimeline([], 'error');
     } finally {
       this.isLoading = false;

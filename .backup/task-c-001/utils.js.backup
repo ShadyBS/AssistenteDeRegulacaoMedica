@@ -1,5 +1,3 @@
-import { logError, logWarning } from './ErrorHandler.js';
-
 /**
  * Exibe um modal customizado de confirmação.
  * @param {Object} options
@@ -248,9 +246,7 @@ export function normalizeTimelineData(apiData) {
       });
     });
   } catch (e) {
-    logError('TIMELINE_NORMALIZATION', 'Failed to normalize consultation data for timeline', {
-      errorMessage: e.message,
-    });
+    console.error('Failed to normalize consultation data for timeline:', e);
   }
 
   // Normalize Exams
@@ -278,9 +274,7 @@ export function normalizeTimelineData(apiData) {
       });
     });
   } catch (e) {
-    logError('TIMELINE_NORMALIZATION', 'Failed to normalize exam data for timeline', {
-      errorMessage: e.message,
-    });
+    console.error('Failed to normalize exam data for timeline:', e);
   }
 
   // Normalize Appointments
@@ -305,9 +299,7 @@ export function normalizeTimelineData(apiData) {
       });
     });
   } catch (e) {
-    logError('TIMELINE_NORMALIZATION', 'Failed to normalize appointment data for timeline', {
-      errorMessage: e.message,
-    });
+    console.error('Failed to normalize appointment data for timeline:', e);
   }
 
   // Normalize Regulations
@@ -330,9 +322,7 @@ export function normalizeTimelineData(apiData) {
       });
     });
   } catch (e) {
-    logError('TIMELINE_NORMALIZATION', 'Failed to normalize regulation data for timeline', {
-      errorMessage: e.message,
-    });
+    console.error('Failed to normalize regulation data for timeline:', e);
   }
 
   // --- INÍCIO DA MODIFICAÇÃO ---
@@ -353,9 +343,7 @@ export function normalizeTimelineData(apiData) {
       });
     });
   } catch (e) {
-    logError('TIMELINE_NORMALIZATION', 'Failed to normalize document data for timeline', {
-      errorMessage: e.message,
-    });
+    console.error('Failed to normalize document data for timeline:', e);
   }
   // --- FIM DA MODIFICAÇÃO ---
 
@@ -442,11 +430,7 @@ export function filterTimelineEvents(events, automationFilters) {
           return true;
       }
     } catch (e) {
-      logWarning(
-        'TIMELINE_FILTERING',
-        'Error filtering timeline event, it will be included by default',
-        { eventType: event?.type, errorMessage: e.message }
-      );
+      console.warn('Error filtering timeline event, it will be included by default:', event, e);
       return true;
     }
   });

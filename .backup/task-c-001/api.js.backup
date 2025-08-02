@@ -85,10 +85,7 @@ export async function fetchRegulationPriorities() {
   try {
     const response = await fetch(url);
     if (!response.ok) {
-      logWarning('SIGSS_API', 'Não foi possível buscar as prioridades de regulação', {
-        status: response.status,
-        statusText: response.statusText,
-      });
+      console.error('Não foi possível buscar as prioridades de regulação.');
       return [];
     }
     const data = await response.json();
@@ -97,7 +94,7 @@ export async function fetchRegulationPriorities() {
       .filter((p) => p.coreIsAtivo === 't')
       .sort((a, b) => a.coreOrdemExibicao - b.coreOrdemExibicao);
   } catch (error) {
-    logError('SIGSS_API', 'Erro de rede ao buscar prioridades', { errorMessage: error.message });
+    console.error('Erro de rede ao buscar prioridades:', error);
     return []; // Retorna lista vazia em caso de falha de rede
   }
 }
@@ -111,10 +108,7 @@ export async function fetchRegulationPriorities() {
  */
 export async function clearRegulationLock({ reguIdp, reguIds }) {
   if (!reguIdp || !reguIds) {
-    logWarning('REGULATION_LOCK', 'IDs da regulação não fornecidos para limpeza de lock', {
-      hasReguIdp: !!reguIdp,
-      hasReguIds: !!reguIds,
-    });
+    console.warn('[Assistente] IDs da regulação não fornecidos para limpeza de lock.');
     return false;
   }
 
@@ -134,23 +128,17 @@ export async function clearRegulationLock({ reguIdp, reguIds }) {
     });
 
     if (response.ok) {
-      logInfo('REGULATION_LOCK', 'Lock da regulação liberado com sucesso', {
-        lockIdProvided: !!lockId,
-      });
+      console.log(`[Assistente] Lock da regulação ${lockId} liberado com sucesso.`);
       return true;
     } else {
-      logWarning('REGULATION_LOCK', 'Falha ao liberar lock da regulação', {
-        status: response.status,
-        statusText: response.statusText,
-        lockIdProvided: !!lockId,
-      });
+      console.warn(
+        `[Assistente] Falha ao liberar lock da regulação ${lockId}: ${response.status} ${response.statusText}`
+      );
       return false;
     }
   } catch (error) {
     // Ignora erros conforme solicitado
-    logWarning('REGULATION_LOCK', 'Erro ao liberar lock da regulação', {
-      errorMessage: error.message,
-    });
+    console.warn('[Assistente] Erro ao liberar lock da regulação:', error);
     return false;
   }
 }
@@ -428,11 +416,7 @@ export async function fetchVisualizaUsuario({ idp, ids }) {
     const patientData = await response.json();
     return patientData?.usuarioServico || {};
   } else {
-    logError(
-      'SESSION_MANAGEMENT',
-      'A resposta do servidor não foi JSON. Provável expiração de sessão',
-      { contentType }
-    );
+    console.error('A resposta do servidor não foi JSON. Provável expiração de sessão.');
     throw new Error('A sessão pode ter expirado. Por favor, faça login no sistema novamente.');
   }
 }
@@ -623,10 +607,7 @@ export async function fetchCadsusData({ cpf, cns }) {
   });
 
   if (!response.ok) {
-    logWarning('CADSUS_API', 'A busca no CADSUS falhou', {
-      status: response.status,
-      statusText: response.statusText,
-    });
+    console.warn(`A busca no CADSUS falhou com status ${response.status}.`);
     return null;
   }
 
@@ -656,12 +637,7 @@ export async function fetchAppointmentDetails({ idp, ids }) {
   });
 
   if (!response.ok) {
-    logError('SIGSS_API', 'Falha ao buscar detalhes do agendamento', {
-      status: response.status,
-      statusText: response.statusText,
-      hasIdp: !!idp,
-      hasIds: !!ids,
-    });
+    console.error(`Falha ao buscar detalhes do agendamento ${idp}-${ids}`);
     return null;
   }
   const data = await response.json();
@@ -781,10 +757,7 @@ export async function fetchAppointments({ isenPK, dataInicial, dataFinal }) {
           };
         }
       } catch (error) {
-        logWarning('SIGSS_API', 'Falha ao buscar detalhes para o agendamento', {
-          appointmentId: appt.id,
-          errorMessage: error.message,
-        });
+        console.warn(`Falha ao buscar detalhes para o agendamento ${appt.id}`, error);
       }
       return appt;
     });
@@ -913,10 +886,7 @@ export async function fetchAllRegulations({ isenPK, dataInicial, dataFinal, type
           });
           return { ...regulation, attachments };
         } catch (error) {
-          logWarning('SIGSS_API', 'Falha ao buscar anexos para regulação', {
-            regulationId: regulation.id,
-            errorMessage: error.message,
-          });
+          console.warn(`Falha ao buscar anexos para regulação ${regulation.id}:`, error);
           return { ...regulation, attachments: [] };
         }
       }
@@ -1143,9 +1113,7 @@ export async function fetchAllTimelineData({ isenPK, isenFullPKCrypto, dataInici
       }
       return result.value; // For others
     }
-    logWarning('TIMELINE_API', 'Falha em chamada de API para a timeline', {
-      reason: result.reason,
-    });
+    console.warn('Falha em chamada de API para a timeline:', result.reason);
     return defaultValue;
   };
 
@@ -1175,21 +1143,15 @@ export async function keepSessionAlive() {
     });
 
     if (!response.ok) {
-      logWarning('SESSION_MANAGEMENT', 'Keep-alive falhou', {
-        status: response.status,
-        statusText: response.statusText,
-      });
+      console.warn(`Keep-alive falhou com status ${response.status}`);
       return false;
     }
 
     const data = await response.json();
-    logInfo('SESSION_MANAGEMENT', 'Sessão mantida ativa', {
-      sessionActive: true,
-      hasSessionData: !!data,
-    });
+    console.log('Sessão mantida ativa:', data);
     return true;
   } catch (error) {
-    logError('SESSION_MANAGEMENT', 'Erro ao manter sessão ativa', { errorMessage: error.message });
+    console.error('Erro ao manter sessão ativa:', error);
     return false;
   }
 }

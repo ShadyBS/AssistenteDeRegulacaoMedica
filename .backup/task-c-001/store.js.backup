@@ -3,8 +3,6 @@
  * Implementa um padrão simples de "publish-subscribe" para gerir o estado global.
  */
 
-import { logError } from './ErrorHandler.js';
-
 const state = {
   currentPatient: {
     ficha: null,
@@ -40,7 +38,7 @@ export const store = {
       try {
         listener();
       } catch (error) {
-        logError('STORE_LISTENER', 'Erro num listener do store', { errorMessage: error.message });
+        console.error('Erro num listener do store:', error);
       }
     }
   },
