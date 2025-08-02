@@ -569,6 +569,14 @@ function init(config, callbacks) {
 /* harmony import */ var _ui_search_js__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(889);
 /* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(239);
 
+/**
+ * 🏥 ASSISTENTE DE REGULAÇÃO MÉDICA - MAIN UI
+ *
+ * 🚨 ANTES DE MODIFICAR: Leia obrigatoriamente agents.md
+ * 📋 Instruções IA: .github/instructions/agents.md.instructions.md
+ * 🔒 Projeto médico - dados sensíveis - nunca logar CPF/CNS/dados pessoais
+ */
+
 // Cross-browser API alias (lint-safe)
 const api = typeof browser !== 'undefined' ? browser : typeof chrome !== 'undefined' ? chrome : {};
 
@@ -1127,6 +1135,11 @@ function _handleRegulationLoaded() {
 function applyAutomationRules(_x3) {
   return _applyAutomationRules.apply(this, arguments);
 }
+/**
+ * Lida com mudanças no storage da extensão.
+ * @param {object} changes - Objeto com as mudanças.
+ * @param {string} areaName - A área do storage que mudou ('sync' ou 'local').
+ */
 function _applyAutomationRules() {
   _applyAutomationRules = (0,bluebird__WEBPACK_IMPORTED_MODULE_0__.coroutine)(function* (regulationData) {
     const {
@@ -1153,7 +1166,32 @@ function _applyAutomationRules() {
   });
   return _applyAutomationRules.apply(this, arguments);
 }
-let listenersAdded = false;
+function handleStorageChange(changes, areaName) {
+  if (areaName === 'local' && changes.pendingRegulation) {
+    // Apenas processa se a detecção automática estiver LIGADA
+    api.storage.sync.get({
+      enableAutomaticDetection: true
+    }).then(settings => {
+      if (settings.enableAutomaticDetection) {
+        const {
+          newValue
+        } = changes.pendingRegulation;
+        if (newValue && newValue.isenPKIdp) {
+          console.log('[Assistente Sidebar] Nova regulação detectada via storage.onChanged:', newValue);
+          handleRegulationLoaded(newValue);
+          api.storage.local.remove('pendingRegulation');
+        }
+      }
+    });
+  }
+  if (areaName === 'sync' && changes.sectionHeaderStyles) {
+    api.runtime.reload();
+  }
+  if (areaName === 'sync' && changes.enableAutomaticDetection) {
+    // Mantém o botão da sidebar sincronizado com a configuração
+    setupAutoModeToggle();
+  }
+}
 function addGlobalEventListeners() {
   const mainContent = document.getElementById('main-content');
   const infoModal = document.getElementById('info-modal');
@@ -1161,26 +1199,7 @@ function addGlobalEventListeners() {
   const infoBtn = document.getElementById('context-info-btn');
   const reloadBtn = document.getElementById('reload-sidebar-btn');
 
-  // Remove listeners antes de adicionar novamente
-  if (listenersAdded) {
-    if (reloadBtn && globalListeners.onReloadBtnClick) {
-      reloadBtn.removeEventListener('click', globalListeners.onReloadBtnClick);
-    }
-    if (modalCloseBtn && globalListeners.onModalCloseBtnClick) {
-      modalCloseBtn.removeEventListener('click', globalListeners.onModalCloseBtnClick);
-    }
-    if (infoModal && globalListeners.onInfoModalClick) {
-      infoModal.removeEventListener('click', globalListeners.onInfoModalClick);
-    }
-    if (mainContent && globalListeners.onMainContentClick) {
-      mainContent.removeEventListener('click', globalListeners.onMainContentClick);
-    }
-    if (infoBtn && globalListeners.onInfoBtnClick) {
-      infoBtn.removeEventListener('click', globalListeners.onInfoBtnClick);
-    }
-  }
-
-  // Create named functions for listeners
+  // Create named functions for listeners to allow removal
   if (!globalListeners.onReloadBtnClick) {
     globalListeners.onReloadBtnClick = function () {
       const patient = _store_js__WEBPACK_IMPORTED_MODULE_5__/* .store */ .M.getPatient();
@@ -1234,41 +1253,17 @@ function addGlobalEventListeners() {
       modal.classList.remove('hidden');
     };
   }
+
+  // Add listeners
   if (reloadBtn) reloadBtn.addEventListener('click', globalListeners.onReloadBtnClick);
   if (modalCloseBtn) modalCloseBtn.addEventListener('click', globalListeners.onModalCloseBtnClick);
   if (infoModal) infoModal.addEventListener('click', globalListeners.onInfoModalClick);
   if (mainContent) mainContent.addEventListener('click', globalListeners.onMainContentClick);
   if (infoBtn) infoBtn.addEventListener('click', globalListeners.onInfoBtnClick);
-  listenersAdded = true;
 
-  // Listener do storage não precisa ser removido, pois é singleton
+  // Add storage listener only once
   if (!addGlobalEventListeners.storageListenerAdded) {
-    api.storage.onChanged.addListener((changes, areaName) => {
-      if (areaName === 'local' && changes.pendingRegulation) {
-        // Apenas processa se a detecção automática estiver LIGADA
-        api.storage.sync.get({
-          enableAutomaticDetection: true
-        }).then(settings => {
-          if (settings.enableAutomaticDetection) {
-            const {
-              newValue
-            } = changes.pendingRegulation;
-            if (newValue && newValue.isenPKIdp) {
-              console.log('[Assistente Sidebar] Nova regulação detectada via storage.onChanged:', newValue);
-              handleRegulationLoaded(newValue);
-              api.storage.local.remove('pendingRegulation');
-            }
-          }
-        });
-      }
-      if (areaName === 'sync' && changes.sectionHeaderStyles) {
-        api.runtime.reload();
-      }
-      if (areaName === 'sync' && changes.enableAutomaticDetection) {
-        // Mantém o botão da sidebar sincronizado com a configuração
-        setupAutoModeToggle();
-      }
-    });
+    api.storage.onChanged.addListener(handleStorageChange);
     addGlobalEventListeners.storageListenerAdded = true;
   }
 }
@@ -1585,7 +1580,11 @@ function handleShowAppointmentInfo(button) {
 }
 function checkForPendingRegulation() {
   return _checkForPendingRegulation.apply(this, arguments);
-} // Initialize with removable listener
+}
+/**
+ * Função de limpeza para remover todos os event listeners globais.
+ * Previne memory leaks, especialmente em ambientes de desenvolvimento com hot-reloading.
+ */
 function _checkForPendingRegulation() {
   _checkForPendingRegulation = (0,bluebird__WEBPACK_IMPORTED_MODULE_0__.coroutine)(function* () {
     try {
@@ -1602,8 +1601,45 @@ function _checkForPendingRegulation() {
   });
   return _checkForPendingRegulation.apply(this, arguments);
 }
+function cleanupEventListeners() {
+  console.log('[Assistente] Removendo event listeners globais para limpeza.');
+  const mainContent = document.getElementById('main-content');
+  const infoModal = document.getElementById('info-modal');
+  const modalCloseBtn = document.getElementById('modal-close-btn');
+  const infoBtn = document.getElementById('context-info-btn');
+  const reloadBtn = document.getElementById('reload-sidebar-btn');
+  const toggle = document.getElementById('auto-mode-toggle');
+  const openOptions = document.getElementById('open-options-from-warning');
+  const reloadSidebar = document.getElementById('reload-sidebar-from-warning');
+
+  // Remover listeners de elementos DOM
+  if (reloadBtn && globalListeners.onReloadBtnClick) reloadBtn.removeEventListener('click', globalListeners.onReloadBtnClick);
+  if (modalCloseBtn && globalListeners.onModalCloseBtnClick) modalCloseBtn.removeEventListener('click', globalListeners.onModalCloseBtnClick);
+  if (infoModal && globalListeners.onInfoModalClick) infoModal.removeEventListener('click', globalListeners.onInfoModalClick);
+  if (mainContent && globalListeners.onMainContentClick) mainContent.removeEventListener('click', globalListeners.onMainContentClick);
+  if (infoBtn && globalListeners.onInfoBtnClick) infoBtn.removeEventListener('click', globalListeners.onInfoBtnClick);
+  if (toggle && globalListeners.onAutoModeToggleChange) toggle.removeEventListener('change', globalListeners.onAutoModeToggleChange);
+  if (openOptions && globalListeners.onOpenOptionsClick) openOptions.removeEventListener('click', globalListeners.onOpenOptionsClick);
+  if (reloadSidebar && globalListeners.onReloadSidebarClick) reloadSidebar.removeEventListener('click', globalListeners.onReloadSidebarClick);
+
+  // Remover listener do documento
+  if (globalListeners.onDOMContentLoaded) {
+    document.removeEventListener('DOMContentLoaded', globalListeners.onDOMContentLoaded);
+  }
+
+  // Remover listener da API de storage
+  if (api.storage.onChanged.hasListener(handleStorageChange)) {
+    api.storage.onChanged.removeListener(handleStorageChange);
+  }
+}
+
+// Initialize with removable listener
 globalListeners.onDOMContentLoaded = init;
 document.addEventListener('DOMContentLoaded', globalListeners.onDOMContentLoaded);
+
+// Adiciona o listener de limpeza para quando a página da sidebar for descarregada
+// eslint-disable-next-line no-restricted-globals
+window.addEventListener('pagehide', cleanupEventListeners);
 
 /***/ }),
 

@@ -9,6 +9,17 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ### ✨ Added
 
+- **🏥 ErrorHandler - Sistema de Logging Médico Centralizado**: Implementado sistema completo de logging com sanitização automática de dados médicos para compliance LGPD/HIPAA
+  - Sanitização automática de campos sensíveis (CPF, CNS, nomes, endereços)
+  - Preservação de IDs técnicos necessários para debugging (reguId, isenPK, etc.)
+  - Categorização específica para ambiente médico (SIGSS_API, MEDICAL_DATA, SECURITY, etc.)
+  - Performance tracking para operações críticas
+  - Storage rotativo de errors críticos para auditoria
+  - Observer pattern para monitoring adicional
+  - Global error handling com detecção de CSP violations
+  - Cross-browser compatibility com fallbacks seguros
+- Integração completa do ErrorHandler em `api.js`, `background.js` e `content-script.js`
+- Testes unitários completos para validação de compliance médico
 - Adicionada liberação automática de locks de regulação após buscar detalhes, prevenindo bloqueios de registro no SIGSS.
 
 ### 🛠️ Refactor & Linting

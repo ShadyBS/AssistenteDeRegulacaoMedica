@@ -180,6 +180,48 @@ await clearRegulationLock(reguId);
 - **Medical data**: NUNCA log/expose dados sensíveis
 - **Cobertura**: > 80% em funções críticas
 
+### 🏥 ErrorHandler - OBRIGATÓRIO
+
+**SEMPRE use ErrorHandler para logging em extensão médica:**
+
+```javascript
+// ✅ CORRETO: Import e uso do ErrorHandler
+import { logInfo, logError, ERROR_CATEGORIES } from './ErrorHandler.js';
+
+// ✅ Logging de dados médicos (sanitização automática)
+logInfo(
+  'Paciente processado',
+  {
+    reguId: 'REG_123', // ✅ ID técnico preservado
+    cpf: '123.456.789-01', // 🔒 Automaticamente sanitizado
+  },
+  ERROR_CATEGORIES.MEDICAL_DATA
+);
+
+// ❌ NUNCA: Console.log direto com dados sensíveis
+console.log('Paciente:', { cpf: '123.456.789-01' }); // ❌ PROIBIDO
+```
+
+#### Categorias Obrigatórias
+
+```javascript
+ERROR_CATEGORIES.MEDICAL_DATA; // Dados de pacientes
+ERROR_CATEGORIES.SIGSS_API; // Chamadas SIGSS
+ERROR_CATEGORIES.SECURITY; // Questões de segurança
+ERROR_CATEGORIES.CONTENT_SCRIPT; // Content script logs
+ERROR_CATEGORIES.BACKGROUND_SCRIPT; // Background logs
+```
+
+#### Performance Tracking
+
+```javascript
+// ✅ Tracking de operações médicas críticas
+const handler = getErrorHandler();
+handler.startPerformanceMark('buscarPaciente');
+const result = await API.buscarPaciente(cpf);
+handler.endPerformanceMark('buscarPaciente', ERROR_CATEGORIES.MEDICAL_DATA);
+```
+
 ### Bibliotecas Preferidas
 
 - **CSS**: TailwindCSS v3.4.1 (não Bootstrap)

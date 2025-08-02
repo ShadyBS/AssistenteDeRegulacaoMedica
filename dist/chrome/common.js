@@ -1,6 +1,553 @@
 "use strict";
 (self["webpackChunkassistente_de_regulacao_medica"] = self["webpackChunkassistente_de_regulacao_medica"] || []).push([[76,984],{
 
+/***/ 322:
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   FF: () => (/* binding */ logWarning),
+/* harmony export */   L9: () => (/* binding */ getErrorHandler),
+/* harmony export */   Uu: () => (/* binding */ ERROR_CATEGORIES),
+/* harmony export */   fH: () => (/* binding */ logInfo),
+/* harmony export */   vV: () => (/* binding */ logError)
+/* harmony export */ });
+/* unused harmony exports ERROR_LEVELS, ErrorHandler, MedicalErrorHandler, logFatal, logDebug, sanitizeForLog */
+/**
+ * 🏥 ASSISTENTE DE REGULAÇÃO MÉDICA - ERROR HANDLER CENTRALIZADO
+ *
+ * 🔒 ATENÇÃO: Este módulo lida com dados médicos sensíveis
+ * 📋 Compliance: LGPD, HIPAA, Lei Geral de Proteção de Dados
+ * 🚨 NUNCA logar: CPF, CNS, nomes completos, dados demográficos
+ */
+
+/**
+ * Níveis de severidade para logging médico
+ */
+const ERROR_LEVELS = {
+  TRACE: 0,
+  // Debugging detalhado (apenas dev)
+  DEBUG: 1,
+  // Informações de debug (apenas dev)
+  INFO: 2,
+  // Informações gerais (produção OK)
+  WARN: 3,
+  // Avisos (produção OK)
+  ERROR: 4,
+  // Erros (produção OK)
+  FATAL: 5 // Erros críticos (produção OK)
+};
+
+/**
+ * Categorias de erro específicas para ambiente médico
+ */
+const ERROR_CATEGORIES = {
+  // APIs médicas
+  SIGSS_API: 'sigss_api',
+  CADSUS_API: 'cadsus_api',
+  MEDICAL_DATA: 'medical_data',
+  // Extensão
+  EXTENSION_LIFECYCLE: 'extension_lifecycle',
+  CONTENT_SCRIPT: 'content_script',
+  BACKGROUND_SCRIPT: 'background_script',
+  // Segurança
+  SECURITY: 'security',
+  PERMISSIONS: 'permissions',
+  CSP_VIOLATION: 'csp_violation',
+  // Performance
+  MEMORY: 'memory',
+  STORAGE: 'storage',
+  NETWORK: 'network',
+  // UI/UX
+  USER_INTERFACE: 'user_interface',
+  USER_INPUT: 'user_input'
+};
+
+/**
+ * Campos médicos sensíveis que NUNCA devem ser logados
+ */
+const SENSITIVE_MEDICAL_FIELDS = [
+// Identificação pessoal
+'cpf', 'rg', 'cns', 'cartao_sus', 'nome', 'nome_completo', 'nome_mae', 'nome_pai',
+// Dados demográficos
+'data_nascimento', 'idade', 'sexo', 'genero', 'endereco', 'rua', 'numero', 'bairro', 'cidade', 'cep', 'telefone', 'celular', 'email',
+// Dados médicos específicos
+'diagnostico', 'cid', 'procedimento', 'medicamento', 'dosagem', 'tratamento',
+// Tokens e IDs sensíveis (alguns são OK para log)
+'senha', 'password', 'token_acesso'];
+
+/**
+ * Campos OK para logging (IDs técnicos necessários para debug)
+ */
+const LOGGABLE_TECHNICAL_FIELDS = ['id', 'uuid', 'reguId', 'reguIdp', 'reguIds', 'isenPK', 'isenFullPKCrypto', 'sessionId', 'requestId', 'transactionId', 'correlationId'];
+
+/**
+ * Configurações do ErrorHandler baseadas no ambiente
+ */
+const getConfig = () => {
+  let isDevelopment = false;
+  try {
+    // Detectar ambiente de desenvolvimento baseado na versão da extensão
+    isDevelopment = typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.getManifest && chrome.runtime.getManifest().version.includes('dev');
+  } catch {
+    // Fallback para produção se não conseguir acessar manifest
+    isDevelopment = false;
+  }
+  return {
+    // Nível mínimo para logging
+    minLevel: isDevelopment ? ERROR_LEVELS.DEBUG : ERROR_LEVELS.INFO,
+    // Habilitar console.log em produção (com sanitização)
+    enableConsoleLogging: true,
+    // Habilitar storage de errors críticos
+    enableErrorStorage: true,
+    // Máximo de errors no storage (rotação)
+    maxStoredErrors: 100,
+    // Habilitar stack traces (apenas dev)
+    enableStackTraces: isDevelopment,
+    // Habilitar timing de performance
+    enablePerformanceTiming: true
+  };
+};
+
+/**
+ * Classe principal do ErrorHandler
+ */
+class MedicalErrorHandler {
+  constructor() {
+    this.config = getConfig();
+    this.errorObservers = [];
+    this.performanceMarks = new Map();
+    this.initializeErrorStorage();
+    this.setupGlobalErrorHandling();
+  }
+
+  /**
+   * Inicializa storage para errors críticos
+   */
+  async initializeErrorStorage() {
+    if (!this.config.enableErrorStorage) return;
+    try {
+      const api = typeof browser !== 'undefined' ? browser : chrome;
+      const result = await api.storage.local.get('medicalErrors');
+      if (!result.medicalErrors) {
+        await api.storage.local.set({
+          medicalErrors: []
+        });
+      }
+    } catch (error) {
+      // Fallback silencioso se storage não estiver disponível
+      console.warn('[ErrorHandler] Storage não disponível:', error.message);
+    }
+  }
+
+  /**
+   * Configura captura global de errors não tratados
+   */
+  setupGlobalErrorHandling() {
+    // Captura errors de JavaScript não tratados
+    if (typeof window !== 'undefined') {
+      window.addEventListener('error', event => {
+        this.logError('Erro JavaScript não tratado', {
+          message: event.message,
+          filename: this.sanitizeFilename(event.filename),
+          lineno: event.lineno,
+          colno: event.colno
+        }, ERROR_CATEGORIES.EXTENSION_LIFECYCLE);
+      });
+
+      // Captura promises rejeitadas não tratadas
+      window.addEventListener('unhandledrejection', event => {
+        var _event$reason;
+        this.logError('Promise rejeitada não tratada', {
+          reason: ((_event$reason = event.reason) === null || _event$reason === void 0 ? void 0 : _event$reason.message) || 'Unknown error'
+        }, ERROR_CATEGORIES.EXTENSION_LIFECYCLE);
+      });
+    }
+
+    // Captura violations de CSP
+    if (typeof document !== 'undefined') {
+      document.addEventListener('securitypolicyviolation', event => {
+        this.logError('Violação de CSP detectada', {
+          directive: event.violatedDirective,
+          blockedURI: event.blockedURI,
+          disposition: event.disposition
+        }, ERROR_CATEGORIES.CSP_VIOLATION);
+      });
+    }
+  }
+
+  /**
+   * Sanitiza dados médicos para logging seguro
+   * @param {any} data - Dados a serem sanitizados
+   * @param {string} strategy - Estratégia de sanitização
+   * @returns {any} Dados sanitizados
+   */
+  sanitizeForLogging(data, strategy = 'MEDICAL_DATA') {
+    if (data === null || data === undefined) return data;
+
+    // Primitivos são safe (numbers, booleans, strings simples)
+    if (typeof data !== 'object') {
+      return typeof data === 'string' && data.length > 100 ? `${data.substring(0, 100)}...` : data;
+    }
+
+    // Arrays
+    if (Array.isArray(data)) {
+      return data.length > 5 ? [...data.slice(0, 5).map(item => this.sanitizeForLogging(item, strategy)), `...${data.length - 5} more items`] : data.map(item => this.sanitizeForLogging(item, strategy));
+    }
+
+    // Objects
+    const sanitized = {};
+    for (const [key, value] of Object.entries(data)) {
+      // Verificar se o campo é sensível
+      if (this.isSensitiveField(key)) {
+        sanitized[key] = '[SANITIZED_MEDICAL_DATA]';
+        continue;
+      }
+
+      // Campos técnicos OK para logging
+      if (LOGGABLE_TECHNICAL_FIELDS.includes(key)) {
+        sanitized[key] = value;
+        continue;
+      }
+
+      // Recursively sanitize nested objects
+      if (typeof value === 'object' && value !== null) {
+        sanitized[key] = this.sanitizeForLogging(value, strategy);
+      } else {
+        sanitized[key] = value;
+      }
+    }
+    return sanitized;
+  }
+
+  /**
+   * Verifica se um campo é sensível para logging
+   * @param {string} fieldName - Nome do campo
+   * @returns {boolean} Se o campo é sensível
+   */
+  isSensitiveField(fieldName) {
+    const lowerField = fieldName.toLowerCase();
+    return SENSITIVE_MEDICAL_FIELDS.some(sensitiveField => lowerField.includes(sensitiveField.toLowerCase()));
+  }
+
+  /**
+   * Sanitiza filename para remover informações sensíveis do path
+   * @param {string} filename - Nome do arquivo
+   * @returns {string} Filename sanitizado
+   */
+  sanitizeFilename(filename) {
+    if (!filename) return 'unknown';
+
+    // Remove paths absolutos, mantém apenas o nome do arquivo
+    const parts = filename.split(/[/\\]/);
+    return parts[parts.length - 1] || 'unknown';
+  }
+
+  /**
+   * Log de informações gerais (safe para produção)
+   * @param {string} message - Mensagem
+   * @param {any} data - Dados adicionais
+   * @param {string} category - Categoria do log
+   */
+  logInfo(message, data = null, category = ERROR_CATEGORIES.EXTENSION_LIFECYCLE) {
+    this.log(ERROR_LEVELS.INFO, message, data, category);
+  }
+
+  /**
+   * Log de warnings (safe para produção)
+   * @param {string} message - Mensagem
+   * @param {any} data - Dados adicionais
+   * @param {string} category - Categoria do warning
+   */
+  logWarning(message, data = null, category = ERROR_CATEGORIES.EXTENSION_LIFECYCLE) {
+    this.log(ERROR_LEVELS.WARN, message, data, category);
+  }
+
+  /**
+   * Log de errors (safe para produção)
+   * @param {string} message - Mensagem
+   * @param {any} data - Dados adicionais
+   * @param {string} category - Categoria do erro
+   */
+  logError(message, data = null, category = ERROR_CATEGORIES.EXTENSION_LIFECYCLE) {
+    this.log(ERROR_LEVELS.ERROR, message, data, category);
+  }
+
+  /**
+   * Log de errors críticos (safe para produção)
+   * @param {string} message - Mensagem
+   * @param {any} data - Dados adicionais
+   * @param {string} category - Categoria do erro crítico
+   */
+  logFatal(message, data = null, category = ERROR_CATEGORIES.EXTENSION_LIFECYCLE) {
+    this.log(ERROR_LEVELS.FATAL, message, data, category);
+  }
+
+  /**
+   * Log apenas para desenvolvimento
+   * @param {string} message - Mensagem
+   * @param {any} data - Dados adicionais
+   * @param {string} category - Categoria do debug
+   */
+  logDebug(message, data = null, category = ERROR_CATEGORIES.EXTENSION_LIFECYCLE) {
+    this.log(ERROR_LEVELS.DEBUG, message, data, category);
+  }
+
+  /**
+   * Método principal de logging com sanitização automática
+   * @param {number} level - Nível do log
+   * @param {string} message - Mensagem
+   * @param {any} data - Dados adicionais
+   * @param {string} category - Categoria
+   */
+  log(level, message, data = null, category = ERROR_CATEGORIES.EXTENSION_LIFECYCLE) {
+    // Verificar nível mínimo
+    if (level < this.config.minLevel) return;
+
+    // Sanitizar dados automaticamente
+    const sanitizedData = data ? this.sanitizeForLogging(data) : null;
+
+    // Criar entrada de log
+    const logEntry = {
+      timestamp: new Date().toISOString(),
+      level: this.getLevelName(level),
+      category,
+      message,
+      data: sanitizedData,
+      userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'Unknown',
+      extensionVersion: this.getExtensionVersion()
+    };
+
+    // Adicionar stack trace apenas em desenvolvimento
+    if (this.config.enableStackTraces && level >= ERROR_LEVELS.ERROR) {
+      logEntry.stack = new Error().stack;
+    }
+
+    // Console logging
+    if (this.config.enableConsoleLogging) {
+      this.outputToConsole(level, logEntry);
+    }
+
+    // Storage de errors críticos
+    if (this.config.enableErrorStorage && level >= ERROR_LEVELS.ERROR) {
+      this.storeError(logEntry);
+    }
+
+    // Notificar observers
+    this.notifyObservers(logEntry);
+  }
+
+  /**
+   * Output para console com formatação adequada
+   * @param {number} level - Nível do log
+   * @param {object} logEntry - Entrada de log
+   */
+  outputToConsole(level, logEntry) {
+    const prefix = `[Assistente Médico ${logEntry.category}]`;
+    const message = `${prefix} ${logEntry.message}`;
+    switch (level) {
+      case ERROR_LEVELS.TRACE:
+      case ERROR_LEVELS.DEBUG:
+        console.debug(message, logEntry.data);
+        break;
+      case ERROR_LEVELS.INFO:
+        console.info(message, logEntry.data);
+        break;
+      case ERROR_LEVELS.WARN:
+        console.warn(message, logEntry.data);
+        break;
+      case ERROR_LEVELS.ERROR:
+        console.error(message, logEntry.data);
+        break;
+      case ERROR_LEVELS.FATAL:
+        console.error(`🚨 FATAL: ${message}`, logEntry.data);
+        break;
+    }
+  }
+
+  /**
+   * Armazena errors críticos para análise posterior
+   * @param {object} logEntry - Entrada de log
+   */
+  async storeError(logEntry) {
+    try {
+      const api = typeof browser !== 'undefined' ? browser : chrome;
+      const result = await api.storage.local.get('medicalErrors');
+      let errors = result.medicalErrors || [];
+
+      // Adicionar novo erro
+      errors.unshift(logEntry);
+
+      // Manter apenas os últimos N errors (rotação)
+      if (errors.length > this.config.maxStoredErrors) {
+        errors = errors.slice(0, this.config.maxStoredErrors);
+      }
+      await api.storage.local.set({
+        medicalErrors: errors
+      });
+    } catch (error) {
+      // Fallback silencioso
+      console.warn('[ErrorHandler] Falha ao armazenar erro:', error.message);
+    }
+  }
+
+  /**
+   * Notifica observers de novos logs
+   * @param {object} logEntry - Entrada de log
+   */
+  notifyObservers(logEntry) {
+    this.errorObservers.forEach(observer => {
+      try {
+        observer(logEntry);
+      } catch (error) {
+        // Evitar loops infinitos de error
+        console.warn('[ErrorHandler] Observer error:', error.message);
+      }
+    });
+  }
+
+  /**
+   * Registra observer para logs
+   * @param {Function} callback - Callback do observer
+   */
+  subscribe(callback) {
+    this.errorObservers.push(callback);
+  }
+
+  /**
+   * Remove observer
+   * @param {Function} callback - Callback para remover
+   */
+  unsubscribe(callback) {
+    const index = this.errorObservers.indexOf(callback);
+    if (index > -1) {
+      this.errorObservers.splice(index, 1);
+    }
+  }
+
+  /**
+   * Inicia marcação de performance
+   * @param {string} name - Nome da operação
+   */
+  startPerformanceMark(name) {
+    if (!this.config.enablePerformanceTiming) return;
+    this.performanceMarks.set(name, Date.now());
+  }
+
+  /**
+   * Finaliza marcação de performance
+   * @param {string} name - Nome da operação
+   * @param {string} category - Categoria do log
+   */
+  endPerformanceMark(name, category = ERROR_CATEGORIES.EXTENSION_LIFECYCLE) {
+    if (!this.config.enablePerformanceTiming) return;
+    const startTime = this.performanceMarks.get(name);
+    if (startTime) {
+      const duration = Date.now() - startTime;
+      this.logInfo(`Performance: ${name} took ${duration}ms`, {
+        duration
+      }, category);
+      this.performanceMarks.delete(name);
+    }
+  }
+
+  /**
+   * Obtém nome do nível
+   * @param {number} level - Nível
+   * @returns {string} Nome do nível
+   */
+  getLevelName(level) {
+    const levelNames = ['TRACE', 'DEBUG', 'INFO', 'WARN', 'ERROR', 'FATAL'];
+    return levelNames[level] || 'UNKNOWN';
+  }
+
+  /**
+   * Obtém versão da extensão
+   * @returns {string} Versão da extensão
+   */
+  getExtensionVersion() {
+    try {
+      if (typeof chrome !== 'undefined' && chrome.runtime) {
+        return chrome.runtime.getManifest().version;
+      }
+      return 'unknown';
+    } catch {
+      return 'unknown';
+    }
+  }
+
+  /**
+   * Recupera errors armazenados
+   * @returns {Promise<Array>} Lista de errors
+   */
+  async getStoredErrors() {
+    try {
+      const api = typeof browser !== 'undefined' ? browser : chrome;
+      const result = await api.storage.local.get('medicalErrors');
+      return result.medicalErrors || [];
+    } catch (error) {
+      this.logWarning('Falha ao recuperar errors armazenados', {
+        error: error.message
+      });
+      return [];
+    }
+  }
+
+  /**
+   * Limpa errors armazenados
+   */
+  async clearStoredErrors() {
+    try {
+      const api = typeof browser !== 'undefined' ? browser : chrome;
+      await api.storage.local.set({
+        medicalErrors: []
+      });
+      this.logInfo('Errors armazenados limpos');
+    } catch (error) {
+      this.logWarning('Falha ao limpar errors armazenados', {
+        error: error.message
+      });
+    }
+  }
+}
+
+// Singleton instance
+let errorHandlerInstance = null;
+
+/**
+ * Obtém instância singleton do ErrorHandler
+ * @returns {MedicalErrorHandler} Instância do ErrorHandler
+ */
+function getErrorHandler() {
+  if (!errorHandlerInstance) {
+    errorHandlerInstance = new MedicalErrorHandler();
+  }
+  return errorHandlerInstance;
+}
+
+// Exportar instância padrão para conveniência
+const ErrorHandler = getErrorHandler();
+
+// Exports para backward compatibility e testing
+
+
+/**
+ * Helper functions para uso rápido
+ */
+const logInfo = (message, data, category) => ErrorHandler.logInfo(message, data, category);
+const logWarning = (message, data, category) => ErrorHandler.logWarning(message, data, category);
+const logError = (message, data, category) => ErrorHandler.logError(message, data, category);
+const logFatal = (message, data, category) => ErrorHandler.logFatal(message, data, category);
+const logDebug = (message, data, category) => ErrorHandler.logDebug(message, data, category);
+
+/**
+ * Sanitização específica para dados médicos (export direto)
+ * @param {any} data - Dados a serem sanitizados
+ * @returns {any} Dados sanitizados
+ */
+const sanitizeForLog = data => ErrorHandler.sanitizeForLogging(data);
+
+/***/ }),
+
 /***/ 335:
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
@@ -682,6 +1229,7 @@ class SectionManager {
 /* harmony export */   DM: () => (/* binding */ fetchRegulationAttachmentUrl),
 /* harmony export */   EI: () => (/* binding */ fetchAppointmentDetails),
 /* harmony export */   GP: () => (/* binding */ fetchCadsusData),
+/* harmony export */   JA: () => (/* binding */ keepSessionAlive),
 /* harmony export */   K4: () => (/* binding */ fetchExamesSolicitados),
 /* harmony export */   Ns: () => (/* binding */ fetchAppointments),
 /* harmony export */   P_: () => (/* binding */ fetchDocuments),
@@ -695,7 +1243,9 @@ class SectionManager {
 /* harmony export */   v0: () => (/* binding */ fetchAllRegulations),
 /* harmony export */   wF: () => (/* binding */ fetchAllConsultations)
 /* harmony export */ });
-/* unused harmony exports clearRegulationLock, fetchProntuarioHash, fetchConsultasEspecializadas, fetchConsultasBasicas, fetchRegulationAttachments, keepSessionAlive */
+/* unused harmony exports clearRegulationLock, fetchProntuarioHash, fetchConsultasEspecializadas, fetchConsultasBasicas, fetchRegulationAttachments */
+/* harmony import */ var _ErrorHandler_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(322);
+
 
 const api = typeof browser !== 'undefined' ? browser : chrome;
 
@@ -706,24 +1256,37 @@ const api = typeof browser !== 'undefined' ? browser : chrome;
 async function getBaseUrl() {
   let data;
   try {
+    const handler = (0,_ErrorHandler_js__WEBPACK_IMPORTED_MODULE_0__/* .getErrorHandler */ .L9)();
+    handler.startPerformanceMark('getBaseUrl');
     data = await api.storage.sync.get('baseUrl');
+    handler.endPerformanceMark('getBaseUrl', _ErrorHandler_js__WEBPACK_IMPORTED_MODULE_0__/* .ERROR_CATEGORIES */ .Uu.STORAGE);
   } catch (e) {
-    console.error('Erro ao obter a URL base do storage:', e);
+    (0,_ErrorHandler_js__WEBPACK_IMPORTED_MODULE_0__/* .logError */ .vV)('Erro ao obter a URL base do storage', {
+      errorMessage: e.message
+    }, _ErrorHandler_js__WEBPACK_IMPORTED_MODULE_0__/* .ERROR_CATEGORIES */ .Uu.STORAGE);
     throw e;
   }
   if (data && data.baseUrl) {
+    (0,_ErrorHandler_js__WEBPACK_IMPORTED_MODULE_0__/* .logInfo */ .fH)('URL base obtida com sucesso', null, _ErrorHandler_js__WEBPACK_IMPORTED_MODULE_0__/* .ERROR_CATEGORIES */ .Uu.STORAGE);
     return data.baseUrl;
   }
-  console.error("URL base não configurada. Vá em 'Opções' para configurá-la.");
+  (0,_ErrorHandler_js__WEBPACK_IMPORTED_MODULE_0__/* .logError */ .vV)('URL base não configurada', null, _ErrorHandler_js__WEBPACK_IMPORTED_MODULE_0__/* .ERROR_CATEGORIES */ .Uu.STORAGE);
   throw new Error('URL_BASE_NOT_CONFIGURED');
 }
 
 /**
- * Lida com erros de fetch de forma centralizada.
+ * Lida com erros de fetch de forma centralizada usando ErrorHandler.
  * @param {Response} response - O objeto de resposta do fetch.
+ * @param {string} operation - Nome da operação para contexto
  */
-function handleFetchError(response) {
-  console.error(`Erro na requisição: ${response.status} ${response.statusText}`);
+function handleFetchError(response, operation = 'API Call') {
+  const errorData = {
+    status: response.status,
+    statusText: response.statusText,
+    url: response.url,
+    operation
+  };
+  (0,_ErrorHandler_js__WEBPACK_IMPORTED_MODULE_0__/* .logError */ .vV)(`Erro na requisição: ${response.status} ${response.statusText}`, errorData, _ErrorHandler_js__WEBPACK_IMPORTED_MODULE_0__/* .ERROR_CATEGORIES */ .Uu.SIGSS_API);
   throw new Error('Falha na comunicação com o servidor.');
 }
 
@@ -763,7 +1326,7 @@ async function fetchRegulationPriorities() {
 
 /**
  * Limpa o lock de uma regulação específica.
- * @param {object} params 
+ * @param {object} params
  * @param {string} params.reguIdp - O IDP da regulação.
  * @param {string} params.reguIds - O IDS da regulação.
  * @returns {Promise<boolean>} True se a operação foi bem-sucedida, false caso contrário.
@@ -784,7 +1347,7 @@ async function clearRegulationLock({
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
-        'Accept': 'application/json, text/javascript, */*; q=0.01',
+        Accept: 'application/json, text/javascript, */*; q=0.01',
         'X-Requested-With': 'XMLHttpRequest'
       },
       body: `lock=${lockId}`
@@ -815,43 +1378,75 @@ async function fetchRegulationDetails({
   reguIds
 }) {
   if (!reguIdp || !reguIds) {
+    (0,_ErrorHandler_js__WEBPACK_IMPORTED_MODULE_0__/* .logError */ .vV)('IDs da regulação são necessários', {
+      reguIdp,
+      reguIds
+    }, _ErrorHandler_js__WEBPACK_IMPORTED_MODULE_0__/* .ERROR_CATEGORIES */ .Uu.SIGSS_API);
     throw new Error('IDs da regulação são necessários.');
   }
-  const baseUrl = await getBaseUrl();
-  // Este é o endpoint que vimos no arquivo HAR.
-  const url = new URL(`${baseUrl}/sigss/regulacaoControleSolicitacao/visualiza`);
-  url.search = new URLSearchParams({
-    'reguPK.idp': reguIdp,
-    'reguPK.ids': reguIds
-  }).toString();
-  const response = await fetch(url, {
-    method: 'GET',
-    headers: {
-      Accept: 'application/json, text/javascript, */*; q=0.01',
-      'X-Requested-With': 'XMLHttpRequest'
+  try {
+    const handler = (0,_ErrorHandler_js__WEBPACK_IMPORTED_MODULE_0__/* .getErrorHandler */ .L9)();
+    handler.startPerformanceMark('fetchRegulationDetails');
+    (0,_ErrorHandler_js__WEBPACK_IMPORTED_MODULE_0__/* .logInfo */ .fH)('Iniciando busca de detalhes da regulação', {
+      reguIdp,
+      reguIds
+    }, _ErrorHandler_js__WEBPACK_IMPORTED_MODULE_0__/* .ERROR_CATEGORIES */ .Uu.SIGSS_API);
+    const baseUrl = await getBaseUrl();
+    // Este é o endpoint que vimos no arquivo HAR.
+    const url = new URL(`${baseUrl}/sigss/regulacaoControleSolicitacao/visualiza`);
+    url.search = new URLSearchParams({
+      'reguPK.idp': reguIdp,
+      'reguPK.ids': reguIds
+    }).toString();
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        Accept: 'application/json, text/javascript, */*; q=0.01',
+        'X-Requested-With': 'XMLHttpRequest'
+      }
+    });
+    if (!response.ok) {
+      handleFetchError(response, 'fetchRegulationDetails');
+      return null;
     }
-  });
-  if (!response.ok) {
-    handleFetchError(response);
-    return null;
-  }
-  let result = null;
-  const contentType = response.headers.get('content-type');
-  if (contentType && contentType.includes('application/json')) {
-    const data = await response.json();
-    // O objeto de dados está aninhado sob a chave "regulacao"
-    result = data.regulacao || null;
-  } else {
-    throw new Error('A resposta do servidor não foi JSON. A sessão pode ter expirado.');
-  }
+    let result = null;
+    const contentType = response.headers.get('content-type');
+    if (contentType && contentType.includes('application/json')) {
+      const data = await response.json();
+      // O objeto de dados está aninhado sob a chave "regulacao"
+      result = data.regulacao || null;
+    } else {
+      (0,_ErrorHandler_js__WEBPACK_IMPORTED_MODULE_0__/* .logError */ .vV)('Resposta do servidor não foi JSON', {
+        contentType
+      }, _ErrorHandler_js__WEBPACK_IMPORTED_MODULE_0__/* .ERROR_CATEGORIES */ .Uu.SIGSS_API);
+      throw new Error('A resposta do servidor não foi JSON. A sessão pode ter expirado.');
+    }
+    handler.endPerformanceMark('fetchRegulationDetails', _ErrorHandler_js__WEBPACK_IMPORTED_MODULE_0__/* .ERROR_CATEGORIES */ .Uu.SIGSS_API);
+    (0,_ErrorHandler_js__WEBPACK_IMPORTED_MODULE_0__/* .logInfo */ .fH)('Detalhes da regulação obtidos com sucesso', {
+      reguIdp,
+      reguIds,
+      hasResult: !!result
+    }, _ErrorHandler_js__WEBPACK_IMPORTED_MODULE_0__/* .ERROR_CATEGORIES */ .Uu.SIGSS_API);
 
-  // Libera o lock após obter os detalhes, independente do resultado
-  // Não aguardamos o resultado da limpeza do lock para não atrasar a resposta
-  clearRegulationLock({
-    reguIdp,
-    reguIds
-  }).catch(error => console.warn('[Assistente] Erro ao limpar lock após buscar detalhes:', error));
-  return result;
+    // Libera o lock após obter os detalhes, independente do resultado
+    // Não aguardamos o resultado da limpeza do lock para não atrasar a resposta
+    clearRegulationLock({
+      reguIdp,
+      reguIds
+    }).catch(error => (0,_ErrorHandler_js__WEBPACK_IMPORTED_MODULE_0__/* .logWarning */ .FF)('Erro ao limpar lock após buscar detalhes', {
+      errorMessage: error.message,
+      reguIdp,
+      reguIds
+    }, _ErrorHandler_js__WEBPACK_IMPORTED_MODULE_0__/* .ERROR_CATEGORIES */ .Uu.SIGSS_API));
+    return result;
+  } catch (error) {
+    (0,_ErrorHandler_js__WEBPACK_IMPORTED_MODULE_0__/* .logError */ .vV)('Falha ao buscar detalhes da regulação', {
+      errorMessage: error.message,
+      reguIdp,
+      reguIds
+    }, _ErrorHandler_js__WEBPACK_IMPORTED_MODULE_0__/* .ERROR_CATEGORIES */ .Uu.SIGSS_API);
+    throw error;
+  }
 }
 function parseConsultasHTML(htmlString) {
   const parser = new DOMParser();

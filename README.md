@@ -255,6 +255,84 @@ Stages:
 - [ ] Auditoria de acessos
 - [ ] Política de retenção de dados
 
+## 🔧 ErrorHandler - Sistema de Logging Médico
+
+### 🏥 Logging Sanitizado para Ambiente Médico
+
+O **ErrorHandler** é o sistema centralizado de logging que garante compliance médico em toda a extensão:
+
+```javascript
+import { logInfo, logError, sanitizeForLog, ERROR_CATEGORIES } from './ErrorHandler.js';
+
+// ✅ CORRETO: Logging sanitizado
+logInfo(
+  'Paciente encontrado',
+  {
+    reguId: 'REG_123', // ✅ ID técnico preservado
+    hasData: true, // ✅ Informação não sensível
+  },
+  ERROR_CATEGORIES.MEDICAL_DATA
+);
+
+// ❌ NUNCA FAÇA: Logging de dados sensíveis
+console.log('Paciente:', {
+  cpf: '123.456.789-01', // ❌ Dado sensível
+  nome: 'João Silva', // ❌ Dado pessoal
+});
+```
+
+### 🔒 Proteções Automáticas
+
+#### Sanitização Automática
+
+```javascript
+const dadosSensiveis = {
+  reguId: 'REG_123', // ✅ Preservado (ID técnico)
+  cpf: '123.456.789-01', // 🔒 Sanitizado automaticamente
+  nome: 'João Silva', // 🔒 Sanitizado automaticamente
+  telefone: '(11) 99999-9999', // 🔒 Sanitizado automaticamente
+};
+
+// Resultado sanitizado automaticamente:
+// { reguId: 'REG_123', cpf: '[SANITIZED_MEDICAL_DATA]', ... }
+```
+
+#### Categorização Médica
+
+```javascript
+ERROR_CATEGORIES = {
+  SIGSS_API: 'sigss_api', // APIs médicas
+  CADSUS_API: 'cadsus_api', // CADSUS
+  MEDICAL_DATA: 'medical_data', // Dados médicos
+  SECURITY: 'security', // Segurança
+  // ... outras categorias
+};
+```
+
+### 📊 Monitoring e Auditoria
+
+```javascript
+// Performance tracking médico
+const handler = getErrorHandler();
+handler.startPerformanceMark('buscarPaciente');
+// ... operação médica ...
+handler.endPerformanceMark('buscarPaciente');
+
+// Armazenamento de errors críticos (compliance)
+await handler.getStoredErrors(); // Para auditoria médica
+```
+
+### 🎯 Compliance LGPD/HIPAA
+
+| Requisito                     | Status | Implementação               |
+| ----------------------------- | ------ | --------------------------- |
+| 🔒 **Nunca logar CPF/CNS**    | ✅     | Sanitização automática      |
+| 🔒 **Nunca logar nomes**      | ✅     | Filtros de campos sensíveis |
+| 🔒 **Nunca logar endereços**  | ✅     | Lista de campos bloqueados  |
+| ✅ **Preservar IDs técnicos** | ✅     | Lista de campos permitidos  |
+| 📊 **Auditoria de errors**    | ✅     | Storage rotativo            |
+| ⚡ **Performance médico**     | ✅     | Timing de operações         |
+
 ## 🏥 Uso Médico
 
 ### Funcionalidades Principais

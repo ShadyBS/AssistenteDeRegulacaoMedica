@@ -1,4 +1,11 @@
 import './browser-polyfill.js';
+import {
+  ERROR_CATEGORIES,
+  getErrorHandler,
+  logError,
+  logInfo,
+  logWarning,
+} from './ErrorHandler.js';
 
 const api = typeof browser !== 'undefined' ? browser : chrome;
 
@@ -9,26 +16,49 @@ const api = typeof browser !== 'undefined' ? browser : chrome;
 export async function getBaseUrl() {
   let data;
   try {
+    const handler = getErrorHandler();
+    handler.startPerformanceMark('getBaseUrl');
+
     data = await api.storage.sync.get('baseUrl');
+
+    handler.endPerformanceMark('getBaseUrl', ERROR_CATEGORIES.STORAGE);
   } catch (e) {
-    console.error('Erro ao obter a URL base do storage:', e);
+    logError(
+      'Erro ao obter a URL base do storage',
+      { errorMessage: e.message },
+      ERROR_CATEGORIES.STORAGE
+    );
     throw e;
   }
 
   if (data && data.baseUrl) {
+    logInfo('URL base obtida com sucesso', null, ERROR_CATEGORIES.STORAGE);
     return data.baseUrl;
   }
 
-  console.error("URL base não configurada. Vá em 'Opções' para configurá-la.");
+  logError('URL base não configurada', null, ERROR_CATEGORIES.STORAGE);
   throw new Error('URL_BASE_NOT_CONFIGURED');
 }
 
 /**
- * Lida com erros de fetch de forma centralizada.
+ * Lida com erros de fetch de forma centralizada usando ErrorHandler.
  * @param {Response} response - O objeto de resposta do fetch.
+ * @param {string} operation - Nome da operação para contexto
  */
-function handleFetchError(response) {
-  console.error(`Erro na requisição: ${response.status} ${response.statusText}`);
+function handleFetchError(response, operation = 'API Call') {
+  const errorData = {
+    status: response.status,
+    statusText: response.statusText,
+    url: response.url,
+    operation,
+  };
+
+  logError(
+    `Erro na requisição: ${response.status} ${response.statusText}`,
+    errorData,
+    ERROR_CATEGORIES.SIGSS_API
+  );
+
   throw new Error('Falha na comunicação com o servidor.');
 }
 
@@ -122,46 +152,91 @@ export async function clearRegulationLock({ reguIdp, reguIds }) {
  */
 export async function fetchRegulationDetails({ reguIdp, reguIds }) {
   if (!reguIdp || !reguIds) {
+    logError('IDs da regulação são necessários', { reguIdp, reguIds }, ERROR_CATEGORIES.SIGSS_API);
     throw new Error('IDs da regulação são necessários.');
   }
-  const baseUrl = await getBaseUrl();
-  // Este é o endpoint que vimos no arquivo HAR.
-  const url = new URL(`${baseUrl}/sigss/regulacaoControleSolicitacao/visualiza`);
-  url.search = new URLSearchParams({
-    'reguPK.idp': reguIdp,
-    'reguPK.ids': reguIds,
-  }).toString();
 
-  const response = await fetch(url, {
-    method: 'GET',
-    headers: {
-      Accept: 'application/json, text/javascript, */*; q=0.01',
-      'X-Requested-With': 'XMLHttpRequest',
-    },
-  });
+  try {
+    const handler = getErrorHandler();
+    handler.startPerformanceMark('fetchRegulationDetails');
 
-  if (!response.ok) {
-    handleFetchError(response);
-    return null;
+    logInfo(
+      'Iniciando busca de detalhes da regulação',
+      { reguIdp, reguIds },
+      ERROR_CATEGORIES.SIGSS_API
+    );
+
+    const baseUrl = await getBaseUrl();
+    // Este é o endpoint que vimos no arquivo HAR.
+    const url = new URL(`${baseUrl}/sigss/regulacaoControleSolicitacao/visualiza`);
+    url.search = new URLSearchParams({
+      'reguPK.idp': reguIdp,
+      'reguPK.ids': reguIds,
+    }).toString();
+
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        Accept: 'application/json, text/javascript, */*; q=0.01',
+        'X-Requested-With': 'XMLHttpRequest',
+      },
+    });
+
+    if (!response.ok) {
+      handleFetchError(response, 'fetchRegulationDetails');
+      return null;
+    }
+
+    let result = null;
+    const contentType = response.headers.get('content-type');
+    if (contentType && contentType.includes('application/json')) {
+      const data = await response.json();
+      // O objeto de dados está aninhado sob a chave "regulacao"
+      result = data.regulacao || null;
+    } else {
+      logError('Resposta do servidor não foi JSON', { contentType }, ERROR_CATEGORIES.SIGSS_API);
+      throw new Error('A resposta do servidor não foi JSON. A sessão pode ter expirado.');
+    }
+
+    handler.endPerformanceMark('fetchRegulationDetails', ERROR_CATEGORIES.SIGSS_API);
+
+    logInfo(
+      'Detalhes da regulação obtidos com sucesso',
+      {
+        reguIdp,
+        reguIds,
+        hasResult: !!result,
+      },
+      ERROR_CATEGORIES.SIGSS_API
+    );
+
+    // Libera o lock após obter os detalhes, independente do resultado
+    // Não aguardamos o resultado da limpeza do lock para não atrasar a resposta
+    clearRegulationLock({ reguIdp, reguIds }).catch((error) =>
+      logWarning(
+        'Erro ao limpar lock após buscar detalhes',
+        {
+          errorMessage: error.message,
+          reguIdp,
+          reguIds,
+        },
+        ERROR_CATEGORIES.SIGSS_API
+      )
+    );
+
+    return result;
+  } catch (error) {
+    logError(
+      'Falha ao buscar detalhes da regulação',
+      {
+        errorMessage: error.message,
+        reguIdp,
+        reguIds,
+      },
+      ERROR_CATEGORIES.SIGSS_API
+    );
+    throw error;
   }
-
-  let result = null;
-  const contentType = response.headers.get('content-type');
-  if (contentType && contentType.includes('application/json')) {
-    const data = await response.json();
-    // O objeto de dados está aninhado sob a chave "regulacao"
-    result = data.regulacao || null;
-  } else {
-    throw new Error('A resposta do servidor não foi JSON. A sessão pode ter expirado.');
-  }
-
-  // Libera o lock após obter os detalhes, independente do resultado
-  // Não aguardamos o resultado da limpeza do lock para não atrasar a resposta
-  clearRegulationLock({ reguIdp, reguIds }).catch((error) =>
-    console.warn('[Assistente] Erro ao limpar lock após buscar detalhes:', error)
-  );
-
-  return result;
 }
 
 function parseConsultasHTML(htmlString) {

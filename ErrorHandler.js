@@ -1,7 +1,3 @@
-/******/ (() => { // webpackBootstrap
-/******/ 	"use strict";
-
-;// ./ErrorHandler.js
 /**
  * 🏥 ASSISTENTE DE REGULAÇÃO MÉDICA - ERROR HANDLER CENTRALIZADO
  *
@@ -13,88 +9,140 @@
 /**
  * Níveis de severidade para logging médico
  */
-const ERROR_LEVELS = {
-  TRACE: 0,
-  // Debugging detalhado (apenas dev)
-  DEBUG: 1,
-  // Informações de debug (apenas dev)
-  INFO: 2,
-  // Informações gerais (produção OK)
-  WARN: 3,
-  // Avisos (produção OK)
-  ERROR: 4,
-  // Erros (produção OK)
-  FATAL: 5 // Erros críticos (produção OK)
+export const ERROR_LEVELS = {
+  TRACE: 0, // Debugging detalhado (apenas dev)
+  DEBUG: 1, // Informações de debug (apenas dev)
+  INFO: 2, // Informações gerais (produção OK)
+  WARN: 3, // Avisos (produção OK)
+  ERROR: 4, // Erros (produção OK)
+  FATAL: 5, // Erros críticos (produção OK)
 };
 
 /**
  * Categorias de erro específicas para ambiente médico
  */
-const ERROR_CATEGORIES = {
+export const ERROR_CATEGORIES = {
   // APIs médicas
   SIGSS_API: 'sigss_api',
   CADSUS_API: 'cadsus_api',
   MEDICAL_DATA: 'medical_data',
+
   // Extensão
   EXTENSION_LIFECYCLE: 'extension_lifecycle',
   CONTENT_SCRIPT: 'content_script',
   BACKGROUND_SCRIPT: 'background_script',
+
   // Segurança
   SECURITY: 'security',
   PERMISSIONS: 'permissions',
   CSP_VIOLATION: 'csp_violation',
+
   // Performance
   MEMORY: 'memory',
   STORAGE: 'storage',
   NETWORK: 'network',
+
   // UI/UX
   USER_INTERFACE: 'user_interface',
-  USER_INPUT: 'user_input'
+  USER_INPUT: 'user_input',
 };
 
 /**
  * Campos médicos sensíveis que NUNCA devem ser logados
  */
 const SENSITIVE_MEDICAL_FIELDS = [
-// Identificação pessoal
-'cpf', 'rg', 'cns', 'cartao_sus', 'nome', 'nome_completo', 'nome_mae', 'nome_pai',
-// Dados demográficos
-'data_nascimento', 'idade', 'sexo', 'genero', 'endereco', 'rua', 'numero', 'bairro', 'cidade', 'cep', 'telefone', 'celular', 'email',
-// Dados médicos específicos
-'diagnostico', 'cid', 'procedimento', 'medicamento', 'dosagem', 'tratamento',
-// Tokens e IDs sensíveis (alguns são OK para log)
-'senha', 'password', 'token_acesso'];
+  // Identificação pessoal
+  'cpf',
+  'rg',
+  'cns',
+  'cartao_sus',
+  'nome',
+  'nome_completo',
+  'nome_mae',
+  'nome_pai',
+
+  // Dados demográficos
+  'data_nascimento',
+  'idade',
+  'sexo',
+  'genero',
+  'endereco',
+  'rua',
+  'numero',
+  'bairro',
+  'cidade',
+  'cep',
+  'telefone',
+  'celular',
+  'email',
+
+  // Dados médicos específicos
+  'diagnostico',
+  'cid',
+  'procedimento',
+  'medicamento',
+  'dosagem',
+  'tratamento',
+
+  // Tokens e IDs sensíveis (alguns são OK para log)
+  'senha',
+  'password',
+  'token_acesso',
+];
 
 /**
  * Campos OK para logging (IDs técnicos necessários para debug)
  */
-const LOGGABLE_TECHNICAL_FIELDS = ['id', 'uuid', 'reguId', 'reguIdp', 'reguIds', 'isenPK', 'isenFullPKCrypto', 'sessionId', 'requestId', 'transactionId', 'correlationId'];
+const LOGGABLE_TECHNICAL_FIELDS = [
+  'id',
+  'uuid',
+  'reguId',
+  'reguIdp',
+  'reguIds',
+  'isenPK',
+  'isenFullPKCrypto',
+  'sessionId',
+  'requestId',
+  'transactionId',
+  'correlationId',
+];
 
 /**
  * Configurações do ErrorHandler baseadas no ambiente
  */
 const getConfig = () => {
   let isDevelopment = false;
+
   try {
     // Detectar ambiente de desenvolvimento baseado na versão da extensão
-    isDevelopment = typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.getManifest && chrome.runtime.getManifest().version.includes('dev');
+    isDevelopment =
+      typeof chrome !== 'undefined' &&
+      chrome.runtime &&
+      chrome.runtime.getManifest &&
+      chrome.runtime.getManifest().version.includes('dev');
   } catch {
     // Fallback para produção se não conseguir acessar manifest
     isDevelopment = false;
   }
+
   return {
     // Nível mínimo para logging
     minLevel: isDevelopment ? ERROR_LEVELS.DEBUG : ERROR_LEVELS.INFO,
+
     // Habilitar console.log em produção (com sanitização)
     enableConsoleLogging: true,
+
     // Habilitar storage de errors críticos
     enableErrorStorage: true,
+
     // Máximo de errors no storage (rotação)
     maxStoredErrors: 100,
+
     // Habilitar stack traces (apenas dev)
     enableStackTraces: isDevelopment,
+
     // Habilitar timing de performance
-    enablePerformanceTiming: true
+    enablePerformanceTiming: true,
   };
 };
 
@@ -106,6 +154,7 @@ class MedicalErrorHandler {
     this.config = getConfig();
     this.errorObservers = [];
     this.performanceMarks = new Map();
+
     this.initializeErrorStorage();
     this.setupGlobalErrorHandling();
   }
@@ -115,13 +164,13 @@ class MedicalErrorHandler {
    */
   async initializeErrorStorage() {
     if (!this.config.enableErrorStorage) return;
+
     try {
       const api = typeof browser !== 'undefined' ? browser : chrome;
       const result = await api.storage.local.get('medicalErrors');
+
       if (!result.medicalErrors) {
-        await api.storage.local.set({
-          medicalErrors: []
-        });
+        await api.storage.local.set({ medicalErrors: [] });
       }
     } catch (error) {
       // Fallback silencioso se storage não estiver disponível
@@ -135,32 +184,43 @@ class MedicalErrorHandler {
   setupGlobalErrorHandling() {
     // Captura errors de JavaScript não tratados
     if (typeof window !== 'undefined') {
-      window.addEventListener('error', event => {
-        this.logError('Erro JavaScript não tratado', {
-          message: event.message,
-          filename: this.sanitizeFilename(event.filename),
-          lineno: event.lineno,
-          colno: event.colno
-        }, ERROR_CATEGORIES.EXTENSION_LIFECYCLE);
+      window.addEventListener('error', (event) => {
+        this.logError(
+          'Erro JavaScript não tratado',
+          {
+            message: event.message,
+            filename: this.sanitizeFilename(event.filename),
+            lineno: event.lineno,
+            colno: event.colno,
+          },
+          ERROR_CATEGORIES.EXTENSION_LIFECYCLE
+        );
       });
 
       // Captura promises rejeitadas não tratadas
-      window.addEventListener('unhandledrejection', event => {
-        var _event$reason;
-        this.logError('Promise rejeitada não tratada', {
-          reason: ((_event$reason = event.reason) === null || _event$reason === void 0 ? void 0 : _event$reason.message) || 'Unknown error'
-        }, ERROR_CATEGORIES.EXTENSION_LIFECYCLE);
+      window.addEventListener('unhandledrejection', (event) => {
+        this.logError(
+          'Promise rejeitada não tratada',
+          {
+            reason: event.reason?.message || 'Unknown error',
+          },
+          ERROR_CATEGORIES.EXTENSION_LIFECYCLE
+        );
       });
     }
 
     // Captura violations de CSP
     if (typeof document !== 'undefined') {
-      document.addEventListener('securitypolicyviolation', event => {
-        this.logError('Violação de CSP detectada', {
-          directive: event.violatedDirective,
-          blockedURI: event.blockedURI,
-          disposition: event.disposition
-        }, ERROR_CATEGORIES.CSP_VIOLATION);
+      document.addEventListener('securitypolicyviolation', (event) => {
+        this.logError(
+          'Violação de CSP detectada',
+          {
+            directive: event.violatedDirective,
+            blockedURI: event.blockedURI,
+            disposition: event.disposition,
+          },
+          ERROR_CATEGORIES.CSP_VIOLATION
+        );
       });
     }
   }
@@ -181,11 +241,17 @@ class MedicalErrorHandler {
 
     // Arrays
     if (Array.isArray(data)) {
-      return data.length > 5 ? [...data.slice(0, 5).map(item => this.sanitizeForLogging(item, strategy)), `...${data.length - 5} more items`] : data.map(item => this.sanitizeForLogging(item, strategy));
+      return data.length > 5
+        ? [
+            ...data.slice(0, 5).map((item) => this.sanitizeForLogging(item, strategy)),
+            `...${data.length - 5} more items`,
+          ]
+        : data.map((item) => this.sanitizeForLogging(item, strategy));
     }
 
     // Objects
     const sanitized = {};
+
     for (const [key, value] of Object.entries(data)) {
       // Verificar se o campo é sensível
       if (this.isSensitiveField(key)) {
@@ -206,6 +272,7 @@ class MedicalErrorHandler {
         sanitized[key] = value;
       }
     }
+
     return sanitized;
   }
 
@@ -216,7 +283,10 @@ class MedicalErrorHandler {
    */
   isSensitiveField(fieldName) {
     const lowerField = fieldName.toLowerCase();
-    return SENSITIVE_MEDICAL_FIELDS.some(sensitiveField => lowerField.includes(sensitiveField.toLowerCase()));
+
+    return SENSITIVE_MEDICAL_FIELDS.some((sensitiveField) =>
+      lowerField.includes(sensitiveField.toLowerCase())
+    );
   }
 
   /**
@@ -304,7 +374,7 @@ class MedicalErrorHandler {
       message,
       data: sanitizedData,
       userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'Unknown',
-      extensionVersion: this.getExtensionVersion()
+      extensionVersion: this.getExtensionVersion(),
     };
 
     // Adicionar stack trace apenas em desenvolvimento
@@ -334,6 +404,7 @@ class MedicalErrorHandler {
   outputToConsole(level, logEntry) {
     const prefix = `[Assistente Médico ${logEntry.category}]`;
     const message = `${prefix} ${logEntry.message}`;
+
     switch (level) {
       case ERROR_LEVELS.TRACE:
       case ERROR_LEVELS.DEBUG:
@@ -371,9 +442,8 @@ class MedicalErrorHandler {
       if (errors.length > this.config.maxStoredErrors) {
         errors = errors.slice(0, this.config.maxStoredErrors);
       }
-      await api.storage.local.set({
-        medicalErrors: errors
-      });
+
+      await api.storage.local.set({ medicalErrors: errors });
     } catch (error) {
       // Fallback silencioso
       console.warn('[ErrorHandler] Falha ao armazenar erro:', error.message);
@@ -385,7 +455,7 @@ class MedicalErrorHandler {
    * @param {object} logEntry - Entrada de log
    */
   notifyObservers(logEntry) {
-    this.errorObservers.forEach(observer => {
+    this.errorObservers.forEach((observer) => {
       try {
         observer(logEntry);
       } catch (error) {
@@ -420,6 +490,7 @@ class MedicalErrorHandler {
    */
   startPerformanceMark(name) {
     if (!this.config.enablePerformanceTiming) return;
+
     this.performanceMarks.set(name, Date.now());
   }
 
@@ -430,12 +501,11 @@ class MedicalErrorHandler {
    */
   endPerformanceMark(name, category = ERROR_CATEGORIES.EXTENSION_LIFECYCLE) {
     if (!this.config.enablePerformanceTiming) return;
+
     const startTime = this.performanceMarks.get(name);
     if (startTime) {
       const duration = Date.now() - startTime;
-      this.logInfo(`Performance: ${name} took ${duration}ms`, {
-        duration
-      }, category);
+      this.logInfo(`Performance: ${name} took ${duration}ms`, { duration }, category);
       this.performanceMarks.delete(name);
     }
   }
@@ -475,9 +545,7 @@ class MedicalErrorHandler {
       const result = await api.storage.local.get('medicalErrors');
       return result.medicalErrors || [];
     } catch (error) {
-      this.logWarning('Falha ao recuperar errors armazenados', {
-        error: error.message
-      });
+      this.logWarning('Falha ao recuperar errors armazenados', { error: error.message });
       return [];
     }
   }
@@ -488,14 +556,10 @@ class MedicalErrorHandler {
   async clearStoredErrors() {
     try {
       const api = typeof browser !== 'undefined' ? browser : chrome;
-      await api.storage.local.set({
-        medicalErrors: []
-      });
+      await api.storage.local.set({ medicalErrors: [] });
       this.logInfo('Errors armazenados limpos');
     } catch (error) {
-      this.logWarning('Falha ao limpar errors armazenados', {
-        error: error.message
-      });
+      this.logWarning('Falha ao limpar errors armazenados', { error: error.message });
     }
   }
 }
@@ -507,7 +571,7 @@ let errorHandlerInstance = null;
  * Obtém instância singleton do ErrorHandler
  * @returns {MedicalErrorHandler} Instância do ErrorHandler
  */
-function getErrorHandler() {
+export function getErrorHandler() {
   if (!errorHandlerInstance) {
     errorHandlerInstance = new MedicalErrorHandler();
   }
@@ -515,90 +579,24 @@ function getErrorHandler() {
 }
 
 // Exportar instância padrão para conveniência
-const ErrorHandler = getErrorHandler();
+export const ErrorHandler = getErrorHandler();
 
 // Exports para backward compatibility e testing
-
+export { MedicalErrorHandler };
 
 /**
  * Helper functions para uso rápido
  */
-const logInfo = (message, data, category) => ErrorHandler.logInfo(message, data, category);
-const logWarning = (message, data, category) => ErrorHandler.logWarning(message, data, category);
-const logError = (message, data, category) => ErrorHandler.logError(message, data, category);
-const logFatal = (message, data, category) => ErrorHandler.logFatal(message, data, category);
-const logDebug = (message, data, category) => ErrorHandler.logDebug(message, data, category);
+export const logInfo = (message, data, category) => ErrorHandler.logInfo(message, data, category);
+export const logWarning = (message, data, category) =>
+  ErrorHandler.logWarning(message, data, category);
+export const logError = (message, data, category) => ErrorHandler.logError(message, data, category);
+export const logFatal = (message, data, category) => ErrorHandler.logFatal(message, data, category);
+export const logDebug = (message, data, category) => ErrorHandler.logDebug(message, data, category);
 
 /**
  * Sanitização específica para dados médicos (export direto)
  * @param {any} data - Dados a serem sanitizados
  * @returns {any} Dados sanitizados
  */
-const sanitizeForLog = data => ErrorHandler.sanitizeForLogging(data);
-;// ./content-script.js
-/**
- * @file Content Script para a extensão Assistente de Regulação (v16 - Detecção com Broker).
- * Este script observa a abertura da aba de manutenção e envia os IDs para o background script,
- * que atua como um intermediário para salvar os dados no storage.session.
- */
-
-
-(function () {
-  logInfo('Script de controle v16 (Detecção com Broker) ativo', {}, ERROR_CATEGORIES.CONTENT_SCRIPT);
-  const api = browser;
-  let lastProcessedReguId = null;
-  const checkMaintenanceTab = () => {
-    const maintenanceTabPanel = document.getElementById('tabs-manutencao');
-    const isActive = maintenanceTabPanel && maintenanceTabPanel.getAttribute('aria-expanded') === 'true';
-    if (isActive) {
-      const idpElement = document.querySelector('#regu\\.reguPK\\.idp');
-      const idsElement = document.querySelector('#regu\\.reguPK\\.ids');
-      if (idpElement && idsElement && idpElement.value) {
-        const reguIdp = idpElement.value;
-        const reguIds = idsElement.value;
-        const currentReguId = `${reguIdp}-${reguIds}`;
-        if (currentReguId !== lastProcessedReguId) {
-          lastProcessedReguId = currentReguId;
-          const payload = {
-            reguIdp,
-            reguIds
-          };
-          logInfo('Dados de regulação detectados na página SIGSS', {
-            hasPayload: !!payload,
-            pageUrl: document.location.pathname,
-            payloadKeys: payload ? Object.keys(payload) : []
-          }, ERROR_CATEGORIES.CONTENT_SCRIPT);
-
-          // Envia a mensagem para o background script, que tem acesso ao storage.session
-          try {
-            api.runtime.sendMessage({
-              type: 'SAVE_REGULATION_DATA',
-              payload
-            });
-            logInfo('Mensagem enviada para background script com sucesso', {
-              messageType: 'SAVE_REGULATION_DATA'
-            }, ERROR_CATEGORIES.CONTENT_SCRIPT);
-          } catch (e) {
-            logError('Falha ao enviar mensagem para background script', {
-              errorMessage: e.message
-            }, ERROR_CATEGORIES.CONTENT_SCRIPT);
-          }
-        }
-      }
-    } else {
-      lastProcessedReguId = null;
-    }
-  };
-  const observer = new MutationObserver(() => {
-    clearTimeout(observer.debounceTimeout);
-    observer.debounceTimeout = setTimeout(checkMaintenanceTab, 250);
-  });
-  observer.observe(document.body, {
-    childList: true,
-    subtree: true,
-    attributes: true,
-    attributeFilter: ['style', 'aria-expanded', 'class']
-  });
-})();
-/******/ })()
-;
+export const sanitizeForLog = (data) => ErrorHandler.sanitizeForLogging(data);

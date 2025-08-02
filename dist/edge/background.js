@@ -8,6 +8,8 @@
 /* harmony import */ var bluebird__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(104);
 /* harmony import */ var _api_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(574);
 /* harmony import */ var _KeepAliveManager_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(657);
+/* harmony import */ var _ErrorHandler_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(322);
+
 
 
 
@@ -16,7 +18,10 @@ const api = typeof browser !== 'undefined' ? browser : chrome;
 api.runtime.onMessage.addListener(/*#__PURE__*/function () {
   var _ref = (0,bluebird__WEBPACK_IMPORTED_MODULE_0__.coroutine)(function* (message) {
     if (message.type === 'SAVE_REGULATION_DATA') {
-      console.log('[Assistente Background] Recebido pedido para salvar dados da regulação:', message.payload);
+      (0,_ErrorHandler_js__WEBPACK_IMPORTED_MODULE_3__/* .logInfo */ .fH)('Recebido pedido para salvar dados da regulação', {
+        payloadType: typeof message.payload,
+        hasPayload: !!message.payload
+      }, _ErrorHandler_js__WEBPACK_IMPORTED_MODULE_3__/* .ERROR_CATEGORIES */ .Uu.BACKGROUND_SCRIPT);
       try {
         const regulationDetails = yield (0,_api_js__WEBPACK_IMPORTED_MODULE_1__/* .fetchRegulationDetails */ .hr)(message.payload);
         if (regulationDetails) {
@@ -24,12 +29,20 @@ api.runtime.onMessage.addListener(/*#__PURE__*/function () {
           yield api.storage.local.set({
             pendingRegulation: regulationDetails
           });
-          console.log('[Assistente Background] Detalhes completos da regulação salvos no storage local:', regulationDetails);
+          (0,_ErrorHandler_js__WEBPACK_IMPORTED_MODULE_3__/* .logInfo */ .fH)('Detalhes da regulação salvos no storage local com sucesso', {
+            regulationId: regulationDetails.id || 'unknown',
+            hasDetails: !!regulationDetails
+          }, _ErrorHandler_js__WEBPACK_IMPORTED_MODULE_3__/* .ERROR_CATEGORIES */ .Uu.BACKGROUND_SCRIPT);
         } else {
-          console.warn('[Assistente Background] Não foram encontrados detalhes para a regulação:', message.payload);
+          (0,_ErrorHandler_js__WEBPACK_IMPORTED_MODULE_3__/* .logWarning */ .FF)('Não foram encontrados detalhes para a regulação', {
+            payloadType: typeof message.payload
+          }, _ErrorHandler_js__WEBPACK_IMPORTED_MODULE_3__/* .ERROR_CATEGORIES */ .Uu.BACKGROUND_SCRIPT);
         }
       } catch (e) {
-        console.error('[Assistente Background] Falha ao buscar ou salvar dados da regulação:', e);
+        (0,_ErrorHandler_js__WEBPACK_IMPORTED_MODULE_3__/* .logError */ .vV)('Falha ao buscar ou salvar dados da regulação', {
+          errorMessage: e.message,
+          errorType: e.constructor.name
+        }, _ErrorHandler_js__WEBPACK_IMPORTED_MODULE_3__/* .ERROR_CATEGORIES */ .Uu.BACKGROUND_SCRIPT);
       }
       return true;
     }
@@ -43,12 +56,26 @@ function openSidebar(_x2) {
 }
 function _openSidebar() {
   _openSidebar = (0,bluebird__WEBPACK_IMPORTED_MODULE_0__.coroutine)(function* (tab) {
-    if (api.sidePanel) {
-      yield api.sidePanel.open({
+    try {
+      if (api.sidePanel) {
+        yield api.sidePanel.open({
+          windowId: tab.windowId
+        });
+        (0,_ErrorHandler_js__WEBPACK_IMPORTED_MODULE_3__/* .logInfo */ .fH)('Sidebar aberto via sidePanel API', {
+          windowId: tab.windowId
+        }, _ErrorHandler_js__WEBPACK_IMPORTED_MODULE_3__/* .ERROR_CATEGORIES */ .Uu.BACKGROUND_SCRIPT);
+      } else if (api.sidebarAction) {
+        yield api.sidebarAction.toggle();
+        (0,_ErrorHandler_js__WEBPACK_IMPORTED_MODULE_3__/* .logInfo */ .fH)('Sidebar alternado via sidebarAction API', {}, _ErrorHandler_js__WEBPACK_IMPORTED_MODULE_3__/* .ERROR_CATEGORIES */ .Uu.BACKGROUND_SCRIPT);
+      } else {
+        (0,_ErrorHandler_js__WEBPACK_IMPORTED_MODULE_3__/* .logWarning */ .FF)('Nenhuma API de sidebar disponível', {}, _ErrorHandler_js__WEBPACK_IMPORTED_MODULE_3__/* .ERROR_CATEGORIES */ .Uu.BACKGROUND_SCRIPT);
+      }
+    } catch (error) {
+      (0,_ErrorHandler_js__WEBPACK_IMPORTED_MODULE_3__/* .logError */ .vV)('Falha ao abrir sidebar', {
+        errorMessage: error.message,
+        tabId: tab.id,
         windowId: tab.windowId
-      });
-    } else if (api.sidebarAction) {
-      yield api.sidebarAction.toggle();
+      }, _ErrorHandler_js__WEBPACK_IMPORTED_MODULE_3__/* .ERROR_CATEGORIES */ .Uu.BACKGROUND_SCRIPT);
     }
   });
   return _openSidebar.apply(this, arguments);
@@ -56,10 +83,16 @@ function _openSidebar() {
 api.action.onClicked.addListener(openSidebar);
 new _KeepAliveManager_js__WEBPACK_IMPORTED_MODULE_2__/* .KeepAliveManager */ .E();
 api.runtime.onInstalled.addListener(details => {
+  (0,_ErrorHandler_js__WEBPACK_IMPORTED_MODULE_3__/* .logInfo */ .fH)('Extensão instalada/atualizada', {
+    reason: details.reason,
+    version: api.runtime.getManifest().version
+  }, _ErrorHandler_js__WEBPACK_IMPORTED_MODULE_3__/* .ERROR_CATEGORIES */ .Uu.EXTENSION_LIFECYCLE);
   if (api.sidePanel) {
     api.sidePanel.setPanelBehavior({
       openPanelOnActionClick: false
-    }).catch(e => console.error('Falha ao definir o comportamento do sidePanel:', e));
+    }).catch(e => (0,_ErrorHandler_js__WEBPACK_IMPORTED_MODULE_3__/* .logError */ .vV)('Falha ao definir o comportamento do sidePanel', {
+      errorMessage: e.message
+    }, _ErrorHandler_js__WEBPACK_IMPORTED_MODULE_3__/* .ERROR_CATEGORIES */ .Uu.BACKGROUND_SCRIPT));
   }
   api.contextMenus.create({
     id: 'openSidePanel',
@@ -72,6 +105,7 @@ api.runtime.onInstalled.addListener(details => {
     }
   });
   if (details.reason === 'install') {
+    (0,_ErrorHandler_js__WEBPACK_IMPORTED_MODULE_3__/* .logInfo */ .fH)('Primeira instalação detectada, abrindo página de ajuda', {}, _ErrorHandler_js__WEBPACK_IMPORTED_MODULE_3__/* .ERROR_CATEGORIES */ .Uu.EXTENSION_LIFECYCLE);
     api.tabs.create({
       url: api.runtime.getURL('help.html')
     });
