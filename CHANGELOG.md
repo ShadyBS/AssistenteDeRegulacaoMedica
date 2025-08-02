@@ -20,7 +20,69 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
   - Cross-browser compatibility com fallbacks seguros
 - Integração completa do ErrorHandler em `api.js`, `background.js` e `content-script.js`
 - Testes unitários completos para validação de compliance médico
-- Adicionada liberação automática de locks de regulação após buscar detalhes, prevenindo bloqueios de registro no SIGSS.
+- Adicionada liberação automática de locks de regulação após buscar detalhes, prevenindo bloqueios de registro no SIGSS
+- **📦 Build System Otimizado**: Migração para build direto sem webpack para packages menores
+  - Redução de tamanho de ~1.5MB para ~94KB por package
+  - Scripts de package específicos por navegador (`package-chrome.js`, `package-firefox.js`, `package-edge.js`)
+  - Integração automática de compilação TailwindCSS no processo de build
+  - Sistema de archiver com compressão máxima (level 9)
+
+### 🛠️ Refactor & Architecture
+
+- **🔄 Manifest V3 Cross-Browser Compliance**: Padronização completa para Manifest V3 em todos navegadores
+  - **Chrome/Edge**: `manifest-edge.json` com `service_worker` padrão V3
+  - **Firefox**: `manifest-firefox.json` com especificidades V3 Firefox (scripts array, CSP objeto, gecko settings)
+  - Correção de inconsistências entre navegadores com manifests específicos
+- **🗂️ Manifest Management**: Remoção completa do `manifest.json` legado
+  - Atualização de todos scripts para usar manifests específicos
+  - Correção de `scripts/validation/validate-security.js` → `manifest-edge.json`
+  - Correção de `scripts/validation/validate-manifest.js` → `manifest-edge.json`
+  - Correção de `scripts/utils/version-bump.js` → atualiza ambos manifests
+  - Correção de `scripts/release/package-firefox.js` → `manifest-firefox.json`
+  - Correção de `build-release.bat` → manifestos corretos
+  - Correção de `release.js` → lista atualizada de arquivos
+- **📋 Cross-browser Manifest V3 Specifications**:
+  - Chrome/Edge: `service_worker`, CSP string, permissions padrão
+  - Firefox: `scripts` array, CSP objeto, `browser_specific_settings` obrigatório
+  - Manutenção de funcionalidade idêntica com sintaxes específicas
+
+### 🐞 Fixed
+
+- Corrigido vazamento de memória (memory leak) em `sidebar.js` ao garantir que todos os event listeners globais sejam removidos quando a sidebar é fechada ou recarregada
+- Corrigido erro `ReferenceError: browser is not defined` em `sidebar.js` e `options.js` usando alias cross-browser (`const api = window.browser || window.chrome`)
+- **🔧 Build Pipeline Issues**: Resolução completa de problemas de build e packaging
+  - Correção de `browser-polyfill.js` ausente nos packages
+  - Remoção de chave inválida `minimum_edge_version` do manifest Edge
+  - Correção de builds webpack oversized vs direct file copying
+  - Resolução de incompatibilidades de manifest entre navegadores
+- **🦊 Firefox Extension Loading**: Correção de erros de carregamento no Firefox
+  - Manifest V3 Firefox com especificidades corretas
+  - CSP em formato objeto para extension_pages
+  - Background scripts array mantido (não service_worker)
+  - Browser-specific settings com gecko ID obrigatório
+
+### 🎯 Performance & Security
+
+- **⚡ Package Size Optimization**: Redução drástica de tamanho dos packages
+  - Chrome: 94,26 KB (era ~1.5MB)
+  - Edge: 94,26 KB (era ~1.5MB)  
+  - Firefox: 94,25 KB (era ~1.5MB)
+- **🛡️ Security Compliance**: Validações médicas implementadas
+  - Scripts de validação usando manifests corretos
+  - Checksums de arquivos críticos atualizados
+  - Manifest V3 compliance em todos navegadores
+
+### 🔧 Developer Experience
+
+- **📝 Documentation Updates**: Criação de documentação detalhada
+  - `MANIFEST_CORRECTION_SUMMARY.md` - Especificidades de cada navegador
+  - `FIREFOX_V3_CLARIFICATION.md` - Esclarecimentos sobre Firefox V3
+  - `MANIFEST_REMOVAL_SUMMARY.md` - Processo de limpeza completo
+- **🚀 Build Commands**: Scripts npm otimizados
+  - `npm run package:all` - Build completo otimizado
+  - `npm run package:chrome` - Package Chrome específico
+  - `npm run package:firefox` - Package Firefox específico
+  - `npm run package:edge` - Package Edge específico
 
 ### 🛠️ Refactor & Linting
 

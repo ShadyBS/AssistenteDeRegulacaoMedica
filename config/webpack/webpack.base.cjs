@@ -17,7 +17,7 @@ const isProduction = process.env.NODE_ENV === 'production';
 const baseConfig = {
     mode: isDev ? 'development' : 'production',
     devtool: isDev ? 'cheap-module-source-map' : false,
-    
+
     resolve: {
         extensions: ['.js', '.json'],
         alias: {
@@ -27,7 +27,7 @@ const baseConfig = {
             '@config': path.resolve(__dirname, '../../config')
         }
     },
-    
+
     module: {
         rules: [
             // JavaScript
@@ -56,7 +56,7 @@ const baseConfig = {
                     }
                 }
             },
-            
+
             // CSS
             {
                 test: /\.css$/,
@@ -83,7 +83,7 @@ const baseConfig = {
                     }
                 ]
             },
-            
+
             // Images
             {
                 test: /\.(png|jpg|jpeg|gif|svg)$/i,
@@ -92,7 +92,7 @@ const baseConfig = {
                     filename: 'images/[name].[hash:8][ext]'
                 }
             },
-            
+
             // Fonts
             {
                 test: /\.(woff|woff2|eot|ttf|otf)$/i,
@@ -103,25 +103,25 @@ const baseConfig = {
             }
         ]
     },
-    
+
     plugins: [
         new CleanWebpackPlugin({
             cleanOnceBeforeBuildPatterns: ['**/*'],
             cleanStaleWebpackAssets: false
         }),
-        
+
         new webpack.DefinePlugin({
             'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV),
             'process.env.BUILD_TARGET': JSON.stringify(process.env.BUILD_TARGET || 'chrome'),
             '__DEV__': isDev,
             '__PROD__': isProduction
         }),
-        
+
         new MiniCssExtractPlugin({
             filename: isDev ? '[name].css' : '[name].[contenthash:8].css',
             chunkFilename: isDev ? '[id].css' : '[id].[contenthash:8].css'
         }),
-        
+
         new CopyWebpackPlugin({
             patterns: [
                 {
@@ -130,6 +130,10 @@ const baseConfig = {
                     globOptions: {
                         ignore: ['**/.DS_Store']
                     }
+                },
+                {
+                    from: path.resolve(__dirname, '../../node_modules/webextension-polyfill/dist/browser-polyfill.js'),
+                    to: 'browser-polyfill.js'
                 },
                 {
                     from: path.resolve(__dirname, '../../help.html'),
@@ -146,7 +150,7 @@ const baseConfig = {
             ]
         })
     ],
-    
+
     optimization: {
         minimize: isProduction,
         minimizer: [
@@ -178,7 +182,7 @@ const baseConfig = {
                 }
             })
         ],
-        
+
         splitChunks: {
             chunks: 'all',
             cacheGroups: {
@@ -198,13 +202,13 @@ const baseConfig = {
             }
         }
     },
-    
+
     performance: {
         hints: isProduction ? 'warning' : false,
         maxAssetSize: 250000, // 250kb
         maxEntrypointSize: 250000
     },
-    
+
     stats: {
         colors: true,
         modules: false,
@@ -227,30 +231,30 @@ const getEntryPoints = (target) => {
         utils: path.resolve(__dirname, '../../utils.js'),
         styles: path.resolve(__dirname, '../../src/input.css')
     };
-    
+
     // UI components
     entries['ui/patient-card'] = path.resolve(__dirname, '../../ui/patient-card.js');
     entries['ui/search'] = path.resolve(__dirname, '../../ui/search.js');
-    
+
     // Managers
     entries['KeepAliveManager'] = path.resolve(__dirname, '../../KeepAliveManager.js');
     entries['SectionManager'] = path.resolve(__dirname, '../../SectionManager.js');
     entries['TimelineManager'] = path.resolve(__dirname, '../../TimelineManager.js');
-    
+
     // Configs
     entries['field-config'] = path.resolve(__dirname, '../../field-config.js');
     entries['filter-config'] = path.resolve(__dirname, '../../filter-config.js');
-    
+
     // Renderers
     entries['renderers'] = path.resolve(__dirname, '../../renderers.js');
-    
+
     return entries;
 };
 
 // Função para criar configuração específica do target
 const createTargetConfig = (target) => {
     const config = { ...baseConfig };
-    
+
     config.entry = getEntryPoints(target);
     config.output = {
         path: path.resolve(__dirname, `../../dist/${target}`),
@@ -258,19 +262,19 @@ const createTargetConfig = (target) => {
         chunkFilename: '[name].[contenthash:8].js',
         clean: true
     };
-    
+
     // Plugin para copiar manifest específico do target
     config.plugins.push(
         new CopyWebpackPlugin({
             patterns: [
                 {
-                    from: target === 'edge' 
+                    from: target === 'edge'
                         ? path.resolve(__dirname, '../../manifest-edge.json')
                         : path.resolve(__dirname, '../../manifest.json'),
                     to: 'manifest.json',
                     transform(content) {
                         const manifest = JSON.parse(content.toString());
-                        
+
                         // Otimizações específicas por target
                         if (target === 'firefox') {
                             // Firefox-specific optimizations
@@ -284,50 +288,48 @@ const createTargetConfig = (target) => {
                                     };
                                 }
                             }
-                            
+
                             // Remove Chrome-specific keys
                             delete manifest.minimum_chrome_version;
                             delete manifest.key;
                         }
-                        
+
                         if (target === 'edge') {
                             // Edge-specific optimizations
-                            if (!manifest.minimum_edge_version) {
-                                manifest.minimum_edge_version = '88.0.0.0';
-                            }
-                            
+                            // Edge uses Manifest V3 like Chrome, no minimum version needed
+
                             // Remove other browser keys
                             delete manifest.applications;
                             delete manifest.browser_specific_settings;
                             delete manifest.key;
                         }
-                        
+
                         if (target === 'chrome') {
                             // Chrome-specific optimizations
                             if (!manifest.minimum_chrome_version) {
                                 manifest.minimum_chrome_version = '88';
                             }
-                            
+
                             // Remove other browser keys
                             delete manifest.applications;
                             delete manifest.browser_specific_settings;
                             delete manifest.minimum_edge_version;
                         }
-                        
+
                         // Production optimizations
                         if (isProduction) {
                             // Remove development keys
                             delete manifest.key;
                             delete manifest.update_url;
                         }
-                        
+
                         return JSON.stringify(manifest, null, 2);
                     }
                 }
             ]
         })
     );
-    
+
     // Target-specific plugins
     if (target === 'firefox') {
         config.plugins.push(
@@ -337,7 +339,7 @@ const createTargetConfig = (target) => {
             })
         );
     }
-    
+
     if (target === 'chrome') {
         config.plugins.push(
             new webpack.DefinePlugin({
@@ -346,7 +348,7 @@ const createTargetConfig = (target) => {
             })
         );
     }
-    
+
     if (target === 'edge') {
         config.plugins.push(
             new webpack.DefinePlugin({
@@ -355,7 +357,7 @@ const createTargetConfig = (target) => {
             })
         );
     }
-    
+
     return config;
 };
 

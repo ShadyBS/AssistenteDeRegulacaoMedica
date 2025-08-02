@@ -3,9 +3,9 @@
  * Validates security compliance, CSP, permissions, and medical data protection
  */
 
+import crypto from 'crypto';
 import fs from 'fs';
 import path from 'path';
-import crypto from 'crypto';
 import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -40,7 +40,7 @@ class SecurityValidator {
     console.log('🔍 Validating manifest security...');
 
     const rootDir = path.resolve(__dirname, '..', '..');
-    const manifestPath = path.join(rootDir, 'manifest.json');
+    const manifestPath = path.join(rootDir, 'manifest-edge.json');
 
     if (!fs.existsSync(manifestPath)) {
       this.addError('Manifest file not found');
@@ -213,7 +213,7 @@ class SecurityValidator {
     console.log('🛡️ Validating Content Security Policy...');
 
     const rootDir = path.resolve(__dirname, '..', '..');
-    const manifestPath = path.join(rootDir, 'manifest.json');
+    const manifestPath = path.join(rootDir, 'manifest-edge.json');
     const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
 
     const csp = manifest.content_security_policy;
@@ -259,7 +259,7 @@ class SecurityValidator {
     console.log('🔑 Validating permission security...');
 
     const rootDir = path.resolve(__dirname, '..', '..');
-    const manifestPath = path.join(rootDir, 'manifest.json');
+    const manifestPath = path.join(rootDir, 'manifest-edge.json');
     const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
 
     const permissions = manifest.permissions || [];
@@ -378,7 +378,12 @@ class SecurityValidator {
     console.log('🔒 Validating file integrity...');
 
     const rootDir = path.resolve(__dirname, '..', '..');
-    const criticalFiles = ['manifest.json', 'background.js', 'content-script.js', 'sidebar.js'];
+    const criticalFiles = [
+      'manifest-edge.json',
+      'background.js',
+      'content-script.js',
+      'sidebar.js',
+    ];
 
     const checksums = {};
 
@@ -475,7 +480,9 @@ class SecurityValidator {
       `🚨 High Severity Issues: ${this.securityIssues.filter((i) => i.severity === 'HIGH').length}`
     );
     console.log(
-      `⚠️ Medium Severity Issues: ${this.securityIssues.filter((i) => i.severity === 'MEDIUM').length}`
+      `⚠️ Medium Severity Issues: ${
+        this.securityIssues.filter((i) => i.severity === 'MEDIUM').length
+      }`
     );
     console.log(
       `ℹ️ Low Severity Issues: ${this.securityIssues.filter((i) => i.severity === 'LOW').length}`

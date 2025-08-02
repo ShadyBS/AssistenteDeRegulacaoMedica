@@ -12,9 +12,10 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 class VersionManager {
   constructor() {
     this.rootDir = path.resolve(__dirname, '..', '..');
-    this.manifestPath = path.join(this.rootDir, 'manifest.json');
+    this.manifestPath = path.join(this.rootDir, 'manifest-edge.json');
     this.packagePath = path.join(this.rootDir, 'package.json');
     this.edgeManifestPath = path.join(this.rootDir, 'manifest-edge.json');
+    this.firefoxManifestPath = path.join(this.rootDir, 'manifest-firefox.json');
   }
 
   async bumpVersion(type = 'patch') {
@@ -80,7 +81,15 @@ class VersionManager {
       const manifest = await fs.readJson(this.manifestPath);
       manifest.version = newVersion;
       await fs.writeJson(this.manifestPath, manifest, { spaces: 2 });
-      console.log(`✅ Updated manifest.json to ${newVersion}`);
+      console.log(`✅ Updated manifest-edge.json to ${newVersion}`);
+    }
+
+    // Update Firefox manifest
+    if (await fs.pathExists(this.firefoxManifestPath)) {
+      const firefoxManifest = await fs.readJson(this.firefoxManifestPath);
+      firefoxManifest.version = newVersion;
+      await fs.writeJson(this.firefoxManifestPath, firefoxManifest, { spaces: 2 });
+      console.log(`✅ Updated manifest-firefox.json to ${newVersion}`);
     }
   }
 

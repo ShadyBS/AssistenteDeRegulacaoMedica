@@ -7,8 +7,8 @@ REM Gera os ZIPs, cria a tag e publica o release no GitHub com os arquivos ZIP
 
 :VERSAO_LOOP
 echo -------- Etapa 1: leitura de versões --------
-for /f "delims=" %%v in ('powershell -NoProfile -Command "(Get-Content -Raw -Encoding UTF8 manifest.json | ConvertFrom-Json).version"') do set VERSION=%%v
-for /f "delims=" %%v in ('powershell -NoProfile -Command "(Get-Content -Raw -Encoding UTF8 manifest-edge.json | ConvertFrom-Json).version"') do set EDGE_VERSION=%%v
+for /f "delims=" %%v in ('powershell -NoProfile -Command "(Get-Content -Raw -Encoding UTF8 manifest-edge.json | ConvertFrom-Json).version"') do set VERSION=%%v
+for /f "delims=" %%v in ('powershell -NoProfile -Command "(Get-Content -Raw -Encoding UTF8 manifest-firefox.json | ConvertFrom-Json).version"') do set FIREFOX_VERSION=%%v
 
 set GIT_TAG=
 for /f "delims=" %%v in ('git describe --tags --abbrev^=0 2^>nul') do set GIT_TAG=%%v
@@ -16,25 +16,25 @@ for /f "delims=" %%v in ('git describe --tags --abbrev^=0 2^>nul') do set GIT_TA
 cls
 echo =====================================
 echo Última tag no git: %GIT_TAG%
-echo Versão em manifest.json: %VERSION%
-echo Versão em manifest-edge.json: %EDGE_VERSION%
+echo Versão em manifest-edge.json: %VERSION%
+echo Versão em manifest-firefox.json: %FIREFOX_VERSION%
 echo =====================================
 set /p NOVA_VERSAO="Pressione ENTER para continuar com a versão atual ou digite uma nova versão: "
 
 if not "%NOVA_VERSAO%"=="" (
     echo Atualizando a versão para %NOVA_VERSAO%...
     powershell.exe -NoProfile -ExecutionPolicy Bypass -Command ^
-      "$path = 'manifest.json'; ^
-       $manifest = Get-Content $path -Raw -Encoding UTF8 | ConvertFrom-Json; ^
-       $manifest.version = '%NOVA_VERSAO%'; ^
-       $manifest | ConvertTo-Json -Depth 5 | Set-Content -Encoding UTF8 -Path $path"
-    powershell.exe -NoProfile -ExecutionPolicy Bypass -Command ^
       "$path = 'manifest-edge.json'; ^
        $manifest = Get-Content $path -Raw -Encoding UTF8 | ConvertFrom-Json; ^
        $manifest.version = '%NOVA_VERSAO%'; ^
        $manifest | ConvertTo-Json -Depth 5 | Set-Content -Encoding UTF8 -Path $path"
+    powershell.exe -NoProfile -ExecutionPolicy Bypass -Command ^
+      "$path = 'manifest-firefox.json'; ^
+       $manifest = Get-Content $path -Raw -Encoding UTF8 | ConvertFrom-Json; ^
+       $manifest.version = '%NOVA_VERSAO%'; ^
+       $manifest | ConvertTo-Json -Depth 5 | Set-Content -Encoding UTF8 -Path $path"
     set "VERSION=%NOVA_VERSAO%"
-    set "EDGE_VERSION=%NOVA_VERSAO%"
+    set "FIREFOX_VERSION=%NOVA_VERSAO%"
 )
 set TAG=v%VERSION%
 pause

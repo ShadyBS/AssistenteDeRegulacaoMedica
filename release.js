@@ -29,7 +29,7 @@ async function getChangelog(fromTag) {
 
 // Passo 3: Atualizar manifests (remove BOM e atualiza versão)
 function updateManifestVersion(newVersion) {
-  const files = ['manifest.json', 'manifest-edge.json'];
+  const files = ['manifest-edge.json', 'manifest-firefox.json'];
   files.forEach((file) => {
     const manifestPath = path.join(__dirname, file);
     if (!fs.existsSync(manifestPath)) {

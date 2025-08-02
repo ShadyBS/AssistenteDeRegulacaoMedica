@@ -7,8 +7,8 @@
 
 /* harmony import */ var bluebird__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(104);
 /* harmony import */ var _api_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(574);
-/* harmony import */ var _KeepAliveManager_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(657);
-/* harmony import */ var _ErrorHandler_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(322);
+/* harmony import */ var _ErrorHandler_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(322);
+/* harmony import */ var _KeepAliveManager_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(657);
 
 
 
@@ -18,10 +18,10 @@ const api = typeof browser !== 'undefined' ? browser : chrome;
 api.runtime.onMessage.addListener(/*#__PURE__*/function () {
   var _ref = (0,bluebird__WEBPACK_IMPORTED_MODULE_0__.coroutine)(function* (message) {
     if (message.type === 'SAVE_REGULATION_DATA') {
-      (0,_ErrorHandler_js__WEBPACK_IMPORTED_MODULE_3__/* .logInfo */ .fH)('Recebido pedido para salvar dados da regulação', {
+      (0,_ErrorHandler_js__WEBPACK_IMPORTED_MODULE_2__/* .logInfo */ .fH)('Recebido pedido para salvar dados da regulação', {
         payloadType: typeof message.payload,
         hasPayload: !!message.payload
-      }, _ErrorHandler_js__WEBPACK_IMPORTED_MODULE_3__/* .ERROR_CATEGORIES */ .Uu.BACKGROUND_SCRIPT);
+      }, _ErrorHandler_js__WEBPACK_IMPORTED_MODULE_2__/* .ERROR_CATEGORIES */ .Uu.BACKGROUND_SCRIPT);
       try {
         const regulationDetails = yield (0,_api_js__WEBPACK_IMPORTED_MODULE_1__/* .fetchRegulationDetails */ .hr)(message.payload);
         if (regulationDetails) {
@@ -29,20 +29,20 @@ api.runtime.onMessage.addListener(/*#__PURE__*/function () {
           yield api.storage.local.set({
             pendingRegulation: regulationDetails
           });
-          (0,_ErrorHandler_js__WEBPACK_IMPORTED_MODULE_3__/* .logInfo */ .fH)('Detalhes da regulação salvos no storage local com sucesso', {
+          (0,_ErrorHandler_js__WEBPACK_IMPORTED_MODULE_2__/* .logInfo */ .fH)('Detalhes da regulação salvos no storage local com sucesso', {
             regulationId: regulationDetails.id || 'unknown',
             hasDetails: !!regulationDetails
-          }, _ErrorHandler_js__WEBPACK_IMPORTED_MODULE_3__/* .ERROR_CATEGORIES */ .Uu.BACKGROUND_SCRIPT);
+          }, _ErrorHandler_js__WEBPACK_IMPORTED_MODULE_2__/* .ERROR_CATEGORIES */ .Uu.BACKGROUND_SCRIPT);
         } else {
-          (0,_ErrorHandler_js__WEBPACK_IMPORTED_MODULE_3__/* .logWarning */ .FF)('Não foram encontrados detalhes para a regulação', {
+          (0,_ErrorHandler_js__WEBPACK_IMPORTED_MODULE_2__/* .logWarning */ .FF)('Não foram encontrados detalhes para a regulação', {
             payloadType: typeof message.payload
-          }, _ErrorHandler_js__WEBPACK_IMPORTED_MODULE_3__/* .ERROR_CATEGORIES */ .Uu.BACKGROUND_SCRIPT);
+          }, _ErrorHandler_js__WEBPACK_IMPORTED_MODULE_2__/* .ERROR_CATEGORIES */ .Uu.BACKGROUND_SCRIPT);
         }
       } catch (e) {
-        (0,_ErrorHandler_js__WEBPACK_IMPORTED_MODULE_3__/* .logError */ .vV)('Falha ao buscar ou salvar dados da regulação', {
+        (0,_ErrorHandler_js__WEBPACK_IMPORTED_MODULE_2__/* .logError */ .vV)('Falha ao buscar ou salvar dados da regulação', {
           errorMessage: e.message,
           errorType: e.constructor.name
-        }, _ErrorHandler_js__WEBPACK_IMPORTED_MODULE_3__/* .ERROR_CATEGORIES */ .Uu.BACKGROUND_SCRIPT);
+        }, _ErrorHandler_js__WEBPACK_IMPORTED_MODULE_2__/* .ERROR_CATEGORIES */ .Uu.BACKGROUND_SCRIPT);
       }
       return true;
     }
@@ -61,38 +61,38 @@ function _openSidebar() {
         yield api.sidePanel.open({
           windowId: tab.windowId
         });
-        (0,_ErrorHandler_js__WEBPACK_IMPORTED_MODULE_3__/* .logInfo */ .fH)('Sidebar aberto via sidePanel API', {
+        (0,_ErrorHandler_js__WEBPACK_IMPORTED_MODULE_2__/* .logInfo */ .fH)('Sidebar aberto via sidePanel API', {
           windowId: tab.windowId
-        }, _ErrorHandler_js__WEBPACK_IMPORTED_MODULE_3__/* .ERROR_CATEGORIES */ .Uu.BACKGROUND_SCRIPT);
+        }, _ErrorHandler_js__WEBPACK_IMPORTED_MODULE_2__/* .ERROR_CATEGORIES */ .Uu.BACKGROUND_SCRIPT);
       } else if (api.sidebarAction) {
         yield api.sidebarAction.toggle();
-        (0,_ErrorHandler_js__WEBPACK_IMPORTED_MODULE_3__/* .logInfo */ .fH)('Sidebar alternado via sidebarAction API', {}, _ErrorHandler_js__WEBPACK_IMPORTED_MODULE_3__/* .ERROR_CATEGORIES */ .Uu.BACKGROUND_SCRIPT);
+        (0,_ErrorHandler_js__WEBPACK_IMPORTED_MODULE_2__/* .logInfo */ .fH)('Sidebar alternado via sidebarAction API', {}, _ErrorHandler_js__WEBPACK_IMPORTED_MODULE_2__/* .ERROR_CATEGORIES */ .Uu.BACKGROUND_SCRIPT);
       } else {
-        (0,_ErrorHandler_js__WEBPACK_IMPORTED_MODULE_3__/* .logWarning */ .FF)('Nenhuma API de sidebar disponível', {}, _ErrorHandler_js__WEBPACK_IMPORTED_MODULE_3__/* .ERROR_CATEGORIES */ .Uu.BACKGROUND_SCRIPT);
+        (0,_ErrorHandler_js__WEBPACK_IMPORTED_MODULE_2__/* .logWarning */ .FF)('Nenhuma API de sidebar disponível', {}, _ErrorHandler_js__WEBPACK_IMPORTED_MODULE_2__/* .ERROR_CATEGORIES */ .Uu.BACKGROUND_SCRIPT);
       }
     } catch (error) {
-      (0,_ErrorHandler_js__WEBPACK_IMPORTED_MODULE_3__/* .logError */ .vV)('Falha ao abrir sidebar', {
+      (0,_ErrorHandler_js__WEBPACK_IMPORTED_MODULE_2__/* .logError */ .vV)('Falha ao abrir sidebar', {
         errorMessage: error.message,
         tabId: tab.id,
         windowId: tab.windowId
-      }, _ErrorHandler_js__WEBPACK_IMPORTED_MODULE_3__/* .ERROR_CATEGORIES */ .Uu.BACKGROUND_SCRIPT);
+      }, _ErrorHandler_js__WEBPACK_IMPORTED_MODULE_2__/* .ERROR_CATEGORIES */ .Uu.BACKGROUND_SCRIPT);
     }
   });
   return _openSidebar.apply(this, arguments);
 }
 api.action.onClicked.addListener(openSidebar);
-new _KeepAliveManager_js__WEBPACK_IMPORTED_MODULE_2__/* .KeepAliveManager */ .E();
+new _KeepAliveManager_js__WEBPACK_IMPORTED_MODULE_3__/* .KeepAliveManager */ .E();
 api.runtime.onInstalled.addListener(details => {
-  (0,_ErrorHandler_js__WEBPACK_IMPORTED_MODULE_3__/* .logInfo */ .fH)('Extensão instalada/atualizada', {
+  (0,_ErrorHandler_js__WEBPACK_IMPORTED_MODULE_2__/* .logInfo */ .fH)('Extensão instalada/atualizada', {
     reason: details.reason,
     version: api.runtime.getManifest().version
-  }, _ErrorHandler_js__WEBPACK_IMPORTED_MODULE_3__/* .ERROR_CATEGORIES */ .Uu.EXTENSION_LIFECYCLE);
+  }, _ErrorHandler_js__WEBPACK_IMPORTED_MODULE_2__/* .ERROR_CATEGORIES */ .Uu.EXTENSION_LIFECYCLE);
   if (api.sidePanel) {
     api.sidePanel.setPanelBehavior({
       openPanelOnActionClick: false
-    }).catch(e => (0,_ErrorHandler_js__WEBPACK_IMPORTED_MODULE_3__/* .logError */ .vV)('Falha ao definir o comportamento do sidePanel', {
+    }).catch(e => (0,_ErrorHandler_js__WEBPACK_IMPORTED_MODULE_2__/* .logError */ .vV)('Falha ao definir o comportamento do sidePanel', {
       errorMessage: e.message
-    }, _ErrorHandler_js__WEBPACK_IMPORTED_MODULE_3__/* .ERROR_CATEGORIES */ .Uu.BACKGROUND_SCRIPT));
+    }, _ErrorHandler_js__WEBPACK_IMPORTED_MODULE_2__/* .ERROR_CATEGORIES */ .Uu.BACKGROUND_SCRIPT));
   }
   api.contextMenus.create({
     id: 'openSidePanel',
@@ -105,7 +105,7 @@ api.runtime.onInstalled.addListener(details => {
     }
   });
   if (details.reason === 'install') {
-    (0,_ErrorHandler_js__WEBPACK_IMPORTED_MODULE_3__/* .logInfo */ .fH)('Primeira instalação detectada, abrindo página de ajuda', {}, _ErrorHandler_js__WEBPACK_IMPORTED_MODULE_3__/* .ERROR_CATEGORIES */ .Uu.EXTENSION_LIFECYCLE);
+    (0,_ErrorHandler_js__WEBPACK_IMPORTED_MODULE_2__/* .logInfo */ .fH)('Primeira instalação detectada, abrindo página de ajuda', {}, _ErrorHandler_js__WEBPACK_IMPORTED_MODULE_2__/* .ERROR_CATEGORIES */ .Uu.EXTENSION_LIFECYCLE);
     api.tabs.create({
       url: api.runtime.getURL('help.html')
     });

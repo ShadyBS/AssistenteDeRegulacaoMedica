@@ -429,7 +429,7 @@ async function main() {
   const rootDir = path.resolve(path.dirname(__dirname), '..', '..');
 
   // Validate main manifest
-  const mainManifestPath = path.join(rootDir, 'manifest.json');
+  const mainManifestPath = path.join(rootDir, 'manifest-edge.json');
   const isMainValid = await validator.validateManifest(mainManifestPath);
 
   // Validate Edge-specific manifest if it exists

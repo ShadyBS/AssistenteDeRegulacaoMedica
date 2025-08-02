@@ -35,10 +35,4 @@ if (process.env.NODE_ENV === 'development') {
     firefoxConfig.devtool = 'source-map'; // Firefox tem melhor suporte a source maps
 }
 
-// Firefox prefere background scripts não minificados para revisão
-if (process.env.NODE_ENV === 'production') {
-    firefoxConfig.optimization.minimizer[0].terserOptions.compress.drop_console = false;
-    firefoxConfig.optimization.minimizer[0].terserOptions.mangle = false;
-}
-
 module.exports = firefoxConfig;

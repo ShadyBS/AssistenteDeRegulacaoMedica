@@ -40,9 +40,19 @@ edgeConfig.module.rules[0].use.options.plugins.push(
 
 // Edge tem algumas peculiaridades com service workers
 if (process.env.NODE_ENV === 'production') {
+    const minimizer = edgeConfig.optimization.minimizer[0];
+
+    // Garante que o objeto terserOptions e compress existam
+    if (!minimizer.terserOptions) {
+        minimizer.terserOptions = {};
+    }
+    if (!minimizer.terserOptions.compress) {
+        minimizer.terserOptions.compress = {};
+    }
+
     // Edge prefere código menos otimizado para melhor compatibilidade
-    edgeConfig.optimization.minimizer[0].terserOptions.compress = {
-        ...edgeConfig.optimization.minimizer[0].terserOptions.compress,
+    minimizer.terserOptions.compress = {
+        ...minimizer.terserOptions.compress,
         keep_infinity: true,
         keep_fargs: true,
         keep_fnames: true

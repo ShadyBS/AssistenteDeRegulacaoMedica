@@ -53,7 +53,12 @@ async function zipExtension({ zipName, manifestSource }) {
         if (FILES_TO_IGNORE.includes(file)) continue;
         // Ignora os arquivos de manifesto para serem adicionados especificamente depois, de forma case-insensitive
         const lowerCaseFile = file.toLowerCase();
-        if (lowerCaseFile === 'manifest.json' || lowerCaseFile === 'manifest-edge.json') continue;
+        if (
+          lowerCaseFile === 'manifest.json' ||
+          lowerCaseFile === 'manifest-edge.json' ||
+          lowerCaseFile === 'manifest-firefox.json'
+        )
+          continue;
         const filePath = path.join(SRC_DIR, file);
         const stats = await fs.stat(filePath);
         if (stats.isDirectory()) {
@@ -84,11 +89,11 @@ const getVersionFromManifest = async (manifestPath) => {
       await fs.remove(path.join(OUT_DIR, zip));
     }
 
-    const firefoxVersion = await getVersionFromManifest('manifest.json');
+    const firefoxVersion = await getVersionFromManifest('manifest-firefox.json');
     const chromiumVersion = await getVersionFromManifest('manifest-edge.json');
     await zipExtension({
       zipName: `AssistenteDeRegulacao-firefox-v${firefoxVersion}.zip`,
-      manifestSource: 'manifest.json',
+      manifestSource: 'manifest-firefox.json',
     });
     await zipExtension({
       zipName: `AssistenteDeRegulacao-chromium-v${chromiumVersion}.zip`,
