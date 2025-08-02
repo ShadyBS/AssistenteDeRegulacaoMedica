@@ -221,11 +221,10 @@ export class SectionManager {
       const result = await this.config.fetchFunction(params);
       this.allData = Array.isArray(result) ? result : result.jsonData || [];
     } catch (error) {
-      logError(
-        'SECTION_DATA_FETCH',
-        `Erro ao buscar dados para ${this.sectionKey}`,
-        { sectionKey: this.sectionKey, errorMessage: error.message }
-      );
+      logError('SECTION_DATA_FETCH', `Erro ao buscar dados para ${this.sectionKey}`, {
+        sectionKey: this.sectionKey,
+        errorMessage: error.message,
+      });
       const sectionNameMap = {
         consultations: 'consultas',
         exams: 'exames',
@@ -505,11 +504,10 @@ export class SectionManager {
         }
       });
     } catch (e) {
-      logError(
-        'SECTION_FILTER_RENDER',
-        `Erro ao renderizar filtros para ${this.sectionKey}`,
-        { sectionKey: this.sectionKey, errorMessage: e.message }
-      );
+      logError('SECTION_FILTER_RENDER', `Erro ao renderizar filtros para ${this.sectionKey}`, {
+        sectionKey: this.sectionKey,
+        errorMessage: e.message,
+      });
     }
   }
 
