@@ -225,6 +225,8 @@ export default [
     languageOptions: {
       globals: {
         ...globals.jest,
+        ...globals.node, // Add Node.js globals for test environment
+        global: 'writable', // Jest global object
         describe: 'readonly',
         it: 'readonly',
         expect: 'readonly',

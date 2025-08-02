@@ -1,5 +1,2 @@
-#!/usr/bin/env sh
-. "$(dirname -- "$0")/_/husky.sh"
-
 # Executa a formatação, linting e validação de segurança antes do commit
 npm run pre-commit

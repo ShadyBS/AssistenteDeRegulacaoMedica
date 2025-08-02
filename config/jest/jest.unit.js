@@ -3,7 +3,7 @@
  * Medical Extension Testing with Security Focus
  */
 
-export default {
+module.exports = {
   displayName: 'Unit Tests',
   testEnvironment: 'jsdom',
   testMatch: [
@@ -61,8 +61,8 @@ export default {
   // Test timeout for async operations
   testTimeout: 10000,
 
-  // Mock configuration for browser APIs
-  setupFiles: ['<rootDir>/test/mocks/browser-mocks.js'],
+  // Mock configuration for browser APIs - moved to setupFilesAfterEnv
+  // setupFiles: ['<rootDir>/test/mocks/browser-mocks.js'],
 
   // Clear mocks between tests
   clearMocks: true,
