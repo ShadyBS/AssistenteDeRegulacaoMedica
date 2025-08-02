@@ -1,0 +1,87 @@
+🔍 Executando validação completa antes do push...
+
+> assistente-de-regulacao-medica@3.3.7 validate
+> npm run validate:all
+
+
+> assistente-de-regulacao-medica@3.3.7 validate:all
+> npm run validate:manifest && npm run validate:security && npm run validate:performance
+
+
+> assistente-de-regulacao-medica@3.3.7 validate:manifest
+> node scripts/validation/validate-manifest.js
+
+
+> assistente-de-regulacao-medica@3.3.7 validate:security
+> node scripts/validation/validate-security.js
+
+
+> assistente-de-regulacao-medica@3.3.7 validate:performance
+> node scripts/validation/validate-performance.cjs
+
+🚀 Performance Validation
+Checking bundle sizes and performance metrics
+
+
+📊 Checking bundle sizes...
+
+
+CHROME Distribution:
+✅ common.js: 110KB (within 500KB limit)
+✅ sidebar.js: 89KB (within 500KB limit)
+✅ service-worker.js: 43KB (within 500KB limit)
+✅ options.js: 61KB (within 500KB limit)
+✅ styles.82e84e8d.css: 33KB (within 100KB limit)
+
+FIREFOX Distribution:
+✅ common.js: 110KB (within 500KB limit)
+✅ sidebar.js: 89KB (within 500KB limit)
+✅ background.js: 43KB (within 500KB limit)
+✅ options.js: 61KB (within 500KB limit)
+✅ styles.82e84e8d.css: 33KB (within 100KB limit)
+
+EDGE Distribution:
+✅ common.js: 119KB (within 500KB limit)
+✅ sidebar.js: 95KB (within 500KB limit)
+✅ background.js: 12KB (within 500KB limit)
+✅ options.js: 65KB (within 500KB limit)
+✅ styles.82e84e8d.css: 33KB (within 100KB limit)
+
+🧠 Memory usage validation...
+
+ℹ️  options.js: Skipped for memory leak check due to UI complexity.
+✅ No obvious memory leak patterns detected
+
+📋 Performance Summary:
+✅ All performance checks passed!
+
+> assistente-de-regulacao-medica@3.3.7 lint
+> npm run lint:all
+
+
+> assistente-de-regulacao-medica@3.3.7 lint:all
+> npm run lint:js && npm run lint:css && npm run lint:html --ignore **/coverage/**/*.html
+
+
+> assistente-de-regulacao-medica@3.3.7 lint:js
+> eslint . --config config/eslint/eslint.config.js --ext .js,.ts
+
+
+> assistente-de-regulacao-medica@3.3.7 lint:css
+> stylelint src/**/*.css
+
+
+> assistente-de-regulacao-medica@3.3.7 lint:html
+> htmlhint ./**/*.html --ignore **/coverage/**/*.html **/coverage/**/*.html
+
+
+   Config loaded: C:\AssistenteDeRegulacaoMedica\.htmlhintrc
+
+   Config loaded: C:\AssistenteDeRegulacaoMedica\.htmlhintrc
+
+Scanned 12 files, no errors found (2518 ms).
+
+> assistente-de-regulacao-medica@3.3.7 test:unit
+> jest --config config/jest/jest.unit.js
+
+husky - pre-push script failed (code 1)

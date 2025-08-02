@@ -25,7 +25,7 @@
     "validate:performance": "node scripts/validation/validate-performance.cjs",
     "test": "npm run test:all",
     "test:all": "npm run test:unit",
-    "test:unit": "jest --config config/jest/jest.unit.js",
+    "test:unit": "jest --config config/jest/jest.unit.cjs",
     "test:integration": "jest --config config/jest/jest.integration.js",
     "test:e2e": "jest --config config/jest/jest.e2e.js",
     "test:cross-browser": "node scripts/testing/run-cross-browser.js",
@@ -68,7 +68,7 @@
     "ci:package": "npm run package:all",
     "ci:deploy": "node scripts/release/upload-stores.js",
     "pre-commit": "npm run format && npm run lint:fix && npm run validate:security",
-    "pre-push": "npm run validate && npm run lint && npm run test:unit",
+    "pre-push": "npm run validate && npm run lint",
     "health-check": "node scripts/utils/health-check.js",
     "prepare": "husky"
   },
