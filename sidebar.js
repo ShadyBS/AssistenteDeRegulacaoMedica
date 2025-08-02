@@ -1,3 +1,11 @@
+/**
+ * 🏥 ASSISTENTE DE REGULAÇÃO MÉDICA - MAIN UI
+ *
+ * 🚨 ANTES DE MODIFICAR: Leia obrigatoriamente agents.md
+ * 📋 Instruções IA: .github/instructions/agents.md.instructions.md
+ * 🔒 Projeto médico - dados sensíveis - nunca logar CPF/CNS/dados pessoais
+ */
+
 // Cross-browser API alias (lint-safe)
 const api = typeof browser !== 'undefined' ? browser : typeof chrome !== 'undefined' ? chrome : {};
 import * as API from './api.js';

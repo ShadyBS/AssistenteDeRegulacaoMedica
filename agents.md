@@ -53,8 +53,8 @@ AssistenteDeRegulacaoMedica/
 ### Convenções
 
 - **Modules**: ES6 imports/exports (ex: `import * as API from "./api.js"`)
-- **Functions**: camelCase (ex: `checkMaintenanceTab()`)
-- **Constants**: UPPER_SNAKE_CASE (ex: `SRC_DIR`)
+- **Functions**: camelCase (ex: `fetchRegulationDetails()`)
+- **Constants**: UPPER_SNAKE_CASE (ex: `API_TIMEOUT`)
 - **CSS**: TailwindCSS utility classes
 
 ## 🚨 FLUXO OBRIGATÓRIO
@@ -69,11 +69,13 @@ AssistenteDeRegulacaoMedica/
 📦 BUILD ZIPS (se mudou core)
     ↓
 ✅ VALIDAR
-   ├── Manifest validation
-   ├── Browser compatibility
-   └── Medical data security
+   ├── npm run ci:validate
+   ├── npm run lint:fix
+   └── npm run test:unit
     ↓
 🔄 TESTAR EM AMBOS BROWSERS
+    ↓
+📋 UPDATE CHANGELOG [Unreleased]
     ↓
 💾 COMMIT
     ↓
@@ -83,43 +85,45 @@ AssistenteDeRegulacaoMedica/
 ### Comandos Essenciais
 
 ```bash
+npm run dev              # Desenvolvimento
+npm run ci:validate      # Validação completa
 npm run build:css        # Build TailwindCSS
 npm run build:zips       # Generate browser packages
-npm run release          # Full release process
 ```
 
 ### ⚠️ Nunca Pule
 
+- Validação de segurança médica
 - CSS build após mudanças UI
 - ZIP generation após mudanças core
-- Manifest validation
-- Cross-browser testing
+- Changelog update antes commit
 
 ## 🔧 SCRIPTS
 
 ### Principais
 
 ```bash
-npm run build:css        # Compila TailwindCSS
-npm run build:zips       # Gera ZIPs Chrome/Firefox
-npm run release          # Release automático
+npm run dev              # Desenvolvimento com watch
+npm run build:prod       # Build produção
+npm run ci:validate      # Validação completa
+npm run test:unit        # Testes unitários
+npm run release:patch    # Release patch version
 ```
 
-### Build Manual
+### Build e Deploy
 
 ```bash
-# CSS only
-tailwindcss -i ./src/input.css -o ./dist/output.css --minify
-
-# Full build
-node build-zips.js
+npm run build:css        # Compila TailwindCSS
+npm run build:zips       # Gera ZIPs Chrome/Firefox/Edge
+npm run package:all      # Packages para stores
+npm run release:all      # Release completo
 ```
 
 ### Quando Usar
 
-- **Desenvolvimento UI**: `npm run build:css` após mudanças CSS
-- **Testing**: `npm run build:zips` para testar em browsers
-- **Release**: `npm run release` para versão final
+- **Desenvolvimento**: `npm run dev`
+- **Pré-commit**: `npm run ci:validate`
+- **Release**: `npm run release:patch` ou `npm run release:minor`
 
 ## 💻 PADRÕES
 
@@ -129,48 +133,59 @@ node build-zips.js
 // ✅ Correto - ES6 modules
 import * as API from "./api.js";
 import { store } from "./store.js";
-export function checkMaintenanceTab() {}
+export function fetchRegulationDetails() {}
+
+// ✅ Medical domain functions - camelCase inglês
+const normalizeTimelineData = (apiData) => { ... };
+const fetchAllTimelineData = async () => { ... };
 
 // ❌ Evitar - CommonJS em browser extension
 const API = require("./api.js");
-module.exports = { checkMaintenanceTab };
+module.exports = { fetchRegulationDetails };
 ```
 
 ### Arquitetura
 
 ```javascript
 // ✅ State management pattern
-const state = { currentPatient: { ficha: null } };
+const state = { currentPatient: { ficha: null, cadsus: null } };
 const listeners = [];
 export const store = { subscribe, getState, setState };
 
-// ✅ Browser API usage
-const api = browser || chrome;
-await api.storage.session.set({ reguId: currentReguId });
+// ✅ Browser API cross-compatibility
+const api = typeof browser !== 'undefined' ? browser : chrome;
+await api.storage.local.set({ pendingRegulation: data });
+
+// ✅ Medical data flow pattern
+// 1. Search → 2. Fetch details → 3. Clear lock
+const details = await fetchRegulationDetails(reguId);
+await clearRegulationLock(reguId);
 ```
 
 ### Manifest V3
 
 ```json
-// ✅ Correct permissions
-"permissions": ["storage", "scripting", "contextMenus"],
+// ✅ Correct permissions for medical extension
+"permissions": ["storage", "scripting", "contextMenus", "clipboardWrite"],
 "host_permissions": ["*://*/sigss/*"],
 "content_security_policy": {
-  "extension_pages": "script-src 'self'; object-src 'self';"
+  "extension_pages": "script-src 'self'; object-src 'self'; connect-src http://* https://*;"
 }
 ```
 
 ### Qualidade
 
 - **Função**: < 50 linhas cada
-- **Arquivo**: < 1500 linhas
-- **Medical data**: Nunca log/expose
+- **Arquivo**: < 1500 linhas total
+- **Medical data**: NUNCA log/expose dados sensíveis
+- **Cobertura**: > 80% em funções críticas
 
 ### Bibliotecas Preferidas
 
-- **CSS**: TailwindCSS (não Bootstrap)
+- **CSS**: TailwindCSS v3.4.1 (não Bootstrap)
 - **Icons**: Lucide SVG inline (não FontAwesome)
-- **Browser API**: browser-polyfill.js (não chrome.\*)
+- **Browser API**: webextension-polyfill (não chrome.\*)
+- **Testing**: Jest com mocks médicos
 
 ## 🐛 DEBUG
 
@@ -180,36 +195,69 @@ await api.storage.session.set({ reguId: currentReguId });
 # Browser extension debugging
 chrome://extensions/     # Chrome DevTools
 about:debugging         # Firefox debugging
+npm run serve           # Firefox test environment
 ```
 
 ### Problemas Comuns
 
-- **Manifest errors**: Verificar permissions e CSP
-- **Content script não injeta**: Verificar host_permissions
+- **SIGSS não detectado**: Verificar host_permissions e content_scripts matches
 - **CSS não aplica**: Rebuild com `npm run build:css`
-- **Storage issues**: Verificar browser compatibility
+- **Storage issues**: Usar api.storage.local vs session
+- **Timeline vazia**: Verificar isenFullPKCrypto e locks
 
-### Logs
+### Logs Seguros
 
 ```javascript
-// ✅ Proper logging for extension
-console.log("[Assistente de Regulação] Script ativo");
-console.warn("⚠️ SIGSS data not found");
-console.error("❌ API call failed:", error);
+// ✅ Logging seguro para extensão médica
+console.log('[Assistente de Regulação] Timeline carregada');
+console.warn('⚠️ SIGSS data structure changed');
+console.error('❌ API call failed:', error.message); // Não o error completo
+
+// ❌ NUNCA fazer - exposição de dados sensíveis
+console.log('Patient data:', patient); // LGPD violation
+console.log('CPF:', cpf); // Medical data exposure
 ```
+
+## 🏥 FLUXOS CRÍTICOS MÉDICOS
+
+### Obtenção Timeline Paciente
+
+```javascript
+// ✅ Sequência OBRIGATÓRIA - nunca quebrar
+1. searchPatients(name/cpf)
+2. fetchVisualizaUsuario(patientId) → isenFullPKCrypto
+3. fetchAllTimelineData(isenFullPKCrypto)
+4. normalizeTimelineData(rawData)
+```
+
+### Regulação SIGSS
+
+```javascript
+// ✅ Lock/Unlock pattern - VITAL para reguladores
+1. fetchRegulationDetails(reguId) → dados + lock
+2. clearRegulationLock(reguId) → libera para outros
+// SEMPRE executar clearRegulationLock após fetch
+```
+
+### Dados Sensíveis NUNCA Logar
+
+- `cns` (Cartão Nacional de Saúde)
+- `isenPK`, `isenFullPKCrypto` (IDs criptografados)
+- `reguIdp`, `reguIds` (IDs de regulação)
+- `nome`, `dataNascimento`, `nomeMae` (dados pessoais)
 
 ## 📝 COMMITS
 
 ### Formato
 
 ```
-<tipo>(<escopo>): <desc>
+<tipo>(<escopo>): <descrição>
 
-feat(sidebar): adiciona busca automática de pacientes
-fix(manifest): corrige permissions para SIGSS
-docs(readme): atualiza instruções de instalação
-style(ui): melhora layout da timeline
-refactor(api): simplifica chamadas CADSUS
+feat(timeline): adiciona filtro por especialidade médica
+fix(sigss): corrige detecção de locks de regulação
+docs(api): documenta endpoints CADSUS
+style(ui): melhora responsividade da sidebar
+refactor(store): simplifica state management
 ```
 
 **Tipos**: feat, fix, docs, style, refactor, test, chore, release
@@ -217,9 +265,9 @@ refactor(api): simplifica chamadas CADSUS
 ### Exemplos Projeto
 
 ```bash
-git commit -m "feat(sidebar): adiciona filtro por data de consulta"
-git commit -m "fix(content-script): corrige detecção de IDs SIGSS"
-git commit -m "release: v3.3.8 - melhorias na timeline"
+git commit -m "feat(sidebar): adiciona busca automática de pacientes"
+git commit -m "fix(api): corrige timeout em chamadas SIGSS"
+git commit -m "release: v3.3.8 - melhorias na timeline médica"
 ```
 
 ### Changelog
@@ -227,15 +275,15 @@ git commit -m "release: v3.3.8 - melhorias na timeline"
 ```markdown
 ## [Unreleased]
 
-### Added
+### ✨ Added
 
 - **Timeline**: Visualização cronológica de consultas
 
-### Changed
+### 🛠️ Changed
 
 - **UI**: Layout responsivo da sidebar
 
-### Fixed
+### 🐞 Fixed
 
 - **API**: Timeout em chamadas CADSUS
 ```
@@ -245,82 +293,82 @@ git commit -m "release: v3.3.8 - melhorias na timeline"
 ### Obrigatórias
 
 ```bash
-# Manifest validation
-web-ext lint              # Firefox
-chrome-extension-validator # Chrome
-
-# CSS build check
-npm run build:css
-
-# ZIP generation
-npm run build:zips
+npm run ci:validate      # Validação completa
+npm run lint:fix         # Fix linting issues
+npm run test:unit        # Testes unitários
+npm run build:css        # Rebuild CSS
+npm run validate:security # Segurança médica
 ```
 
 ### Cross-browser
 
 ```bash
-# Test both browsers
-web-ext run               # Firefox testing
-# Chrome: Load unpacked in chrome://extensions
+npm run build:chrome     # Build Chrome
+npm run build:firefox    # Build Firefox
+npm run build:edge       # Build Edge
+web-ext run             # Test Firefox
 ```
 
 ### Medical Data Security
 
-- [ ] Nunca log dados pessoais
-- [ ] Sanitize API responses
+- [ ] Nunca log dados pessoais/médicos
+- [ ] Sanitize API responses antes de armazenar
 - [ ] Validate SIGSS permissions
 - [ ] Check CSP compliance
+- [ ] Verify regulation lock clearing
 
 ## ✅ CHECKLIST
 
 ### Pré-Commit
 
-- [ ] `npm run build:css` executado
-- [ ] Manifest validado
+- [ ] `npm run ci:validate` passou
+- [ ] Medical data security verificada
 - [ ] Cross-browser testado
-- [ ] Medical data secured
-- [ ] ZIP build functional
+- [ ] Changelog [Unreleased] atualizado
+- [ ] CSS/ZIPs rebuilt se necessário
 
 ### Qualidade
 
 - [ ] ES6 modules usados
 - [ ] TailwindCSS classes aplicadas
-- [ ] Browser APIs properly called
+- [ ] Browser APIs cross-compatible
 - [ ] No console errors
-- [ ] Medical workflows respected
+- [ ] Medical workflows preservados
 
 ### Finalização
 
-- [ ] Funcionalidade testada em SIGSS
+- [ ] Funcionalidade testada no contexto SIGSS
 - [ ] Documentação atualizada
-- [ ] Changelog updated
 - [ ] Version bumped if needed
+- [ ] Commit com mensagem padrão
 
 ## 🚨 AVISOS
 
 ### NUNCA
 
+- ❌ Log dados médicos sensíveis no console
 - ❌ Usar CommonJS (require/module.exports) em browser context
-- ❌ Hardcode credentials ou dados sensíveis
-- ❌ Ignorar CSP violations
-- ❌ Deploy sem testar em ambos browsers
-- ❌ Log dados médicos no console
+- ❌ Ignorar CSP violations ou manifest errors
+- ❌ Deploy sem testar em Chrome/Firefox/Edge
+- ❌ Quebrar fluxos críticos de timeline/regulação
 
 ### Segurança
 
 ```javascript
-// ✅ Secure API calls
+// ✅ Secure medical data handling
 const sanitizedData = sanitizePatientData(rawData);
-await api.storage.session.set({ data: sanitizedData });
+await api.storage.local.set({ data: sanitizedData });
 
-// ❌ Nunca fazer
-console.log("Patient CPF:", patient.cpf); // GDPR violation
+// ✅ Proper regulation flow
+const details = await fetchRegulationDetails(reguId);
+// Process details...
+await clearRegulationLock(reguId); // ALWAYS clear lock
 ```
 
 ### Performance
 
 ```javascript
-// ✅ Debounced API calls
+// ✅ Debounced searches for UX
 const debouncedSearch = debounce(searchPatients, 500);
 
 // ✅ Efficient DOM updates
@@ -329,43 +377,108 @@ const fragment = document.createDocumentFragment();
 container.appendChild(fragment);
 ```
 
-### Manifest V3 Compliance
-
-```javascript
-// ✅ Use service worker patterns
-chrome.action.onClicked.addListener((tab) => {
-  chrome.sidePanel.open({ windowId: tab.windowId });
-});
-
-// ❌ Avoid background page patterns
-// No persistent background scripts
-```
-
 ## 📋 RESUMO
 
 ### Fluxo Básico
 
-1. Ler agents.md → 2. Implementar → 3. Build CSS/ZIPs → 4. Validar → 5. Commit
+1. Ler agents.md → 2. Implementar → 3. Validar → 4. Update changelog → 5. Commit
 
 ### Comandos Críticos
 
 ```bash
+npm run dev              # Desenvolvimento
+npm run ci:validate      # Antes commit
 npm run build:css        # Após mudanças UI
-npm run build:zips       # Antes de testar
-npm run release          # Para releases
+npm run release:patch    # Release
 ```
 
 ### Arquivos Críticos
 
 - `manifest.json` - Permissions e CSP
-- `sidebar.js` - Entry point principal
-- `content-script.js` - SIGSS integration
+- `api.js` - Fluxos SIGSS/CADSUS
 - `store.js` - State management
+- `timeline.js` - Lógica médica principal
 
 ### Checklist Mínimo
 
 - [ ] Manifest V3 compliant
-- [ ] Cross-browser tested
 - [ ] Medical data secured
-- [ ] CSS/ZIPs built
+- [ ] Cross-browser tested
+- [ ] Changelog updated
 - [ ] Commit realizado
+
+  - **Nunca logar ou expor na UI (além do necessário):**
+    - `CPF`
+    - `CNS` (Cartão Nacional de Saúde)
+    - `isenPK` e `isenFullPKCrypto` (identificadores do paciente)
+    - `reguIdp` e `reguIds` (identificadores de regulação)
+    - Dados demográficos diretos (`nome`, `dataNascimento`, `nomeMae`).
+  - **Sanitização:** O projeto possui uma cultura de sanitização de dados, como visto nos mocks de teste (`medicalTestHelpers.sanitizeForLog`), que deve ser aplicada a qualquer log de produção.
+
+- **Conformidade (LGPD/HIPAA):**
+
+  - **Validação:** Não há uma função de validação explícita, mas a conformidade é alcançada por design.
+  - **Princípios Aplicados:**
+    - **Acesso Controlado:** O uso do `isenFullPKCrypto` garante que o acesso aos dados do paciente seja sempre mediado por um token criptográfico.
+    - **Minimização de Dados:** A extensão busca apenas os dados necessários para a sua funcionalidade.
+    - **Não Persistência:** Dados sensíveis não são armazenados permanentemente pela extensão; são mantidos apenas em memória ou no `session storage` do navegador, que é limpo ao final da sessão.
+
+- **Segurança da Extensão:**
+  - **Manifest V3:** Utiliza a versão mais recente e segura do manifesto, com um `content_security_policy` (CSP) rigoroso.
+  - **Permissões:** As permissões solicitadas no `manifest.json` devem ser mínimas e justificadas.
+  - **Comunicação Segura:** Todas as chamadas de API são feitas via HTTPS.
+
+---
+
+## 3. 🚀 Engenheiro de DevOps (DevOps Engineer)
+
+**Foco:** Pipeline de CI/CD, automação de build, testes, versionamento e deploy.
+
+### Conhecimentos Essenciais:
+
+- **Pipeline de CI/CD (GitHub Actions):**
+
+  - **Workflows:** O projeto possui workflows para CI, CD e scans de segurança.
+  - **CI:** Executa validações (`lint`, `format`), testes (unitários, integração) e build a cada push/PR.
+  - **CD:** Automatiza o packaging e o upload para as web stores (Chrome, Firefox, Edge) em cada release.
+
+- **Automação de Build e Testes:**
+
+  - **Build:** `Webpack` é usado para criar bundles otimizados e específicos para cada navegador.
+  - **Testes:**
+    - **Estratégia:** A testagem é feita com **mocks**, simulando as respostas das APIs do SIGSS. **Não há um ambiente de staging do SIGSS utilizado para testes automatizados.**
+    - **Ferramentas:** `Jest` para testes unitários e de integração.
+    - **Mocks:** `test/mocks/medical-apis.js` contém simulações detalhadas para todas as interações com sistemas externos.
+
+- **Versionamento e Release:**
+  - **Versionamento:** O projeto segue o **Semantic Versioning (SemVer)**.
+  - **Changelog:** O `CHANGELOG.md` é mantido no formato **Keep a Changelog**, com categorias semânticas e seções específicas para o domínio médico.
+  - **Scripts:** O `package.json` contém mais de 50 scripts para automação de tarefas, incluindo `npm run release:*` para facilitar o processo de release.
+
+---
+
+## 4. 💻 Desenvolvedor Sênior (Senior Developer)
+
+**Foco:** Convenções de código, implementação de funcionalidades, boas práticas e resolução de problemas do dia a dia.
+
+### Conhecimentos Essenciais:
+
+- **Convenções de Nomenclatura:**
+
+  - **Funções:** `camelCase`, em inglês, com nomes descritivos e focados na ação (ex: `applyAutomationFilters`).
+  - **Variáveis:** `camelCase`, em inglês. Coleções no plural (`exams`), objetos únicos no singular (`currentPatient`).
+
+- **Padrões de Código:**
+
+  - **Módulos ES6:** `import`/`export` são usados em todo o projeto.
+  - **Programação Funcional:** Uso de funções como `map`, `filter`, `reduce` para manipulação de dados.
+  - **Tratamento de Erros:** Uso de `try...catch` para chamadas de API, com uma função centralizada `handleFetchError`.
+  - **DOM-Wrapper:** Funções em `renderers.js` e `utils.js` (como `showDialog`) abstraem a manipulação direta da DOM.
+
+- **Mensagens de Commit:**
+
+  - Embora não esteja explicitamente documentado, a estrutura do projeto e o uso de `Husky` sugerem o padrão **Conventional Commits** (`feat(api): ...`, `fix(timeline): ...`).
+
+- **Ambiente de Desenvolvimento:**
+  - **Hot Reload:** O ambiente de desenvolvimento (`npm run dev`) utiliza `webpack-dev-server` com recarregamento automático.
+  - **Linting:** `ESLint` e `Prettier` estão configurados para garantir a consistência do código, com hooks de pre-commit para validação automática.

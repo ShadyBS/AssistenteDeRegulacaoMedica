@@ -16,6 +16,12 @@
 - 🔒 **Segurança**: Manifest V3 com políticas de segurança rigorosas
 - 🌐 **Multi-Browser**: Compatible with Chrome, Firefox, e Edge
 
+## 🤖 Para Desenvolvedores e Agentes IA
+
+**IMPORTANTE**: Este projeto possui instruções obrigatórias para agentes IA em `.github/instructions/agents.md.instructions.md`.
+
+**SEMPRE leia o arquivo `agents.md` antes de fazer qualquer modificação no código.**
+
 ## 📦 Instalação
 
 ### Chrome Web Store

@@ -10,7 +10,8 @@ export default {
     '<rootDir>/test/unit/**/*.test.js',
     '<rootDir>/test/unit/**/*.spec.js'
   ],
-  
+  rootDir: '../../',
+
   // Coverage configuration
   collectCoverage: true,
   collectCoverageFrom: [
@@ -35,53 +36,46 @@ export default {
       statements: 80
     }
   },
-  
+
   // Setup and teardown
-  setupFilesAfterEnv: ['<rootDir>/test/setup/unit-setup.js'],
-  
+  setupFilesAfterEnv: ['<rootDir>/test/setup.js'],
+
   // Module mapping
-  moduleNameMapping: {
+  moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/$1',
     '^@test/(.*)$': '<rootDir>/test/$1'
   },
-  
+
   // Globals for browser extension
   globals: {
     chrome: {},
     browser: {},
     AssistenteRegulacao: {}
   },
-  
+
   // Transform configuration
   transform: {
     '^.+\\.js$': 'babel-jest'
   },
-  
+
   // Test timeout for async operations
   testTimeout: 10000,
-  
+
   // Mock configuration for browser APIs
   setupFiles: ['<rootDir>/test/mocks/browser-mocks.js'],
-  
+
   // Clear mocks between tests
   clearMocks: true,
   restoreMocks: true,
-  
+
   // Verbose output for medical compliance tracking
   verbose: true,
-  
+
   // Error on deprecated features
   errorOnDeprecated: true,
-  
+
   // Medical data security testing
   reporters: [
-    'default',
-    ['jest-html-reporters', {
-      publicPath: './coverage/unit',
-      filename: 'unit-test-report.html',
-      pageTitle: 'Assistente de Regulação - Unit Tests',
-      includeFailureMsg: true,
-      includeSuiteFailure: true
-    }]
+    'default'
   ]
 };
