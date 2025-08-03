@@ -177,7 +177,7 @@ jobs:
         continue-on-error: true
 
       - name: 📤 Upload Release Package
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: release-${{ matrix.browser }}-${{ needs.pre-release-check.outputs.version }}
           path: dist/packages/
@@ -207,7 +207,7 @@ jobs:
         run: npm ci
 
       - name: 📦 Download Chrome Package
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: release-chrome-${{ needs.pre-release-check.outputs.version }}
           path: dist/packages/
@@ -246,7 +246,7 @@ jobs:
         run: npm ci
 
       - name: 📦 Download Firefox Package
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: release-firefox-${{ needs.pre-release-check.outputs.version }}
           path: dist/packages/
@@ -284,7 +284,7 @@ jobs:
         run: npm ci
 
       - name: 📦 Download Edge Package
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: release-edge-${{ needs.pre-release-check.outputs.version }}
           path: dist/packages/
@@ -318,7 +318,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: 📦 Download All Packages
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           path: packages/
 
@@ -363,7 +363,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: 📦 Download All Packages
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           path: packages/
 

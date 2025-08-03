@@ -240,7 +240,7 @@ jobs:
           key: build-${{ matrix.browser }}-${{ github.sha }}
           
       - name: 📤 Upload Build Artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: extension-${{ matrix.browser }}-${{ github.sha }}
           path: dist/${{ matrix.browser }}
@@ -293,7 +293,7 @@ jobs:
           fi
           
       - name: 📤 Upload Package
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: package-${{ matrix.browser }}-${{ github.sha }}
           path: dist/packages/
@@ -313,7 +313,7 @@ jobs:
         uses: actions/checkout@v4
         
       - name: 📦 Download All Packages
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           path: packages/
           
@@ -348,7 +348,7 @@ jobs:
           ls -la packages/ >> build-report.md
           
       - name: 📤 Upload Build Report
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: build-report-${{ github.sha }}
           path: build-report.md
