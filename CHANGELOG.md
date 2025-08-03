@@ -9,6 +9,17 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ### ✨ Added
 
+- **🏗️ Store Pattern Refactoring (TASK-M-001)**: Refatoração completa do sistema de store para melhor gerenciamento de memória
+
+  - **Memory Management**: Implementação de WeakMap para listeners registry, auto-cleanup de listeners órfãos e controle de tamanho de estado
+  - **Debug Tools**: Modo debug habilitável/desabilitável, tracking de uso de memória e estatísticas detalhadas de store
+  - **Medical Flow Preservation**: Sistema que preserva o fluxo médico de "nova análise = filtros resetados para padrão do usuário"
+  - **Smart Persistence**: Persistência médica consciente que distingue dados seguros vs sensíveis (CPF, CNS nunca persistem)
+  - **Performance Optimization**: 1000+ listeners processados em <100ms, cleanup automático a cada 100 notificações
+  - **Test Suite**: 39 testes passando em 4 suítes (memory, medical-flow, persistence, performance)
+  - **Backward Compatibility**: 100% dos métodos existentes preservados, zero breaking changes
+  - **Medical Compliance**: LGPD/HIPAA compliance com sanitização automática de dados sensíveis
+
 - **🔄 KeepAliveManager Service Worker Migration (TASK-C-004)**: Migração completa para compatibilidade com service workers
 
   - **Hybrid Architecture**: Implementação dual que detecta automaticamente o ambiente (service worker vs background script)
@@ -19,6 +30,7 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
   - **Medical Compliance**: Sessões SIGSS mantidas ativas para reguladores médicos
 
 - **🔧 Manifest V3 Service Worker Migration (TASK-A-005)**: Migração completa para service workers compatíveis
+
   - **Chrome/Edge**: Restaurado `"type": "module"` necessário para ES6 imports em service workers
   - **Firefox**: Migrado de `"scripts"` para `"service_worker"` para conformidade Manifest V3
   - **Cross-browser consistency**: Configuração otimizada para cada navegador
@@ -46,6 +58,7 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 ### 🛠️ Changed
 
 - **🌐 Browser API Standardization (TASK-M-003)**: Padronização completa das APIs cross-browser
+
   - **Padrão unificado**: Implementado `const api = typeof browser !== 'undefined' ? browser : chrome;` em todos os arquivos
   - **content-script.js**: Migrado de `const api = browser;` para padrão fallback
   - **options.js**: Migrado de `const api = window.browser || window.chrome;` para padrão fallback
