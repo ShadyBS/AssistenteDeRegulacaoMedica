@@ -795,7 +795,15 @@ async function openSidebar(tab) {
 
 api.action.onClicked.addListener(openSidebar);
 
-new KeepAliveManager();
+// Initialize KeepAliveManager
+const keepAliveManager = new KeepAliveManager();
+keepAliveManager.start().catch((error) => {
+  logError(
+    'Falha ao inicializar KeepAliveManager',
+    { errorMessage: error.message },
+    ERROR_CATEGORIES.BACKGROUND_SCRIPT
+  );
+});
 
 api.runtime.onInstalled.addListener((details) => {
   logInfo(
@@ -843,7 +851,14 @@ api.runtime.onInstalled.addListener((details) => {
 
 /**
  * Cleanup ao unload da extensão.
+ * Para service workers, cleanup automático via alarms API.
  */
+// For service worker environment - cleanup via event listener
+if (typeof self !== 'undefined' && self.addEventListener) {
+  self.addEventListener('unload', () => {
+    keepAliveManager?.stop();
+  });
+}
 api.runtime.onSuspend.addListener(() => {
   logInfo('Extension suspending - cleanup de recursos', {}, ERROR_CATEGORIES.EXTENSION_LIFECYCLE);
 

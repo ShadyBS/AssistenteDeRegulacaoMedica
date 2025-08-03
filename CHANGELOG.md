@@ -1,6 +1,16 @@
-# Chang## [Unreleased]
+# Changelog
+
+## [Unreleased]
 
 ### ✨ Added
+
+- **🔄 KeepAliveManager Service Worker Migration (TASK-C-004)**: Migração completa para compatibilidade com service workers
+  - **Hybrid Architecture**: Implementação dual que detecta automaticamente o ambiente (service worker vs background script)
+  - **Chrome/Edge**: Utiliza Alarms API para manter sessões ativas em service workers
+  - **Firefox**: Mantém setInterval em background scripts tradicionais
+  - **Zero Breaking Changes**: Funcionalidade médica preservada com fallback automático
+  - **Cross-browser Compatibility**: Teste em Chrome, Firefox e Edge com arquiteturas específicas
+  - **Medical Compliance**: Sessões SIGSS mantidas ativas para reguladores médicos
 
 - **🔧 Manifest V3 Service Worker Migration (TASK-A-005)**: Migração completa para service workers compatíveis
   - **Chrome/Edge**: Restaurado `"type": "module"` necessário para ES6 imports em service workers
@@ -18,12 +28,14 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 ### ✨ Added
 
 - **� Manifest V3 Service Worker Migration (TASK-A-005)**: Migração completa para service workers compatíveis
+
   - **Chrome/Edge**: Removido `"type": "module"` incompatível com service workers
   - **Firefox**: Migrado de `"scripts"` para `"service_worker"` para conformidade Manifest V3
   - **Cross-browser consistency**: Configuração uniforme de background scripts em todos os navegadores
   - **Future-proof**: Preparado para atualizações futuras dos navegadores e especificações
 
 - **🛡️ Security Validation Framework**: Implementado sistema completo de validação de mensagens (TASK-C-003)
+
   - **URLConfigurationManager**: Validação dinâmica de domínios SIGSS baseada em URL configurada
   - **MessageRateLimiter**: Rate limiting de 5 mensagens/segundo por aba para prevenir ataques DoS
   - **PayloadValidator**: Validação estrutural de dados de regulação médica
