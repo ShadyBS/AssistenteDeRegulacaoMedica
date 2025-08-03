@@ -1,4 +1,4 @@
-name: "CD - Browser Extension Release"
+name: 'CD - Browser Extension Release'
 
 on:
   push:
@@ -31,29 +31,29 @@ jobs:
   # ===============================
   # PRE-RELEASE VALIDATION
   # ===============================
-  
+
   pre-release-check:
     name: 🔍 Pre-Release Validation
     runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.version.outputs.version }}
       is-production: ${{ steps.environment.outputs.is-production }}
-      
+
     steps:
       - name: 📥 Checkout Repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          
+
       - name: 🔧 Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-          
+
       - name: 📥 Install Dependencies
         run: npm ci
-        
+
       - name: 📋 Extract Version
         id: version
         run: |
@@ -64,7 +64,7 @@ jobs:
           fi
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "📦 Version: $VERSION"
-          
+
       - name: 🌍 Determine Environment
         id: environment
         run: |
@@ -75,11 +75,11 @@ jobs:
             echo "is-production=false" >> $GITHUB_OUTPUT
             echo "🧪 Beta Release"
           fi
-          
+
       - name: ✅ Validate Release Prerequisites
         run: |
           echo "🔍 Validating release prerequisites..."
-          
+
           # Check if all required secrets are available
           if [ "${{ steps.environment.outputs.is-production }}" = "true" ]; then
             if [ -z "${{ secrets.CHROME_EXTENSION_ID }}" ]; then
@@ -91,19 +91,19 @@ jobs:
               exit 1
             fi
           fi
-          
+
           # Validate version format
           if ! [[ "${{ steps.version.outputs.version }}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
             echo "❌ Invalid version format: ${{ steps.version.outputs.version }}"
             exit 1
           fi
-          
+
           echo "✅ All prerequisites validated"
 
   # ===============================
   # RUN FULL CI PIPELINE
   # ===============================
-  
+
   run-ci:
     name: 🔄 Run CI Pipeline
     uses: ./.github/workflows/ci.yml
@@ -112,7 +112,7 @@ jobs:
   # ===============================
   # BUILD RELEASE PACKAGES
   # ===============================
-  
+
   build-release:
     name: 🏗️ Build Release Packages
     runs-on: ubuntu-latest
@@ -120,50 +120,50 @@ jobs:
     strategy:
       matrix:
         browser: [chrome, firefox, edge]
-        
+
     steps:
       - name: 📥 Checkout Repository
         uses: actions/checkout@v4
-        
+
       - name: 🔧 Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-          
+
       - name: 📥 Install Dependencies
         run: npm ci
-        
+
       - name: 🔧 Update Version in Manifests
         run: |
           VERSION="${{ needs.pre-release-check.outputs.version }}"
-          
+
           # Update main manifest (Chrome)
           jq --arg version "$VERSION" '.version = $version' manifest.json > manifest.tmp.json
           mv manifest.tmp.json manifest.json
-          
+
           # Update Edge manifest
           if [ -f "manifest-edge.json" ]; then
             jq --arg version "$VERSION" '.version = $version' manifest-edge.json > manifest-edge.tmp.json
             mv manifest-edge.tmp.json manifest-edge.json
           fi
-          
+
           # Update Firefox manifest
           if [ -f "manifest-firefox.json" ]; then
             jq --arg version "$VERSION" '.version = $version' manifest-firefox.json > manifest-firefox.tmp.json
             mv manifest-firefox.tmp.json manifest-firefox.json
           fi
-          
+
           echo "📦 Updated version to $VERSION"
-          
+
       - name: 🏗️ Build Production
         run: |
           npm run build:css
           npm run build:prod
-          
+
       - name: 📦 Package ${{ matrix.browser }}
         run: npm run package:${{ matrix.browser }}
-        
+
       - name: 🔐 Sign Extension (Chrome)
         if: matrix.browser == 'chrome' && needs.pre-release-check.outputs.is-production == 'true'
         env:
@@ -175,7 +175,7 @@ jobs:
             node scripts/release/sign-chrome.js
           fi
         continue-on-error: true
-        
+
       - name: 📤 Upload Release Package
         uses: actions/upload-artifact@v3
         with:
@@ -186,32 +186,32 @@ jobs:
   # ===============================
   # STORE SUBMISSION
   # ===============================
-  
+
   submit-chrome:
     name: 🌐 Submit to Chrome Web Store
     runs-on: ubuntu-latest
     needs: [pre-release-check, build-release]
     if: needs.pre-release-check.outputs.is-production == 'true'
-    
+
     steps:
       - name: 📥 Checkout Repository
         uses: actions/checkout@v4
-        
+
       - name: 🔧 Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-          
+
       - name: 📥 Install Dependencies
         run: npm ci
-        
+
       - name: 📦 Download Chrome Package
         uses: actions/download-artifact@v3
         with:
           name: release-chrome-${{ needs.pre-release-check.outputs.version }}
           path: dist/packages/
-          
+
       - name: 🚀 Upload to Chrome Web Store
         env:
           CHROME_EXTENSION_ID: ${{ secrets.CHROME_EXTENSION_ID }}
@@ -231,26 +231,26 @@ jobs:
     runs-on: ubuntu-latest
     needs: [pre-release-check, build-release]
     if: needs.pre-release-check.outputs.is-production == 'true'
-    
+
     steps:
       - name: 📥 Checkout Repository
         uses: actions/checkout@v4
-        
+
       - name: 🔧 Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-          
+
       - name: 📥 Install Dependencies
         run: npm ci
-        
+
       - name: 📦 Download Firefox Package
         uses: actions/download-artifact@v3
         with:
           name: release-firefox-${{ needs.pre-release-check.outputs.version }}
           path: dist/packages/
-          
+
       - name: 🚀 Upload to Firefox Add-ons
         env:
           FIREFOX_JWT_ISSUER: ${{ secrets.FIREFOX_JWT_ISSUER }}
@@ -269,26 +269,26 @@ jobs:
     runs-on: ubuntu-latest
     needs: [pre-release-check, build-release]
     if: needs.pre-release-check.outputs.is-production == 'true'
-    
+
     steps:
       - name: 📥 Checkout Repository
         uses: actions/checkout@v4
-        
+
       - name: 🔧 Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-          
+
       - name: 📥 Install Dependencies
         run: npm ci
-        
+
       - name: 📦 Download Edge Package
         uses: actions/download-artifact@v3
         with:
           name: release-edge-${{ needs.pre-release-check.outputs.version }}
           path: dist/packages/
-          
+
       - name: 🚀 Upload to Edge Add-ons
         env:
           EDGE_CLIENT_ID: ${{ secrets.EDGE_CLIENT_ID }}
@@ -306,22 +306,22 @@ jobs:
   # ===============================
   # BETA DISTRIBUTION
   # ===============================
-  
+
   beta-release:
     name: 🧪 Beta Release Distribution
     runs-on: ubuntu-latest
     needs: [pre-release-check, build-release]
     if: needs.pre-release-check.outputs.is-production == 'false'
-    
+
     steps:
       - name: 📥 Checkout Repository
         uses: actions/checkout@v4
-        
+
       - name: 📦 Download All Packages
         uses: actions/download-artifact@v3
         with:
           path: packages/
-          
+
       - name: 🧪 Create Beta Release
         uses: softprops/action-gh-release@v1
         with:
@@ -329,19 +329,19 @@ jobs:
           name: 🧪 Beta Release v${{ needs.pre-release-check.outputs.version }}
           body: |
             ## 🧪 Beta Release v${{ needs.pre-release-check.outputs.version }}
-            
+
             **⚠️ This is a beta release for testing purposes**
-            
+
             ### 📦 Available Downloads
             - Chrome Extension (.zip)
             - Firefox Extension (.xpi)
             - Edge Extension (.zip)
-            
+
             ### 🚀 Installation Instructions
             1. Download the appropriate package for your browser
             2. Load as unpacked extension in developer mode
             3. Report any issues on GitHub
-            
+
             **Commit:** ${{ github.sha }}
             **Build Date:** ${{ github.run_id }}
           files: packages/**/*
@@ -351,22 +351,22 @@ jobs:
   # ===============================
   # PRODUCTION RELEASE
   # ===============================
-  
+
   production-release:
     name: 🚀 Production Release
     runs-on: ubuntu-latest
     needs: [pre-release-check, build-release, submit-chrome, submit-firefox, submit-edge]
     if: needs.pre-release-check.outputs.is-production == 'true'
-    
+
     steps:
       - name: 📥 Checkout Repository
         uses: actions/checkout@v4
-        
+
       - name: 📦 Download All Packages
         uses: actions/download-artifact@v3
         with:
           path: packages/
-          
+
       - name: 📝 Generate Changelog
         id: changelog
         run: |
@@ -377,11 +377,11 @@ jobs:
           else
             CHANGELOG="- Initial release"
           fi
-          
+
           echo "CHANGELOG<<EOF" >> $GITHUB_OUTPUT
           echo "$CHANGELOG" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
-          
+
       - name: 🚀 Create Production Release
         uses: softprops/action-gh-release@v1
         with:
@@ -389,21 +389,21 @@ jobs:
           name: 🚀 Release v${{ needs.pre-release-check.outputs.version }}
           body: |
             ## 🚀 Release v${{ needs.pre-release-check.outputs.version }}
-            
+
             ### 📦 Available on Browser Stores
             - [Chrome Web Store](https://chrome.google.com/webstore/detail/${{ secrets.CHROME_EXTENSION_ID }})
             - [Firefox Add-ons](https://addons.mozilla.org/addon/${{ secrets.FIREFOX_EXTENSION_ID }})
             - [Edge Add-ons](https://microsoftedge.microsoft.com/addons/detail/${{ secrets.EDGE_EXTENSION_ID }})
-            
+
             ### 🔄 Changes
             ${{ steps.changelog.outputs.CHANGELOG }}
-            
+
             ### 📊 Technical Details
             - **Commit:** ${{ github.sha }}
             - **Build Date:** ${{ github.run_id }}
             - **Manifest Version:** 3
             - **Browsers:** Chrome, Firefox, Edge
-            
+
             ### 🛡️ Security
             All packages are digitally signed and verified.
           files: packages/**/*
@@ -413,34 +413,34 @@ jobs:
   # ===============================
   # POST-RELEASE MONITORING
   # ===============================
-  
+
   post-release:
     name: 📊 Post-Release Monitoring
     runs-on: ubuntu-latest
     needs: [pre-release-check, production-release, beta-release]
     if: always() && (needs.production-release.result == 'success' || needs.beta-release.result == 'success')
-    
+
     steps:
       - name: 📥 Checkout Repository
         uses: actions/checkout@v4
-        
+
       - name: 🔧 Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-          
+
       - name: 📥 Install Dependencies
         run: npm ci
-        
+
       - name: 📊 Initialize Monitoring
         run: |
           echo "🚀 Release deployed successfully!"
           echo "📊 Initializing post-release monitoring..."
-          
+
           # Setup error tracking
           node scripts/monitoring/setup-tracking.js
-          
+
           # Send success notification
           node scripts/utils/notification.js \
             --type="success" \
@@ -451,20 +451,20 @@ jobs:
   # ===============================
   # NOTIFICATION & CLEANUP
   # ===============================
-  
+
   notify-completion:
     name: 📢 Notify Completion
     runs-on: ubuntu-latest
     needs: [pre-release-check, production-release, beta-release, post-release]
     if: always()
-    
+
     steps:
       - name: 📢 Success Notification
         if: needs.post-release.result == 'success'
         run: |
           echo "✅ Release pipeline completed successfully!"
           echo "🎉 Version ${{ needs.pre-release-check.outputs.version }} is now available"
-          
+
       - name: 📢 Failure Notification
         if: failure()
         run: |

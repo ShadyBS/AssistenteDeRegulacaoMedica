@@ -1,6 +1,15 @@
-# Changelog
+# Changelog- **### ✨ Added
+- **📋 Manifest Chrome Principal**: Criado `manifest.json` como manifest principal para Chrome/desenvolvimento, resolvendo erro de build do webpack
+- **�🛡️ Security Validation Framework**: Implementado sistema completo de validação de mensagens (TASK-C-003)Security Validation Framework**: Implementado sistema completo de validação de mensagens (TASK-C-003)
 
-Todas as mudanças notáveis do projeto serão documentadas neste arquivo.
+  - **URLConfigurationManager**: Validação dinâmica de domínios SIGSS baseada em URL configurada
+  - **MessageRateLimiter**: Rate limiting de 5 mensagens/segundo por aba para prevenir ataques DoS
+  - **PayloadValidator**: Validação estrutural de dados de regulação médica
+  - **MessageQueue**: Sistema de fila para cenários de instalação e inicialização
+  - **6-Step Validation Pipeline**: Validação completa de origem, rate limiting, payload e configuração
+  - **Validação 100% aprovada**: 25/25 validações passaram no script de validação automática
+  - **Testes unitários**: Jest configurado com Babel para suporte ES6 modules
+  - **Compliance médico**: Logging seguro com sanitização automática de dados sensíveisas as mudanças notáveis do projeto serão documentadas neste arquivo.
 
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/),
 e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
@@ -9,7 +18,15 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ### ✨ Added
 
-- **📋 Manifest Chrome Principal**: Criado `manifest.json` como manifest principal para Chrome/desenvolvimento, resolvendo erro de build do webpack
+- **� Security Validation Framework**: Implementado sistema completo de validação de mensagens (TASK-C-003)
+
+  - **URLConfigurationManager**: Validação dinâmica de domínios SIGSS baseada em URL configurada
+  - **MessageRateLimiter**: Rate limiting de 5 mensagens/segundo por aba para prevenir ataques DoS
+  - **PayloadValidator**: Validação estrutural de dados de regulação médica
+  - **MessageQueue**: Sistema de fila para cenários de instalação e inicialização
+  - **6-Step Validation Pipeline**: Validação completa de origem, rate limiting, payload e configuração
+
+- **�📋 Manifest Chrome Principal**: Criado `manifest.json` como manifest principal para Chrome/desenvolvimento, resolvendo erro de build do webpack
   - **Estrutura cross-browser completa**: `manifest.json` (Chrome), `manifest-edge.json` (Edge), `manifest-firefox.json` (Firefox)
   - **Scripts sincronizados**: Todos os scripts de build, packaging, validation e version-bump agora usam os manifestos corretos
   - **Pipeline atualizada**: GitHub Actions CD/CI configurada para atualizar todos os 3 manifestos simultaneamente

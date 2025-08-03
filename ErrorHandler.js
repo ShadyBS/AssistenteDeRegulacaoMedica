@@ -34,6 +34,7 @@ export const ERROR_CATEGORIES = {
 
   // Segurança
   SECURITY: 'security',
+  SECURITY_VALIDATION: 'security_validation',
   PERMISSIONS: 'permissions',
   CSP_VIOLATION: 'csp_violation',
 
