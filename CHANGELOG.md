@@ -1,15 +1,14 @@
-# Changelog- **### ✨ Added
-- **📋 Manifest Chrome Principal**: Criado `manifest.json` como manifest principal para Chrome/desenvolvimento, resolvendo erro de build do webpack
-- **�🛡️ Security Validation Framework**: Implementado sistema completo de validação de mensagens (TASK-C-003)Security Validation Framework**: Implementado sistema completo de validação de mensagens (TASK-C-003)
+# Chang## [Unreleased]
 
-  - **URLConfigurationManager**: Validação dinâmica de domínios SIGSS baseada em URL configurada
-  - **MessageRateLimiter**: Rate limiting de 5 mensagens/segundo por aba para prevenir ataques DoS
-  - **PayloadValidator**: Validação estrutural de dados de regulação médica
-  - **MessageQueue**: Sistema de fila para cenários de instalação e inicialização
-  - **6-Step Validation Pipeline**: Validação completa de origem, rate limiting, payload e configuração
-  - **Validação 100% aprovada**: 25/25 validações passaram no script de validação automática
-  - **Testes unitários**: Jest configurado com Babel para suporte ES6 modules
-  - **Compliance médico**: Logging seguro com sanitização automática de dados sensíveisas as mudanças notáveis do projeto serão documentadas neste arquivo.
+### ✨ Added
+
+- **🔧 Manifest V3 Service Worker Migration (TASK-A-005)**: Migração completa para service workers compatíveis
+  - **Chrome/Edge**: Restaurado `"type": "module"` necessário para ES6 imports em service workers
+  - **Firefox**: Migrado de `"scripts"` para `"service_worker"` para conformidade Manifest V3
+  - **Cross-browser consistency**: Configuração otimizada para cada navegador
+  - **Build moderno**: Uso do sistema webpack moderno via `npm run package:all`
+  - **Validação completa**: Manifests, segurança e performance validados
+  - **Zero breaking changes**: Funcionalidades médicas preservadasodas as mudanças notáveis do projeto serão documentadas neste arquivo.
 
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/),
 e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
@@ -18,15 +17,23 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ### ✨ Added
 
-- **� Security Validation Framework**: Implementado sistema completo de validação de mensagens (TASK-C-003)
+- **� Manifest V3 Service Worker Migration (TASK-A-005)**: Migração completa para service workers compatíveis
+  - **Chrome/Edge**: Removido `"type": "module"` incompatível com service workers
+  - **Firefox**: Migrado de `"scripts"` para `"service_worker"` para conformidade Manifest V3
+  - **Cross-browser consistency**: Configuração uniforme de background scripts em todos os navegadores
+  - **Future-proof**: Preparado para atualizações futuras dos navegadores e especificações
 
+- **🛡️ Security Validation Framework**: Implementado sistema completo de validação de mensagens (TASK-C-003)
   - **URLConfigurationManager**: Validação dinâmica de domínios SIGSS baseada em URL configurada
   - **MessageRateLimiter**: Rate limiting de 5 mensagens/segundo por aba para prevenir ataques DoS
   - **PayloadValidator**: Validação estrutural de dados de regulação médica
   - **MessageQueue**: Sistema de fila para cenários de instalação e inicialização
   - **6-Step Validation Pipeline**: Validação completa de origem, rate limiting, payload e configuração
+  - **Validação 100% aprovada**: 25/25 validações passaram no script de validação automática
+  - **Testes unitários**: Jest configurado com Babel para suporte ES6 modules
+  - **Compliance médico**: Logging seguro com sanitização automática de dados sensíveis
 
-- **�📋 Manifest Chrome Principal**: Criado `manifest.json` como manifest principal para Chrome/desenvolvimento, resolvendo erro de build do webpack
+- **📋 Manifest Chrome Principal**: Criado `manifest.json` como manifest principal para Chrome/desenvolvimento, resolvendo erro de build do webpack
   - **Estrutura cross-browser completa**: `manifest.json` (Chrome), `manifest-edge.json` (Edge), `manifest-firefox.json` (Firefox)
   - **Scripts sincronizados**: Todos os scripts de build, packaging, validation e version-bump agora usam os manifestos corretos
   - **Pipeline atualizada**: GitHub Actions CD/CI configurada para atualizar todos os 3 manifestos simultaneamente
