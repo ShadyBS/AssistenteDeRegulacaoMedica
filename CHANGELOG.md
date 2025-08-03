@@ -9,6 +9,32 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ### ✨ Added
 
+- **📋 Manifest Chrome Principal**: Criado `manifest.json` como manifest principal para Chrome/desenvolvimento, resolvendo erro de build do webpack
+  - **Estrutura cross-browser completa**: `manifest.json` (Chrome), `manifest-edge.json` (Edge), `manifest-firefox.json` (Firefox)
+  - **Scripts sincronizados**: Todos os scripts de build, packaging, validation e version-bump agora usam os manifestos corretos
+  - **Pipeline atualizada**: GitHub Actions CD/CI configurada para atualizar todos os 3 manifestos simultaneamente
+  - **Build funcionando**: `npm run build:all` executando com sucesso para todos os navegadores
+
+### 🛠️ Changed
+
+- **Scripts de release corrigidos**: `package-chrome.js` agora usa `manifest.json` em vez de `manifest-edge.json`
+- **Validação atualizada**: `validate-manifest.js` e `validate-security.js` usam `manifest.json` como arquivo principal
+- **Version bump melhorado**: `version-bump.js` atualiza todos os 3 manifestos (Chrome, Edge, Firefox) simultaneamente
+- **Build universal corrigido**: `build-universal.js` usa manifestos específicos para cada navegador
+
+### 🐞 Fixed
+
+- **ERROR webpack**: Resolvido erro "unable to locate 'manifest.json' glob" no build do Chrome
+- **Inconsistência de manifestos**: Todos os scripts agora referenciam os arquivos de manifest corretos para cada navegador
+- **Pipeline CD**: GitHub Actions workflow atualizado para incluir `manifest-firefox.json` no processo de release
+
+### 📋 TASK-A-001 Analysis
+
+- **📋 TASK-A-001 Analysis**: Criado documento completo de análise e planejamento para TASK-A-001, confirmando que a task é OBSOLETA devido às implementações das TASK-M-005 e TASK-C-001
+  - **Status confirmado**: Content script já migrado para ErrorHandler com sanitização completa
+  - **Compliance verificado**: Zero exposição de dados médicos em logs do content script
+  - **Validação completa**: Testes de segurança e compliance passando 100%
+  - **Documentação detalhada**: Guia completo para agentes AI futuros sobre o status da implementação
 - **🏥 TASK-C-001 - Migração Completa para Logging Centralizado**: Implementada migração 100% dos console logs para sistema ErrorHandler centralizado
   - **Eliminação CRÍTICA de violação LGPD**: Removida exposição completa de dados médicos em `sidebar.js` linha 665
   - **Sanitização de dados sensíveis**: IDs de regulação e dados de sessão em `api.js` linhas 131 e 1151 sanitizados

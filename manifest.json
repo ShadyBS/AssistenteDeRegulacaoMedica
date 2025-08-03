@@ -3,17 +3,8 @@
   "name": "Assistente de Regulação Médica",
   "version": "3.3.7",
   "description": "Fornece informações para auxiliar médicos reguladores a analisar solicitações e a aderência de pacientes.",
-  "permissions": [
-    "storage",
-    "scripting",
-    "contextMenus",
-    "sidePanel",
-    "clipboardWrite",
-    "alarms"
-  ],
-  "host_permissions": [
-    "*://*/sigss/*"
-  ],
+  "permissions": ["storage", "scripting", "contextMenus", "sidePanel", "clipboardWrite", "alarms"],
+  "host_permissions": ["*://*/sigss/*"],
   "content_security_policy": {
     "extension_pages": "script-src 'self'; object-src 'self'; connect-src http://* https://*;"
   },
@@ -49,10 +40,7 @@
         "*://*/sigss/regulacaoControleSolicitacao/*",
         "*://*/sigss/regulacaoControleSolicitacao*"
       ],
-      "js": [
-        "browser-polyfill.js",
-        "content-script.js"
-      ],
+      "js": ["browser-polyfill.js", "content-script.js"],
       "all_frames": true
     }
   ],

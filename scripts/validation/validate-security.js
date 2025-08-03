@@ -40,7 +40,7 @@ class SecurityValidator {
     console.log('🔍 Validating manifest security...');
 
     const rootDir = path.resolve(__dirname, '..', '..');
-    const manifestPath = path.join(rootDir, 'manifest-edge.json');
+    const manifestPath = path.join(rootDir, 'manifest.json');
 
     if (!fs.existsSync(manifestPath)) {
       this.addError('Manifest file not found');
@@ -213,7 +213,7 @@ class SecurityValidator {
     console.log('🛡️ Validating Content Security Policy...');
 
     const rootDir = path.resolve(__dirname, '..', '..');
-    const manifestPath = path.join(rootDir, 'manifest-edge.json');
+    const manifestPath = path.join(rootDir, 'manifest.json');
     const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
 
     const csp = manifest.content_security_policy;
@@ -259,7 +259,7 @@ class SecurityValidator {
     console.log('🔑 Validating permission security...');
 
     const rootDir = path.resolve(__dirname, '..', '..');
-    const manifestPath = path.join(rootDir, 'manifest-edge.json');
+    const manifestPath = path.join(rootDir, 'manifest.json');
     const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
 
     const permissions = manifest.permissions || [];
@@ -378,12 +378,7 @@ class SecurityValidator {
     console.log('🔒 Validating file integrity...');
 
     const rootDir = path.resolve(__dirname, '..', '..');
-    const criticalFiles = [
-      'manifest-edge.json',
-      'background.js',
-      'content-script.js',
-      'sidebar.js',
-    ];
+    const criticalFiles = ['manifest.json', 'background.js', 'content-script.js', 'sidebar.js'];
 
     const checksums = {};
 

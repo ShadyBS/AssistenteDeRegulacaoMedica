@@ -1,1 +1,1727 @@
-(()=>{"use strict";var e,t={239:(e,t,n)=>{function i({message:e,onConfirm:t,onCancel:n}){let i=document.getElementById("custom-confirm-modal");i||(i=document.createElement("div"),i.id="custom-confirm-modal",i.innerHTML='\n      <div class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">\n        <div class="bg-white rounded-lg shadow-lg p-6 max-w-md w-full">\n          <div class="mb-4 text-slate-800 text-base" id="custom-confirm-message"></div>\n          <div class="flex justify-end gap-2">\n            <button id="custom-confirm-cancel" class="px-4 py-2 rounded bg-slate-200 text-slate-700 hover:bg-slate-300">Cancelar</button>\n            <button id="custom-confirm-ok" class="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700">Confirmar</button>\n          </div>\n        </div>\n      </div>\n    ',document.body.appendChild(i)),i.style.display="flex",i.querySelector("#custom-confirm-message").textContent=e;const o=i.querySelector("#custom-confirm-ok"),a=i.querySelector("#custom-confirm-cancel"),s=()=>{i.style.display="none"};o.onclick=()=>{s(),t&&t()},a.onclick=()=>{s(),n&&n()}}function o(e,t=500){let n;return(...i)=>{clearTimeout(n),n=setTimeout(()=>{e.apply(this,i)},t)}}function a(e){const t=document.getElementById("loader");t&&(t.style.display=e?"block":"none")}function s(e,t="error"){const n=document.getElementById("message-area");if(n){n.textContent=e;const i={error:"bg-red-100 text-red-700",success:"bg-green-100 text-green-700",info:"bg-blue-100 text-blue-700"};n.className=`p-3 rounded-md text-sm ${i[t]||i.error}`,n.style.display="block"}}function l(){const e=document.getElementById("message-area");e&&(e.style.display="none")}function r(e){if(!e||"string"!=typeof e)return null;const t=e.match(/(\d{4}-\d{2}-\d{2})|(\d{2}\/\d{2}\/\d{2,4})/);if(!t)return null;const n=t[0];let i,o,a;if(n.includes("-")?[i,o,a]=n.split("-").map(Number):n.includes("/")&&([a,o,i]=n.split("/").map(Number)),isNaN(i)||isNaN(o)||isNaN(a))return null;i>=0&&i<100&&(i+=2e3);const s=new Date(Date.UTC(i,o-1,a));return s.getUTCFullYear()===i&&s.getUTCMonth()===o-1&&s.getUTCDate()===a?s:null}n.d(t,{AQ:()=>p,Eg:()=>u,J2:()=>m,LJ:()=>c,Pr:()=>f,Z9:()=>d,_U:()=>r,de:()=>l,i1:()=>a,rG:()=>s,sg:()=>o,td:()=>g,ui:()=>i});const c=(e,t)=>{if(t)return t.split(".").reduce((e,t)=>e&&e[t],e)};function d(e){const t=new Date;return t.setMonth(t.getMonth()+e),t}function u(e){e=e.replace("#","");return(299*parseInt(e.substr(0,2),16)+587*parseInt(e.substr(2,2),16)+114*parseInt(e.substr(4,2),16))/1e3>=128?"black":"white"}function m(e){return e?e.toString().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,""):""}function p(e){if(!e)return;const t=e.querySelectorAll(".tab-button"),n=e.querySelectorAll(".tab-content");t.forEach(i=>{i.addEventListener("click",()=>{const o=i.dataset.tab;t.forEach(e=>e.classList.remove("active")),n.forEach(e=>e.classList.remove("active")),i.classList.add("active");const a=e.querySelector(`#${o}-tab`);a&&a.classList.add("active")})})}function g(e){const t=[];try{(e.consultations||[]).forEach(e=>{if(!e||!e.date)return;const n=m([e.specialty,e.professional,e.unit,...e.details.map(e=>e.value)].join(" "));t.push({type:"consultation",date:r(e.date.split("\n")[0]),sortableDate:e.sortableDate||r(e.date),title:`Consulta: ${e.specialty||"Especialidade não informada"}`,summary:`com ${e.professional||"Profissional não informado"}`,details:e,subDetails:e.details||[],searchText:n})})}catch(n){}try{(e.exams||[]).forEach(e=>{const n=r(e.date);if(!e||!n)return;const i=m([e.examName,e.professional,e.specialty].filter(Boolean).join(" "));t.push({type:"exam",date:n,sortableDate:n,title:`Exame Solicitado: ${e.examName||"Nome não informado"}`,summary:`Solicitado por ${e.professional||"Não informado"}`,details:e,subDetails:[{label:"Resultado",value:e.hasResult?"Disponível":"Pendente"}],searchText:i})})}catch(n){}try{(e.appointments||[]).forEach(e=>{if(!e||!e.date)return;const n=m([e.specialty,e.description,e.location,e.professional].join(" "));t.push({type:"appointment",date:r(e.date),sortableDate:r(e.date),title:`Agendamento: ${e.specialty||e.description||"Não descrito"}`,summary:e.location||"Local não informado",details:e,subDetails:[{label:"Status",value:e.status||"N/A"},{label:"Hora",value:e.time||"N/A"}],searchText:n})})}catch(n){}try{(e.regulations||[]).forEach(e=>{if(!e||!e.date)return;const n=m([e.procedure,e.requester,e.provider,e.cid].join(" "));t.push({type:"regulation",date:r(e.date),sortableDate:r(e.date),title:`Regulação: ${e.procedure||"Procedimento não informado"}`,summary:`Solicitante: ${e.requester||"Não informado"}`,details:e,subDetails:[{label:"Status",value:e.status||"N/A"},{label:"Prioridade",value:e.priority||"N/A"}],searchText:n})})}catch(n){}try{(e.documents||[]).forEach(e=>{if(!e||!e.date)return;const n=m(e.description||"");t.push({type:"document",date:r(e.date),sortableDate:r(e.date),title:`Documento: ${e.description||"Sem descrição"}`,summary:`Tipo: ${e.fileType.toUpperCase()}`,details:e,subDetails:[],searchText:n})})}catch(n){}return t.filter(e=>e.sortableDate instanceof Date&&!isNaN(e.sortableDate)).sort((e,t)=>t.sortableDate-e.sortableDate)}function f(e,t){if(!t)return e;const n=(e,t)=>{if(!t)return!0;const n=t.toLowerCase().split(",").map(e=>e.trim()).filter(Boolean);if(0===n.length)return!0;const i=m(e||"");return n.some(e=>i.includes(e))};return e.filter(e=>{try{switch(e.type){case"consultation":{const i=t.consultations||{},o=(e.details.details||[]).find(e=>m(e.label).includes("cid")||m(e.label).includes("ciap")),a=o?o.value:"";return n(e.details.specialty,i["consultation-filter-specialty"])&&n(e.details.professional,i["consultation-filter-professional"])&&n(a,i["consultation-filter-cid"])}case"exam":{const i=t.exams||{};return n(e.details.examName,i["exam-filter-name"])&&n(e.details.professional,i["exam-filter-professional"])&&n(e.details.specialty,i["exam-filter-specialty"])}case"appointment":{const i=t.appointments||{},o=`${e.details.specialty} ${e.details.professional} ${e.details.location}`;return n(o,i["appointment-filter-term"])}case"regulation":{const i=t.regulations||{};return n(e.details.procedure,i["regulation-filter-procedure"])&&n(e.details.requester,i["regulation-filter-requester"])&&("todos"===i["regulation-filter-status"]||!i["regulation-filter-status"]||e.details.status.toUpperCase()===i["regulation-filter-status"].toUpperCase())&&("todas"===i["regulation-filter-priority"]||!i["regulation-filter-priority"]||e.details.priority.toUpperCase()===i["regulation-filter-priority"].toUpperCase())}default:return!0}}catch(i){return!0}})}},627:(e,t,n)=>{n.d(t,{T:()=>b});var i=n(335),o=n(239);let a,s,l,r,c,d,u,m,p=[];function g(e){if(!a||!e||!e.ficha)return void f();const{ficha:t,cadsus:n,lastCadsusCheck:i,isUpdating:m}=e;s.innerHTML="",l.innerHTML="";const g=[...p].sort((e,t)=>e.order-t.order);g.forEach(e=>{if(!e.enabled)return;let i=((e,t)=>"function"==typeof e.key?e.key(t):o.LJ(t,e.key))(e,t);e.formatter&&(i=e.formatter(i));let a=((e,t)=>t&&null!==e.cadsusKey?"function"==typeof e.cadsusKey?e.cadsusKey(t):t[e.cadsusKey]:null)(e,n);e.formatter&&(a=e.formatter(a));const r=String(i||"").trim(),c=String(a||"").trim();let d="";if(n&&null!==e.cadsusKey){let t=r,n=c;if("telefone"===e.id?(t=r.replace(/\D/g,"").replace(/^55/,""),n=c.replace(/\D/g,"").replace(/^55/,"")):(t=o.J2(r),n=o.J2(c)),t&&t===n)d='<span class="comparison-icon" title="Dado confere com o CADSUS">✅</span>';else{d=`<span class="comparison-icon" data-tooltip="${`Ficha: ${r||"Vazio"}\nCADSUS: ${c||"Vazio"}`}">⚠️</span>`}}const u=e.id.toLowerCase().includes("alerg")&&r&&"-"!==r?"text-red-600 font-bold":"text-slate-900",m=r?`<span class="copy-icon" title="Copiar" data-copy-text="${r}">📄</span>`:"",p=`<div class="flex justify-between items-center py-1"><span class="font-medium text-slate-600">${e.label}:</span><span class="${u} text-right flex items-center">${r||"-"}${d}${m}</span></div>`;"main"===e.section?s.innerHTML+=p:l.innerHTML+=p}),i?(d.textContent=`CADSUS verificado em: ${i.toLocaleString()}`,c.style.display="flex"):(d.textContent="Não foi possível verificar dados do CADSUS.",c.style.display="flex"),u.querySelector(".refresh-icon").classList.toggle("spinning",m),u.disabled=m,r.style.display=g.some(e=>e.enabled&&"more"===e.section)?"block":"none",a.style.display="block"}function f(){a&&(a.style.display="none")}function h(){l.classList.toggle("show"),r.textContent=l.classList.contains("show")?"Mostrar menos":"Mostrar mais"}function v(){const e=i.M.getPatient();e&&e.ficha&&m&&m({idp:e.ficha.isenPK.idp,ids:e.ficha.isenPK.ids},!0)}function y(){const e=i.M.getPatient();e?g(e):f()}function b(e,t){a=document.getElementById("patient-details-section"),s=document.getElementById("patient-main-info"),l=document.getElementById("patient-additional-info"),r=document.getElementById("toggle-details-btn"),c=document.getElementById("patient-card-footer"),d=document.getElementById("cadsus-timestamp"),u=document.getElementById("refresh-cadsus-btn"),p=e,m=t.onForceRefresh,r.addEventListener("click",h),u.addEventListener("click",v),i.M.subscribe(y)}},778:(e,t,n)=>{var i=n(574),o=n(869),a=n(690),s=n(338),l=n(335),r=n(968),c=n(627),d=n(889),u=n(239);const m="undefined"!=typeof browser?browser:"undefined"!=typeof chrome?chrome:{},p={"patient-details":'<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-user-round-check-icon lucide-user-round-check"><path d="M2 21a8 8 0 0 1 13.292-6"/><circle cx="10" cy="8" r="5"/><path d="m16 19 2 2 4-4"/></svg>',timeline:'<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-gantt-chart"><path d="M8 6h10"/><path d="M6 12h9"/><path d="M11 18h7"/></svg>',regulations:'<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-shield-check-icon lucide-shield-check"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg>',consultations:'<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-stethoscope-icon lucide-stethoscope"><path d="M11 2v2"/><path d="M5 2v2"/><path d="M5 3H4a2 2 0 0 0-2 2v4a6 6 0 0 0 12 0V5a2 2 0 0 0-2-2h-1"/><path d="M8 15a6 6 0 0 0 12 0v-3"/><circle cx="20" cy="10" r="2"/></svg>',exams:'<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-microscope-icon lucide-microscope"><path d="M6 18h8"/><path d="M3 22h18"/><path d="M14 22a7 7 0 1 0 0-14h-1"/><path d="M9 14h2"/><path d="M9 12a2 2 0 0 1-2-2V6h6v4a2 2 0 0 1-2 2Z"/><path d="M12 6V3a1 1 0 0 0-1-1H9a1 1 0 0 0-1 1v3"/></svg>',appointments:'<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-calendar-check-icon lucide-calendar-check"><path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/><path d="m9 16 2 2 4-4"/></svg>',documents:'<svg xmlns="http://www.w3.org/2000/svg" class="lucide lucide-file-text" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>'};let g=null;const f={},h={onOpenOptionsClick:null,onReloadSidebarClick:null,onAutoModeToggleChange:null,onReloadBtnClick:null,onModalCloseBtnClick:null,onInfoModalClick:null,onMainContentClick:null,onInfoBtnClick:null,onDOMContentLoaded:null},v=(e,t,n)=>{const i=u.J2(t).split(",").map(e=>e.trim()).filter(Boolean);return 0===i.length?e:e.filter(e=>{const t=u.J2(n(e));return i.some(e=>t.includes(e))})},y={"patient-details":{},timeline:{},consultations:{fetchFunction:i.wF,renderFunction:a.rX,initialSortState:{key:"sortableDate",order:"desc"},filterLogic:(e,t)=>{let n=[...e];return t["hide-no-show-checkbox"]&&(n=n.filter(e=>!e.isNoShow)),n=v(n,t["consultation-filter-keyword"],e=>[e.specialty,e.professional,e.unit,...e.details.map(e=>`${e.label} ${e.value}`)].join(" ")),n=v(n,t["consultation-filter-cid"],e=>e.details.map(e=>e.value).join(" ")),n=v(n,t["consultation-filter-specialty"],e=>e.specialty||""),n=v(n,t["consultation-filter-professional"],e=>e.professional||""),n=v(n,t["consultation-filter-unit"],e=>e.unit||""),n}},exams:{fetchFunction:i.K4,renderFunction:a.Rb,initialSortState:{key:"date",order:"desc"},filterLogic:(e,t)=>{let n=[...e];return n=v(n,t["exam-filter-name"],e=>e.examName),n=v(n,t["exam-filter-professional"],e=>e.professional),n=v(n,t["exam-filter-specialty"],e=>e.specialty),n}},appointments:{fetchFunction:i.Ns,renderFunction:a.lT,initialSortState:{key:"date",order:"desc"},filterLogic:(e,t,n)=>{let i=[...e];const o=t["appointment-filter-status"]||"todos";return"todos"!==o&&(i=i.filter(e=>(e.status||"").toUpperCase()===o.toUpperCase())),"consultas"===n?i=i.filter(e=>!e.type.toUpperCase().includes("EXAME")):"exames"===n&&(i=i.filter(e=>e.type.toUpperCase().includes("EXAME"))),i=v(i,t["appointment-filter-term"],e=>[e.professional,e.specialty,e.description].join(" ")),i=v(i,t["appointment-filter-location"],e=>e.location||""),i}},regulations:{fetchFunction:i.v0,renderFunction:a.IC,initialSortState:{key:"date",order:"desc"},filterLogic:(e,t)=>{let n=[...e];const i=t["regulation-filter-status"]||"todos",o=t["regulation-filter-priority"]||"todas";return"todos"!==i&&(n=n.filter(e=>(e.status||"").toUpperCase()===i.toUpperCase())),"todas"!==o&&(n=n.filter(e=>(e.priority||"").toUpperCase()===o.toUpperCase())),n=v(n,t["regulation-filter-procedure"],e=>e.procedure||""),n=v(n,t["regulation-filter-requester"],e=>e.requester||""),n}},documents:{fetchFunction:i.P_,renderFunction:a.zL,initialSortState:{key:"date",order:"desc"},filterLogic:(e,t)=>{var n,i;let o=[...e];const a=null===(n=document.getElementById("document-date-initial"))||void 0===n?void 0:n.value,s=null===(i=document.getElementById("document-date-final"))||void 0===i?void 0:i.value;if(a){const e=u._U(a);e&&(o=o.filter(t=>{const n=u._U(t.date.split(" ")[0]);return n&&n>=e}))}if(s){const e=u._U(s);e&&(o=o.filter(t=>{const n=u._U(t.date.split(" ")[0]);return n&&n<=e}))}return o=v(o,t["document-filter-keyword"],e=>e.description||""),o}}};async function b(e,t=!1){const n=l.M.getPatient();if(!n||n.ficha.isenPK.idp!==e.idp||t){u.i1(!0),u.de(),l.M.setPatientUpdating();try{const t=await i.Tp(e),n=await i.GP({cpf:u.LJ(t,"entidadeFisica.entfCPF"),cns:t.isenNumCadSus});Object.values(f).forEach(e=>{"function"==typeof e.clearAutomationFeedbackAndFilters?e.clearAutomationFeedbackAndFilters(!1):"function"==typeof e.clearAutomation&&e.clearAutomation()}),l.M.setPatient(t,n),await async function(e){if(!e||!e.ficha)return;const t={...e},n=(l.M.getRecentPatients()||[]).filter(e=>e.ficha.isenPK.idp!==t.ficha.isenPK.idp),i=[t,...n].slice(0,5);await m.storage.local.set({recentPatients:i}),l.M.setRecentPatients(i)}(l.M.getPatient())}catch(o){u.rG(o.message,"error"),l.M.clearPatient()}finally{u.i1(!1)}}}async function C(){const e=await m.storage.sync.get({patientFields:o.Q,filterLayout:{},autoLoadExams:!1,autoLoadConsultations:!1,autoLoadAppointments:!1,autoLoadRegulations:!1,autoLoadDocuments:!1,enableAutomaticDetection:!0,dateRangeDefaults:{},sidebarSectionOrder:[],sectionHeaderStyles:{}}),t=await m.storage.local.get({recentPatients:[],savedFilterSets:{},automationRules:[]});return l.M.setRecentPatients(t.recentPatients),l.M.setSavedFilterSets(t.savedFilterSets),{fieldConfigLayout:o.Q.map(t=>{const n=e.patientFields.find(e=>e.id===t.id);return n?{...t,...n}:t}),filterLayout:e.filterLayout,userPreferences:{autoLoadExams:e.autoLoadExams,autoLoadConsultations:e.autoLoadConsultations,autoLoadAppointments:e.autoLoadAppointments,autoLoadRegulations:e.autoLoadRegulations,autoLoadDocuments:e.autoLoadDocuments,enableAutomaticDetection:e.enableAutomaticDetection,dateRangeDefaults:e.dateRangeDefaults},sidebarSectionOrder:e.sidebarSectionOrder,sectionHeaderStyles:e.sectionHeaderStyles}}function k(){const e=document.getElementById("auto-mode-toggle"),t=document.getElementById("auto-mode-label");m.storage.sync.get({enableAutomaticDetection:!0}).then(n=>{e.checked=n.enableAutomaticDetection,t.textContent=n.enableAutomaticDetection?"Auto":"Manual"}),h.onAutoModeToggleChange&&e.removeEventListener("change",h.onAutoModeToggleChange),h.onAutoModeToggleChange=function(e){const n=e.target.checked;m.storage.sync.set({enableAutomaticDetection:n}),t.textContent=n?"Auto":"Manual"},e.addEventListener("change",h.onAutoModeToggleChange)}async function w(e){u.i1(!0);try{if(g=e,e&&e.isenPKIdp&&e.isenPKIds){const t={idp:e.isenPKIdp,ids:e.isenPKIds};await b(t);const n=e.apcnNome||e.prciNome||"Contexto",i=document.getElementById("context-info-btn");i.title=`Contexto: ${n.trim()}`,i.classList.remove("hidden"),await async function(e){const{automationRules:t}=await m.storage.local.get({automationRules:[]});if(!t||0===t.length)return;const n=[e.prciNome||"",e.prciCodigo||"",e.apcnNome||"",e.apcnCod||""].join(" ").toLowerCase();for(const i of t)if(i.isActive){if(i.triggerKeywords.some(e=>n.includes(e.toLowerCase().trim())))return void Object.entries(f).forEach(([e,t])=>{i.filterSettings[e]&&"function"==typeof t.applyAutomationFilters&&t.applyAutomationFilters(i.filterSettings[e],i.name)})}}(e)}else g=null,u.rG("Não foi possível extrair os dados do paciente da regulação.","error")}catch(t){g=null,u.rG(`Erro ao processar a regulação: ${t.message}`,"error")}finally{u.i1(!1)}}function E(e,t){"local"===t&&e.pendingRegulation&&m.storage.sync.get({enableAutomaticDetection:!0}).then(t=>{if(t.enableAutomaticDetection){const{newValue:t}=e.pendingRegulation;t&&t.isenPKIdp&&(w(t),m.storage.local.remove("pendingRegulation"))}}),"sync"===t&&e.sectionHeaderStyles&&m.runtime.reload(),"sync"===t&&e.enableAutomaticDetection&&k()}function L(){const e=document.getElementById("main-content"),t=document.getElementById("info-modal"),n=document.getElementById("modal-close-btn"),o=document.getElementById("context-info-btn"),a=document.getElementById("reload-sidebar-btn");h.onReloadBtnClick||(h.onReloadBtnClick=function(){const e=l.M.getPatient();e&&e.ficha?u.ui({message:"Um paciente está selecionado e o estado atual será perdido. Deseja realmente recarregar o assistente?",onConfirm:()=>{location.reload()}}):location.reload()}),h.onModalCloseBtnClick||(h.onModalCloseBtnClick=function(){const e=document.getElementById("info-modal");e&&e.classList.add("hidden")}),h.onInfoModalClick||(h.onInfoModalClick=function(e){e.target===e.currentTarget&&e.currentTarget.classList.add("hidden")}),h.onMainContentClick||(h.onMainContentClick=async function(e){await async function(e){const t=e.target,n=t.closest(".copy-icon");if(n)return void(await async function(e){if("true"===e.dataset.inProgress)return;const t=e.dataset.copyText;if(!t)return;e.dataset.inProgress="true";const n=e;try{await navigator.clipboard.writeText(t),document.body.contains(n)&&(n.textContent="✅")}catch(i){document.body.contains(n)&&(n.textContent="❌")}finally{setTimeout(()=>{document.body.contains(n)&&(n.textContent="📄"),document.body.contains(n)&&(n.dataset.inProgress="false")},1200)}}(n));const o=t.closest(".view-exam-result-btn");if(o)return void(await async function(e){const{idp:t,ids:n}=e.dataset,o=await i.Sp({idp:t,ids:n}),a=await i.$_();let s="about:blank";o&&(s=o.startsWith("http")?o:`${a}${o}`);m.tabs.create({url:s})}(o));const a=t.closest(".view-appointment-details-btn");if(a)return void(await async function(e){const{idp:t,ids:n,type:o}=e.dataset,a=o.toUpperCase().includes("EXAME"),s=a?"Detalhes do Agendamento de Exame":"Detalhes da Consulta Agendada";x(s,"<p>Carregando...</p>");try{let e,o;a?(e=await i.Pn({idp:t,ids:n}),o=function(e){var t,n,i,o,a,s,l;if(!e)return"<p>Dados do agendamento de exame não encontrados.</p>";let r="";return r+=D("Data Agendamento",e.examDataCad),r+=D("Unidade Origem",null===(t=e.ligacaoModularOrigem)||void 0===t?void 0:t.limoNome),r+=D("Unidade Destino",null===(n=e.ligacaoModularDestino)||void 0===n?void 0:n.limoNome),r+=D("Profissional Sol.",null===(i=e.profissional)||void 0===i||null===(o=i.entidadeFisica)||void 0===o||null===(a=o.entidade)||void 0===a?void 0:a.entiNome),r+=D("Caráter",null===(s=e.CaraterAtendimento)||void 0===s?void 0:s.caraDescri),r+=D("Critério",null===(l=e.criterioExame)||void 0===l?void 0:l.critNome),r}(e)):(e=await i.EI({idp:t,ids:n}),o=function(e){var t,n,i,o,a,s,l,r,c;if(!e)return"<p>Dados do agendamento não encontrados.</p>";let d="Agendado";"t"===e.agcoIsCancelado?d="Cancelado":"t"===e.agcoIsFaltante?d="Faltou":"t"===e.agcoIsAtendido&&(d="Atendido");let u="";u+=D("Status",d),u+=D("Data",`${e.agcoData} às ${e.agcoHoraPrevista}`),u+=D("Local",null===(t=e.unidadeSaudeDestino)||void 0===t||null===(n=t.entidade)||void 0===n?void 0:n.entiNome),u+=D("Profissional",null===(i=e.profissionalDestino)||void 0===i||null===(o=i.entidadeFisica)||void 0===o||null===(a=o.entidade)||void 0===a?void 0:a.entiNome),u+=D("Especialidade",null===(s=e.atividadeProfissionalCnes)||void 0===s?void 0:s.apcnNome),u+=D("Procedimento",null===(l=e.procedimento)||void 0===l?void 0:l.prciNome),u+=D("Convênio",null===(r=e.convenio)||void 0===r||null===(c=r.entidade)||void 0===c?void 0:c.entiNome),e.agcoObs&&(u+=`<div class="py-2">\n                        <span class="font-semibold text-slate-600">Observação:</span>\n                        <p class="text-slate-800 whitespace-pre-wrap mt-1 p-2 bg-slate-50 rounded">${e.agcoObs}</p>\n                    </div>`);return u}(e)),x(s,o)}catch(l){x("Erro",`<p>Não foi possível carregar os detalhes: ${l.message}</p>`)}}(a));const s=t.closest(".view-regulation-details-btn");if(s)return void(await async function(e){const{idp:t,ids:n}=e.dataset;x("Detalhes da Regulação","<p>Carregando...</p>");try{const e=function(e){if(!e)return"<p>Dados da regulação não encontrados.</p>";let t="";t+=D("Status",e.reguStatus),t+=D("Tipo","ENC"===e.reguTipo?"Consulta":"Exame"),t+=D("Data Solicitação",e.reguDataStr),t+=D("Procedimento",e.prciNome),t+=D("CID",`${e.tcidCod} - ${e.tcidDescricao}`),t+=D("Profissional Sol.",e.prsaEntiNome),t+=D("Unidade Sol.",e.limoSolicitanteNome),t+=D("Unidade Desejada",e.limoDesejadaNome),t+=D("Gravidade",e.reguGravidade),e.reguJustificativa&&"null"!==e.reguJustificativa&&(t+=`<div class="py-2">\n    <span class="font-semibold text-slate-600">Justificativa:</span>\n    <p class="text-slate-800 whitespace-pre-wrap mt-1 p-2 bg-slate-50 rounded">${e.reguJustificativa.replace(/\\n/g,"\n")}</p>\n</div>`);return t}(await i.hr({reguIdp:t,reguIds:n}));x("Detalhes da Regulação",e)}catch(o){x("Erro",`<p>Não foi possível carregar os detalhes: ${o.message}</p>`)}}(s));const l=t.closest(".appointment-info-btn");if(l)return void function(e){const t=JSON.parse(e.dataset.appointment),n=document.getElementById("modal-title"),i=document.getElementById("modal-content"),o=document.getElementById("info-modal");n.textContent="Detalhes do Agendamento",i.innerHTML=`\n    <p><strong>ID:</strong> ${t.id}</p>\n    <p><strong>Tipo:</strong> ${t.isSpecialized?"Especializada":t.isOdonto?"Odontológica":t.type}</p>\n    <p><strong>Status:</strong> ${t.status}</p>\n    <p><strong>Data:</strong> ${t.date} às ${t.time}</p>\n    <p><strong>Local:</strong> ${t.location}</p>\n    <p><strong>Profissional:</strong> ${t.professional}</p>\n    <p><strong>Especialidade:</strong> ${t.specialty||"N/A"}</p>\n    <p><strong>Procedimento:</strong> ${t.description}</p>\n  `,o.classList.remove("hidden")}(l);const r=t.closest(".view-document-btn");if(r)return void(await async function(e){const{idp:t,ids:n}=e.dataset;try{const e=await i.pP({idp:t,ids:n});m.tabs.create({url:e||"about:blank"})}catch(o){}}(r));const c=t.closest(".view-regulation-attachment-btn");if(c)return void(await async function(e){const{idp:t,ids:n}=e.dataset;try{const e=await i.DM({idp:t,ids:n});e&&await m.tabs.create({url:e})}catch(o){}}(c))}(e)}),h.onInfoBtnClick||(h.onInfoBtnClick=function(){if(!g)return void u.rG("Nenhuma informação de regulação carregada.","info");const e=document.getElementById("modal-title"),t=document.getElementById("modal-content"),n=document.getElementById("info-modal");e.textContent="Dados da Regulação (JSON)";const i=JSON.stringify(g,null,2);t.innerHTML=`<pre class="bg-slate-100 p-2 rounded-md text-xs whitespace-pre-wrap break-all">${i}</pre>`,n.classList.remove("hidden")}),a&&a.addEventListener("click",h.onReloadBtnClick),n&&n.addEventListener("click",h.onModalCloseBtnClick),t&&t.addEventListener("click",h.onInfoModalClick),e&&e.addEventListener("click",h.onMainContentClick),o&&o.addEventListener("click",h.onInfoBtnClick),L.storageListenerAdded||(m.storage.onChanged.addListener(E),L.storageListenerAdded=!0)}function x(e,t){const n=document.getElementById("info-modal"),i=document.getElementById("modal-title"),o=document.getElementById("modal-content");i.textContent=e,o.innerHTML=t,n.classList.remove("hidden")}function D(e,t){return t&&""!==String(t).trim()?`<div class="py-2 border-b border-slate-100 flex justify-between items-start gap-4">\n            <span class="font-semibold text-slate-600 flex-shrink-0">${e}:</span>\n            <span class="text-slate-800 text-right break-words">${t}</span>\n          </div>`:""}h.onDOMContentLoaded=async function(){let e=!0;try{await i.$_()}catch(o){if("URL_BASE_NOT_CONFIGURED"!==(null==o?void 0:o.message))return void u.rG("Ocorreu um erro inesperado ao iniciar a extensão.","error");{e=!1;const t=document.getElementById("main-content"),n=document.getElementById("url-config-warning"),i=document.getElementById("open-options-from-warning"),o=document.getElementById("reload-sidebar-from-warning");t&&t.classList.add("hidden"),n&&n.classList.remove("hidden"),i&&(h.onOpenOptionsClick&&i.removeEventListener("click",h.onOpenOptionsClick),h.onOpenOptionsClick=function(){m.runtime.openOptionsPage()},i.addEventListener("click",h.onOpenOptionsClick)),o&&(h.onReloadSidebarClick&&o.removeEventListener("click",h.onReloadSidebarClick),h.onReloadSidebarClick=function(){location.reload()},o.addEventListener("click",h.onReloadSidebarClick))}}if(u.AQ(document.getElementById("layout-tabs-container")),u.AQ(document.getElementById("patterns-tabs-container")),!e)return;const[t,n]=await Promise.all([C(),i.$4()]);t.regulationPriorities=n,function(){for(const e in p){const t=document.getElementById(`${e}-section-icon`);t&&(t.innerHTML=p[e])}}(),function(e){const t={backgroundColor:"#ffffff",color:"#1e293b",iconColor:"#1e293b",fontSize:"16px"};for(const n in p){const i="patient-details"===n?"patient-details-section":`${n}-section`,o=document.getElementById(i);if(!o)continue;const a={...t,...e[n]||{}};o.style.setProperty("--section-bg-color",a.backgroundColor),o.style.setProperty("--section-font-color",a.color),o.style.setProperty("--section-icon-color",a.iconColor),o.style.setProperty("--section-font-size",a.fontSize)}}(t.sectionHeaderStyles),function(e){const t=document.getElementById("main-content");if(!t)return;const n={"patient-details":"patient-details-section",timeline:"timeline-section",regulations:"regulations-section",consultations:"consultations-section",exams:"exams-section",appointments:"appointments-section",documents:"documents-section"},i="patient-details",o=(e&&e.length>0?e:Object.keys(n)).filter(e=>e!==i);o.unshift(i);const a=new Set(o);Object.keys(n).forEach(e=>{a.has(e)||o.push(e)}),o.forEach(e=>{const i=n[e],o=document.getElementById(i);o&&t.appendChild(o)})}(t.sidebarSectionOrder),d.T({onSelectPatient:b}),c.T(t.fieldConfigLayout,{onForceRefresh:b}),function(e){Object.keys(y).forEach(t=>{"patient-details"!==t&&(f[t]="timeline"!==t?new s.N(t,y[t],e):new r.l(t,y[t],e))})}(t),function(e){const{userPreferences:t,filterLayout:n}=e,{dateRangeDefaults:i}=t,o={consultations:{start:-6,end:0},exams:{start:-6,end:0},appointments:{start:-1,end:3},regulations:{start:-12,end:0},documents:{start:-24,end:0}};["consultations","exams","appointments","regulations","documents"].forEach(e=>{const t=i[e]||o[e],n=e.replace(/s$/,""),a=document.getElementById(`${n}-date-initial`),s=document.getElementById(`${n}-date-final`);a&&(a.valueAsDate=u.Z9(t.start)),s&&(s.valueAsDate=u.Z9(t.end))}),Object.values(n).flat().forEach(e=>{const t=document.getElementById(e.id);t&&void 0!==e.defaultValue&&null!==e.defaultValue&&("checkbox"===t.type?t.checked=e.defaultValue:t.value=e.defaultValue)})}(t),L(),k(),await async function(){try{const{pendingRegulation:e}=await m.storage.local.get("pendingRegulation");e&&e.isenPKIdp&&(await w(e),await m.storage.local.remove("pendingRegulation"))}catch(e){}}()},document.addEventListener("DOMContentLoaded",h.onDOMContentLoaded),window.addEventListener("pagehide",function(){const e=document.getElementById("main-content"),t=document.getElementById("info-modal"),n=document.getElementById("modal-close-btn"),i=document.getElementById("context-info-btn"),o=document.getElementById("reload-sidebar-btn"),a=document.getElementById("auto-mode-toggle"),s=document.getElementById("open-options-from-warning"),l=document.getElementById("reload-sidebar-from-warning");o&&h.onReloadBtnClick&&o.removeEventListener("click",h.onReloadBtnClick),n&&h.onModalCloseBtnClick&&n.removeEventListener("click",h.onModalCloseBtnClick),t&&h.onInfoModalClick&&t.removeEventListener("click",h.onInfoModalClick),e&&h.onMainContentClick&&e.removeEventListener("click",h.onMainContentClick),i&&h.onInfoBtnClick&&i.removeEventListener("click",h.onInfoBtnClick),a&&h.onAutoModeToggleChange&&a.removeEventListener("change",h.onAutoModeToggleChange),s&&h.onOpenOptionsClick&&s.removeEventListener("click",h.onOpenOptionsClick),l&&h.onReloadSidebarClick&&l.removeEventListener("click",h.onReloadSidebarClick),h.onDOMContentLoaded&&document.removeEventListener("DOMContentLoaded",h.onDOMContentLoaded),m.storage.onChanged.hasListener(E)&&m.storage.onChanged.removeListener(E)})},889:(e,t,n)=>{n.d(t,{T:()=>h});var i=n(574),o=n(335),a=n(239);let s,l,r,c;function d(){if(!r)return;const e=o.M.getRecentPatients()||[];r.innerHTML='<li class="px-4 pt-3 pb-1 text-xs font-semibold text-slate-400">PACIENTES RECENTES</li>'+(0===e.length?'<li class="px-4 py-3 text-sm text-slate-500">Nenhum paciente recente.</li>':e.map(e=>{var t,n;const i=e.ficha||e,o=(null===(t=i.isenPK)||void 0===t?void 0:t.idp)||i.idp,a=(null===(n=i.isenPK)||void 0===n?void 0:n.ids)||i.ids;return o&&a?`<li class="px-4 py-3 border-b border-slate-100 hover:bg-slate-50 cursor-pointer transition recent-patient-item" data-idp="${o}" data-ids="${a}">${u(i)}</li>`:""}).join(""))}function u(e){var t,n;return`\n      <div class="font-medium text-slate-800">${e.value||a.LJ(e,"entidadeFisica.entidade.entiNome")||"Nome não informado"}</div>\n      <div class="grid grid-cols-2 gap-x-4 text-xs text-slate-500 mt-1">\n        <span><strong class="font-semibold">Cód:</strong> ${e.idp||(null===(t=e.isenPK)||void 0===t?void 0:t.idp)}-${e.ids||(null===(n=e.isenPK)||void 0===n?void 0:n.ids)}</span>\n        <span><strong class="font-semibold">Nasc:</strong> ${e.dataNascimento||a.LJ(e,"entidadeFisica.entfDtNasc")||"-"}</span>\n        <span><strong class="font-semibold">CPF:</strong> ${e.cpf||a.LJ(e,"entidadeFisica.entfCPF")||"-"}</span>\n        <span><strong class="font-semibold">CNS:</strong> ${e.cns||e.isenNumCadSus||"-"}</span>\n      </div>\n    `}const m=a.sg(async()=>{const e=s.value.trim();if(o.M.clearPatient(),r.classList.add("hidden"),l.classList.remove("hidden"),e.length<1)l.innerHTML="";else{a.i1(!0);try{!function(e){l&&(0!==e.length?l.innerHTML=e.map(e=>`<li class="px-4 py-3 border-b border-slate-100 hover:bg-slate-50 cursor-pointer transition" data-idp="${e.idp}" data-ids="${e.ids}">${u(e)}</li>`).join(""):l.innerHTML='<li class="px-4 py-3 text-sm text-slate-500">Nenhum paciente encontrado.</li>')}(await i.bW(e))}catch{a.rG("Erro ao buscar pacientes.")}finally{a.i1(!1)}}},500);function p(){s.value.length>0||(d(),l.classList.add("hidden"),r.classList.remove("hidden"))}function g(){setTimeout(()=>{l.classList.add("hidden"),r.classList.add("hidden")},200)}async function f(e){const t=e.target.closest("li[data-idp]");if(!t)return;const{idp:n,ids:i}=t.dataset;if(t.classList.contains("recent-patient-item")){const e=o.M.getRecentPatients().find(e=>(e.ficha?e.ficha.isenPK.idp:e.idp)==n);if(e&&e.ficha)return o.M.setPatient(e.ficha,e.cadsus),s.value="",l.classList.add("hidden"),void r.classList.add("hidden")}c&&c({idp:n,ids:i}),s.value="",l.classList.add("hidden"),r.classList.add("hidden")}function h(e){s=document.getElementById("patient-search-input"),l=document.getElementById("search-results"),r=document.getElementById("recent-patients-list"),c=e.onSelectPatient,o.M.subscribe(()=>{r.classList.contains("hidden")||d()}),s.addEventListener("input",m),s.addEventListener("focus",p),s.addEventListener("blur",g),l.addEventListener("click",f),r.addEventListener("click",f)}},968:(e,t,n)=>{n.d(t,{l:()=>l});var i=n(574),o=n(690),a=n(335),s=n(239);class l{constructor(e,t,n){this.sectionKey=e,this.config=t,this.globalSettings=n,this.allData=[],this.currentPatient=null,this.isLoading=!1,this.activeRuleFilters=null,this.activeRuleName=null,this.isFilteredView=!1,this.elements={},this.init()}init(){this.cacheDomElements(),this.addEventListeners(),a.M.subscribe(()=>this.onStateChange())}cacheDomElements(){this.elements={section:document.getElementById("timeline-section"),wrapper:document.getElementById("timeline-wrapper"),content:document.getElementById("timeline-content"),fetchBtn:document.getElementById("fetch-timeline-btn"),toggleBtn:document.getElementById("toggle-timeline-list-btn"),automationFeedback:document.getElementById("timeline-automation-feedback"),dateInitial:document.getElementById("timeline-date-initial"),dateFinal:document.getElementById("timeline-date-final"),searchKeyword:document.getElementById("timeline-search-keyword")}}addEventListeners(){var e,t,n,i,o,a,l,r,c,d,u,m;this._listeners||(this._listeners={});const p=this.elements;null===(e=p.fetchBtn)||void 0===e||e.removeEventListener("click",this._listeners.onFetchBtnClick),null===(t=p.toggleBtn)||void 0===t||t.removeEventListener("click",this._listeners.onToggleBtnClick),null===(n=p.searchKeyword)||void 0===n||n.removeEventListener("input",this._listeners.onSearchKeywordInput),null===(i=p.dateInitial)||void 0===i||i.removeEventListener("change",this._listeners.onDateInitialChange),null===(o=p.dateFinal)||void 0===o||o.removeEventListener("change",this._listeners.onDateFinalChange),null===(a=p.section)||void 0===a||a.removeEventListener("click",this._listeners.onSectionClick),this._listeners.onFetchBtnClick=this.onFetchBtnClick.bind(this),this._listeners.onToggleBtnClick=this.onToggleBtnClick.bind(this),this._listeners.onSearchKeywordInput=s.sg(this.onSearchKeywordInput.bind(this),300),this._listeners.onDateInitialChange=this.onDateInitialChange.bind(this),this._listeners.onDateFinalChange=this.onDateFinalChange.bind(this),this._listeners.onSectionClick=this.onSectionClick.bind(this),null===(l=p.fetchBtn)||void 0===l||l.addEventListener("click",this._listeners.onFetchBtnClick),null===(r=p.toggleBtn)||void 0===r||r.addEventListener("click",this._listeners.onToggleBtnClick),null===(c=p.searchKeyword)||void 0===c||c.addEventListener("input",this._listeners.onSearchKeywordInput),null===(d=p.dateInitial)||void 0===d||d.addEventListener("change",this._listeners.onDateInitialChange),null===(u=p.dateFinal)||void 0===u||u.addEventListener("change",this._listeners.onDateFinalChange),null===(m=p.section)||void 0===m||m.addEventListener("click",this._listeners.onSectionClick)}onFetchBtnClick(){this.fetchData()}onToggleBtnClick(){this.toggleSection()}onSearchKeywordInput(){this.render()}onDateInitialChange(){this.render()}onDateFinalChange(){this.render()}onSectionClick(e){const t=e.target.closest(".timeline-header");if(t){const e=t.nextElementSibling;return void(e&&e.classList.contains("timeline-details-body")&&e.classList.toggle("show"))}const n=e.target.closest(".timeline-toggle-details-btn");if(n){const e=n.closest(".timeline-item"),t=null==e?void 0:e.querySelector(".timeline-details-body");return void(t&&t.classList.toggle("show"))}e.target.closest("#timeline-toggle-filter-btn")&&this.toggleFilteredView()}onStateChange(){var e,t,n;const i=a.M.getPatient(),o=i?i.ficha:null;(null===(e=this.currentPatient)||void 0===e||null===(t=e.isenPK)||void 0===t?void 0:t.idp)!==(null==o||null===(n=o.isenPK)||void 0===n?void 0:n.idp)&&this.setPatient(o)}setPatient(e){this.currentPatient=e,this.allData=[],this.clearAutomation(),this.elements.content.innerHTML="",this.elements.searchKeyword&&(this.elements.searchKeyword.value=""),this.applyDefaultDateRange(),this.elements.section&&(this.elements.section.style.display=e?"block":"none")}applyDefaultDateRange(){const e=this.globalSettings.userPreferences.dateRangeDefaults.timeline||{start:-12,end:0};this.elements.dateInitial&&(this.elements.dateInitial.valueAsDate=s.Z9(e.start)),this.elements.dateFinal&&(this.elements.dateFinal.valueAsDate=s.Z9(e.end))}async fetchData(){if(this.currentPatient&&!this.isLoading){this.isLoading=!0,o.s8([],"loading");try{const e={isenPK:`${this.currentPatient.isenPK.idp}-${this.currentPatient.isenPK.ids}`,isenFullPKCrypto:this.currentPatient.isenFullPKCrypto,dataInicial:"01/01/1900",dataFinal:(new Date).toLocaleDateString("pt-BR")},t=await i.lQ(e),n=s.td(t);this.allData=n,this.render()}catch(e){o.s8([],"error")}finally{this.isLoading=!1}}}getFilterValues(){var e,t,n;return{startDate:null===(e=this.elements.dateInitial)||void 0===e?void 0:e.value,endDate:null===(t=this.elements.dateFinal)||void 0===t?void 0:t.value,keyword:s.J2((null===(n=this.elements.searchKeyword)||void 0===n?void 0:n.value)||"")}}render(){if(0===this.allData.length&&!this.isLoading)return void o.s8([],"empty");let e=this.allData;const t=this.getFilterValues();if(t.startDate){const n=new Date(t.startDate);e=e.filter(e=>e.sortableDate>=n)}if(t.endDate){const n=new Date(t.endDate);n.setHours(23,59,59,999),e=e.filter(e=>e.sortableDate<=n)}t.keyword&&(e=e.filter(e=>e.searchText.includes(t.keyword))),this.isFilteredView&&this.activeRuleFilters&&(e=s.Pr(e,this.activeRuleFilters)),o.s8(e,"success")}toggleSection(){var e;null===(e=this.elements.wrapper)||void 0===e||e.classList.toggle("show"),this.elements.toggleBtn.textContent=this.elements.wrapper.classList.contains("show")?"Recolher":"Expandir"}applyAutomationFilters(e,t){this.activeRuleFilters=e,this.activeRuleName=t,this.isFilteredView=!1,this.elements.automationFeedback&&(this.elements.automationFeedback.innerHTML=`\n            <div class="flex justify-between items-center text-sm">\n                <span>Regra '<strong>${t}</strong>' ativa.</span>\n                <button id="timeline-toggle-filter-btn" class="font-semibold text-blue-600 hover:underline">\n                    Ver timeline focada\n                </button>\n            </div>\n        `,this.elements.automationFeedback.classList.remove("hidden")),this.allData.length>0&&this.render()}clearAutomation(){this.activeRuleFilters=null,this.activeRuleName=null,this.isFilteredView=!1,this.elements.automationFeedback&&(this.elements.automationFeedback.classList.add("hidden"),this.elements.automationFeedback.innerHTML=""),this.allData.length>0&&this.render()}toggleFilteredView(){this.isFilteredView=!this.isFilteredView;const e=document.getElementById("timeline-toggle-filter-btn");e&&(e.textContent=this.isFilteredView?"Ver timeline completa":"Ver timeline focada"),this.render()}}}},n={};function i(e){var o=n[e];if(void 0!==o)return o.exports;var a=n[e]={exports:{}};return t[e](a,a.exports,i),a.exports}i.m=t,e=[],i.O=(t,n,o,a)=>{if(!n){var s=1/0;for(d=0;d<e.length;d++){for(var[n,o,a]=e[d],l=!0,r=0;r<n.length;r++)(!1&a||s>=a)&&Object.keys(i.O).every(e=>i.O[e](n[r]))?n.splice(r--,1):(l=!1,a<s&&(s=a));if(l){e.splice(d--,1);var c=o();void 0!==c&&(t=c)}}return t}a=a||0;for(var d=e.length;d>0&&e[d-1][2]>a;d--)e[d]=e[d-1];e[d]=[n,o,a]},i.d=(e,t)=>{for(var n in t)i.o(t,n)&&!i.o(e,n)&&Object.defineProperty(e,n,{enumerable:!0,get:t[n]})},i.o=(e,t)=>Object.prototype.hasOwnProperty.call(e,t),i.j=61,(()=>{var e={61:0,312:0,434:0,583:0,738:0};i.O.j=t=>0===e[t];var t=(t,n)=>{var o,a,[s,l,r]=n,c=0;if(s.some(t=>0!==e[t])){for(o in l)i.o(l,o)&&(i.m[o]=l[o]);if(r)var d=r(i)}for(t&&t(n);c<s.length;c++)a=s[c],i.o(e,a)&&e[a]&&e[a][0](),e[a]=0;return i.O(d)},n=self.webpackChunkassistente_de_regulacao_medica=self.webpackChunkassistente_de_regulacao_medica||[];n.forEach(t.bind(null,0)),n.push=t.bind(null,n.push.bind(n))})();var o=i.O(void 0,[76],()=>i(778));o=i.O(o)})();
+/******/ (() => { // webpackBootstrap
+/******/ 	"use strict";
+/******/ 	var __webpack_modules__ = ({
+
+/***/ 627:
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   T: () => (/* binding */ init)
+/* harmony export */ });
+/* harmony import */ var _store_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(335);
+/* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(239);
+/**
+ * @file Módulo para gerir o card de "Dados do Paciente".
+ */
+
+
+let patientDetailsSection, patientMainInfoDiv, patientAdditionalInfoDiv, toggleDetailsBtn, patientCardFooter, cadsusTimestamp, refreshCadsusBtn;
+let fieldConfigLayout = [];
+let onForceRefresh; // Callback para forçar a atualização
+
+/**
+ * Renderiza os detalhes do paciente no card.
+ * @param {object} patientData - O objeto completo do paciente vindo do store.
+ */
+function render(patientData) {
+  if (!patientDetailsSection || !patientData || !patientData.ficha) {
+    hide();
+    return;
+  }
+  const {
+    ficha,
+    cadsus,
+    lastCadsusCheck,
+    isUpdating
+  } = patientData;
+  patientMainInfoDiv.innerHTML = '';
+  patientAdditionalInfoDiv.innerHTML = '';
+  const getLocalValue = (field, data) => {
+    if (typeof field.key === 'function') return field.key(data);
+    return _utils_js__WEBPACK_IMPORTED_MODULE_1__/* .getNestedValue */ .LJ(data, field.key);
+  };
+  const getCadsusValue = (field, data) => {
+    if (!data || field.cadsusKey === null) return null;
+    if (typeof field.cadsusKey === 'function') return field.cadsusKey(data);
+    return data[field.cadsusKey];
+  };
+  const sortedFields = [...fieldConfigLayout].sort((a, b) => a.order - b.order);
+  sortedFields.forEach(field => {
+    if (!field.enabled) return;
+    let localValue = getLocalValue(field, ficha);
+    if (field.formatter) localValue = field.formatter(localValue);
+    let cadsusValue = getCadsusValue(field, cadsus);
+    if (field.formatter) cadsusValue = field.formatter(cadsusValue);
+    const v1 = String(localValue || '').trim();
+    const v2 = String(cadsusValue || '').trim();
+    let icon = '';
+    if (cadsus && field.cadsusKey !== null) {
+      let compareV1 = v1;
+      let compareV2 = v2;
+      if (field.id === 'telefone') {
+        compareV1 = v1.replace(/\D/g, '').replace(/^55/, '');
+        compareV2 = v2.replace(/\D/g, '').replace(/^55/, '');
+      } else {
+        compareV1 = _utils_js__WEBPACK_IMPORTED_MODULE_1__/* .normalizeString */ .J2(v1);
+        compareV2 = _utils_js__WEBPACK_IMPORTED_MODULE_1__/* .normalizeString */ .J2(v2);
+      }
+      if (compareV1 && compareV1 === compareV2) {
+        icon = '<span class="comparison-icon" title="Dado confere com o CADSUS">✅</span>';
+      } else {
+        const tooltipText = `Ficha: ${v1 || 'Vazio'}\nCADSUS: ${v2 || 'Vazio'}`;
+        icon = `<span class="comparison-icon" data-tooltip="${tooltipText}">⚠️</span>`;
+      }
+    }
+    const valueClass = field.id.toLowerCase().includes('alerg') && v1 && v1 !== '-' ? 'text-red-600 font-bold' : 'text-slate-900';
+    const copyIcon = v1 ? `<span class="copy-icon" title="Copiar" data-copy-text="${v1}">📄</span>` : '';
+    const rowHtml = `<div class="flex justify-between items-center py-1"><span class="font-medium text-slate-600">${field.label}:</span><span class="${valueClass} text-right flex items-center">${v1 || '-'}${icon}${copyIcon}</span></div>`;
+    if (field.section === 'main') {
+      patientMainInfoDiv.innerHTML += rowHtml;
+    } else {
+      patientAdditionalInfoDiv.innerHTML += rowHtml;
+    }
+  });
+  if (lastCadsusCheck) {
+    cadsusTimestamp.textContent = `CADSUS verificado em: ${lastCadsusCheck.toLocaleString()}`;
+    patientCardFooter.style.display = 'flex';
+  } else {
+    cadsusTimestamp.textContent = 'Não foi possível verificar dados do CADSUS.';
+    patientCardFooter.style.display = 'flex';
+  }
+  refreshCadsusBtn.querySelector('.refresh-icon').classList.toggle('spinning', isUpdating);
+  refreshCadsusBtn.disabled = isUpdating;
+  toggleDetailsBtn.style.display = sortedFields.some(f => f.enabled && f.section === 'more') ? 'block' : 'none';
+  patientDetailsSection.style.display = 'block';
+}
+function hide() {
+  if (patientDetailsSection) patientDetailsSection.style.display = 'none';
+}
+function handleToggleDetails() {
+  patientAdditionalInfoDiv.classList.toggle('show');
+  toggleDetailsBtn.textContent = patientAdditionalInfoDiv.classList.contains('show') ? 'Mostrar menos' : 'Mostrar mais';
+}
+function handleForceRefresh() {
+  const patient = _store_js__WEBPACK_IMPORTED_MODULE_0__/* .store */ .M.getPatient();
+  if (patient && patient.ficha && onForceRefresh) {
+    onForceRefresh({
+      idp: patient.ficha.isenPK.idp,
+      ids: patient.ficha.isenPK.ids
+    }, true);
+  }
+}
+function onStateChange() {
+  const patient = _store_js__WEBPACK_IMPORTED_MODULE_0__/* .store */ .M.getPatient();
+  if (patient) {
+    render(patient);
+  } else {
+    hide();
+  }
+}
+
+/**
+ * Inicializa o módulo do card de paciente.
+ * @param {Array<object>} config - A configuração dos campos da ficha.
+ * @param {object} callbacks - Funções de callback.
+ * @param {Function} callbacks.onForceRefresh - Função para forçar a atualização.
+ */
+function init(config, callbacks) {
+  patientDetailsSection = document.getElementById('patient-details-section');
+  patientMainInfoDiv = document.getElementById('patient-main-info');
+  patientAdditionalInfoDiv = document.getElementById('patient-additional-info');
+  toggleDetailsBtn = document.getElementById('toggle-details-btn');
+  patientCardFooter = document.getElementById('patient-card-footer');
+  cadsusTimestamp = document.getElementById('cadsus-timestamp');
+  refreshCadsusBtn = document.getElementById('refresh-cadsus-btn');
+  fieldConfigLayout = config;
+  onForceRefresh = callbacks.onForceRefresh;
+  toggleDetailsBtn.addEventListener('click', handleToggleDetails);
+  refreshCadsusBtn.addEventListener('click', handleForceRefresh);
+  _store_js__WEBPACK_IMPORTED_MODULE_0__/* .store */ .M.subscribe(onStateChange);
+}
+
+/***/ }),
+
+/***/ 778:
+/***/ ((__unused_webpack___webpack_module__, __unused_webpack___webpack_exports__, __webpack_require__) => {
+
+/* harmony import */ var _api_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(574);
+/* harmony import */ var _ErrorHandler_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(322);
+/* harmony import */ var _field_config_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(869);
+/* harmony import */ var _renderers_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(690);
+/* harmony import */ var _SectionManager_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(338);
+/* harmony import */ var _store_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(335);
+/* harmony import */ var _TimelineManager_js__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(968);
+/* harmony import */ var _ui_patient_card_js__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(627);
+/* harmony import */ var _ui_search_js__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(889);
+/* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(239);
+/**
+ * 🏥 ASSISTENTE DE REGULAÇÃO MÉDICA - MAIN UI
+ *
+ * 🚨 ANTES DE MODIFICAR: Leia obrigatoriamente agents.md
+ * 📋 Instruções IA: .github/instructions/agents.md.instructions.md
+ * 🔒 Projeto médico - dados sensíveis - nunca logar CPF/CNS/dados pessoais
+ */
+
+// Cross-browser API alias (lint-safe)
+const api = typeof browser !== 'undefined' ? browser : typeof chrome !== 'undefined' ? chrome : {};
+
+
+
+
+
+
+
+ // Importa o novo gestor
+
+
+
+
+// --- ÍCONES ---
+const sectionIcons = {
+  'patient-details': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-user-round-check-icon lucide-user-round-check"><path d="M2 21a8 8 0 0 1 13.292-6"/><circle cx="10" cy="8" r="5"/><path d="m16 19 2 2 4-4"/></svg>',
+  timeline: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-gantt-chart"><path d="M8 6h10"/><path d="M6 12h9"/><path d="M11 18h7"/></svg>',
+  regulations: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-shield-check-icon lucide-shield-check"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg>',
+  consultations: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-stethoscope-icon lucide-stethoscope"><path d="M11 2v2"/><path d="M5 2v2"/><path d="M5 3H4a2 2 0 0 0-2 2v4a6 6 0 0 0 12 0V5a2 2 0 0 0-2-2h-1"/><path d="M8 15a6 6 0 0 0 12 0v-3"/><circle cx="20" cy="10" r="2"/></svg>',
+  exams: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-microscope-icon lucide-microscope"><path d="M6 18h8"/><path d="M3 22h18"/><path d="M14 22a7 7 0 1 0 0-14h-1"/><path d="M9 14h2"/><path d="M9 12a2 2 0 0 1-2-2V6h6v4a2 2 0 0 1-2 2Z"/><path d="M12 6V3a1 1 0 0 0-1-1H9a1 1 0 0 0-1 1v3"/></svg>',
+  appointments: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-calendar-check-icon lucide-calendar-check"><path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/><path d="m9 16 2 2 4-4"/></svg>',
+  documents: '<svg xmlns="http://www.w3.org/2000/svg" class="lucide lucide-file-text" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>'
+};
+let currentRegulationData = null;
+const sectionManagers = {}; // Objeto para armazenar instâncias de SectionManager
+
+// Global listeners storage for memory leak prevention
+const globalListeners = {
+  onOpenOptionsClick: null,
+  onReloadSidebarClick: null,
+  onAutoModeToggleChange: null,
+  onReloadBtnClick: null,
+  onModalCloseBtnClick: null,
+  onInfoModalClick: null,
+  onMainContentClick: null,
+  onInfoBtnClick: null,
+  onDOMContentLoaded: null
+};
+
+// --- FUNÇÃO AUXILIAR DE FILTRAGEM ---
+/**
+ * Aplica um filtro de texto normalizado a um array de dados.
+ * @param {Array} items - O array de itens a ser filtrado.
+ * @param {string} text - O texto de busca (pode conter múltiplos termos separados por vírgula).
+ * @param {Function} getFieldContent - Uma função que recebe um item e retorna a string a ser pesquisada.
+ * @returns {Array} O array de itens filtrado.
+ */
+const applyNormalizedTextFilter = (items, text, getFieldContent) => {
+  const searchTerms = _utils_js__WEBPACK_IMPORTED_MODULE_9__/* .normalizeString */ .J2(text).split(',').map(t => t.trim()).filter(Boolean);
+  if (searchTerms.length === 0) return items;
+  return items.filter(item => {
+    const content = _utils_js__WEBPACK_IMPORTED_MODULE_9__/* .normalizeString */ .J2(getFieldContent(item));
+    return searchTerms.some(term => content.includes(term));
+  });
+};
+
+// --- LÓGICA DE FILTRAGEM ---
+const consultationFilterLogic = (data, filters) => {
+  let filteredData = [...data];
+  if (filters['hide-no-show-checkbox']) {
+    filteredData = filteredData.filter(c => !c.isNoShow);
+  }
+  filteredData = applyNormalizedTextFilter(filteredData, filters['consultation-filter-keyword'], c => [c.specialty, c.professional, c.unit, ...c.details.map(d => `${d.label} ${d.value}`)].join(' '));
+  filteredData = applyNormalizedTextFilter(filteredData, filters['consultation-filter-cid'], c => c.details.map(d => d.value).join(' '));
+  filteredData = applyNormalizedTextFilter(filteredData, filters['consultation-filter-specialty'], c => c.specialty || '');
+  filteredData = applyNormalizedTextFilter(filteredData, filters['consultation-filter-professional'], c => c.professional || '');
+  filteredData = applyNormalizedTextFilter(filteredData, filters['consultation-filter-unit'], c => c.unit || '');
+  return filteredData;
+};
+const examFilterLogic = (data, filters) => {
+  let filteredData = [...data];
+  filteredData = applyNormalizedTextFilter(filteredData, filters['exam-filter-name'], item => item.examName);
+  filteredData = applyNormalizedTextFilter(filteredData, filters['exam-filter-professional'], item => item.professional);
+  filteredData = applyNormalizedTextFilter(filteredData, filters['exam-filter-specialty'], item => item.specialty);
+  return filteredData;
+};
+const appointmentFilterLogic = (data, filters, fetchType) => {
+  let filteredData = [...data];
+  const status = filters['appointment-filter-status'] || 'todos';
+  if (status !== 'todos') {
+    filteredData = filteredData.filter(a => (a.status || '').toUpperCase() === status.toUpperCase());
+  }
+  if (fetchType === 'consultas') {
+    filteredData = filteredData.filter(a => !a.type.toUpperCase().includes('EXAME'));
+  } else if (fetchType === 'exames') {
+    filteredData = filteredData.filter(a => a.type.toUpperCase().includes('EXAME'));
+  }
+  filteredData = applyNormalizedTextFilter(filteredData, filters['appointment-filter-term'], a => [a.professional, a.specialty, a.description].join(' '));
+  filteredData = applyNormalizedTextFilter(filteredData, filters['appointment-filter-location'], a => a.location || '');
+  return filteredData;
+};
+const regulationFilterLogic = (data, filters) => {
+  let filteredData = [...data];
+  const status = filters['regulation-filter-status'] || 'todos';
+  const priority = filters['regulation-filter-priority'] || 'todas';
+  if (status !== 'todos') {
+    filteredData = filteredData.filter(item => (item.status || '').toUpperCase() === status.toUpperCase());
+  }
+  if (priority !== 'todas') {
+    filteredData = filteredData.filter(item => (item.priority || '').toUpperCase() === priority.toUpperCase());
+  }
+  filteredData = applyNormalizedTextFilter(filteredData, filters['regulation-filter-procedure'], item => item.procedure || '');
+  filteredData = applyNormalizedTextFilter(filteredData, filters['regulation-filter-requester'], item => item.requester || '');
+  return filteredData;
+};
+const documentFilterLogic = (data, filters) => {
+  var _document$getElementB, _document$getElementB2;
+  let filteredData = [...data];
+
+  // Filtro por data (client-side)
+  const startDateValue = (_document$getElementB = document.getElementById('document-date-initial')) === null || _document$getElementB === void 0 ? void 0 : _document$getElementB.value;
+  const endDateValue = (_document$getElementB2 = document.getElementById('document-date-final')) === null || _document$getElementB2 === void 0 ? void 0 : _document$getElementB2.value;
+  if (startDateValue) {
+    const start = _utils_js__WEBPACK_IMPORTED_MODULE_9__/* .parseDate */ ._U(startDateValue);
+    if (start) {
+      filteredData = filteredData.filter(doc => {
+        const docDate = _utils_js__WEBPACK_IMPORTED_MODULE_9__/* .parseDate */ ._U(doc.date.split(' ')[0]);
+        return docDate && docDate >= start;
+      });
+    }
+  }
+  if (endDateValue) {
+    const end = _utils_js__WEBPACK_IMPORTED_MODULE_9__/* .parseDate */ ._U(endDateValue);
+    if (end) {
+      filteredData = filteredData.filter(doc => {
+        const docDate = _utils_js__WEBPACK_IMPORTED_MODULE_9__/* .parseDate */ ._U(doc.date.split(' ')[0]);
+        return docDate && docDate <= end;
+      });
+    }
+  }
+
+  // Filtro por palavra-chave normalizada
+  filteredData = applyNormalizedTextFilter(filteredData, filters['document-filter-keyword'], doc => doc.description || '');
+  return filteredData;
+};
+const sectionConfigurations = {
+  'patient-details': {},
+  // Seção especial sem fetch
+  timeline: {},
+  // Configuração da Timeline será tratada pelo seu próprio gestor
+  consultations: {
+    fetchFunction: _api_js__WEBPACK_IMPORTED_MODULE_0__/* .fetchAllConsultations */ .wF,
+    renderFunction: _renderers_js__WEBPACK_IMPORTED_MODULE_3__/* .renderConsultations */ .rX,
+    initialSortState: {
+      key: 'sortableDate',
+      order: 'desc'
+    },
+    filterLogic: consultationFilterLogic
+  },
+  exams: {
+    fetchFunction: _api_js__WEBPACK_IMPORTED_MODULE_0__/* .fetchExamesSolicitados */ .K4,
+    renderFunction: _renderers_js__WEBPACK_IMPORTED_MODULE_3__/* .renderExams */ .Rb,
+    initialSortState: {
+      key: 'date',
+      order: 'desc'
+    },
+    filterLogic: examFilterLogic
+  },
+  appointments: {
+    fetchFunction: _api_js__WEBPACK_IMPORTED_MODULE_0__/* .fetchAppointments */ .Ns,
+    renderFunction: _renderers_js__WEBPACK_IMPORTED_MODULE_3__/* .renderAppointments */ .lT,
+    initialSortState: {
+      key: 'date',
+      order: 'desc'
+    },
+    filterLogic: appointmentFilterLogic
+  },
+  regulations: {
+    fetchFunction: _api_js__WEBPACK_IMPORTED_MODULE_0__/* .fetchAllRegulations */ .v0,
+    renderFunction: _renderers_js__WEBPACK_IMPORTED_MODULE_3__/* .renderRegulations */ .IC,
+    initialSortState: {
+      key: 'date',
+      order: 'desc'
+    },
+    filterLogic: regulationFilterLogic
+  },
+  documents: {
+    fetchFunction: _api_js__WEBPACK_IMPORTED_MODULE_0__/* .fetchDocuments */ .P_,
+    renderFunction: _renderers_js__WEBPACK_IMPORTED_MODULE_3__/* .renderDocuments */ .zL,
+    initialSortState: {
+      key: 'date',
+      order: 'desc'
+    },
+    filterLogic: documentFilterLogic
+  }
+};
+
+// --- FUNÇÕES DE ESTILO E ÍCONES ---
+
+/**
+ * Injeta os ícones SVG nos cabeçalhos das seções.
+ */
+function applySectionIcons() {
+  for (const sectionKey in sectionIcons) {
+    const iconContainer = document.getElementById(`${sectionKey}-section-icon`);
+    if (iconContainer) {
+      iconContainer.innerHTML = sectionIcons[sectionKey];
+    }
+  }
+}
+
+/**
+ * Lê os estilos customizados do storage e os aplica aos cabeçalhos
+ * usando Variáveis CSS (CSS Custom Properties) para melhor performance e manutenibilidade.
+ * @param {object} styles - O objeto de estilos vindo do storage.
+ */
+function applyCustomHeaderStyles(styles) {
+  // O CSS base com as variáveis e fallbacks já está definido em sidebar.html.
+  // Esta função apenas define os valores das variáveis para cada seção.
+
+  const defaultStyles = {
+    backgroundColor: '#ffffff',
+    color: '#1e293b',
+    iconColor: '#1e293b',
+    fontSize: '16px'
+  };
+  for (const sectionKey in sectionIcons) {
+    const sectionId = sectionKey === 'patient-details' ? 'patient-details-section' : `${sectionKey}-section`;
+    const sectionElement = document.getElementById(sectionId);
+    if (!sectionElement) continue;
+
+    // Pega o estilo salvo para a seção ou usa um objeto vazio.
+    const savedStyle = styles[sectionKey] || {};
+    // Combina com os padrões para garantir que todas as propriedades existam.
+    const finalStyle = {
+      ...defaultStyles,
+      ...savedStyle
+    };
+
+    // Define as variáveis CSS no elemento da seção.
+    sectionElement.style.setProperty('--section-bg-color', finalStyle.backgroundColor);
+    sectionElement.style.setProperty('--section-font-color', finalStyle.color);
+    sectionElement.style.setProperty('--section-icon-color', finalStyle.iconColor);
+    sectionElement.style.setProperty('--section-font-size', finalStyle.fontSize);
+  }
+}
+async function selectPatient(patientInfo, forceRefresh = false) {
+  const currentPatient = _store_js__WEBPACK_IMPORTED_MODULE_5__/* .store */ .M.getPatient();
+  if (currentPatient && currentPatient.ficha.isenPK.idp === patientInfo.idp && !forceRefresh) {
+    return;
+  }
+  _utils_js__WEBPACK_IMPORTED_MODULE_9__/* .toggleLoader */ .i1(true);
+  _utils_js__WEBPACK_IMPORTED_MODULE_9__/* .clearMessage */ .de();
+  _store_js__WEBPACK_IMPORTED_MODULE_5__/* .store */ .M.setPatientUpdating();
+  try {
+    const ficha = await _api_js__WEBPACK_IMPORTED_MODULE_0__/* .fetchVisualizaUsuario */ .Tp(patientInfo);
+    const cadsus = await _api_js__WEBPACK_IMPORTED_MODULE_0__/* .fetchCadsusData */ .GP({
+      cpf: _utils_js__WEBPACK_IMPORTED_MODULE_9__/* .getNestedValue */ .LJ(ficha, 'entidadeFisica.entfCPF'),
+      cns: ficha.isenNumCadSus
+    });
+    Object.values(sectionManagers).forEach(manager => {
+      if (typeof manager.clearAutomationFeedbackAndFilters === 'function') {
+        manager.clearAutomationFeedbackAndFilters(false);
+      } else if (typeof manager.clearAutomation === 'function') {
+        manager.clearAutomation();
+      }
+    });
+    _store_js__WEBPACK_IMPORTED_MODULE_5__/* .store */ .M.setPatient(ficha, cadsus);
+    await updateRecentPatients(_store_js__WEBPACK_IMPORTED_MODULE_5__/* .store */ .M.getPatient());
+  } catch (error) {
+    _utils_js__WEBPACK_IMPORTED_MODULE_9__/* .showMessage */ .rG(error.message, 'error');
+    (0,_ErrorHandler_js__WEBPACK_IMPORTED_MODULE_1__/* .logError */ .vV)('PATIENT_LOADING', 'Erro ao carregar dados do paciente', {
+      errorMessage: error.message
+    });
+    _store_js__WEBPACK_IMPORTED_MODULE_5__/* .store */ .M.clearPatient();
+  } finally {
+    _utils_js__WEBPACK_IMPORTED_MODULE_9__/* .toggleLoader */ .i1(false);
+  }
+}
+async function init() {
+  let baseUrlConfigured = true;
+  try {
+    await _api_js__WEBPACK_IMPORTED_MODULE_0__/* .getBaseUrl */ .$_();
+  } catch (error) {
+    if ((error === null || error === void 0 ? void 0 : error.message) === 'URL_BASE_NOT_CONFIGURED') {
+      baseUrlConfigured = false;
+      const mainContent = document.getElementById('main-content');
+      const urlWarning = document.getElementById('url-config-warning');
+      const openOptions = document.getElementById('open-options-from-warning');
+      const reloadSidebar = document.getElementById('reload-sidebar-from-warning');
+      if (mainContent) mainContent.classList.add('hidden');
+      if (urlWarning) urlWarning.classList.remove('hidden');
+      if (openOptions) {
+        // Remove antes de adicionar
+        if (globalListeners.onOpenOptionsClick) {
+          openOptions.removeEventListener('click', globalListeners.onOpenOptionsClick);
+        }
+        globalListeners.onOpenOptionsClick = function () {
+          api.runtime.openOptionsPage();
+        };
+        openOptions.addEventListener('click', globalListeners.onOpenOptionsClick);
+      }
+      if (reloadSidebar) {
+        if (globalListeners.onReloadSidebarClick) {
+          reloadSidebar.removeEventListener('click', globalListeners.onReloadSidebarClick);
+        }
+        globalListeners.onReloadSidebarClick = function () {
+          location.reload();
+        };
+        reloadSidebar.addEventListener('click', globalListeners.onReloadSidebarClick);
+      }
+
+      // **não retornamos mais aqui**, apenas marcamos que deu “fallback”
+    } else {
+      (0,_ErrorHandler_js__WEBPACK_IMPORTED_MODULE_1__/* .logError */ .vV)('INITIALIZATION', 'Falha na inicialização da extensão', {
+        errorMessage: error.message
+      });
+      _utils_js__WEBPACK_IMPORTED_MODULE_9__/* .showMessage */ .rG('Ocorreu um erro inesperado ao iniciar a extensão.', 'error');
+      // nesse caso você pode querer return ou throw de verdade
+      return;
+    }
+  }
+
+  // === setup das abas: sempre rodar, mesmo sem baseURL ===
+  _utils_js__WEBPACK_IMPORTED_MODULE_9__/* .setupTabs */ .AQ(document.getElementById('layout-tabs-container'));
+  _utils_js__WEBPACK_IMPORTED_MODULE_9__/* .setupTabs */ .AQ(document.getElementById('patterns-tabs-container'));
+  // (adicione aqui quaisquer outros containers de aba que tenha)
+
+  // === só o resto do fluxo principal depende de baseUrlConfigured ===
+  if (!baseUrlConfigured) {
+    // já mostramos o formulário de URL, não temos mais nada a fazer
+    return;
+  }
+
+  // agora vem tudo o que precisa de baseURL
+  const [globalSettings, regulationPriorities] = await Promise.all([loadConfigAndData(), _api_js__WEBPACK_IMPORTED_MODULE_0__/* .fetchRegulationPriorities */ .$4()]);
+  globalSettings.regulationPriorities = regulationPriorities;
+  applySectionIcons();
+  applyCustomHeaderStyles(globalSettings.sectionHeaderStyles);
+  applySectionOrder(globalSettings.sidebarSectionOrder);
+  _ui_search_js__WEBPACK_IMPORTED_MODULE_8__/* .init */ .T({
+    onSelectPatient: selectPatient
+  });
+  _ui_patient_card_js__WEBPACK_IMPORTED_MODULE_7__/* .init */ .T(globalSettings.fieldConfigLayout, {
+    onForceRefresh: selectPatient
+  });
+  initializeSections(globalSettings);
+  applyUserPreferences(globalSettings);
+  addGlobalEventListeners();
+  setupAutoModeToggle();
+  await checkForPendingRegulation();
+}
+async function loadConfigAndData() {
+  const syncData = await api.storage.sync.get({
+    patientFields: _field_config_js__WEBPACK_IMPORTED_MODULE_2__/* .defaultFieldConfig */ .Q,
+    filterLayout: {},
+    autoLoadExams: false,
+    autoLoadConsultations: false,
+    autoLoadAppointments: false,
+    autoLoadRegulations: false,
+    autoLoadDocuments: false,
+    enableAutomaticDetection: true,
+    dateRangeDefaults: {},
+    sidebarSectionOrder: [],
+    sectionHeaderStyles: {} // Carrega a nova configuração de estilos
+  });
+  const localData = await api.storage.local.get({
+    recentPatients: [],
+    savedFilterSets: {},
+    automationRules: []
+  });
+  _store_js__WEBPACK_IMPORTED_MODULE_5__/* .store */ .M.setRecentPatients(localData.recentPatients);
+  _store_js__WEBPACK_IMPORTED_MODULE_5__/* .store */ .M.setSavedFilterSets(localData.savedFilterSets);
+  return {
+    fieldConfigLayout: _field_config_js__WEBPACK_IMPORTED_MODULE_2__/* .defaultFieldConfig */ .Q.map(defaultField => {
+      const savedField = syncData.patientFields.find(f => f.id === defaultField.id);
+      return savedField ? {
+        ...defaultField,
+        ...savedField
+      } : defaultField;
+    }),
+    filterLayout: syncData.filterLayout,
+    userPreferences: {
+      autoLoadExams: syncData.autoLoadExams,
+      autoLoadConsultations: syncData.autoLoadConsultations,
+      autoLoadAppointments: syncData.autoLoadAppointments,
+      autoLoadRegulations: syncData.autoLoadRegulations,
+      autoLoadDocuments: syncData.autoLoadDocuments,
+      enableAutomaticDetection: syncData.enableAutomaticDetection,
+      dateRangeDefaults: syncData.dateRangeDefaults
+    },
+    sidebarSectionOrder: syncData.sidebarSectionOrder,
+    sectionHeaderStyles: syncData.sectionHeaderStyles // Passa os estilos para frente
+  };
+}
+function applySectionOrder(order) {
+  const mainContent = document.getElementById('main-content');
+  if (!mainContent) return;
+  const sectionMap = {
+    'patient-details': 'patient-details-section',
+    timeline: 'timeline-section',
+    regulations: 'regulations-section',
+    consultations: 'consultations-section',
+    exams: 'exams-section',
+    appointments: 'appointments-section',
+    documents: 'documents-section'
+  };
+  const patientCardId = 'patient-details';
+
+  // Pega a ordem salva ou a ordem padrão do DOM
+  const savedOrder = order && order.length > 0 ? order : Object.keys(sectionMap);
+
+  // Garante que a ficha do paciente esteja sempre no topo
+  // 1. Remove a ficha da ordem atual, não importa onde esteja.
+  const finalOrder = savedOrder.filter(id => id !== patientCardId);
+  // 2. Adiciona a ficha no início da lista.
+  finalOrder.unshift(patientCardId);
+
+  // Adiciona quaisquer novas seções (não presentes na ordem salva) ao final
+  const knownIds = new Set(finalOrder);
+  Object.keys(sectionMap).forEach(id => {
+    if (!knownIds.has(id)) {
+      finalOrder.push(id);
+    }
+  });
+
+  // Reordena os elementos no DOM
+  finalOrder.forEach(tabId => {
+    const sectionId = sectionMap[tabId];
+    const sectionElement = document.getElementById(sectionId);
+    if (sectionElement) {
+      mainContent.appendChild(sectionElement);
+    }
+  });
+}
+function initializeSections(globalSettings) {
+  Object.keys(sectionConfigurations).forEach(key => {
+    if (key === 'patient-details') return;
+    if (key === 'timeline') {
+      sectionManagers[key] = new _TimelineManager_js__WEBPACK_IMPORTED_MODULE_6__/* .TimelineManager */ .l(key, sectionConfigurations[key], globalSettings);
+      return;
+    }
+    sectionManagers[key] = new _SectionManager_js__WEBPACK_IMPORTED_MODULE_4__/* .SectionManager */ .N(key, sectionConfigurations[key], globalSettings);
+  });
+}
+function applyUserPreferences(globalSettings) {
+  const {
+    userPreferences,
+    filterLayout
+  } = globalSettings;
+  const {
+    dateRangeDefaults
+  } = userPreferences;
+  const sections = ['consultations', 'exams', 'appointments', 'regulations', 'documents'];
+  const defaultSystemRanges = {
+    consultations: {
+      start: -6,
+      end: 0
+    },
+    exams: {
+      start: -6,
+      end: 0
+    },
+    appointments: {
+      start: -1,
+      end: 3
+    },
+    regulations: {
+      start: -12,
+      end: 0
+    },
+    documents: {
+      start: -24,
+      end: 0
+    }
+  };
+  sections.forEach(section => {
+    const range = dateRangeDefaults[section] || defaultSystemRanges[section];
+    const prefix = section.replace(/s$/, '');
+    const initialEl = document.getElementById(`${prefix}-date-initial`);
+    const finalEl = document.getElementById(`${prefix}-date-final`);
+    if (initialEl) initialEl.valueAsDate = _utils_js__WEBPACK_IMPORTED_MODULE_9__/* .calculateRelativeDate */ .Z9(range.start);
+    if (finalEl) finalEl.valueAsDate = _utils_js__WEBPACK_IMPORTED_MODULE_9__/* .calculateRelativeDate */ .Z9(range.end);
+  });
+  Object.values(filterLayout).flat().forEach(filterSetting => {
+    const el = document.getElementById(filterSetting.id);
+    if (el && filterSetting.defaultValue !== undefined && filterSetting.defaultValue !== null) {
+      if (el.type === 'checkbox') {
+        el.checked = filterSetting.defaultValue;
+      } else {
+        el.value = filterSetting.defaultValue;
+      }
+    }
+  });
+}
+function setupAutoModeToggle() {
+  const toggle = document.getElementById('auto-mode-toggle');
+  const label = document.getElementById('auto-mode-label');
+  api.storage.sync.get({
+    enableAutomaticDetection: true
+  }).then(settings => {
+    toggle.checked = settings.enableAutomaticDetection;
+    label.textContent = settings.enableAutomaticDetection ? 'Auto' : 'Manual';
+  });
+
+  // Remove antes de adicionar
+  if (globalListeners.onAutoModeToggleChange) {
+    toggle.removeEventListener('change', globalListeners.onAutoModeToggleChange);
+  }
+  globalListeners.onAutoModeToggleChange = function (event) {
+    const isEnabled = event.target.checked;
+    api.storage.sync.set({
+      enableAutomaticDetection: isEnabled
+    });
+    label.textContent = isEnabled ? 'Auto' : 'Manual';
+  };
+  toggle.addEventListener('change', globalListeners.onAutoModeToggleChange);
+}
+async function handleRegulationLoaded(regulationData) {
+  _utils_js__WEBPACK_IMPORTED_MODULE_9__/* .toggleLoader */ .i1(true);
+  try {
+    currentRegulationData = regulationData;
+    if (regulationData && regulationData.isenPKIdp && regulationData.isenPKIds) {
+      const patientInfo = {
+        idp: regulationData.isenPKIdp,
+        ids: regulationData.isenPKIds
+      };
+      await selectPatient(patientInfo);
+      const contextName = regulationData.apcnNome || regulationData.prciNome || 'Contexto';
+      const infoBtn = document.getElementById('context-info-btn');
+      infoBtn.title = `Contexto: ${contextName.trim()}`;
+      infoBtn.classList.remove('hidden');
+      await applyAutomationRules(regulationData);
+    } else {
+      currentRegulationData = null;
+      _utils_js__WEBPACK_IMPORTED_MODULE_9__/* .showMessage */ .rG('Não foi possível extrair os dados do paciente da regulação.', 'error');
+    }
+  } catch (error) {
+    currentRegulationData = null;
+    _utils_js__WEBPACK_IMPORTED_MODULE_9__/* .showMessage */ .rG(`Erro ao processar a regulação: ${error.message}`, 'error');
+    (0,_ErrorHandler_js__WEBPACK_IMPORTED_MODULE_1__/* .logError */ .vV)('REGULATION_PROCESSING', 'Erro ao processar a regulação', {
+      errorMessage: error.message
+    });
+  } finally {
+    _utils_js__WEBPACK_IMPORTED_MODULE_9__/* .toggleLoader */ .i1(false);
+  }
+}
+async function applyAutomationRules(regulationData) {
+  const {
+    automationRules
+  } = await api.storage.local.get({
+    automationRules: []
+  });
+  if (!automationRules || automationRules.length === 0) return;
+  const contextString = [regulationData.prciNome || '', regulationData.prciCodigo || '', regulationData.apcnNome || '', regulationData.apcnCod || ''].join(' ').toLowerCase();
+  for (const rule of automationRules) {
+    if (rule.isActive) {
+      const hasMatch = rule.triggerKeywords.some(keyword => contextString.includes(keyword.toLowerCase().trim()));
+      if (hasMatch) {
+        // Aplicar filtros nas seções existentes E na nova timeline
+        Object.entries(sectionManagers).forEach(([key, manager]) => {
+          if (rule.filterSettings[key] && typeof manager.applyAutomationFilters === 'function') {
+            manager.applyAutomationFilters(rule.filterSettings[key], rule.name);
+          }
+        });
+        return; // Aplica apenas a primeira regra correspondente
+      }
+    }
+  }
+}
+
+/**
+ * Lida com mudanças no storage da extensão.
+ * @param {object} changes - Objeto com as mudanças.
+ * @param {string} areaName - A área do storage que mudou ('sync' ou 'local').
+ */
+function handleStorageChange(changes, areaName) {
+  if (areaName === 'local' && changes.pendingRegulation) {
+    // Apenas processa se a detecção automática estiver LIGADA
+    api.storage.sync.get({
+      enableAutomaticDetection: true
+    }).then(settings => {
+      if (settings.enableAutomaticDetection) {
+        const {
+          newValue
+        } = changes.pendingRegulation;
+        if (newValue && newValue.isenPKIdp) {
+          (0,_ErrorHandler_js__WEBPACK_IMPORTED_MODULE_1__/* .logInfo */ .fH)('REGULATION_DETECTION', 'Nova regulação detectada via storage.onChanged', {
+            hasIsenPKIdp: !!newValue.isenPKIdp
+          });
+          handleRegulationLoaded(newValue);
+          api.storage.local.remove('pendingRegulation');
+        }
+      }
+    });
+  }
+  if (areaName === 'sync' && changes.sectionHeaderStyles) {
+    api.runtime.reload();
+  }
+  if (areaName === 'sync' && changes.enableAutomaticDetection) {
+    // Mantém o botão da sidebar sincronizado com a configuração
+    setupAutoModeToggle();
+  }
+}
+function addGlobalEventListeners() {
+  const mainContent = document.getElementById('main-content');
+  const infoModal = document.getElementById('info-modal');
+  const modalCloseBtn = document.getElementById('modal-close-btn');
+  const infoBtn = document.getElementById('context-info-btn');
+  const reloadBtn = document.getElementById('reload-sidebar-btn');
+
+  // Create named functions for listeners to allow removal
+  if (!globalListeners.onReloadBtnClick) {
+    globalListeners.onReloadBtnClick = function () {
+      const patient = _store_js__WEBPACK_IMPORTED_MODULE_5__/* .store */ .M.getPatient();
+      if (patient && patient.ficha) {
+        _utils_js__WEBPACK_IMPORTED_MODULE_9__/* .showDialog */ .ui({
+          message: 'Um paciente está selecionado e o estado atual será perdido. Deseja realmente recarregar o assistente?',
+          onConfirm: () => {
+            location.reload();
+          }
+        });
+      } else {
+        location.reload();
+      }
+    };
+  }
+  if (!globalListeners.onModalCloseBtnClick) {
+    globalListeners.onModalCloseBtnClick = function () {
+      const modal = document.getElementById('info-modal');
+      if (modal) modal.classList.add('hidden');
+    };
+  }
+  if (!globalListeners.onInfoModalClick) {
+    globalListeners.onInfoModalClick = function (e) {
+      if (e.target === e.currentTarget) {
+        e.currentTarget.classList.add('hidden');
+      }
+    };
+  }
+  if (!globalListeners.onMainContentClick) {
+    globalListeners.onMainContentClick = async function (event) {
+      await handleGlobalActions(event);
+    };
+  }
+  if (!globalListeners.onInfoBtnClick) {
+    globalListeners.onInfoBtnClick = function () {
+      if (!currentRegulationData) {
+        _utils_js__WEBPACK_IMPORTED_MODULE_9__/* .showMessage */ .rG('Nenhuma informação de regulação carregada.', 'info');
+        return;
+      }
+      const modalTitle = document.getElementById('modal-title');
+      const modalContent = document.getElementById('modal-content');
+      const modal = document.getElementById('info-modal');
+      modalTitle.textContent = 'Dados da Regulação (JSON)';
+      const formattedJson = JSON.stringify(currentRegulationData, null, 2);
+      modalContent.innerHTML = `<pre class="bg-slate-100 p-2 rounded-md text-xs whitespace-pre-wrap break-all">${formattedJson}</pre>`;
+      modal.classList.remove('hidden');
+    };
+  }
+
+  // Add listeners
+  if (reloadBtn) reloadBtn.addEventListener('click', globalListeners.onReloadBtnClick);
+  if (modalCloseBtn) modalCloseBtn.addEventListener('click', globalListeners.onModalCloseBtnClick);
+  if (infoModal) infoModal.addEventListener('click', globalListeners.onInfoModalClick);
+  if (mainContent) mainContent.addEventListener('click', globalListeners.onMainContentClick);
+  if (infoBtn) infoBtn.addEventListener('click', globalListeners.onInfoBtnClick);
+
+  // Add storage listener only once
+  if (!addGlobalEventListeners.storageListenerAdded) {
+    api.storage.onChanged.addListener(handleStorageChange);
+    addGlobalEventListeners.storageListenerAdded = true;
+  }
+}
+async function handleGlobalActions(event) {
+  const target = event.target;
+  const copyBtn = target.closest('.copy-icon');
+  if (copyBtn) {
+    await copyToClipboard(copyBtn);
+    return;
+  }
+  const examResultBtn = target.closest('.view-exam-result-btn');
+  if (examResultBtn) {
+    await handleViewExamResult(examResultBtn);
+    return;
+  }
+  const appointmentDetailsBtn = target.closest('.view-appointment-details-btn');
+  if (appointmentDetailsBtn) {
+    await handleShowAppointmentDetailsModal(appointmentDetailsBtn);
+    return;
+  }
+  const regulationDetailsBtn = target.closest('.view-regulation-details-btn');
+  if (regulationDetailsBtn) {
+    await handleShowRegulationDetailsModal(regulationDetailsBtn);
+    return;
+  }
+  const appointmentInfoBtn = target.closest('.appointment-info-btn');
+  if (appointmentInfoBtn) {
+    handleShowAppointmentInfo(appointmentInfoBtn);
+    return;
+  }
+  const documentBtn = target.closest('.view-document-btn');
+  if (documentBtn) {
+    await handleViewDocument(documentBtn);
+    return;
+  }
+  const regulationAttachmentBtn = target.closest('.view-regulation-attachment-btn');
+  if (regulationAttachmentBtn) {
+    await handleViewRegulationAttachment(regulationAttachmentBtn);
+    return;
+  }
+}
+async function copyToClipboard(button) {
+  if (button.dataset.inProgress === 'true') return;
+  const textToCopy = button.dataset.copyText;
+  if (!textToCopy) return;
+  button.dataset.inProgress = 'true';
+  const original = button;
+  try {
+    await navigator.clipboard.writeText(textToCopy);
+    if (document.body.contains(original)) original.textContent = '✅';
+  } catch (err) {
+    (0,_ErrorHandler_js__WEBPACK_IMPORTED_MODULE_1__/* .logError */ .vV)('CLIPBOARD_OPERATION', 'Falha ao copiar texto', {
+      errorMessage: err.message
+    });
+    if (document.body.contains(original)) original.textContent = '❌';
+  } finally {
+    setTimeout(() => {
+      if (document.body.contains(original)) original.textContent = '📄';
+      if (document.body.contains(original)) original.dataset.inProgress = 'false';
+    }, 1200);
+  }
+}
+async function updateRecentPatients(patientData) {
+  if (!patientData || !patientData.ficha) return;
+  const newRecent = {
+    ...patientData
+  };
+  const currentRecents = _store_js__WEBPACK_IMPORTED_MODULE_5__/* .store */ .M.getRecentPatients();
+  const filtered = (currentRecents || []).filter(p => p.ficha.isenPK.idp !== newRecent.ficha.isenPK.idp);
+  const updatedRecents = [newRecent, ...filtered].slice(0, 5);
+  await api.storage.local.set({
+    recentPatients: updatedRecents
+  });
+  _store_js__WEBPACK_IMPORTED_MODULE_5__/* .store */ .M.setRecentPatients(updatedRecents);
+}
+async function handleViewExamResult(button) {
+  const {
+    idp,
+    ids
+  } = button.dataset;
+  const filePath = await _api_js__WEBPACK_IMPORTED_MODULE_0__/* .fetchResultadoExame */ .Sp({
+    idp,
+    ids
+  });
+  const baseUrl = await _api_js__WEBPACK_IMPORTED_MODULE_0__/* .getBaseUrl */ .$_();
+  let url = 'about:blank';
+  if (filePath) {
+    url = filePath.startsWith('http') ? filePath : `${baseUrl}${filePath}`;
+  }
+  api.tabs.create({
+    url
+  });
+}
+async function handleViewDocument(button) {
+  const {
+    idp,
+    ids
+  } = button.dataset;
+  try {
+    const docUrl = await _api_js__WEBPACK_IMPORTED_MODULE_0__/* .fetchDocumentUrl */ .pP({
+      idp,
+      ids
+    });
+    api.tabs.create({
+      url: docUrl || 'about:blank'
+    });
+    if (!docUrl) {
+      (0,_ErrorHandler_js__WEBPACK_IMPORTED_MODULE_1__/* .logWarning */ .FF)('DOCUMENT_ACCESS', 'URL do documento não encontrada', {
+        idp,
+        ids
+      });
+    }
+  } catch (error) {
+    (0,_ErrorHandler_js__WEBPACK_IMPORTED_MODULE_1__/* .logError */ .vV)('DOCUMENT_ACCESS', 'Falha ao visualizar documento', {
+      idp,
+      ids,
+      errorMessage: error.message
+    });
+  }
+}
+async function handleViewRegulationAttachment(button) {
+  const {
+    idp,
+    ids
+  } = button.dataset;
+  try {
+    const fileUrl = await _api_js__WEBPACK_IMPORTED_MODULE_0__/* .fetchRegulationAttachmentUrl */ .DM({
+      idp,
+      ids
+    });
+    if (fileUrl) {
+      // Use browser extension API instead of window.open
+      await api.tabs.create({
+        url: fileUrl
+      });
+    } else {
+      (0,_ErrorHandler_js__WEBPACK_IMPORTED_MODULE_1__/* .logWarning */ .FF)('REGULATION_ATTACHMENT', 'URL do anexo não encontrada', {
+        idp,
+        ids
+      });
+    }
+  } catch (error) {
+    (0,_ErrorHandler_js__WEBPACK_IMPORTED_MODULE_1__/* .logError */ .vV)('REGULATION_ATTACHMENT', 'Erro ao carregar anexo da regulação', {
+      idp,
+      ids,
+      errorMessage: error.message
+    });
+  }
+}
+function showModal(title, content) {
+  const modal = document.getElementById('info-modal');
+  const modalTitle = document.getElementById('modal-title');
+  const modalContent = document.getElementById('modal-content');
+  modalTitle.textContent = title;
+  modalContent.innerHTML = content;
+  modal.classList.remove('hidden');
+}
+function createDetailRow(label, value) {
+  if (!value || String(value).trim() === '') return '';
+  return `<div class="py-2 border-b border-slate-100 flex justify-between items-start gap-4">
+            <span class="font-semibold text-slate-600 flex-shrink-0">${label}:</span>
+            <span class="text-slate-800 text-right break-words">${value}</span>
+          </div>`;
+}
+function formatRegulationDetailsForModal(data) {
+  if (!data) return '<p>Dados da regulação não encontrados.</p>';
+  let content = '';
+  content += createDetailRow('Status', data.reguStatus);
+  content += createDetailRow('Tipo', data.reguTipo === 'ENC' ? 'Consulta' : 'Exame');
+  content += createDetailRow('Data Solicitação', data.reguDataStr);
+  content += createDetailRow('Procedimento', data.prciNome);
+  content += createDetailRow('CID', `${data.tcidCod} - ${data.tcidDescricao}`);
+  content += createDetailRow('Profissional Sol.', data.prsaEntiNome);
+  content += createDetailRow('Unidade Sol.', data.limoSolicitanteNome);
+  content += createDetailRow('Unidade Desejada', data.limoDesejadaNome);
+  content += createDetailRow('Gravidade', data.reguGravidade);
+  if (data.reguJustificativa && data.reguJustificativa !== 'null') {
+    content += `<div class="py-2">
+    <span class="font-semibold text-slate-600">Justificativa:</span>
+    <p class="text-slate-800 whitespace-pre-wrap mt-1 p-2 bg-slate-50 rounded">${data.reguJustificativa.replace(/\\n/g, '\n')}</p>
+</div>`;
+  }
+  return content;
+}
+function formatAppointmentDetailsForModal(data) {
+  var _data$unidadeSaudeDes, _data$unidadeSaudeDes2, _data$profissionalDes, _data$profissionalDes2, _data$profissionalDes3, _data$atividadeProfis, _data$procedimento, _data$convenio, _data$convenio$entida;
+  if (!data) return '<p>Dados do agendamento não encontrados.</p>';
+  let status = 'Agendado';
+  if (data.agcoIsCancelado === 't') status = 'Cancelado';else if (data.agcoIsFaltante === 't') status = 'Faltou';else if (data.agcoIsAtendido === 't') status = 'Atendido';
+  let content = '';
+  content += createDetailRow('Status', status);
+  content += createDetailRow('Data', `${data.agcoData} às ${data.agcoHoraPrevista}`);
+  content += createDetailRow('Local', (_data$unidadeSaudeDes = data.unidadeSaudeDestino) === null || _data$unidadeSaudeDes === void 0 ? void 0 : (_data$unidadeSaudeDes2 = _data$unidadeSaudeDes.entidade) === null || _data$unidadeSaudeDes2 === void 0 ? void 0 : _data$unidadeSaudeDes2.entiNome);
+  content += createDetailRow('Profissional', (_data$profissionalDes = data.profissionalDestino) === null || _data$profissionalDes === void 0 ? void 0 : (_data$profissionalDes2 = _data$profissionalDes.entidadeFisica) === null || _data$profissionalDes2 === void 0 ? void 0 : (_data$profissionalDes3 = _data$profissionalDes2.entidade) === null || _data$profissionalDes3 === void 0 ? void 0 : _data$profissionalDes3.entiNome);
+  content += createDetailRow('Especialidade', (_data$atividadeProfis = data.atividadeProfissionalCnes) === null || _data$atividadeProfis === void 0 ? void 0 : _data$atividadeProfis.apcnNome);
+  content += createDetailRow('Procedimento', (_data$procedimento = data.procedimento) === null || _data$procedimento === void 0 ? void 0 : _data$procedimento.prciNome);
+  content += createDetailRow('Convênio', (_data$convenio = data.convenio) === null || _data$convenio === void 0 ? void 0 : (_data$convenio$entida = _data$convenio.entidade) === null || _data$convenio$entida === void 0 ? void 0 : _data$convenio$entida.entiNome);
+  if (data.agcoObs) {
+    content += `<div class="py-2">
+                        <span class="font-semibold text-slate-600">Observação:</span>
+                        <p class="text-slate-800 whitespace-pre-wrap mt-1 p-2 bg-slate-50 rounded">${data.agcoObs}</p>
+                    </div>`;
+  }
+  return content;
+}
+function formatExamAppointmentDetailsForModal(data) {
+  var _data$ligacaoModularO, _data$ligacaoModularD, _data$profissional, _data$profissional$en, _data$profissional$en2, _data$CaraterAtendime, _data$criterioExame;
+  if (!data) return '<p>Dados do agendamento de exame não encontrados.</p>';
+  let content = '';
+  content += createDetailRow('Data Agendamento', data.examDataCad);
+  content += createDetailRow('Unidade Origem', (_data$ligacaoModularO = data.ligacaoModularOrigem) === null || _data$ligacaoModularO === void 0 ? void 0 : _data$ligacaoModularO.limoNome);
+  content += createDetailRow('Unidade Destino', (_data$ligacaoModularD = data.ligacaoModularDestino) === null || _data$ligacaoModularD === void 0 ? void 0 : _data$ligacaoModularD.limoNome);
+  content += createDetailRow('Profissional Sol.', (_data$profissional = data.profissional) === null || _data$profissional === void 0 ? void 0 : (_data$profissional$en = _data$profissional.entidadeFisica) === null || _data$profissional$en === void 0 ? void 0 : (_data$profissional$en2 = _data$profissional$en.entidade) === null || _data$profissional$en2 === void 0 ? void 0 : _data$profissional$en2.entiNome);
+  content += createDetailRow('Caráter', (_data$CaraterAtendime = data.CaraterAtendimento) === null || _data$CaraterAtendime === void 0 ? void 0 : _data$CaraterAtendime.caraDescri);
+  content += createDetailRow('Critério', (_data$criterioExame = data.criterioExame) === null || _data$criterioExame === void 0 ? void 0 : _data$criterioExame.critNome);
+  return content;
+}
+async function handleShowRegulationDetailsModal(button) {
+  const {
+    idp,
+    ids
+  } = button.dataset;
+  showModal('Detalhes da Regulação', '<p>Carregando...</p>');
+  try {
+    const data = await _api_js__WEBPACK_IMPORTED_MODULE_0__/* .fetchRegulationDetails */ .hr({
+      reguIdp: idp,
+      reguIds: ids
+    });
+    const content = formatRegulationDetailsForModal(data);
+    showModal('Detalhes da Regulação', content);
+  } catch (error) {
+    showModal('Erro', `<p>Não foi possível carregar os detalhes: ${error.message}</p>`);
+  }
+}
+async function handleShowAppointmentDetailsModal(button) {
+  const {
+    idp,
+    ids,
+    type
+  } = button.dataset;
+  const isExam = type.toUpperCase().includes('EXAME');
+  const title = isExam ? 'Detalhes do Agendamento de Exame' : 'Detalhes da Consulta Agendada';
+  showModal(title, '<p>Carregando...</p>');
+  try {
+    let data;
+    let content;
+    if (isExam) {
+      data = await _api_js__WEBPACK_IMPORTED_MODULE_0__/* .fetchExamAppointmentDetails */ .Pn({
+        idp,
+        ids
+      });
+      content = formatExamAppointmentDetailsForModal(data);
+    } else {
+      data = await _api_js__WEBPACK_IMPORTED_MODULE_0__/* .fetchAppointmentDetails */ .EI({
+        idp,
+        ids
+      });
+      content = formatAppointmentDetailsForModal(data);
+    }
+    showModal(title, content);
+  } catch (error) {
+    showModal('Erro', `<p>Não foi possível carregar os detalhes: ${error.message}</p>`);
+  }
+}
+function handleShowAppointmentInfo(button) {
+  const data = JSON.parse(button.dataset.appointment);
+  const modalTitle = document.getElementById('modal-title');
+  const modalContent = document.getElementById('modal-content');
+  const infoModal = document.getElementById('info-modal');
+  modalTitle.textContent = 'Detalhes do Agendamento';
+  modalContent.innerHTML = `
+    <p><strong>ID:</strong> ${data.id}</p>
+    <p><strong>Tipo:</strong> ${data.isSpecialized ? 'Especializada' : data.isOdonto ? 'Odontológica' : data.type}</p>
+    <p><strong>Status:</strong> ${data.status}</p>
+    <p><strong>Data:</strong> ${data.date} às ${data.time}</p>
+    <p><strong>Local:</strong> ${data.location}</p>
+    <p><strong>Profissional:</strong> ${data.professional}</p>
+    <p><strong>Especialidade:</strong> ${data.specialty || 'N/A'}</p>
+    <p><strong>Procedimento:</strong> ${data.description}</p>
+  `;
+  infoModal.classList.remove('hidden');
+}
+async function checkForPendingRegulation() {
+  try {
+    const {
+      pendingRegulation
+    } = await api.storage.local.get('pendingRegulation');
+    if (pendingRegulation && pendingRegulation.isenPKIdp) {
+      await handleRegulationLoaded(pendingRegulation);
+      await api.storage.local.remove('pendingRegulation');
+    }
+  } catch (e) {
+    (0,_ErrorHandler_js__WEBPACK_IMPORTED_MODULE_1__/* .logError */ .vV)('REGULATION_PENDING_CHECK', 'Erro ao verificar regulação pendente', {
+      errorMessage: e.message
+    });
+  }
+}
+
+/**
+ * Função de limpeza para remover todos os event listeners globais.
+ * Previne memory leaks, especialmente em ambientes de desenvolvimento com hot-reloading.
+ */
+function cleanupEventListeners() {
+  (0,_ErrorHandler_js__WEBPACK_IMPORTED_MODULE_1__/* .logInfo */ .fH)('CLEANUP', 'Removendo event listeners globais para limpeza', {
+    environment: 'development'
+  });
+  const mainContent = document.getElementById('main-content');
+  const infoModal = document.getElementById('info-modal');
+  const modalCloseBtn = document.getElementById('modal-close-btn');
+  const infoBtn = document.getElementById('context-info-btn');
+  const reloadBtn = document.getElementById('reload-sidebar-btn');
+  const toggle = document.getElementById('auto-mode-toggle');
+  const openOptions = document.getElementById('open-options-from-warning');
+  const reloadSidebar = document.getElementById('reload-sidebar-from-warning');
+
+  // Remover listeners de elementos DOM
+  if (reloadBtn && globalListeners.onReloadBtnClick) reloadBtn.removeEventListener('click', globalListeners.onReloadBtnClick);
+  if (modalCloseBtn && globalListeners.onModalCloseBtnClick) modalCloseBtn.removeEventListener('click', globalListeners.onModalCloseBtnClick);
+  if (infoModal && globalListeners.onInfoModalClick) infoModal.removeEventListener('click', globalListeners.onInfoModalClick);
+  if (mainContent && globalListeners.onMainContentClick) mainContent.removeEventListener('click', globalListeners.onMainContentClick);
+  if (infoBtn && globalListeners.onInfoBtnClick) infoBtn.removeEventListener('click', globalListeners.onInfoBtnClick);
+  if (toggle && globalListeners.onAutoModeToggleChange) toggle.removeEventListener('change', globalListeners.onAutoModeToggleChange);
+  if (openOptions && globalListeners.onOpenOptionsClick) openOptions.removeEventListener('click', globalListeners.onOpenOptionsClick);
+  if (reloadSidebar && globalListeners.onReloadSidebarClick) reloadSidebar.removeEventListener('click', globalListeners.onReloadSidebarClick);
+
+  // Remover listener do documento
+  if (globalListeners.onDOMContentLoaded) {
+    document.removeEventListener('DOMContentLoaded', globalListeners.onDOMContentLoaded);
+  }
+
+  // Remover listener da API de storage
+  if (api.storage.onChanged.hasListener(handleStorageChange)) {
+    api.storage.onChanged.removeListener(handleStorageChange);
+  }
+}
+
+// Initialize with removable listener
+globalListeners.onDOMContentLoaded = init;
+document.addEventListener('DOMContentLoaded', globalListeners.onDOMContentLoaded);
+
+// Adiciona o listener de limpeza para quando a página da sidebar for descarregada
+// eslint-disable-next-line no-restricted-globals
+window.addEventListener('pagehide', cleanupEventListeners);
+
+/***/ }),
+
+/***/ 889:
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   T: () => (/* binding */ init)
+/* harmony export */ });
+/* harmony import */ var _api_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(574);
+/* harmony import */ var _store_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(335);
+/* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(239);
+/**
+ * @file Módulo para gerir a funcionalidade de busca de pacientes.
+ */
+
+
+
+let searchInput;
+let searchResultsList;
+let recentPatientsList;
+let onSelectPatient; // Callback para notificar o sidebar sobre a seleção
+
+function renderSearchResults(patients) {
+  if (!searchResultsList) return;
+  if (patients.length === 0) {
+    searchResultsList.innerHTML = '<li class="px-4 py-3 text-sm text-slate-500">Nenhum paciente encontrado.</li>';
+    return;
+  }
+  searchResultsList.innerHTML = patients.map(p => `<li class="px-4 py-3 border-b border-slate-100 hover:bg-slate-50 cursor-pointer transition" data-idp="${p.idp}" data-ids="${p.ids}">${renderPatientListItem(p)}</li>`).join('');
+}
+
+/**
+ * Renderiza a lista de pacientes recentes a partir do store.
+ */
+function renderRecentPatients() {
+  if (!recentPatientsList) return;
+  const recents = _store_js__WEBPACK_IMPORTED_MODULE_1__/* .store */ .M.getRecentPatients() || [];
+  recentPatientsList.innerHTML = '<li class="px-4 pt-3 pb-1 text-xs font-semibold text-slate-400">PACIENTES RECENTES</li>' + (recents.length === 0 ? '<li class="px-4 py-3 text-sm text-slate-500">Nenhum paciente recente.</li>' : recents.map(p => {
+    var _fichaData$isenPK, _fichaData$isenPK2;
+    // CORREÇÃO: Lida com a estrutura de dados antiga e nova dos pacientes recentes.
+    const fichaData = p.ficha || p; // Se p.ficha não existe, 'p' é o próprio objeto da ficha.
+    const idp = ((_fichaData$isenPK = fichaData.isenPK) === null || _fichaData$isenPK === void 0 ? void 0 : _fichaData$isenPK.idp) || fichaData.idp;
+    const ids = ((_fichaData$isenPK2 = fichaData.isenPK) === null || _fichaData$isenPK2 === void 0 ? void 0 : _fichaData$isenPK2.ids) || fichaData.ids;
+    if (!idp || !ids) return ''; // Pula a renderização se o item estiver malformado.
+
+    return `<li class="px-4 py-3 border-b border-slate-100 hover:bg-slate-50 cursor-pointer transition recent-patient-item" data-idp="${idp}" data-ids="${ids}">${renderPatientListItem(fichaData)}</li>`;
+  }).join(''));
+}
+function renderPatientListItem(patient) {
+  var _patient$isenPK, _patient$isenPK2;
+  const nome = patient.value || _utils_js__WEBPACK_IMPORTED_MODULE_2__/* .getNestedValue */ .LJ(patient, 'entidadeFisica.entidade.entiNome') || 'Nome não informado';
+  const idp = patient.idp || ((_patient$isenPK = patient.isenPK) === null || _patient$isenPK === void 0 ? void 0 : _patient$isenPK.idp);
+  const ids = patient.ids || ((_patient$isenPK2 = patient.isenPK) === null || _patient$isenPK2 === void 0 ? void 0 : _patient$isenPK2.ids);
+  const dataNascimento = patient.dataNascimento || _utils_js__WEBPACK_IMPORTED_MODULE_2__/* .getNestedValue */ .LJ(patient, 'entidadeFisica.entfDtNasc');
+  const cpf = patient.cpf || _utils_js__WEBPACK_IMPORTED_MODULE_2__/* .getNestedValue */ .LJ(patient, 'entidadeFisica.entfCPF');
+  const cns = patient.cns || patient.isenNumCadSus;
+  return `
+      <div class="font-medium text-slate-800">${nome}</div>
+      <div class="grid grid-cols-2 gap-x-4 text-xs text-slate-500 mt-1">
+        <span><strong class="font-semibold">Cód:</strong> ${idp}-${ids}</span>
+        <span><strong class="font-semibold">Nasc:</strong> ${dataNascimento || '-'}</span>
+        <span><strong class="font-semibold">CPF:</strong> ${cpf || '-'}</span>
+        <span><strong class="font-semibold">CNS:</strong> ${cns || '-'}</span>
+      </div>
+    `;
+}
+const handleSearchInput = _utils_js__WEBPACK_IMPORTED_MODULE_2__/* .debounce */ .sg(async () => {
+  const searchTerm = searchInput.value.trim();
+  _store_js__WEBPACK_IMPORTED_MODULE_1__/* .store */ .M.clearPatient();
+  recentPatientsList.classList.add('hidden');
+  searchResultsList.classList.remove('hidden');
+  if (searchTerm.length < 1) {
+    searchResultsList.innerHTML = '';
+    return;
+  }
+  _utils_js__WEBPACK_IMPORTED_MODULE_2__/* .toggleLoader */ .i1(true);
+  try {
+    const patients = await _api_js__WEBPACK_IMPORTED_MODULE_0__/* .searchPatients */ .bW(searchTerm);
+    renderSearchResults(patients);
+  } catch {
+    _utils_js__WEBPACK_IMPORTED_MODULE_2__/* .showMessage */ .rG('Erro ao buscar pacientes.');
+  } finally {
+    _utils_js__WEBPACK_IMPORTED_MODULE_2__/* .toggleLoader */ .i1(false);
+  }
+}, 500);
+function handleSearchFocus() {
+  if (searchInput.value.length > 0) return;
+  renderRecentPatients();
+  searchResultsList.classList.add('hidden');
+  recentPatientsList.classList.remove('hidden');
+}
+function handleSearchBlur() {
+  setTimeout(() => {
+    searchResultsList.classList.add('hidden');
+    recentPatientsList.classList.add('hidden');
+  }, 200);
+}
+async function handleResultClick(event) {
+  const listItem = event.target.closest('li[data-idp]');
+  if (!listItem) return;
+  const {
+    idp,
+    ids
+  } = listItem.dataset;
+  if (listItem.classList.contains('recent-patient-item')) {
+    const recentPatient = _store_js__WEBPACK_IMPORTED_MODULE_1__/* .store */ .M.getRecentPatients().find(p => {
+      // CORREÇÃO: Lida com a estrutura de dados antiga e nova.
+      const patientIdp = p.ficha ? p.ficha.isenPK.idp : p.idp;
+      return patientIdp == idp;
+    });
+
+    // Se o paciente foi encontrado e tem a nova estrutura (com cache), usa os dados do cache.
+    if (recentPatient && recentPatient.ficha) {
+      _store_js__WEBPACK_IMPORTED_MODULE_1__/* .store */ .M.setPatient(recentPatient.ficha, recentPatient.cadsus);
+      searchInput.value = '';
+      searchResultsList.classList.add('hidden');
+      recentPatientsList.classList.add('hidden');
+      return;
+    }
+  }
+
+  // Para pacientes novos ou pacientes recentes com a estrutura antiga (que precisam ser re-buscados).
+  if (onSelectPatient) {
+    onSelectPatient({
+      idp,
+      ids
+    });
+  }
+  searchInput.value = '';
+  searchResultsList.classList.add('hidden');
+  recentPatientsList.classList.add('hidden');
+}
+function init(config) {
+  searchInput = document.getElementById('patient-search-input');
+  searchResultsList = document.getElementById('search-results');
+  recentPatientsList = document.getElementById('recent-patients-list');
+  onSelectPatient = config.onSelectPatient;
+  _store_js__WEBPACK_IMPORTED_MODULE_1__/* .store */ .M.subscribe(() => {
+    if (!recentPatientsList.classList.contains('hidden')) {
+      renderRecentPatients();
+    }
+  });
+  searchInput.addEventListener('input', handleSearchInput);
+  searchInput.addEventListener('focus', handleSearchFocus);
+  searchInput.addEventListener('blur', handleSearchBlur);
+  searchResultsList.addEventListener('click', handleResultClick);
+  recentPatientsList.addEventListener('click', handleResultClick);
+}
+
+/***/ }),
+
+/***/ 968:
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   l: () => (/* binding */ TimelineManager)
+/* harmony export */ });
+/* harmony import */ var _api_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(574);
+/* harmony import */ var _ErrorHandler_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(322);
+/* harmony import */ var _renderers_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(690);
+/* harmony import */ var _store_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(335);
+/* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(239);
+/**
+ * @file Módulo TimelineManager, responsável por gerir a secção da Linha do Tempo.
+ */
+
+
+
+
+
+class TimelineManager {
+  constructor(sectionKey, config, globalSettings) {
+    this.sectionKey = sectionKey;
+    this.config = config;
+    this.globalSettings = globalSettings;
+    this.allData = [];
+    this.currentPatient = null;
+    this.isLoading = false;
+
+    // State for automation filters
+    this.activeRuleFilters = null;
+    this.activeRuleName = null;
+    this.isFilteredView = false;
+    this.elements = {};
+    this.init();
+  }
+  init() {
+    this.cacheDomElements();
+    this.addEventListeners();
+    _store_js__WEBPACK_IMPORTED_MODULE_3__/* .store */ .M.subscribe(() => this.onStateChange());
+  }
+  cacheDomElements() {
+    this.elements = {
+      section: document.getElementById('timeline-section'),
+      wrapper: document.getElementById('timeline-wrapper'),
+      content: document.getElementById('timeline-content'),
+      fetchBtn: document.getElementById('fetch-timeline-btn'),
+      toggleBtn: document.getElementById('toggle-timeline-list-btn'),
+      automationFeedback: document.getElementById('timeline-automation-feedback'),
+      dateInitial: document.getElementById('timeline-date-initial'),
+      dateFinal: document.getElementById('timeline-date-final'),
+      searchKeyword: document.getElementById('timeline-search-keyword')
+    };
+  }
+  addEventListeners() {
+    var _el$fetchBtn, _el$toggleBtn, _el$searchKeyword, _el$dateInitial, _el$dateFinal, _el$section, _el$fetchBtn2, _el$toggleBtn2, _el$searchKeyword2, _el$dateInitial2, _el$dateFinal2, _el$section2;
+    // Remove listeners antes de adicionar
+    if (!this._listeners) this._listeners = {};
+    const el = this.elements;
+    // Remove
+    (_el$fetchBtn = el.fetchBtn) === null || _el$fetchBtn === void 0 ? void 0 : _el$fetchBtn.removeEventListener('click', this._listeners.onFetchBtnClick);
+    (_el$toggleBtn = el.toggleBtn) === null || _el$toggleBtn === void 0 ? void 0 : _el$toggleBtn.removeEventListener('click', this._listeners.onToggleBtnClick);
+    (_el$searchKeyword = el.searchKeyword) === null || _el$searchKeyword === void 0 ? void 0 : _el$searchKeyword.removeEventListener('input', this._listeners.onSearchKeywordInput);
+    (_el$dateInitial = el.dateInitial) === null || _el$dateInitial === void 0 ? void 0 : _el$dateInitial.removeEventListener('change', this._listeners.onDateInitialChange);
+    (_el$dateFinal = el.dateFinal) === null || _el$dateFinal === void 0 ? void 0 : _el$dateFinal.removeEventListener('change', this._listeners.onDateFinalChange);
+    (_el$section = el.section) === null || _el$section === void 0 ? void 0 : _el$section.removeEventListener('click', this._listeners.onSectionClick);
+
+    // Funções nomeadas
+    this._listeners.onFetchBtnClick = this.onFetchBtnClick.bind(this);
+    this._listeners.onToggleBtnClick = this.onToggleBtnClick.bind(this);
+    this._listeners.onSearchKeywordInput = _utils_js__WEBPACK_IMPORTED_MODULE_4__/* .debounce */ .sg(this.onSearchKeywordInput.bind(this), 300);
+    this._listeners.onDateInitialChange = this.onDateInitialChange.bind(this);
+    this._listeners.onDateFinalChange = this.onDateFinalChange.bind(this);
+    this._listeners.onSectionClick = this.onSectionClick.bind(this);
+
+    // Adiciona
+    (_el$fetchBtn2 = el.fetchBtn) === null || _el$fetchBtn2 === void 0 ? void 0 : _el$fetchBtn2.addEventListener('click', this._listeners.onFetchBtnClick);
+    (_el$toggleBtn2 = el.toggleBtn) === null || _el$toggleBtn2 === void 0 ? void 0 : _el$toggleBtn2.addEventListener('click', this._listeners.onToggleBtnClick);
+    (_el$searchKeyword2 = el.searchKeyword) === null || _el$searchKeyword2 === void 0 ? void 0 : _el$searchKeyword2.addEventListener('input', this._listeners.onSearchKeywordInput);
+    (_el$dateInitial2 = el.dateInitial) === null || _el$dateInitial2 === void 0 ? void 0 : _el$dateInitial2.addEventListener('change', this._listeners.onDateInitialChange);
+    (_el$dateFinal2 = el.dateFinal) === null || _el$dateFinal2 === void 0 ? void 0 : _el$dateFinal2.addEventListener('change', this._listeners.onDateFinalChange);
+    (_el$section2 = el.section) === null || _el$section2 === void 0 ? void 0 : _el$section2.addEventListener('click', this._listeners.onSectionClick);
+  }
+  onFetchBtnClick() {
+    this.fetchData();
+  }
+  onToggleBtnClick() {
+    this.toggleSection();
+  }
+  onSearchKeywordInput() {
+    this.render();
+  }
+  onDateInitialChange() {
+    this.render();
+  }
+  onDateFinalChange() {
+    this.render();
+  }
+  onSectionClick(event) {
+    const header = event.target.closest('.timeline-header');
+    if (header) {
+      const details = header.nextElementSibling;
+      if (details && details.classList.contains('timeline-details-body')) {
+        details.classList.toggle('show');
+      }
+      return;
+    }
+    const toggleDetailsBtn = event.target.closest('.timeline-toggle-details-btn');
+    if (toggleDetailsBtn) {
+      const timelineItem = toggleDetailsBtn.closest('.timeline-item');
+      const details = timelineItem === null || timelineItem === void 0 ? void 0 : timelineItem.querySelector('.timeline-details-body');
+      if (details) {
+        details.classList.toggle('show');
+      }
+      return;
+    }
+    const toggleFilterBtn = event.target.closest('#timeline-toggle-filter-btn');
+    if (toggleFilterBtn) {
+      this.toggleFilteredView();
+    }
+  }
+  onStateChange() {
+    var _this$currentPatient, _this$currentPatient$, _newPatient$isenPK;
+    const patientState = _store_js__WEBPACK_IMPORTED_MODULE_3__/* .store */ .M.getPatient();
+    const newPatient = patientState ? patientState.ficha : null;
+    if (((_this$currentPatient = this.currentPatient) === null || _this$currentPatient === void 0 ? void 0 : (_this$currentPatient$ = _this$currentPatient.isenPK) === null || _this$currentPatient$ === void 0 ? void 0 : _this$currentPatient$.idp) !== (newPatient === null || newPatient === void 0 ? void 0 : (_newPatient$isenPK = newPatient.isenPK) === null || _newPatient$isenPK === void 0 ? void 0 : _newPatient$isenPK.idp)) {
+      this.setPatient(newPatient);
+    }
+  }
+  setPatient(patient) {
+    this.currentPatient = patient;
+    this.allData = [];
+    this.clearAutomation();
+    this.elements.content.innerHTML = '';
+    if (this.elements.searchKeyword) {
+      this.elements.searchKeyword.value = '';
+    }
+    this.applyDefaultDateRange();
+    if (this.elements.section) {
+      this.elements.section.style.display = patient ? 'block' : 'none';
+    }
+  }
+  applyDefaultDateRange() {
+    const dateRangeDefaults = this.globalSettings.userPreferences.dateRangeDefaults;
+    const range = dateRangeDefaults.timeline || {
+      start: -12,
+      end: 0
+    };
+    if (this.elements.dateInitial) this.elements.dateInitial.valueAsDate = _utils_js__WEBPACK_IMPORTED_MODULE_4__/* .calculateRelativeDate */ .Z9(range.start);
+    if (this.elements.dateFinal) this.elements.dateFinal.valueAsDate = _utils_js__WEBPACK_IMPORTED_MODULE_4__/* .calculateRelativeDate */ .Z9(range.end);
+  }
+  async fetchData() {
+    if (!this.currentPatient || this.isLoading) {
+      return;
+    }
+    this.isLoading = true;
+    _renderers_js__WEBPACK_IMPORTED_MODULE_2__/* .renderTimeline */ .s8([], 'loading');
+    try {
+      const params = {
+        isenPK: `${this.currentPatient.isenPK.idp}-${this.currentPatient.isenPK.ids}`,
+        isenFullPKCrypto: this.currentPatient.isenFullPKCrypto,
+        dataInicial: '01/01/1900',
+        // Busca sempre o histórico completo
+        dataFinal: new Date().toLocaleDateString('pt-BR')
+      };
+      const apiData = await _api_js__WEBPACK_IMPORTED_MODULE_0__/* .fetchAllTimelineData */ .lQ(params);
+      const normalizedData = _utils_js__WEBPACK_IMPORTED_MODULE_4__/* .normalizeTimelineData */ .td(apiData);
+      this.allData = normalizedData;
+      this.render();
+    } catch (error) {
+      (0,_ErrorHandler_js__WEBPACK_IMPORTED_MODULE_1__/* .logError */ .vV)('TIMELINE_DATA_FETCH', 'Erro ao buscar dados para a Linha do Tempo', {
+        errorMessage: error.message
+      });
+      _renderers_js__WEBPACK_IMPORTED_MODULE_2__/* .renderTimeline */ .s8([], 'error');
+    } finally {
+      this.isLoading = false;
+    }
+  }
+  getFilterValues() {
+    var _this$elements$dateIn, _this$elements$dateFi, _this$elements$search;
+    return {
+      startDate: (_this$elements$dateIn = this.elements.dateInitial) === null || _this$elements$dateIn === void 0 ? void 0 : _this$elements$dateIn.value,
+      endDate: (_this$elements$dateFi = this.elements.dateFinal) === null || _this$elements$dateFi === void 0 ? void 0 : _this$elements$dateFi.value,
+      keyword: _utils_js__WEBPACK_IMPORTED_MODULE_4__/* .normalizeString */ .J2(((_this$elements$search = this.elements.searchKeyword) === null || _this$elements$search === void 0 ? void 0 : _this$elements$search.value) || '')
+    };
+  }
+  render() {
+    if (this.allData.length === 0 && !this.isLoading) {
+      _renderers_js__WEBPACK_IMPORTED_MODULE_2__/* .renderTimeline */ .s8([], 'empty');
+      return;
+    }
+    let dataToRender = this.allData;
+    const filters = this.getFilterValues();
+
+    // Client-side filtering
+    if (filters.startDate) {
+      const startDate = new Date(filters.startDate);
+      dataToRender = dataToRender.filter(event => event.sortableDate >= startDate);
+    }
+    if (filters.endDate) {
+      const endDate = new Date(filters.endDate);
+      endDate.setHours(23, 59, 59, 999); // Garante que o dia final seja incluído
+      dataToRender = dataToRender.filter(event => event.sortableDate <= endDate);
+    }
+    if (filters.keyword) {
+      dataToRender = dataToRender.filter(event => event.searchText.includes(filters.keyword));
+    }
+
+    // Automation rule filtering
+    if (this.isFilteredView && this.activeRuleFilters) {
+      dataToRender = _utils_js__WEBPACK_IMPORTED_MODULE_4__/* .filterTimelineEvents */ .Pr(dataToRender, this.activeRuleFilters);
+    }
+    _renderers_js__WEBPACK_IMPORTED_MODULE_2__/* .renderTimeline */ .s8(dataToRender, 'success');
+  }
+  toggleSection() {
+    var _this$elements$wrappe;
+    (_this$elements$wrappe = this.elements.wrapper) === null || _this$elements$wrappe === void 0 ? void 0 : _this$elements$wrappe.classList.toggle('show');
+    this.elements.toggleBtn.textContent = this.elements.wrapper.classList.contains('show') ? 'Recolher' : 'Expandir';
+  }
+  applyAutomationFilters(filters, ruleName) {
+    this.activeRuleFilters = filters;
+    this.activeRuleName = ruleName;
+    this.isFilteredView = false;
+    if (this.elements.automationFeedback) {
+      this.elements.automationFeedback.innerHTML = `
+            <div class="flex justify-between items-center text-sm">
+                <span>Regra '<strong>${ruleName}</strong>' ativa.</span>
+                <button id="timeline-toggle-filter-btn" class="font-semibold text-blue-600 hover:underline">
+                    Ver timeline focada
+                </button>
+            </div>
+        `;
+      this.elements.automationFeedback.classList.remove('hidden');
+    }
+    if (this.allData.length > 0) {
+      this.render();
+    }
+  }
+  clearAutomation() {
+    this.activeRuleFilters = null;
+    this.activeRuleName = null;
+    this.isFilteredView = false;
+    if (this.elements.automationFeedback) {
+      this.elements.automationFeedback.classList.add('hidden');
+      this.elements.automationFeedback.innerHTML = '';
+    }
+    if (this.allData.length > 0) {
+      this.render();
+    }
+  }
+  toggleFilteredView() {
+    this.isFilteredView = !this.isFilteredView;
+    const button = document.getElementById('timeline-toggle-filter-btn');
+    if (button) {
+      button.textContent = this.isFilteredView ? 'Ver timeline completa' : 'Ver timeline focada';
+    }
+    this.render();
+  }
+}
+
+/***/ })
+
+/******/ 	});
+/************************************************************************/
+/******/ 	// The module cache
+/******/ 	var __webpack_module_cache__ = {};
+/******/ 	
+/******/ 	// The require function
+/******/ 	function __webpack_require__(moduleId) {
+/******/ 		// Check if module is in cache
+/******/ 		var cachedModule = __webpack_module_cache__[moduleId];
+/******/ 		if (cachedModule !== undefined) {
+/******/ 			return cachedModule.exports;
+/******/ 		}
+/******/ 		// Create a new module (and put it into the cache)
+/******/ 		var module = __webpack_module_cache__[moduleId] = {
+/******/ 			// no module.id needed
+/******/ 			// no module.loaded needed
+/******/ 			exports: {}
+/******/ 		};
+/******/ 	
+/******/ 		// Execute the module function
+/******/ 		__webpack_modules__[moduleId](module, module.exports, __webpack_require__);
+/******/ 	
+/******/ 		// Return the exports of the module
+/******/ 		return module.exports;
+/******/ 	}
+/******/ 	
+/******/ 	// expose the modules object (__webpack_modules__)
+/******/ 	__webpack_require__.m = __webpack_modules__;
+/******/ 	
+/************************************************************************/
+/******/ 	/* webpack/runtime/chunk loaded */
+/******/ 	(() => {
+/******/ 		var deferred = [];
+/******/ 		__webpack_require__.O = (result, chunkIds, fn, priority) => {
+/******/ 			if(chunkIds) {
+/******/ 				priority = priority || 0;
+/******/ 				for(var i = deferred.length; i > 0 && deferred[i - 1][2] > priority; i--) deferred[i] = deferred[i - 1];
+/******/ 				deferred[i] = [chunkIds, fn, priority];
+/******/ 				return;
+/******/ 			}
+/******/ 			var notFulfilled = Infinity;
+/******/ 			for (var i = 0; i < deferred.length; i++) {
+/******/ 				var [chunkIds, fn, priority] = deferred[i];
+/******/ 				var fulfilled = true;
+/******/ 				for (var j = 0; j < chunkIds.length; j++) {
+/******/ 					if ((priority & 1 === 0 || notFulfilled >= priority) && Object.keys(__webpack_require__.O).every((key) => (__webpack_require__.O[key](chunkIds[j])))) {
+/******/ 						chunkIds.splice(j--, 1);
+/******/ 					} else {
+/******/ 						fulfilled = false;
+/******/ 						if(priority < notFulfilled) notFulfilled = priority;
+/******/ 					}
+/******/ 				}
+/******/ 				if(fulfilled) {
+/******/ 					deferred.splice(i--, 1)
+/******/ 					var r = fn();
+/******/ 					if (r !== undefined) result = r;
+/******/ 				}
+/******/ 			}
+/******/ 			return result;
+/******/ 		};
+/******/ 	})();
+/******/ 	
+/******/ 	/* webpack/runtime/define property getters */
+/******/ 	(() => {
+/******/ 		// define getter functions for harmony exports
+/******/ 		__webpack_require__.d = (exports, definition) => {
+/******/ 			for(var key in definition) {
+/******/ 				if(__webpack_require__.o(definition, key) && !__webpack_require__.o(exports, key)) {
+/******/ 					Object.defineProperty(exports, key, { enumerable: true, get: definition[key] });
+/******/ 				}
+/******/ 			}
+/******/ 		};
+/******/ 	})();
+/******/ 	
+/******/ 	/* webpack/runtime/hasOwnProperty shorthand */
+/******/ 	(() => {
+/******/ 		__webpack_require__.o = (obj, prop) => (Object.prototype.hasOwnProperty.call(obj, prop))
+/******/ 	})();
+/******/ 	
+/******/ 	/* webpack/runtime/jsonp chunk loading */
+/******/ 	(() => {
+/******/ 		// no baseURI
+/******/ 		
+/******/ 		// object to store loaded and loading chunks
+/******/ 		// undefined = chunk not loaded, null = chunk preloaded/prefetched
+/******/ 		// [resolve, reject, Promise] = chunk loading, 0 = chunk loaded
+/******/ 		var installedChunks = {
+/******/ 			61: 0,
+/******/ 			312: 0,
+/******/ 			434: 0,
+/******/ 			583: 0
+/******/ 		};
+/******/ 		
+/******/ 		// no chunk on demand loading
+/******/ 		
+/******/ 		// no prefetching
+/******/ 		
+/******/ 		// no preloaded
+/******/ 		
+/******/ 		// no HMR
+/******/ 		
+/******/ 		// no HMR manifest
+/******/ 		
+/******/ 		__webpack_require__.O.j = (chunkId) => (installedChunks[chunkId] === 0);
+/******/ 		
+/******/ 		// install a JSONP callback for chunk loading
+/******/ 		var webpackJsonpCallback = (parentChunkLoadingFunction, data) => {
+/******/ 			var [chunkIds, moreModules, runtime] = data;
+/******/ 			// add "moreModules" to the modules object,
+/******/ 			// then flag all "chunkIds" as loaded and fire callback
+/******/ 			var moduleId, chunkId, i = 0;
+/******/ 			if(chunkIds.some((id) => (installedChunks[id] !== 0))) {
+/******/ 				for(moduleId in moreModules) {
+/******/ 					if(__webpack_require__.o(moreModules, moduleId)) {
+/******/ 						__webpack_require__.m[moduleId] = moreModules[moduleId];
+/******/ 					}
+/******/ 				}
+/******/ 				if(runtime) var result = runtime(__webpack_require__);
+/******/ 			}
+/******/ 			if(parentChunkLoadingFunction) parentChunkLoadingFunction(data);
+/******/ 			for(;i < chunkIds.length; i++) {
+/******/ 				chunkId = chunkIds[i];
+/******/ 				if(__webpack_require__.o(installedChunks, chunkId) && installedChunks[chunkId]) {
+/******/ 					installedChunks[chunkId][0]();
+/******/ 				}
+/******/ 				installedChunks[chunkId] = 0;
+/******/ 			}
+/******/ 			return __webpack_require__.O(result);
+/******/ 		}
+/******/ 		
+/******/ 		var chunkLoadingGlobal = self["webpackChunkassistente_de_regulacao_medica"] = self["webpackChunkassistente_de_regulacao_medica"] || [];
+/******/ 		chunkLoadingGlobal.forEach(webpackJsonpCallback.bind(null, 0));
+/******/ 		chunkLoadingGlobal.push = webpackJsonpCallback.bind(null, chunkLoadingGlobal.push.bind(chunkLoadingGlobal));
+/******/ 	})();
+/******/ 	
+/************************************************************************/
+/******/ 	
+/******/ 	// startup
+/******/ 	// Load entry module and return exports
+/******/ 	// This entry module depends on other loaded chunks and execution need to be delayed
+/******/ 	var __webpack_exports__ = __webpack_require__.O(undefined, [76], () => (__webpack_require__(778)))
+/******/ 	__webpack_exports__ = __webpack_require__.O(__webpack_exports__);
+/******/ 	
+/******/ })()
+;

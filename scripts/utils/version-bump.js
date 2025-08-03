@@ -12,8 +12,9 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 class VersionManager {
   constructor() {
     this.rootDir = path.resolve(__dirname, '..', '..');
-    this.manifestPath = path.join(this.rootDir, 'manifest-edge.json');
+    this.manifestPath = path.join(this.rootDir, 'manifest.json');
     this.packagePath = path.join(this.rootDir, 'package.json');
+    this.chromeManifestPath = path.join(this.rootDir, 'manifest.json');
     this.edgeManifestPath = path.join(this.rootDir, 'manifest-edge.json');
     this.firefoxManifestPath = path.join(this.rootDir, 'manifest-firefox.json');
   }
@@ -33,7 +34,6 @@ class VersionManager {
       // Update all files
       await this.updateManifest(newVersion);
       await this.updatePackageJson(newVersion);
-      await this.updateEdgeManifest(newVersion);
 
       // Generate changelog entry
       await this.generateChangelogEntry(currentVersion, newVersion, type);
@@ -77,10 +77,19 @@ class VersionManager {
   }
 
   async updateManifest(newVersion) {
-    if (await fs.pathExists(this.manifestPath)) {
-      const manifest = await fs.readJson(this.manifestPath);
+    // Update Chrome manifest
+    if (await fs.pathExists(this.chromeManifestPath)) {
+      const manifest = await fs.readJson(this.chromeManifestPath);
       manifest.version = newVersion;
-      await fs.writeJson(this.manifestPath, manifest, { spaces: 2 });
+      await fs.writeJson(this.chromeManifestPath, manifest, { spaces: 2 });
+      console.log(`✅ Updated manifest.json to ${newVersion}`);
+    }
+
+    // Update Edge manifest
+    if (await fs.pathExists(this.edgeManifestPath)) {
+      const edgeManifest = await fs.readJson(this.edgeManifestPath);
+      edgeManifest.version = newVersion;
+      await fs.writeJson(this.edgeManifestPath, edgeManifest, { spaces: 2 });
       console.log(`✅ Updated manifest-edge.json to ${newVersion}`);
     }
 
@@ -99,15 +108,6 @@ class VersionManager {
       packageJson.version = newVersion;
       await fs.writeJson(this.packagePath, packageJson, { spaces: 2 });
       console.log(`✅ Updated package.json to ${newVersion}`);
-    }
-  }
-
-  async updateEdgeManifest(newVersion) {
-    if (await fs.pathExists(this.edgeManifestPath)) {
-      const edgeManifest = await fs.readJson(this.edgeManifestPath);
-      edgeManifest.version = newVersion;
-      await fs.writeJson(this.edgeManifestPath, edgeManifest, { spaces: 2 });
-      console.log(`✅ Updated manifest-edge.json to ${newVersion}`);
     }
   }
 

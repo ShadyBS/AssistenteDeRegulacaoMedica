@@ -264,13 +264,20 @@ const createTargetConfig = (target) => {
     };
 
     // Plugin para copiar manifest específico do target
+    let manifestSource;
+    if (target === 'edge') {
+        manifestSource = path.resolve(__dirname, '../../manifest-edge.json');
+    } else if (target === 'firefox') {
+        manifestSource = path.resolve(__dirname, '../../manifest-firefox.json');
+    } else {
+        manifestSource = path.resolve(__dirname, '../../manifest.json');
+    }
+
     config.plugins.push(
         new CopyWebpackPlugin({
             patterns: [
                 {
-                    from: target === 'edge'
-                        ? path.resolve(__dirname, '../../manifest-edge.json')
-                        : path.resolve(__dirname, '../../manifest.json'),
+                    from: manifestSource,
                     to: 'manifest.json',
                     transform(content) {
                         const manifest = JSON.parse(content.toString());

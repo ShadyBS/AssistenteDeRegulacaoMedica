@@ -27,7 +27,7 @@ class UniversalBuilder {
       },
       firefox: {
         name: 'Firefox',
-        manifestFile: 'manifest.json',
+        manifestFile: 'manifest-firefox.json',
         outputDir: path.join(this.distDir, 'firefox'),
         packageExt: '.xpi',
       },

@@ -1,1 +1,293 @@
-(()=>{"use strict";var e,t={239:(e,t,n)=>{function s(e,t=500){let n;return(...s)=>{clearTimeout(n),n=setTimeout(()=>{e.apply(this,s)},t)}}function r(e){const t=document.getElementById("loader");t&&(t.style.display=e?"block":"none")}function i(e,t="error"){const n=document.getElementById("message-area");if(n){n.textContent=e;const s={error:"bg-red-100 text-red-700",success:"bg-green-100 text-green-700",info:"bg-blue-100 text-blue-700"};n.className=`p-3 rounded-md text-sm ${s[t]||s.error}`,n.style.display="block"}}n.d(t,{LJ:()=>a,i1:()=>r,rG:()=>i,sg:()=>s});const a=(e,t)=>{if(t)return t.split(".").reduce((e,t)=>e&&e[t],e)}},889:(e,t,n)=>{var s=n(574),r=n(335),i=n(239);let a,o,d;function l(e){var t,n;return`\n      <div class="font-medium text-slate-800">${e.value||i.LJ(e,"entidadeFisica.entidade.entiNome")||"Nome não informado"}</div>\n      <div class="grid grid-cols-2 gap-x-4 text-xs text-slate-500 mt-1">\n        <span><strong class="font-semibold">Cód:</strong> ${e.idp||(null===(t=e.isenPK)||void 0===t?void 0:t.idp)}-${e.ids||(null===(n=e.isenPK)||void 0===n?void 0:n.ids)}</span>\n        <span><strong class="font-semibold">Nasc:</strong> ${e.dataNascimento||i.LJ(e,"entidadeFisica.entfDtNasc")||"-"}</span>\n        <span><strong class="font-semibold">CPF:</strong> ${e.cpf||i.LJ(e,"entidadeFisica.entfCPF")||"-"}</span>\n        <span><strong class="font-semibold">CNS:</strong> ${e.cns||e.isenNumCadSus||"-"}</span>\n      </div>\n    `}i.sg(async()=>{const e=a.value.trim();if(r.M.clearPatient(),d.classList.add("hidden"),o.classList.remove("hidden"),e.length<1)o.innerHTML="";else{i.i1(!0);try{!function(e){o&&(0!==e.length?o.innerHTML=e.map(e=>`<li class="px-4 py-3 border-b border-slate-100 hover:bg-slate-50 cursor-pointer transition" data-idp="${e.idp}" data-ids="${e.ids}">${l(e)}</li>`).join(""):o.innerHTML='<li class="px-4 py-3 text-sm text-slate-500">Nenhum paciente encontrado.</li>')}(await s.bW(e))}catch{i.rG("Erro ao buscar pacientes.")}finally{i.i1(!1)}}},500)}},n={};function s(e){var r=n[e];if(void 0!==r)return r.exports;var i=n[e]={exports:{}};return t[e](i,i.exports,s),i.exports}s.m=t,e=[],s.O=(t,n,r,i)=>{if(!n){var a=1/0;for(c=0;c<e.length;c++){for(var[n,r,i]=e[c],o=!0,d=0;d<n.length;d++)(!1&i||a>=i)&&Object.keys(s.O).every(e=>s.O[e](n[d]))?n.splice(d--,1):(o=!1,i<a&&(a=i));if(o){e.splice(c--,1);var l=r();void 0!==l&&(t=l)}}return t}i=i||0;for(var c=e.length;c>0&&e[c-1][2]>i;c--)e[c]=e[c-1];e[c]=[n,r,i]},s.d=(e,t)=>{for(var n in t)s.o(t,n)&&!s.o(e,n)&&Object.defineProperty(e,n,{enumerable:!0,get:t[n]})},s.o=(e,t)=>Object.prototype.hasOwnProperty.call(e,t),s.j=312,(()=>{var e={312:0,738:0};s.O.j=t=>0===e[t];var t=(t,n)=>{var r,i,[a,o,d]=n,l=0;if(a.some(t=>0!==e[t])){for(r in o)s.o(o,r)&&(s.m[r]=o[r]);if(d)var c=d(s)}for(t&&t(n);l<a.length;l++)i=a[l],s.o(e,i)&&e[i]&&e[i][0](),e[i]=0;return s.O(c)},n=self.webpackChunkassistente_de_regulacao_medica=self.webpackChunkassistente_de_regulacao_medica||[];n.forEach(t.bind(null,0)),n.push=t.bind(null,n.push.bind(n))})();var r=s.O(void 0,[76],()=>s(889));r=s.O(r)})();
+/******/ (() => { // webpackBootstrap
+/******/ 	"use strict";
+/******/ 	var __webpack_modules__ = ({
+
+/***/ 889:
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+/* unused harmony export init */
+/* harmony import */ var _api_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(574);
+/* harmony import */ var _store_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(335);
+/* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(239);
+/**
+ * @file Módulo para gerir a funcionalidade de busca de pacientes.
+ */
+
+
+
+let searchInput;
+let searchResultsList;
+let recentPatientsList;
+let onSelectPatient; // Callback para notificar o sidebar sobre a seleção
+
+function renderSearchResults(patients) {
+  if (!searchResultsList) return;
+  if (patients.length === 0) {
+    searchResultsList.innerHTML = '<li class="px-4 py-3 text-sm text-slate-500">Nenhum paciente encontrado.</li>';
+    return;
+  }
+  searchResultsList.innerHTML = patients.map(p => `<li class="px-4 py-3 border-b border-slate-100 hover:bg-slate-50 cursor-pointer transition" data-idp="${p.idp}" data-ids="${p.ids}">${renderPatientListItem(p)}</li>`).join('');
+}
+
+/**
+ * Renderiza a lista de pacientes recentes a partir do store.
+ */
+function renderRecentPatients() {
+  if (!recentPatientsList) return;
+  const recents = store.getRecentPatients() || [];
+  recentPatientsList.innerHTML = '<li class="px-4 pt-3 pb-1 text-xs font-semibold text-slate-400">PACIENTES RECENTES</li>' + (recents.length === 0 ? '<li class="px-4 py-3 text-sm text-slate-500">Nenhum paciente recente.</li>' : recents.map(p => {
+    var _fichaData$isenPK, _fichaData$isenPK2;
+    // CORREÇÃO: Lida com a estrutura de dados antiga e nova dos pacientes recentes.
+    const fichaData = p.ficha || p; // Se p.ficha não existe, 'p' é o próprio objeto da ficha.
+    const idp = ((_fichaData$isenPK = fichaData.isenPK) === null || _fichaData$isenPK === void 0 ? void 0 : _fichaData$isenPK.idp) || fichaData.idp;
+    const ids = ((_fichaData$isenPK2 = fichaData.isenPK) === null || _fichaData$isenPK2 === void 0 ? void 0 : _fichaData$isenPK2.ids) || fichaData.ids;
+    if (!idp || !ids) return ''; // Pula a renderização se o item estiver malformado.
+
+    return `<li class="px-4 py-3 border-b border-slate-100 hover:bg-slate-50 cursor-pointer transition recent-patient-item" data-idp="${idp}" data-ids="${ids}">${renderPatientListItem(fichaData)}</li>`;
+  }).join(''));
+}
+function renderPatientListItem(patient) {
+  var _patient$isenPK, _patient$isenPK2;
+  const nome = patient.value || _utils_js__WEBPACK_IMPORTED_MODULE_2__/* .getNestedValue */ .LJ(patient, 'entidadeFisica.entidade.entiNome') || 'Nome não informado';
+  const idp = patient.idp || ((_patient$isenPK = patient.isenPK) === null || _patient$isenPK === void 0 ? void 0 : _patient$isenPK.idp);
+  const ids = patient.ids || ((_patient$isenPK2 = patient.isenPK) === null || _patient$isenPK2 === void 0 ? void 0 : _patient$isenPK2.ids);
+  const dataNascimento = patient.dataNascimento || _utils_js__WEBPACK_IMPORTED_MODULE_2__/* .getNestedValue */ .LJ(patient, 'entidadeFisica.entfDtNasc');
+  const cpf = patient.cpf || _utils_js__WEBPACK_IMPORTED_MODULE_2__/* .getNestedValue */ .LJ(patient, 'entidadeFisica.entfCPF');
+  const cns = patient.cns || patient.isenNumCadSus;
+  return `
+      <div class="font-medium text-slate-800">${nome}</div>
+      <div class="grid grid-cols-2 gap-x-4 text-xs text-slate-500 mt-1">
+        <span><strong class="font-semibold">Cód:</strong> ${idp}-${ids}</span>
+        <span><strong class="font-semibold">Nasc:</strong> ${dataNascimento || '-'}</span>
+        <span><strong class="font-semibold">CPF:</strong> ${cpf || '-'}</span>
+        <span><strong class="font-semibold">CNS:</strong> ${cns || '-'}</span>
+      </div>
+    `;
+}
+const handleSearchInput = _utils_js__WEBPACK_IMPORTED_MODULE_2__/* .debounce */ .sg(async () => {
+  const searchTerm = searchInput.value.trim();
+  _store_js__WEBPACK_IMPORTED_MODULE_1__/* .store */ .M.clearPatient();
+  recentPatientsList.classList.add('hidden');
+  searchResultsList.classList.remove('hidden');
+  if (searchTerm.length < 1) {
+    searchResultsList.innerHTML = '';
+    return;
+  }
+  _utils_js__WEBPACK_IMPORTED_MODULE_2__/* .toggleLoader */ .i1(true);
+  try {
+    const patients = await _api_js__WEBPACK_IMPORTED_MODULE_0__/* .searchPatients */ .bW(searchTerm);
+    renderSearchResults(patients);
+  } catch {
+    _utils_js__WEBPACK_IMPORTED_MODULE_2__/* .showMessage */ .rG('Erro ao buscar pacientes.');
+  } finally {
+    _utils_js__WEBPACK_IMPORTED_MODULE_2__/* .toggleLoader */ .i1(false);
+  }
+}, 500);
+function handleSearchFocus() {
+  if (searchInput.value.length > 0) return;
+  renderRecentPatients();
+  searchResultsList.classList.add('hidden');
+  recentPatientsList.classList.remove('hidden');
+}
+function handleSearchBlur() {
+  setTimeout(() => {
+    searchResultsList.classList.add('hidden');
+    recentPatientsList.classList.add('hidden');
+  }, 200);
+}
+async function handleResultClick(event) {
+  const listItem = event.target.closest('li[data-idp]');
+  if (!listItem) return;
+  const {
+    idp,
+    ids
+  } = listItem.dataset;
+  if (listItem.classList.contains('recent-patient-item')) {
+    const recentPatient = store.getRecentPatients().find(p => {
+      // CORREÇÃO: Lida com a estrutura de dados antiga e nova.
+      const patientIdp = p.ficha ? p.ficha.isenPK.idp : p.idp;
+      return patientIdp == idp;
+    });
+
+    // Se o paciente foi encontrado e tem a nova estrutura (com cache), usa os dados do cache.
+    if (recentPatient && recentPatient.ficha) {
+      store.setPatient(recentPatient.ficha, recentPatient.cadsus);
+      searchInput.value = '';
+      searchResultsList.classList.add('hidden');
+      recentPatientsList.classList.add('hidden');
+      return;
+    }
+  }
+
+  // Para pacientes novos ou pacientes recentes com a estrutura antiga (que precisam ser re-buscados).
+  if (onSelectPatient) {
+    onSelectPatient({
+      idp,
+      ids
+    });
+  }
+  searchInput.value = '';
+  searchResultsList.classList.add('hidden');
+  recentPatientsList.classList.add('hidden');
+}
+function init(config) {
+  searchInput = document.getElementById('patient-search-input');
+  searchResultsList = document.getElementById('search-results');
+  recentPatientsList = document.getElementById('recent-patients-list');
+  onSelectPatient = config.onSelectPatient;
+  store.subscribe(() => {
+    if (!recentPatientsList.classList.contains('hidden')) {
+      renderRecentPatients();
+    }
+  });
+  searchInput.addEventListener('input', handleSearchInput);
+  searchInput.addEventListener('focus', handleSearchFocus);
+  searchInput.addEventListener('blur', handleSearchBlur);
+  searchResultsList.addEventListener('click', handleResultClick);
+  recentPatientsList.addEventListener('click', handleResultClick);
+}
+
+/***/ })
+
+/******/ 	});
+/************************************************************************/
+/******/ 	// The module cache
+/******/ 	var __webpack_module_cache__ = {};
+/******/ 	
+/******/ 	// The require function
+/******/ 	function __webpack_require__(moduleId) {
+/******/ 		// Check if module is in cache
+/******/ 		var cachedModule = __webpack_module_cache__[moduleId];
+/******/ 		if (cachedModule !== undefined) {
+/******/ 			return cachedModule.exports;
+/******/ 		}
+/******/ 		// Create a new module (and put it into the cache)
+/******/ 		var module = __webpack_module_cache__[moduleId] = {
+/******/ 			// no module.id needed
+/******/ 			// no module.loaded needed
+/******/ 			exports: {}
+/******/ 		};
+/******/ 	
+/******/ 		// Execute the module function
+/******/ 		__webpack_modules__[moduleId](module, module.exports, __webpack_require__);
+/******/ 	
+/******/ 		// Return the exports of the module
+/******/ 		return module.exports;
+/******/ 	}
+/******/ 	
+/******/ 	// expose the modules object (__webpack_modules__)
+/******/ 	__webpack_require__.m = __webpack_modules__;
+/******/ 	
+/************************************************************************/
+/******/ 	/* webpack/runtime/chunk loaded */
+/******/ 	(() => {
+/******/ 		var deferred = [];
+/******/ 		__webpack_require__.O = (result, chunkIds, fn, priority) => {
+/******/ 			if(chunkIds) {
+/******/ 				priority = priority || 0;
+/******/ 				for(var i = deferred.length; i > 0 && deferred[i - 1][2] > priority; i--) deferred[i] = deferred[i - 1];
+/******/ 				deferred[i] = [chunkIds, fn, priority];
+/******/ 				return;
+/******/ 			}
+/******/ 			var notFulfilled = Infinity;
+/******/ 			for (var i = 0; i < deferred.length; i++) {
+/******/ 				var [chunkIds, fn, priority] = deferred[i];
+/******/ 				var fulfilled = true;
+/******/ 				for (var j = 0; j < chunkIds.length; j++) {
+/******/ 					if ((priority & 1 === 0 || notFulfilled >= priority) && Object.keys(__webpack_require__.O).every((key) => (__webpack_require__.O[key](chunkIds[j])))) {
+/******/ 						chunkIds.splice(j--, 1);
+/******/ 					} else {
+/******/ 						fulfilled = false;
+/******/ 						if(priority < notFulfilled) notFulfilled = priority;
+/******/ 					}
+/******/ 				}
+/******/ 				if(fulfilled) {
+/******/ 					deferred.splice(i--, 1)
+/******/ 					var r = fn();
+/******/ 					if (r !== undefined) result = r;
+/******/ 				}
+/******/ 			}
+/******/ 			return result;
+/******/ 		};
+/******/ 	})();
+/******/ 	
+/******/ 	/* webpack/runtime/define property getters */
+/******/ 	(() => {
+/******/ 		// define getter functions for harmony exports
+/******/ 		__webpack_require__.d = (exports, definition) => {
+/******/ 			for(var key in definition) {
+/******/ 				if(__webpack_require__.o(definition, key) && !__webpack_require__.o(exports, key)) {
+/******/ 					Object.defineProperty(exports, key, { enumerable: true, get: definition[key] });
+/******/ 				}
+/******/ 			}
+/******/ 		};
+/******/ 	})();
+/******/ 	
+/******/ 	/* webpack/runtime/hasOwnProperty shorthand */
+/******/ 	(() => {
+/******/ 		__webpack_require__.o = (obj, prop) => (Object.prototype.hasOwnProperty.call(obj, prop))
+/******/ 	})();
+/******/ 	
+/******/ 	/* webpack/runtime/jsonp chunk loading */
+/******/ 	(() => {
+/******/ 		// no baseURI
+/******/ 		
+/******/ 		// object to store loaded and loading chunks
+/******/ 		// undefined = chunk not loaded, null = chunk preloaded/prefetched
+/******/ 		// [resolve, reject, Promise] = chunk loading, 0 = chunk loaded
+/******/ 		var installedChunks = {
+/******/ 			312: 0
+/******/ 		};
+/******/ 		
+/******/ 		// no chunk on demand loading
+/******/ 		
+/******/ 		// no prefetching
+/******/ 		
+/******/ 		// no preloaded
+/******/ 		
+/******/ 		// no HMR
+/******/ 		
+/******/ 		// no HMR manifest
+/******/ 		
+/******/ 		__webpack_require__.O.j = (chunkId) => (installedChunks[chunkId] === 0);
+/******/ 		
+/******/ 		// install a JSONP callback for chunk loading
+/******/ 		var webpackJsonpCallback = (parentChunkLoadingFunction, data) => {
+/******/ 			var [chunkIds, moreModules, runtime] = data;
+/******/ 			// add "moreModules" to the modules object,
+/******/ 			// then flag all "chunkIds" as loaded and fire callback
+/******/ 			var moduleId, chunkId, i = 0;
+/******/ 			if(chunkIds.some((id) => (installedChunks[id] !== 0))) {
+/******/ 				for(moduleId in moreModules) {
+/******/ 					if(__webpack_require__.o(moreModules, moduleId)) {
+/******/ 						__webpack_require__.m[moduleId] = moreModules[moduleId];
+/******/ 					}
+/******/ 				}
+/******/ 				if(runtime) var result = runtime(__webpack_require__);
+/******/ 			}
+/******/ 			if(parentChunkLoadingFunction) parentChunkLoadingFunction(data);
+/******/ 			for(;i < chunkIds.length; i++) {
+/******/ 				chunkId = chunkIds[i];
+/******/ 				if(__webpack_require__.o(installedChunks, chunkId) && installedChunks[chunkId]) {
+/******/ 					installedChunks[chunkId][0]();
+/******/ 				}
+/******/ 				installedChunks[chunkId] = 0;
+/******/ 			}
+/******/ 			return __webpack_require__.O(result);
+/******/ 		}
+/******/ 		
+/******/ 		var chunkLoadingGlobal = self["webpackChunkassistente_de_regulacao_medica"] = self["webpackChunkassistente_de_regulacao_medica"] || [];
+/******/ 		chunkLoadingGlobal.forEach(webpackJsonpCallback.bind(null, 0));
+/******/ 		chunkLoadingGlobal.push = webpackJsonpCallback.bind(null, chunkLoadingGlobal.push.bind(chunkLoadingGlobal));
+/******/ 	})();
+/******/ 	
+/************************************************************************/
+/******/ 	
+/******/ 	// startup
+/******/ 	// Load entry module and return exports
+/******/ 	// This entry module depends on other loaded chunks and execution need to be delayed
+/******/ 	var __webpack_exports__ = __webpack_require__.O(undefined, [76], () => (__webpack_require__(889)))
+/******/ 	__webpack_exports__ = __webpack_require__.O(__webpack_exports__);
+/******/ 	
+/******/ })()
+;

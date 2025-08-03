@@ -58,7 +58,7 @@ async function packageChrome() {
     '.babelrc.cjs',
   ];
 
-  const manifest = await fs.readJson(path.join(srcDir, 'manifest-edge.json'));
+  const manifest = await fs.readJson(path.join(srcDir, 'manifest.json'));
   const version = manifest.version;
 
   console.log(`📋 Version: ${version}`);
@@ -110,8 +110,8 @@ async function packageChrome() {
           }
         }
 
-        // Add correct manifest as manifest.json (Chrome uses manifest-edge.json for V3)
-        archive.file(path.join(srcDir, 'manifest-edge.json'), { name: 'manifest.json' });
+        // Add correct manifest as manifest.json (Chrome uses manifest.json)
+        archive.file(path.join(srcDir, 'manifest.json'), { name: 'manifest.json' });
 
         // Add compiled CSS if exists
         const cssPath = path.join(srcDir, 'dist', 'output.css');

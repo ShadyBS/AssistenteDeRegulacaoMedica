@@ -2,420 +2,6 @@
 /******/ 	"use strict";
 /******/ 	var __webpack_modules__ = ({
 
-/***/ 239:
-/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
-
-/* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   AQ: () => (/* binding */ setupTabs),
-/* harmony export */   Eg: () => (/* binding */ getContrastYIQ),
-/* harmony export */   J2: () => (/* binding */ normalizeString),
-/* harmony export */   LJ: () => (/* binding */ getNestedValue),
-/* harmony export */   Pr: () => (/* binding */ filterTimelineEvents),
-/* harmony export */   Z9: () => (/* binding */ calculateRelativeDate),
-/* harmony export */   _U: () => (/* binding */ parseDate),
-/* harmony export */   de: () => (/* binding */ clearMessage),
-/* harmony export */   i1: () => (/* binding */ toggleLoader),
-/* harmony export */   rG: () => (/* binding */ showMessage),
-/* harmony export */   sg: () => (/* binding */ debounce),
-/* harmony export */   td: () => (/* binding */ normalizeTimelineData),
-/* harmony export */   ui: () => (/* binding */ showDialog)
-/* harmony export */ });
-/**
- * Exibe um modal customizado de confirmação.
- * @param {Object} options
- * @param {string} options.message Mensagem a exibir
- * @param {Function} options.onConfirm Callback para confirmação
- * @param {Function} [options.onCancel] Callback para cancelamento
- */
-function showDialog({
-  message,
-  onConfirm,
-  onCancel
-}) {
-  let modal = document.getElementById('custom-confirm-modal');
-  if (!modal) {
-    modal = document.createElement('div');
-    modal.id = 'custom-confirm-modal';
-    modal.innerHTML = `
-      <div class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-        <div class="bg-white rounded-lg shadow-lg p-6 max-w-md w-full">
-          <div class="mb-4 text-slate-800 text-base" id="custom-confirm-message"></div>
-          <div class="flex justify-end gap-2">
-            <button id="custom-confirm-cancel" class="px-4 py-2 rounded bg-slate-200 text-slate-700 hover:bg-slate-300">Cancelar</button>
-            <button id="custom-confirm-ok" class="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700">Confirmar</button>
-          </div>
-        </div>
-      </div>
-    `;
-    document.body.appendChild(modal);
-  }
-  modal.style.display = 'flex';
-  modal.querySelector('#custom-confirm-message').textContent = message;
-  const okBtn = modal.querySelector('#custom-confirm-ok');
-  const cancelBtn = modal.querySelector('#custom-confirm-cancel');
-  const close = () => {
-    modal.style.display = 'none';
-  };
-  okBtn.onclick = () => {
-    close();
-    onConfirm && onConfirm();
-  };
-  cancelBtn.onclick = () => {
-    close();
-    onCancel && onCancel();
-  };
-}
-/**
- * @file Contém funções utilitárias compartilhadas em toda a extensão.
- */
-
-/**
- * Atraso na execução de uma função após o utilizador parar de digitar.
- * @param {Function} func A função a ser executada.
- * @param {number} [delay=500] O tempo de espera em milissegundos.
- * @returns {Function} A função com debounce.
- */
-function debounce(func, delay = 500) {
-  let timeoutId;
-  return (...args) => {
-    clearTimeout(timeoutId);
-    timeoutId = setTimeout(() => {
-      func.apply(this, args);
-    }, delay);
-  };
-}
-
-/**
- * Mostra ou esconde o loader principal.
- * @param {boolean} show - `true` para mostrar, `false` para esconder.
- */
-function toggleLoader(show) {
-  const loader = document.getElementById('loader');
-  if (loader) {
-    loader.style.display = show ? 'block' : 'none';
-  }
-}
-
-/**
- * Exibe uma mensagem na área de mensagens.
- * @param {string} text O texto da mensagem.
- * @param {'error' | 'success' | 'info'} [type='error'] O tipo de mensagem.
- */
-function showMessage(text, type = 'error') {
-  const messageArea = document.getElementById('message-area');
-  if (messageArea) {
-    messageArea.textContent = text;
-    const typeClasses = {
-      error: 'bg-red-100 text-red-700',
-      success: 'bg-green-100 text-green-700',
-      info: 'bg-blue-100 text-blue-700'
-    };
-    messageArea.className = `p-3 rounded-md text-sm ${typeClasses[type] || typeClasses.error}`;
-    messageArea.style.display = 'block';
-  }
-}
-
-/**
- * Limpa a área de mensagens.
- */
-function clearMessage() {
-  const messageArea = document.getElementById('message-area');
-  if (messageArea) {
-    messageArea.style.display = 'none';
-  }
-}
-
-/**
- * Converte uma string de data em vários formatos para um objeto Date.
- * @param {string} dateString A data no formato "dd/MM/yyyy" ou "yyyy-MM-dd", podendo conter prefixos.
- * @returns {Date|null} O objeto Date ou null se a string for inválida.
- */
-function parseDate(dateString) {
-  if (!dateString || typeof dateString !== 'string') return null;
-
-  // Tenta extrair o primeiro padrão de data válido da string.
-  const dateMatch = dateString.match(/(\d{4}-\d{2}-\d{2})|(\d{2}\/\d{2}\/\d{2,4})/);
-  if (!dateMatch) return null;
-  const matchedDate = dateMatch[0];
-  let year, month, day;
-
-  // Tenta o formato YYYY-MM-DD
-  if (matchedDate.includes('-')) {
-    [year, month, day] = matchedDate.split('-').map(Number);
-  } else if (matchedDate.includes('/')) {
-    // Tenta o formato DD/MM/YYYY
-    [day, month, year] = matchedDate.split('/').map(Number);
-  }
-
-  // Valida se os números são válidos e se a data é real
-  if (isNaN(year) || isNaN(month) || isNaN(day)) return null;
-
-  // Lida com anos de 2 dígitos (ex: '24' -> 2024)
-  if (year >= 0 && year < 100) {
-    year += 2000;
-  }
-  const date = new Date(Date.UTC(year, month - 1, day));
-
-  // Confirma que a data não "rolou" para o mês seguinte (ex: 31 de Abril -> 1 de Maio)
-  if (date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day) {
-    return date;
-  }
-  return null; // Retorna nulo se a data for inválida (ex: 31/02/2024)
-}
-
-/**
- * Obtém um valor aninhado de um objeto de forma segura.
- * @param {object} obj O objeto.
- * @param {string} path O caminho para a propriedade (ex: 'a.b.c').
- * @returns {*} O valor encontrado ou undefined.
- */
-const getNestedValue = (obj, path) => {
-  if (!path) return undefined;
-  return path.split('.').reduce((acc, part) => acc && acc[part], obj);
-};
-
-/**
- * Calcula uma data relativa à data atual com base num desvio em meses.
- * @param {number} offsetInMonths - O número de meses a adicionar ou subtrair.
- * @returns {Date} O objeto Date resultante.
- */
-function calculateRelativeDate(offsetInMonths) {
-  const date = new Date();
-  // setMonth lida corretamente com transições de ano e dias do mês
-  date.setMonth(date.getMonth() + offsetInMonths);
-  return date;
-}
-
-/**
- * Retorna 'black' ou 'white' para o texto dependendo do contraste com a cor de fundo.
- * @param {string} hexcolor - A cor de fundo em formato hexadecimal (com ou sem #).
- * @returns {'black' | 'white'}
- */
-function getContrastYIQ(hexcolor) {
-  hexcolor = hexcolor.replace('#', '');
-  const r = parseInt(hexcolor.substr(0, 2), 16);
-  const g = parseInt(hexcolor.substr(2, 2), 16);
-  const b = parseInt(hexcolor.substr(4, 2), 16);
-  const yiq = (r * 299 + g * 587 + b * 114) / 1000;
-  return yiq >= 128 ? 'black' : 'white';
-}
-
-/**
- * Normaliza uma string removendo acentos, cedilha e convertendo para minúsculas.
- * @param {string} str - A string a ser normalizada.
- * @returns {string} A string normalizada.
- */
-function normalizeString(str) {
-  if (!str) return '';
-  return str.toString().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-}
-
-/**
- * Configura um sistema de abas (tabs) dentro de um container.
- * @param {HTMLElement} container - O elemento que contém os botões e os painéis das abas.
- */
-function setupTabs(container) {
-  if (!container) return;
-  const tabButtons = container.querySelectorAll('.tab-button');
-  const tabContents = container.querySelectorAll('.tab-content');
-  tabButtons.forEach(button => {
-    button.addEventListener('click', () => {
-      const tabName = button.dataset.tab;
-      tabButtons.forEach(btn => btn.classList.remove('active'));
-      tabContents.forEach(content => content.classList.remove('active'));
-      button.classList.add('active');
-      const activeContent = container.querySelector(`#${tabName}-tab`);
-      if (activeContent) {
-        activeContent.classList.add('active');
-      }
-    });
-  });
-}
-
-/**
- * Normalizes data from various sources into a single, sorted timeline event list.
- * @param {object} apiData - An object containing arrays of consultations, exams, etc.
- * @returns {Array<object>} A sorted array of timeline event objects.
- */
-function normalizeTimelineData(apiData) {
-  const events = [];
-
-  // Normalize Consultations
-  try {
-    (apiData.consultations || []).forEach(c => {
-      if (!c || !c.date) return;
-      const searchText = normalizeString([c.specialty, c.professional, c.unit, ...c.details.map(d => d.value)].join(' '));
-      events.push({
-        type: 'consultation',
-        date: parseDate(c.date.split('\n')[0]),
-        sortableDate: c.sortableDate || parseDate(c.date),
-        title: `Consulta: ${c.specialty || 'Especialidade não informada'}`,
-        summary: `com ${c.professional || 'Profissional não informado'}`,
-        details: c,
-        subDetails: c.details || [],
-        searchText
-      });
-    });
-  } catch (e) {
-    console.error('Failed to normalize consultation data for timeline:', e);
-  }
-
-  // Normalize Exams
-  try {
-    (apiData.exams || []).forEach(e => {
-      const eventDate = parseDate(e.date);
-      if (!e || !eventDate) return;
-      const searchText = normalizeString([e.examName, e.professional, e.specialty].filter(Boolean).join(' '));
-      events.push({
-        type: 'exam',
-        date: eventDate,
-        sortableDate: eventDate,
-        title: `Exame Solicitado: ${e.examName || 'Nome não informado'}`,
-        summary: `Solicitado por ${e.professional || 'Não informado'}`,
-        details: e,
-        subDetails: [{
-          label: 'Resultado',
-          value: e.hasResult ? 'Disponível' : 'Pendente'
-        }],
-        searchText
-      });
-    });
-  } catch (e) {
-    console.error('Failed to normalize exam data for timeline:', e);
-  }
-
-  // Normalize Appointments
-  try {
-    (apiData.appointments || []).forEach(a => {
-      if (!a || !a.date) return;
-      const searchText = normalizeString([a.specialty, a.description, a.location, a.professional].join(' '));
-      events.push({
-        type: 'appointment',
-        date: parseDate(a.date),
-        sortableDate: parseDate(a.date),
-        title: `Agendamento: ${a.specialty || a.description || 'Não descrito'}`,
-        summary: a.location || 'Local não informado',
-        details: a,
-        subDetails: [{
-          label: 'Status',
-          value: a.status || 'N/A'
-        }, {
-          label: 'Hora',
-          value: a.time || 'N/A'
-        }],
-        searchText
-      });
-    });
-  } catch (e) {
-    console.error('Failed to normalize appointment data for timeline:', e);
-  }
-
-  // Normalize Regulations
-  try {
-    (apiData.regulations || []).forEach(r => {
-      if (!r || !r.date) return;
-      const searchText = normalizeString([r.procedure, r.requester, r.provider, r.cid].join(' '));
-      events.push({
-        type: 'regulation',
-        date: parseDate(r.date),
-        sortableDate: parseDate(r.date),
-        title: `Regulação: ${r.procedure || 'Procedimento não informado'}`,
-        summary: `Solicitante: ${r.requester || 'Não informado'}`,
-        details: r,
-        subDetails: [{
-          label: 'Status',
-          value: r.status || 'N/A'
-        }, {
-          label: 'Prioridade',
-          value: r.priority || 'N/A'
-        }],
-        searchText
-      });
-    });
-  } catch (e) {
-    console.error('Failed to normalize regulation data for timeline:', e);
-  }
-
-  // --- INÍCIO DA MODIFICAÇÃO ---
-  // Normalize Documents
-  try {
-    (apiData.documents || []).forEach(doc => {
-      if (!doc || !doc.date) return;
-      const searchText = normalizeString(doc.description || '');
-      events.push({
-        type: 'document',
-        date: parseDate(doc.date),
-        sortableDate: parseDate(doc.date),
-        title: `Documento: ${doc.description || 'Sem descrição'}`,
-        summary: `Tipo: ${doc.fileType.toUpperCase()}`,
-        details: doc,
-        subDetails: [],
-        searchText
-      });
-    });
-  } catch (e) {
-    console.error('Failed to normalize document data for timeline:', e);
-  }
-  // --- FIM DA MODIFICAÇÃO ---
-
-  // Filter out events with invalid dates and sort all events by date, newest first.
-  return events.filter(event => event.sortableDate instanceof Date && !isNaN(event.sortableDate)).sort((a, b) => b.sortableDate - a.sortableDate);
-}
-
-/**
- * Filters timeline events based on automation rule filters.
- * @param {Array<object>} events - The full array of timeline events.
- * @param {object} automationFilters - The filter settings from an automation rule.
- * @returns {Array<object>} A new array with the filtered events.
- */
-function filterTimelineEvents(events, automationFilters) {
-  if (!automationFilters) return events;
-  const checkText = (text, filterValue) => {
-    if (!filterValue) return true; // If filter is empty, it passes
-    const terms = filterValue.toLowerCase().split(',').map(t => t.trim()).filter(Boolean);
-    if (terms.length === 0) return true;
-    const normalizedText = normalizeString(text || '');
-    return terms.some(term => normalizedText.includes(term));
-  };
-  return events.filter(event => {
-    try {
-      switch (event.type) {
-        case 'consultation':
-          {
-            const consultFilters = automationFilters.consultations || {};
-            // Procura por um campo rotulado como CID ou CIAP para uma busca precisa.
-            const cidDetail = (event.details.details || []).find(d => normalizeString(d.label).includes('cid') || normalizeString(d.label).includes('ciap'));
-            const cidText = cidDetail ? cidDetail.value : '';
-            return checkText(event.details.specialty, consultFilters['consultation-filter-specialty']) && checkText(event.details.professional, consultFilters['consultation-filter-professional']) && checkText(cidText, consultFilters['consultation-filter-cid']);
-          }
-        case 'exam':
-          {
-            const examFilters = automationFilters.exams || {};
-            return checkText(event.details.examName, examFilters['exam-filter-name']) && checkText(event.details.professional, examFilters['exam-filter-professional']) && checkText(event.details.specialty, examFilters['exam-filter-specialty']);
-          }
-        case 'appointment':
-          {
-            const apptFilters = automationFilters.appointments || {};
-            const apptText = `${event.details.specialty} ${event.details.professional} ${event.details.location}`;
-            return checkText(apptText, apptFilters['appointment-filter-term']);
-          }
-        case 'regulation':
-          {
-            const regFilters = automationFilters.regulations || {};
-            return checkText(event.details.procedure, regFilters['regulation-filter-procedure']) && checkText(event.details.requester, regFilters['regulation-filter-requester']) && (regFilters['regulation-filter-status'] === 'todos' || !regFilters['regulation-filter-status'] || event.details.status.toUpperCase() === regFilters['regulation-filter-status'].toUpperCase()) && (regFilters['regulation-filter-priority'] === 'todas' || !regFilters['regulation-filter-priority'] || event.details.priority.toUpperCase() === regFilters['regulation-filter-priority'].toUpperCase());
-          }
-        default:
-          return true;
-      }
-    } catch (e) {
-      console.warn('Error filtering timeline event, it will be included by default:', event, e);
-      return true;
-    }
-  });
-}
-
-/***/ }),
-
 /***/ 627:
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
@@ -560,14 +146,15 @@ function init(config, callbacks) {
 
 /* harmony import */ var bluebird__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(104);
 /* harmony import */ var _api_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(574);
-/* harmony import */ var _field_config_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(869);
-/* harmony import */ var _renderers_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(690);
-/* harmony import */ var _SectionManager_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(338);
-/* harmony import */ var _store_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(335);
-/* harmony import */ var _TimelineManager_js__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(968);
-/* harmony import */ var _ui_patient_card_js__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(627);
-/* harmony import */ var _ui_search_js__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(889);
-/* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(239);
+/* harmony import */ var _ErrorHandler_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(322);
+/* harmony import */ var _field_config_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(869);
+/* harmony import */ var _renderers_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(690);
+/* harmony import */ var _SectionManager_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(338);
+/* harmony import */ var _store_js__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(335);
+/* harmony import */ var _TimelineManager_js__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(968);
+/* harmony import */ var _ui_patient_card_js__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(627);
+/* harmony import */ var _ui_search_js__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(889);
+/* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(239);
 
 /**
  * 🏥 ASSISTENTE DE REGULAÇÃO MÉDICA - MAIN UI
@@ -579,6 +166,7 @@ function init(config, callbacks) {
 
 // Cross-browser API alias (lint-safe)
 const api = typeof browser !== 'undefined' ? browser : typeof chrome !== 'undefined' ? chrome : {};
+
 
 
 
@@ -625,10 +213,10 @@ const globalListeners = {
  * @returns {Array} O array de itens filtrado.
  */
 const applyNormalizedTextFilter = (items, text, getFieldContent) => {
-  const searchTerms = _utils_js__WEBPACK_IMPORTED_MODULE_9__/* .normalizeString */ .J2(text).split(',').map(t => t.trim()).filter(Boolean);
+  const searchTerms = _utils_js__WEBPACK_IMPORTED_MODULE_10__/* .normalizeString */ .J2(text).split(',').map(t => t.trim()).filter(Boolean);
   if (searchTerms.length === 0) return items;
   return items.filter(item => {
-    const content = _utils_js__WEBPACK_IMPORTED_MODULE_9__/* .normalizeString */ .J2(getFieldContent(item));
+    const content = _utils_js__WEBPACK_IMPORTED_MODULE_10__/* .normalizeString */ .J2(getFieldContent(item));
     return searchTerms.some(term => content.includes(term));
   });
 };
@@ -690,19 +278,19 @@ const documentFilterLogic = (data, filters) => {
   const startDateValue = (_document$getElementB = document.getElementById('document-date-initial')) === null || _document$getElementB === void 0 ? void 0 : _document$getElementB.value;
   const endDateValue = (_document$getElementB2 = document.getElementById('document-date-final')) === null || _document$getElementB2 === void 0 ? void 0 : _document$getElementB2.value;
   if (startDateValue) {
-    const start = _utils_js__WEBPACK_IMPORTED_MODULE_9__/* .parseDate */ ._U(startDateValue);
+    const start = _utils_js__WEBPACK_IMPORTED_MODULE_10__/* .parseDate */ ._U(startDateValue);
     if (start) {
       filteredData = filteredData.filter(doc => {
-        const docDate = _utils_js__WEBPACK_IMPORTED_MODULE_9__/* .parseDate */ ._U(doc.date.split(' ')[0]);
+        const docDate = _utils_js__WEBPACK_IMPORTED_MODULE_10__/* .parseDate */ ._U(doc.date.split(' ')[0]);
         return docDate && docDate >= start;
       });
     }
   }
   if (endDateValue) {
-    const end = _utils_js__WEBPACK_IMPORTED_MODULE_9__/* .parseDate */ ._U(endDateValue);
+    const end = _utils_js__WEBPACK_IMPORTED_MODULE_10__/* .parseDate */ ._U(endDateValue);
     if (end) {
       filteredData = filteredData.filter(doc => {
-        const docDate = _utils_js__WEBPACK_IMPORTED_MODULE_9__/* .parseDate */ ._U(doc.date.split(' ')[0]);
+        const docDate = _utils_js__WEBPACK_IMPORTED_MODULE_10__/* .parseDate */ ._U(doc.date.split(' ')[0]);
         return docDate && docDate <= end;
       });
     }
@@ -719,7 +307,7 @@ const sectionConfigurations = {
   // Configuração da Timeline será tratada pelo seu próprio gestor
   consultations: {
     fetchFunction: _api_js__WEBPACK_IMPORTED_MODULE_1__/* .fetchAllConsultations */ .wF,
-    renderFunction: _renderers_js__WEBPACK_IMPORTED_MODULE_3__/* .renderConsultations */ .rX,
+    renderFunction: _renderers_js__WEBPACK_IMPORTED_MODULE_4__/* .renderConsultations */ .rX,
     initialSortState: {
       key: 'sortableDate',
       order: 'desc'
@@ -728,7 +316,7 @@ const sectionConfigurations = {
   },
   exams: {
     fetchFunction: _api_js__WEBPACK_IMPORTED_MODULE_1__/* .fetchExamesSolicitados */ .K4,
-    renderFunction: _renderers_js__WEBPACK_IMPORTED_MODULE_3__/* .renderExams */ .Rb,
+    renderFunction: _renderers_js__WEBPACK_IMPORTED_MODULE_4__/* .renderExams */ .Rb,
     initialSortState: {
       key: 'date',
       order: 'desc'
@@ -737,7 +325,7 @@ const sectionConfigurations = {
   },
   appointments: {
     fetchFunction: _api_js__WEBPACK_IMPORTED_MODULE_1__/* .fetchAppointments */ .Ns,
-    renderFunction: _renderers_js__WEBPACK_IMPORTED_MODULE_3__/* .renderAppointments */ .lT,
+    renderFunction: _renderers_js__WEBPACK_IMPORTED_MODULE_4__/* .renderAppointments */ .lT,
     initialSortState: {
       key: 'date',
       order: 'desc'
@@ -746,7 +334,7 @@ const sectionConfigurations = {
   },
   regulations: {
     fetchFunction: _api_js__WEBPACK_IMPORTED_MODULE_1__/* .fetchAllRegulations */ .v0,
-    renderFunction: _renderers_js__WEBPACK_IMPORTED_MODULE_3__/* .renderRegulations */ .IC,
+    renderFunction: _renderers_js__WEBPACK_IMPORTED_MODULE_4__/* .renderRegulations */ .IC,
     initialSortState: {
       key: 'date',
       order: 'desc'
@@ -755,7 +343,7 @@ const sectionConfigurations = {
   },
   documents: {
     fetchFunction: _api_js__WEBPACK_IMPORTED_MODULE_1__/* .fetchDocuments */ .P_,
-    renderFunction: _renderers_js__WEBPACK_IMPORTED_MODULE_3__/* .renderDocuments */ .zL,
+    renderFunction: _renderers_js__WEBPACK_IMPORTED_MODULE_4__/* .renderDocuments */ .zL,
     initialSortState: {
       key: 'date',
       order: 'desc'
@@ -818,17 +406,17 @@ function selectPatient(_x) {
 }
 function _selectPatient() {
   _selectPatient = (0,bluebird__WEBPACK_IMPORTED_MODULE_0__.coroutine)(function* (patientInfo, forceRefresh = false) {
-    const currentPatient = _store_js__WEBPACK_IMPORTED_MODULE_5__/* .store */ .M.getPatient();
+    const currentPatient = _store_js__WEBPACK_IMPORTED_MODULE_6__/* .store */ .M.getPatient();
     if (currentPatient && currentPatient.ficha.isenPK.idp === patientInfo.idp && !forceRefresh) {
       return;
     }
-    _utils_js__WEBPACK_IMPORTED_MODULE_9__/* .toggleLoader */ .i1(true);
-    _utils_js__WEBPACK_IMPORTED_MODULE_9__/* .clearMessage */ .de();
-    _store_js__WEBPACK_IMPORTED_MODULE_5__/* .store */ .M.setPatientUpdating();
+    _utils_js__WEBPACK_IMPORTED_MODULE_10__/* .toggleLoader */ .i1(true);
+    _utils_js__WEBPACK_IMPORTED_MODULE_10__/* .clearMessage */ .de();
+    _store_js__WEBPACK_IMPORTED_MODULE_6__/* .store */ .M.setPatientUpdating();
     try {
       const ficha = yield _api_js__WEBPACK_IMPORTED_MODULE_1__/* .fetchVisualizaUsuario */ .Tp(patientInfo);
       const cadsus = yield _api_js__WEBPACK_IMPORTED_MODULE_1__/* .fetchCadsusData */ .GP({
-        cpf: _utils_js__WEBPACK_IMPORTED_MODULE_9__/* .getNestedValue */ .LJ(ficha, 'entidadeFisica.entfCPF'),
+        cpf: _utils_js__WEBPACK_IMPORTED_MODULE_10__/* .getNestedValue */ .LJ(ficha, 'entidadeFisica.entfCPF'),
         cns: ficha.isenNumCadSus
       });
       Object.values(sectionManagers).forEach(manager => {
@@ -838,14 +426,16 @@ function _selectPatient() {
           manager.clearAutomation();
         }
       });
-      _store_js__WEBPACK_IMPORTED_MODULE_5__/* .store */ .M.setPatient(ficha, cadsus);
-      yield updateRecentPatients(_store_js__WEBPACK_IMPORTED_MODULE_5__/* .store */ .M.getPatient());
+      _store_js__WEBPACK_IMPORTED_MODULE_6__/* .store */ .M.setPatient(ficha, cadsus);
+      yield updateRecentPatients(_store_js__WEBPACK_IMPORTED_MODULE_6__/* .store */ .M.getPatient());
     } catch (error) {
-      _utils_js__WEBPACK_IMPORTED_MODULE_9__/* .showMessage */ .rG(error.message, 'error');
-      console.error(error);
-      _store_js__WEBPACK_IMPORTED_MODULE_5__/* .store */ .M.clearPatient();
+      _utils_js__WEBPACK_IMPORTED_MODULE_10__/* .showMessage */ .rG(error.message, 'error');
+      (0,_ErrorHandler_js__WEBPACK_IMPORTED_MODULE_2__/* .logError */ .vV)('PATIENT_LOADING', 'Erro ao carregar dados do paciente', {
+        errorMessage: error.message
+      });
+      _store_js__WEBPACK_IMPORTED_MODULE_6__/* .store */ .M.clearPatient();
     } finally {
-      _utils_js__WEBPACK_IMPORTED_MODULE_9__/* .toggleLoader */ .i1(false);
+      _utils_js__WEBPACK_IMPORTED_MODULE_10__/* .toggleLoader */ .i1(false);
     }
   });
   return _selectPatient.apply(this, arguments);
@@ -889,16 +479,18 @@ function _init() {
 
         // **não retornamos mais aqui**, apenas marcamos que deu “fallback”
       } else {
-        console.error('Initialization failed:', error);
-        _utils_js__WEBPACK_IMPORTED_MODULE_9__/* .showMessage */ .rG('Ocorreu um erro inesperado ao iniciar a extensão.', 'error');
+        (0,_ErrorHandler_js__WEBPACK_IMPORTED_MODULE_2__/* .logError */ .vV)('INITIALIZATION', 'Falha na inicialização da extensão', {
+          errorMessage: error.message
+        });
+        _utils_js__WEBPACK_IMPORTED_MODULE_10__/* .showMessage */ .rG('Ocorreu um erro inesperado ao iniciar a extensão.', 'error');
         // nesse caso você pode querer return ou throw de verdade
         return;
       }
     }
 
     // === setup das abas: sempre rodar, mesmo sem baseURL ===
-    _utils_js__WEBPACK_IMPORTED_MODULE_9__/* .setupTabs */ .AQ(document.getElementById('layout-tabs-container'));
-    _utils_js__WEBPACK_IMPORTED_MODULE_9__/* .setupTabs */ .AQ(document.getElementById('patterns-tabs-container'));
+    _utils_js__WEBPACK_IMPORTED_MODULE_10__/* .setupTabs */ .AQ(document.getElementById('layout-tabs-container'));
+    _utils_js__WEBPACK_IMPORTED_MODULE_10__/* .setupTabs */ .AQ(document.getElementById('patterns-tabs-container'));
     // (adicione aqui quaisquer outros containers de aba que tenha)
 
     // === só o resto do fluxo principal depende de baseUrlConfigured ===
@@ -913,10 +505,10 @@ function _init() {
     applySectionIcons();
     applyCustomHeaderStyles(globalSettings.sectionHeaderStyles);
     applySectionOrder(globalSettings.sidebarSectionOrder);
-    _ui_search_js__WEBPACK_IMPORTED_MODULE_8__/* .init */ .T({
+    _ui_search_js__WEBPACK_IMPORTED_MODULE_9__/* .init */ .T({
       onSelectPatient: selectPatient
     });
-    _ui_patient_card_js__WEBPACK_IMPORTED_MODULE_7__/* .init */ .T(globalSettings.fieldConfigLayout, {
+    _ui_patient_card_js__WEBPACK_IMPORTED_MODULE_8__/* .init */ .T(globalSettings.fieldConfigLayout, {
       onForceRefresh: selectPatient
     });
     initializeSections(globalSettings);
@@ -933,7 +525,7 @@ function loadConfigAndData() {
 function _loadConfigAndData() {
   _loadConfigAndData = (0,bluebird__WEBPACK_IMPORTED_MODULE_0__.coroutine)(function* () {
     const syncData = yield api.storage.sync.get({
-      patientFields: _field_config_js__WEBPACK_IMPORTED_MODULE_2__/* .defaultFieldConfig */ .Q,
+      patientFields: _field_config_js__WEBPACK_IMPORTED_MODULE_3__/* .defaultFieldConfig */ .Q,
       filterLayout: {},
       autoLoadExams: false,
       autoLoadConsultations: false,
@@ -950,10 +542,10 @@ function _loadConfigAndData() {
       savedFilterSets: {},
       automationRules: []
     });
-    _store_js__WEBPACK_IMPORTED_MODULE_5__/* .store */ .M.setRecentPatients(localData.recentPatients);
-    _store_js__WEBPACK_IMPORTED_MODULE_5__/* .store */ .M.setSavedFilterSets(localData.savedFilterSets);
+    _store_js__WEBPACK_IMPORTED_MODULE_6__/* .store */ .M.setRecentPatients(localData.recentPatients);
+    _store_js__WEBPACK_IMPORTED_MODULE_6__/* .store */ .M.setSavedFilterSets(localData.savedFilterSets);
     return {
-      fieldConfigLayout: _field_config_js__WEBPACK_IMPORTED_MODULE_2__/* .defaultFieldConfig */ .Q.map(defaultField => {
+      fieldConfigLayout: _field_config_js__WEBPACK_IMPORTED_MODULE_3__/* .defaultFieldConfig */ .Q.map(defaultField => {
         const savedField = syncData.patientFields.find(f => f.id === defaultField.id);
         return savedField ? {
           ...defaultField,
@@ -1020,10 +612,10 @@ function initializeSections(globalSettings) {
   Object.keys(sectionConfigurations).forEach(key => {
     if (key === 'patient-details') return;
     if (key === 'timeline') {
-      sectionManagers[key] = new _TimelineManager_js__WEBPACK_IMPORTED_MODULE_6__/* .TimelineManager */ .l(key, sectionConfigurations[key], globalSettings);
+      sectionManagers[key] = new _TimelineManager_js__WEBPACK_IMPORTED_MODULE_7__/* .TimelineManager */ .l(key, sectionConfigurations[key], globalSettings);
       return;
     }
-    sectionManagers[key] = new _SectionManager_js__WEBPACK_IMPORTED_MODULE_4__/* .SectionManager */ .N(key, sectionConfigurations[key], globalSettings);
+    sectionManagers[key] = new _SectionManager_js__WEBPACK_IMPORTED_MODULE_5__/* .SectionManager */ .N(key, sectionConfigurations[key], globalSettings);
   });
 }
 function applyUserPreferences(globalSettings) {
@@ -1062,8 +654,8 @@ function applyUserPreferences(globalSettings) {
     const prefix = section.replace(/s$/, '');
     const initialEl = document.getElementById(`${prefix}-date-initial`);
     const finalEl = document.getElementById(`${prefix}-date-final`);
-    if (initialEl) initialEl.valueAsDate = _utils_js__WEBPACK_IMPORTED_MODULE_9__/* .calculateRelativeDate */ .Z9(range.start);
-    if (finalEl) finalEl.valueAsDate = _utils_js__WEBPACK_IMPORTED_MODULE_9__/* .calculateRelativeDate */ .Z9(range.end);
+    if (initialEl) initialEl.valueAsDate = _utils_js__WEBPACK_IMPORTED_MODULE_10__/* .calculateRelativeDate */ .Z9(range.start);
+    if (finalEl) finalEl.valueAsDate = _utils_js__WEBPACK_IMPORTED_MODULE_10__/* .calculateRelativeDate */ .Z9(range.end);
   });
   Object.values(filterLayout).flat().forEach(filterSetting => {
     const el = document.getElementById(filterSetting.id);
@@ -1104,7 +696,7 @@ function handleRegulationLoaded(_x2) {
 }
 function _handleRegulationLoaded() {
   _handleRegulationLoaded = (0,bluebird__WEBPACK_IMPORTED_MODULE_0__.coroutine)(function* (regulationData) {
-    _utils_js__WEBPACK_IMPORTED_MODULE_9__/* .toggleLoader */ .i1(true);
+    _utils_js__WEBPACK_IMPORTED_MODULE_10__/* .toggleLoader */ .i1(true);
     try {
       currentRegulationData = regulationData;
       if (regulationData && regulationData.isenPKIdp && regulationData.isenPKIds) {
@@ -1120,14 +712,16 @@ function _handleRegulationLoaded() {
         yield applyAutomationRules(regulationData);
       } else {
         currentRegulationData = null;
-        _utils_js__WEBPACK_IMPORTED_MODULE_9__/* .showMessage */ .rG('Não foi possível extrair os dados do paciente da regulação.', 'error');
+        _utils_js__WEBPACK_IMPORTED_MODULE_10__/* .showMessage */ .rG('Não foi possível extrair os dados do paciente da regulação.', 'error');
       }
     } catch (error) {
       currentRegulationData = null;
-      _utils_js__WEBPACK_IMPORTED_MODULE_9__/* .showMessage */ .rG(`Erro ao processar a regulação: ${error.message}`, 'error');
-      console.error('Erro ao processar a regulação:', error);
+      _utils_js__WEBPACK_IMPORTED_MODULE_10__/* .showMessage */ .rG(`Erro ao processar a regulação: ${error.message}`, 'error');
+      (0,_ErrorHandler_js__WEBPACK_IMPORTED_MODULE_2__/* .logError */ .vV)('REGULATION_PROCESSING', 'Erro ao processar a regulação', {
+        errorMessage: error.message
+      });
     } finally {
-      _utils_js__WEBPACK_IMPORTED_MODULE_9__/* .toggleLoader */ .i1(false);
+      _utils_js__WEBPACK_IMPORTED_MODULE_10__/* .toggleLoader */ .i1(false);
     }
   });
   return _handleRegulationLoaded.apply(this, arguments);
@@ -1177,7 +771,9 @@ function handleStorageChange(changes, areaName) {
           newValue
         } = changes.pendingRegulation;
         if (newValue && newValue.isenPKIdp) {
-          console.log('[Assistente Sidebar] Nova regulação detectada via storage.onChanged:', newValue);
+          (0,_ErrorHandler_js__WEBPACK_IMPORTED_MODULE_2__/* .logInfo */ .fH)('REGULATION_DETECTION', 'Nova regulação detectada via storage.onChanged', {
+            hasIsenPKIdp: !!newValue.isenPKIdp
+          });
           handleRegulationLoaded(newValue);
           api.storage.local.remove('pendingRegulation');
         }
@@ -1202,9 +798,9 @@ function addGlobalEventListeners() {
   // Create named functions for listeners to allow removal
   if (!globalListeners.onReloadBtnClick) {
     globalListeners.onReloadBtnClick = function () {
-      const patient = _store_js__WEBPACK_IMPORTED_MODULE_5__/* .store */ .M.getPatient();
+      const patient = _store_js__WEBPACK_IMPORTED_MODULE_6__/* .store */ .M.getPatient();
       if (patient && patient.ficha) {
-        _utils_js__WEBPACK_IMPORTED_MODULE_9__/* .showDialog */ .ui({
+        _utils_js__WEBPACK_IMPORTED_MODULE_10__/* .showDialog */ .ui({
           message: 'Um paciente está selecionado e o estado atual será perdido. Deseja realmente recarregar o assistente?',
           onConfirm: () => {
             location.reload();
@@ -1241,7 +837,7 @@ function addGlobalEventListeners() {
   if (!globalListeners.onInfoBtnClick) {
     globalListeners.onInfoBtnClick = function () {
       if (!currentRegulationData) {
-        _utils_js__WEBPACK_IMPORTED_MODULE_9__/* .showMessage */ .rG('Nenhuma informação de regulação carregada.', 'info');
+        _utils_js__WEBPACK_IMPORTED_MODULE_10__/* .showMessage */ .rG('Nenhuma informação de regulação carregada.', 'info');
         return;
       }
       const modalTitle = document.getElementById('modal-title');
@@ -1325,7 +921,9 @@ function _copyToClipboard() {
       yield navigator.clipboard.writeText(textToCopy);
       if (document.body.contains(original)) original.textContent = '✅';
     } catch (err) {
-      console.error('Falha ao copiar texto: ', err);
+      (0,_ErrorHandler_js__WEBPACK_IMPORTED_MODULE_2__/* .logError */ .vV)('CLIPBOARD_OPERATION', 'Falha ao copiar texto', {
+        errorMessage: err.message
+      });
       if (document.body.contains(original)) original.textContent = '❌';
     } finally {
       setTimeout(() => {
@@ -1345,13 +943,13 @@ function _updateRecentPatients() {
     const newRecent = {
       ...patientData
     };
-    const currentRecents = _store_js__WEBPACK_IMPORTED_MODULE_5__/* .store */ .M.getRecentPatients();
+    const currentRecents = _store_js__WEBPACK_IMPORTED_MODULE_6__/* .store */ .M.getRecentPatients();
     const filtered = (currentRecents || []).filter(p => p.ficha.isenPK.idp !== newRecent.ficha.isenPK.idp);
     const updatedRecents = [newRecent, ...filtered].slice(0, 5);
     yield api.storage.local.set({
       recentPatients: updatedRecents
     });
-    _store_js__WEBPACK_IMPORTED_MODULE_5__/* .store */ .M.setRecentPatients(updatedRecents);
+    _store_js__WEBPACK_IMPORTED_MODULE_6__/* .store */ .M.setRecentPatients(updatedRecents);
   });
   return _updateRecentPatients.apply(this, arguments);
 }
@@ -1397,10 +995,17 @@ function _handleViewDocument() {
         url: docUrl || 'about:blank'
       });
       if (!docUrl) {
-        console.warn('URL do documento não encontrada.');
+        (0,_ErrorHandler_js__WEBPACK_IMPORTED_MODULE_2__/* .logWarning */ .FF)('DOCUMENT_ACCESS', 'URL do documento não encontrada', {
+          idp,
+          ids
+        });
       }
     } catch (error) {
-      console.error('Falha ao visualizar documento:', error);
+      (0,_ErrorHandler_js__WEBPACK_IMPORTED_MODULE_2__/* .logError */ .vV)('DOCUMENT_ACCESS', 'Falha ao visualizar documento', {
+        idp,
+        ids,
+        errorMessage: error.message
+      });
     }
   });
   return _handleViewDocument.apply(this, arguments);
@@ -1425,10 +1030,17 @@ function _handleViewRegulationAttachment() {
           url: fileUrl
         });
       } else {
-        console.warn('⚠️ URL do anexo não encontrada');
+        (0,_ErrorHandler_js__WEBPACK_IMPORTED_MODULE_2__/* .logWarning */ .FF)('REGULATION_ATTACHMENT', 'URL do anexo não encontrada', {
+          idp,
+          ids
+        });
       }
     } catch (error) {
-      console.error('❌ Erro ao carregar anexo da regulação:', error);
+      (0,_ErrorHandler_js__WEBPACK_IMPORTED_MODULE_2__/* .logError */ .vV)('REGULATION_ATTACHMENT', 'Erro ao carregar anexo da regulação', {
+        idp,
+        ids,
+        errorMessage: error.message
+      });
     }
   });
   return _handleViewRegulationAttachment.apply(this, arguments);
@@ -1596,13 +1208,17 @@ function _checkForPendingRegulation() {
         yield api.storage.local.remove('pendingRegulation');
       }
     } catch (e) {
-      console.error('Erro ao verificar regulação pendente:', e);
+      (0,_ErrorHandler_js__WEBPACK_IMPORTED_MODULE_2__/* .logError */ .vV)('REGULATION_PENDING_CHECK', 'Erro ao verificar regulação pendente', {
+        errorMessage: e.message
+      });
     }
   });
   return _checkForPendingRegulation.apply(this, arguments);
 }
 function cleanupEventListeners() {
-  console.log('[Assistente] Removendo event listeners globais para limpeza.');
+  (0,_ErrorHandler_js__WEBPACK_IMPORTED_MODULE_2__/* .logInfo */ .fH)('CLEANUP', 'Removendo event listeners globais para limpeza', {
+    environment: 'development'
+  });
   const mainContent = document.getElementById('main-content');
   const infoModal = document.getElementById('info-modal');
   const modalCloseBtn = document.getElementById('modal-close-btn');
@@ -1808,13 +1424,15 @@ function init(config) {
 /* harmony export */ });
 /* harmony import */ var bluebird__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(104);
 /* harmony import */ var _api_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(574);
-/* harmony import */ var _renderers_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(690);
-/* harmony import */ var _store_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(335);
-/* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(239);
+/* harmony import */ var _ErrorHandler_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(322);
+/* harmony import */ var _renderers_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(690);
+/* harmony import */ var _store_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(335);
+/* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(239);
 
 /**
  * @file Módulo TimelineManager, responsável por gerir a secção da Linha do Tempo.
  */
+
 
 
 
@@ -1838,7 +1456,7 @@ class TimelineManager {
   init() {
     this.cacheDomElements();
     this.addEventListeners();
-    _store_js__WEBPACK_IMPORTED_MODULE_3__/* .store */ .M.subscribe(() => this.onStateChange());
+    _store_js__WEBPACK_IMPORTED_MODULE_4__/* .store */ .M.subscribe(() => this.onStateChange());
   }
   cacheDomElements() {
     this.elements = {
@@ -1869,7 +1487,7 @@ class TimelineManager {
     // Funções nomeadas
     this._listeners.onFetchBtnClick = this.onFetchBtnClick.bind(this);
     this._listeners.onToggleBtnClick = this.onToggleBtnClick.bind(this);
-    this._listeners.onSearchKeywordInput = _utils_js__WEBPACK_IMPORTED_MODULE_4__/* .debounce */ .sg(this.onSearchKeywordInput.bind(this), 300);
+    this._listeners.onSearchKeywordInput = _utils_js__WEBPACK_IMPORTED_MODULE_5__/* .debounce */ .sg(this.onSearchKeywordInput.bind(this), 300);
     this._listeners.onDateInitialChange = this.onDateInitialChange.bind(this);
     this._listeners.onDateFinalChange = this.onDateFinalChange.bind(this);
     this._listeners.onSectionClick = this.onSectionClick.bind(this);
@@ -1922,7 +1540,7 @@ class TimelineManager {
   }
   onStateChange() {
     var _this$currentPatient, _this$currentPatient$, _newPatient$isenPK;
-    const patientState = _store_js__WEBPACK_IMPORTED_MODULE_3__/* .store */ .M.getPatient();
+    const patientState = _store_js__WEBPACK_IMPORTED_MODULE_4__/* .store */ .M.getPatient();
     const newPatient = patientState ? patientState.ficha : null;
     if (((_this$currentPatient = this.currentPatient) === null || _this$currentPatient === void 0 ? void 0 : (_this$currentPatient$ = _this$currentPatient.isenPK) === null || _this$currentPatient$ === void 0 ? void 0 : _this$currentPatient$.idp) !== (newPatient === null || newPatient === void 0 ? void 0 : (_newPatient$isenPK = newPatient.isenPK) === null || _newPatient$isenPK === void 0 ? void 0 : _newPatient$isenPK.idp)) {
       this.setPatient(newPatient);
@@ -1947,8 +1565,8 @@ class TimelineManager {
       start: -12,
       end: 0
     };
-    if (this.elements.dateInitial) this.elements.dateInitial.valueAsDate = _utils_js__WEBPACK_IMPORTED_MODULE_4__/* .calculateRelativeDate */ .Z9(range.start);
-    if (this.elements.dateFinal) this.elements.dateFinal.valueAsDate = _utils_js__WEBPACK_IMPORTED_MODULE_4__/* .calculateRelativeDate */ .Z9(range.end);
+    if (this.elements.dateInitial) this.elements.dateInitial.valueAsDate = _utils_js__WEBPACK_IMPORTED_MODULE_5__/* .calculateRelativeDate */ .Z9(range.start);
+    if (this.elements.dateFinal) this.elements.dateFinal.valueAsDate = _utils_js__WEBPACK_IMPORTED_MODULE_5__/* .calculateRelativeDate */ .Z9(range.end);
   }
   fetchData() {
     var _this = this;
@@ -1957,7 +1575,7 @@ class TimelineManager {
         return;
       }
       _this.isLoading = true;
-      _renderers_js__WEBPACK_IMPORTED_MODULE_2__/* .renderTimeline */ .s8([], 'loading');
+      _renderers_js__WEBPACK_IMPORTED_MODULE_3__/* .renderTimeline */ .s8([], 'loading');
       try {
         const params = {
           isenPK: `${_this.currentPatient.isenPK.idp}-${_this.currentPatient.isenPK.ids}`,
@@ -1967,12 +1585,14 @@ class TimelineManager {
           dataFinal: new Date().toLocaleDateString('pt-BR')
         };
         const apiData = yield _api_js__WEBPACK_IMPORTED_MODULE_1__/* .fetchAllTimelineData */ .lQ(params);
-        const normalizedData = _utils_js__WEBPACK_IMPORTED_MODULE_4__/* .normalizeTimelineData */ .td(apiData);
+        const normalizedData = _utils_js__WEBPACK_IMPORTED_MODULE_5__/* .normalizeTimelineData */ .td(apiData);
         _this.allData = normalizedData;
         _this.render();
       } catch (error) {
-        console.error('Erro ao buscar dados para a Linha do Tempo:', error);
-        _renderers_js__WEBPACK_IMPORTED_MODULE_2__/* .renderTimeline */ .s8([], 'error');
+        (0,_ErrorHandler_js__WEBPACK_IMPORTED_MODULE_2__/* .logError */ .vV)('TIMELINE_DATA_FETCH', 'Erro ao buscar dados para a Linha do Tempo', {
+          errorMessage: error.message
+        });
+        _renderers_js__WEBPACK_IMPORTED_MODULE_3__/* .renderTimeline */ .s8([], 'error');
       } finally {
         _this.isLoading = false;
       }
@@ -1983,12 +1603,12 @@ class TimelineManager {
     return {
       startDate: (_this$elements$dateIn = this.elements.dateInitial) === null || _this$elements$dateIn === void 0 ? void 0 : _this$elements$dateIn.value,
       endDate: (_this$elements$dateFi = this.elements.dateFinal) === null || _this$elements$dateFi === void 0 ? void 0 : _this$elements$dateFi.value,
-      keyword: _utils_js__WEBPACK_IMPORTED_MODULE_4__/* .normalizeString */ .J2(((_this$elements$search = this.elements.searchKeyword) === null || _this$elements$search === void 0 ? void 0 : _this$elements$search.value) || '')
+      keyword: _utils_js__WEBPACK_IMPORTED_MODULE_5__/* .normalizeString */ .J2(((_this$elements$search = this.elements.searchKeyword) === null || _this$elements$search === void 0 ? void 0 : _this$elements$search.value) || '')
     };
   }
   render() {
     if (this.allData.length === 0 && !this.isLoading) {
-      _renderers_js__WEBPACK_IMPORTED_MODULE_2__/* .renderTimeline */ .s8([], 'empty');
+      _renderers_js__WEBPACK_IMPORTED_MODULE_3__/* .renderTimeline */ .s8([], 'empty');
       return;
     }
     let dataToRender = this.allData;
@@ -2010,9 +1630,9 @@ class TimelineManager {
 
     // Automation rule filtering
     if (this.isFilteredView && this.activeRuleFilters) {
-      dataToRender = _utils_js__WEBPACK_IMPORTED_MODULE_4__/* .filterTimelineEvents */ .Pr(dataToRender, this.activeRuleFilters);
+      dataToRender = _utils_js__WEBPACK_IMPORTED_MODULE_5__/* .filterTimelineEvents */ .Pr(dataToRender, this.activeRuleFilters);
     }
-    _renderers_js__WEBPACK_IMPORTED_MODULE_2__/* .renderTimeline */ .s8(dataToRender, 'success');
+    _renderers_js__WEBPACK_IMPORTED_MODULE_3__/* .renderTimeline */ .s8(dataToRender, 'success');
   }
   toggleSection() {
     var _this$elements$wrappe;
@@ -2153,11 +1773,6 @@ class TimelineManager {
 /******/ 		__webpack_require__.o = (obj, prop) => (Object.prototype.hasOwnProperty.call(obj, prop))
 /******/ 	})();
 /******/ 	
-/******/ 	/* webpack/runtime/runtimeId */
-/******/ 	(() => {
-/******/ 		__webpack_require__.j = 61;
-/******/ 	})();
-/******/ 	
 /******/ 	/* webpack/runtime/jsonp chunk loading */
 /******/ 	(() => {
 /******/ 		// no baseURI
@@ -2169,8 +1784,7 @@ class TimelineManager {
 /******/ 			61: 0,
 /******/ 			312: 0,
 /******/ 			434: 0,
-/******/ 			583: 0,
-/******/ 			738: 0
+/******/ 			583: 0
 /******/ 		};
 /******/ 		
 /******/ 		// no chunk on demand loading

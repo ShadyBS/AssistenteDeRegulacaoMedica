@@ -1,6 +1,436 @@
 "use strict";
 (self["webpackChunkassistente_de_regulacao_medica"] = self["webpackChunkassistente_de_regulacao_medica"] || []).push([[76,984],{
 
+/***/ 239:
+/***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
+
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   AQ: () => (/* binding */ setupTabs),
+/* harmony export */   Eg: () => (/* binding */ getContrastYIQ),
+/* harmony export */   J2: () => (/* binding */ normalizeString),
+/* harmony export */   LJ: () => (/* binding */ getNestedValue),
+/* harmony export */   Pr: () => (/* binding */ filterTimelineEvents),
+/* harmony export */   Z9: () => (/* binding */ calculateRelativeDate),
+/* harmony export */   _U: () => (/* binding */ parseDate),
+/* harmony export */   de: () => (/* binding */ clearMessage),
+/* harmony export */   i1: () => (/* binding */ toggleLoader),
+/* harmony export */   rG: () => (/* binding */ showMessage),
+/* harmony export */   sg: () => (/* binding */ debounce),
+/* harmony export */   td: () => (/* binding */ normalizeTimelineData),
+/* harmony export */   ui: () => (/* binding */ showDialog)
+/* harmony export */ });
+/* harmony import */ var _ErrorHandler_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(322);
+
+
+/**
+ * Exibe um modal customizado de confirmação.
+ * @param {Object} options
+ * @param {string} options.message Mensagem a exibir
+ * @param {Function} options.onConfirm Callback para confirmação
+ * @param {Function} [options.onCancel] Callback para cancelamento
+ */
+function showDialog({
+  message,
+  onConfirm,
+  onCancel
+}) {
+  let modal = document.getElementById('custom-confirm-modal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'custom-confirm-modal';
+    modal.innerHTML = `
+      <div class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg shadow-lg p-6 max-w-md w-full">
+          <div class="mb-4 text-slate-800 text-base" id="custom-confirm-message"></div>
+          <div class="flex justify-end gap-2">
+            <button id="custom-confirm-cancel" class="px-4 py-2 rounded bg-slate-200 text-slate-700 hover:bg-slate-300">Cancelar</button>
+            <button id="custom-confirm-ok" class="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700">Confirmar</button>
+          </div>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+  }
+  modal.style.display = 'flex';
+  modal.querySelector('#custom-confirm-message').textContent = message;
+  const okBtn = modal.querySelector('#custom-confirm-ok');
+  const cancelBtn = modal.querySelector('#custom-confirm-cancel');
+  const close = () => {
+    modal.style.display = 'none';
+  };
+  okBtn.onclick = () => {
+    close();
+    onConfirm && onConfirm();
+  };
+  cancelBtn.onclick = () => {
+    close();
+    onCancel && onCancel();
+  };
+}
+/**
+ * @file Contém funções utilitárias compartilhadas em toda a extensão.
+ */
+
+/**
+ * Atraso na execução de uma função após o utilizador parar de digitar.
+ * @param {Function} func A função a ser executada.
+ * @param {number} [delay=500] O tempo de espera em milissegundos.
+ * @returns {Function} A função com debounce.
+ */
+function debounce(func, delay = 500) {
+  let timeoutId;
+  return (...args) => {
+    clearTimeout(timeoutId);
+    timeoutId = setTimeout(() => {
+      func.apply(this, args);
+    }, delay);
+  };
+}
+
+/**
+ * Mostra ou esconde o loader principal.
+ * @param {boolean} show - `true` para mostrar, `false` para esconder.
+ */
+function toggleLoader(show) {
+  const loader = document.getElementById('loader');
+  if (loader) {
+    loader.style.display = show ? 'block' : 'none';
+  }
+}
+
+/**
+ * Exibe uma mensagem na área de mensagens.
+ * @param {string} text O texto da mensagem.
+ * @param {'error' | 'success' | 'info'} [type='error'] O tipo de mensagem.
+ */
+function showMessage(text, type = 'error') {
+  const messageArea = document.getElementById('message-area');
+  if (messageArea) {
+    messageArea.textContent = text;
+    const typeClasses = {
+      error: 'bg-red-100 text-red-700',
+      success: 'bg-green-100 text-green-700',
+      info: 'bg-blue-100 text-blue-700'
+    };
+    messageArea.className = `p-3 rounded-md text-sm ${typeClasses[type] || typeClasses.error}`;
+    messageArea.style.display = 'block';
+  }
+}
+
+/**
+ * Limpa a área de mensagens.
+ */
+function clearMessage() {
+  const messageArea = document.getElementById('message-area');
+  if (messageArea) {
+    messageArea.style.display = 'none';
+  }
+}
+
+/**
+ * Converte uma string de data em vários formatos para um objeto Date.
+ * @param {string} dateString A data no formato "dd/MM/yyyy" ou "yyyy-MM-dd", podendo conter prefixos.
+ * @returns {Date|null} O objeto Date ou null se a string for inválida.
+ */
+function parseDate(dateString) {
+  if (!dateString || typeof dateString !== 'string') return null;
+
+  // Tenta extrair o primeiro padrão de data válido da string.
+  const dateMatch = dateString.match(/(\d{4}-\d{2}-\d{2})|(\d{2}\/\d{2}\/\d{2,4})/);
+  if (!dateMatch) return null;
+  const matchedDate = dateMatch[0];
+  let year, month, day;
+
+  // Tenta o formato YYYY-MM-DD
+  if (matchedDate.includes('-')) {
+    [year, month, day] = matchedDate.split('-').map(Number);
+  } else if (matchedDate.includes('/')) {
+    // Tenta o formato DD/MM/YYYY
+    [day, month, year] = matchedDate.split('/').map(Number);
+  }
+
+  // Valida se os números são válidos e se a data é real
+  if (isNaN(year) || isNaN(month) || isNaN(day)) return null;
+
+  // Lida com anos de 2 dígitos (ex: '24' -> 2024)
+  if (year >= 0 && year < 100) {
+    year += 2000;
+  }
+  const date = new Date(Date.UTC(year, month - 1, day));
+
+  // Confirma que a data não "rolou" para o mês seguinte (ex: 31 de Abril -> 1 de Maio)
+  if (date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day) {
+    return date;
+  }
+  return null; // Retorna nulo se a data for inválida (ex: 31/02/2024)
+}
+
+/**
+ * Obtém um valor aninhado de um objeto de forma segura.
+ * @param {object} obj O objeto.
+ * @param {string} path O caminho para a propriedade (ex: 'a.b.c').
+ * @returns {*} O valor encontrado ou undefined.
+ */
+const getNestedValue = (obj, path) => {
+  if (!path) return undefined;
+  return path.split('.').reduce((acc, part) => acc && acc[part], obj);
+};
+
+/**
+ * Calcula uma data relativa à data atual com base num desvio em meses.
+ * @param {number} offsetInMonths - O número de meses a adicionar ou subtrair.
+ * @returns {Date} O objeto Date resultante.
+ */
+function calculateRelativeDate(offsetInMonths) {
+  const date = new Date();
+  // setMonth lida corretamente com transições de ano e dias do mês
+  date.setMonth(date.getMonth() + offsetInMonths);
+  return date;
+}
+
+/**
+ * Retorna 'black' ou 'white' para o texto dependendo do contraste com a cor de fundo.
+ * @param {string} hexcolor - A cor de fundo em formato hexadecimal (com ou sem #).
+ * @returns {'black' | 'white'}
+ */
+function getContrastYIQ(hexcolor) {
+  hexcolor = hexcolor.replace('#', '');
+  const r = parseInt(hexcolor.substr(0, 2), 16);
+  const g = parseInt(hexcolor.substr(2, 2), 16);
+  const b = parseInt(hexcolor.substr(4, 2), 16);
+  const yiq = (r * 299 + g * 587 + b * 114) / 1000;
+  return yiq >= 128 ? 'black' : 'white';
+}
+
+/**
+ * Normaliza uma string removendo acentos, cedilha e convertendo para minúsculas.
+ * @param {string} str - A string a ser normalizada.
+ * @returns {string} A string normalizada.
+ */
+function normalizeString(str) {
+  if (!str) return '';
+  return str.toString().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+}
+
+/**
+ * Configura um sistema de abas (tabs) dentro de um container.
+ * @param {HTMLElement} container - O elemento que contém os botões e os painéis das abas.
+ */
+function setupTabs(container) {
+  if (!container) return;
+  const tabButtons = container.querySelectorAll('.tab-button');
+  const tabContents = container.querySelectorAll('.tab-content');
+  tabButtons.forEach(button => {
+    button.addEventListener('click', () => {
+      const tabName = button.dataset.tab;
+      tabButtons.forEach(btn => btn.classList.remove('active'));
+      tabContents.forEach(content => content.classList.remove('active'));
+      button.classList.add('active');
+      const activeContent = container.querySelector(`#${tabName}-tab`);
+      if (activeContent) {
+        activeContent.classList.add('active');
+      }
+    });
+  });
+}
+
+/**
+ * Normalizes data from various sources into a single, sorted timeline event list.
+ * @param {object} apiData - An object containing arrays of consultations, exams, etc.
+ * @returns {Array<object>} A sorted array of timeline event objects.
+ */
+function normalizeTimelineData(apiData) {
+  const events = [];
+
+  // Normalize Consultations
+  try {
+    (apiData.consultations || []).forEach(c => {
+      if (!c || !c.date) return;
+      const searchText = normalizeString([c.specialty, c.professional, c.unit, ...c.details.map(d => d.value)].join(' '));
+      events.push({
+        type: 'consultation',
+        date: parseDate(c.date.split('\n')[0]),
+        sortableDate: c.sortableDate || parseDate(c.date),
+        title: `Consulta: ${c.specialty || 'Especialidade não informada'}`,
+        summary: `com ${c.professional || 'Profissional não informado'}`,
+        details: c,
+        subDetails: c.details || [],
+        searchText
+      });
+    });
+  } catch (e) {
+    (0,_ErrorHandler_js__WEBPACK_IMPORTED_MODULE_0__/* .logError */ .vV)('TIMELINE_NORMALIZATION', 'Failed to normalize consultation data for timeline', {
+      errorMessage: e.message
+    });
+  }
+
+  // Normalize Exams
+  try {
+    (apiData.exams || []).forEach(e => {
+      const eventDate = parseDate(e.date);
+      if (!e || !eventDate) return;
+      const searchText = normalizeString([e.examName, e.professional, e.specialty].filter(Boolean).join(' '));
+      events.push({
+        type: 'exam',
+        date: eventDate,
+        sortableDate: eventDate,
+        title: `Exame Solicitado: ${e.examName || 'Nome não informado'}`,
+        summary: `Solicitado por ${e.professional || 'Não informado'}`,
+        details: e,
+        subDetails: [{
+          label: 'Resultado',
+          value: e.hasResult ? 'Disponível' : 'Pendente'
+        }],
+        searchText
+      });
+    });
+  } catch (e) {
+    (0,_ErrorHandler_js__WEBPACK_IMPORTED_MODULE_0__/* .logError */ .vV)('TIMELINE_NORMALIZATION', 'Failed to normalize exam data for timeline', {
+      errorMessage: e.message
+    });
+  }
+
+  // Normalize Appointments
+  try {
+    (apiData.appointments || []).forEach(a => {
+      if (!a || !a.date) return;
+      const searchText = normalizeString([a.specialty, a.description, a.location, a.professional].join(' '));
+      events.push({
+        type: 'appointment',
+        date: parseDate(a.date),
+        sortableDate: parseDate(a.date),
+        title: `Agendamento: ${a.specialty || a.description || 'Não descrito'}`,
+        summary: a.location || 'Local não informado',
+        details: a,
+        subDetails: [{
+          label: 'Status',
+          value: a.status || 'N/A'
+        }, {
+          label: 'Hora',
+          value: a.time || 'N/A'
+        }],
+        searchText
+      });
+    });
+  } catch (e) {
+    (0,_ErrorHandler_js__WEBPACK_IMPORTED_MODULE_0__/* .logError */ .vV)('TIMELINE_NORMALIZATION', 'Failed to normalize appointment data for timeline', {
+      errorMessage: e.message
+    });
+  }
+
+  // Normalize Regulations
+  try {
+    (apiData.regulations || []).forEach(r => {
+      if (!r || !r.date) return;
+      const searchText = normalizeString([r.procedure, r.requester, r.provider, r.cid].join(' '));
+      events.push({
+        type: 'regulation',
+        date: parseDate(r.date),
+        sortableDate: parseDate(r.date),
+        title: `Regulação: ${r.procedure || 'Procedimento não informado'}`,
+        summary: `Solicitante: ${r.requester || 'Não informado'}`,
+        details: r,
+        subDetails: [{
+          label: 'Status',
+          value: r.status || 'N/A'
+        }, {
+          label: 'Prioridade',
+          value: r.priority || 'N/A'
+        }],
+        searchText
+      });
+    });
+  } catch (e) {
+    (0,_ErrorHandler_js__WEBPACK_IMPORTED_MODULE_0__/* .logError */ .vV)('TIMELINE_NORMALIZATION', 'Failed to normalize regulation data for timeline', {
+      errorMessage: e.message
+    });
+  }
+
+  // --- INÍCIO DA MODIFICAÇÃO ---
+  // Normalize Documents
+  try {
+    (apiData.documents || []).forEach(doc => {
+      if (!doc || !doc.date) return;
+      const searchText = normalizeString(doc.description || '');
+      events.push({
+        type: 'document',
+        date: parseDate(doc.date),
+        sortableDate: parseDate(doc.date),
+        title: `Documento: ${doc.description || 'Sem descrição'}`,
+        summary: `Tipo: ${doc.fileType.toUpperCase()}`,
+        details: doc,
+        subDetails: [],
+        searchText
+      });
+    });
+  } catch (e) {
+    (0,_ErrorHandler_js__WEBPACK_IMPORTED_MODULE_0__/* .logError */ .vV)('TIMELINE_NORMALIZATION', 'Failed to normalize document data for timeline', {
+      errorMessage: e.message
+    });
+  }
+  // --- FIM DA MODIFICAÇÃO ---
+
+  // Filter out events with invalid dates and sort all events by date, newest first.
+  return events.filter(event => event.sortableDate instanceof Date && !isNaN(event.sortableDate)).sort((a, b) => b.sortableDate - a.sortableDate);
+}
+
+/**
+ * Filters timeline events based on automation rule filters.
+ * @param {Array<object>} events - The full array of timeline events.
+ * @param {object} automationFilters - The filter settings from an automation rule.
+ * @returns {Array<object>} A new array with the filtered events.
+ */
+function filterTimelineEvents(events, automationFilters) {
+  if (!automationFilters) return events;
+  const checkText = (text, filterValue) => {
+    if (!filterValue) return true; // If filter is empty, it passes
+    const terms = filterValue.toLowerCase().split(',').map(t => t.trim()).filter(Boolean);
+    if (terms.length === 0) return true;
+    const normalizedText = normalizeString(text || '');
+    return terms.some(term => normalizedText.includes(term));
+  };
+  return events.filter(event => {
+    try {
+      switch (event.type) {
+        case 'consultation':
+          {
+            const consultFilters = automationFilters.consultations || {};
+            // Procura por um campo rotulado como CID ou CIAP para uma busca precisa.
+            const cidDetail = (event.details.details || []).find(d => normalizeString(d.label).includes('cid') || normalizeString(d.label).includes('ciap'));
+            const cidText = cidDetail ? cidDetail.value : '';
+            return checkText(event.details.specialty, consultFilters['consultation-filter-specialty']) && checkText(event.details.professional, consultFilters['consultation-filter-professional']) && checkText(cidText, consultFilters['consultation-filter-cid']);
+          }
+        case 'exam':
+          {
+            const examFilters = automationFilters.exams || {};
+            return checkText(event.details.examName, examFilters['exam-filter-name']) && checkText(event.details.professional, examFilters['exam-filter-professional']) && checkText(event.details.specialty, examFilters['exam-filter-specialty']);
+          }
+        case 'appointment':
+          {
+            const apptFilters = automationFilters.appointments || {};
+            const apptText = `${event.details.specialty} ${event.details.professional} ${event.details.location}`;
+            return checkText(apptText, apptFilters['appointment-filter-term']);
+          }
+        case 'regulation':
+          {
+            const regFilters = automationFilters.regulations || {};
+            return checkText(event.details.procedure, regFilters['regulation-filter-procedure']) && checkText(event.details.requester, regFilters['regulation-filter-requester']) && (regFilters['regulation-filter-status'] === 'todos' || !regFilters['regulation-filter-status'] || event.details.status.toUpperCase() === regFilters['regulation-filter-status'].toUpperCase()) && (regFilters['regulation-filter-priority'] === 'todas' || !regFilters['regulation-filter-priority'] || event.details.priority.toUpperCase() === regFilters['regulation-filter-priority'].toUpperCase());
+          }
+        default:
+          return true;
+      }
+    } catch (e) {
+      (0,_ErrorHandler_js__WEBPACK_IMPORTED_MODULE_0__/* .logWarning */ .FF)('TIMELINE_FILTERING', 'Error filtering timeline event, it will be included by default', {
+        eventType: event === null || event === void 0 ? void 0 : event.type,
+        errorMessage: e.message
+      });
+      return true;
+    }
+  });
+}
+
+/***/ }),
+
 /***/ 322:
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) => {
 
@@ -568,10 +998,12 @@ const sanitizeForLog = data => ErrorHandler.sanitizeForLogging(data);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   M: () => (/* binding */ store)
 /* harmony export */ });
+/* harmony import */ var _ErrorHandler_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(322);
 /**
  * @file store.js - Gestor de estado centralizado para a aplicação.
  * Implementa um padrão simples de "publish-subscribe" para gerir o estado global.
  */
+
 
 const state = {
   currentPatient: {
@@ -605,7 +1037,9 @@ const store = {
       try {
         listener();
       } catch (error) {
-        console.error('Erro num listener do store:', error);
+        (0,_ErrorHandler_js__WEBPACK_IMPORTED_MODULE_0__/* .logError */ .vV)('STORE_LISTENER', 'Erro num listener do store', {
+          errorMessage: error.message
+        });
       }
     }
   },
@@ -667,15 +1101,15 @@ const store = {
 /* harmony export */   Q: () => (/* binding */ getSortIndicator)
 /* harmony export */ });
 /* harmony import */ var bluebird__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(104);
-/* harmony import */ var _filter_config_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(733);
-/* harmony import */ var _store_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(335);
-if (61 == __webpack_require__.j) {
-	/* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(239);
-}
+/* harmony import */ var _ErrorHandler_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(322);
+/* harmony import */ var _filter_config_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(733);
+/* harmony import */ var _store_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(335);
+/* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(239);
 
 /**
  * @file Módulo SectionManager, responsável por gerir uma secção inteira da sidebar.
  */
+
 
 
 
@@ -729,11 +1163,11 @@ class SectionManager {
     this.cacheDomElements();
     this.renderFilterControls();
     this.addEventListeners();
-    _store_js__WEBPACK_IMPORTED_MODULE_2__/* .store */ .M.subscribe(() => this.onStateChange());
+    _store_js__WEBPACK_IMPORTED_MODULE_3__/* .store */ .M.subscribe(() => this.onStateChange());
   }
   onStateChange() {
     var _this$currentPatient, _this$currentPatient$, _newPatient$isenPK;
-    const patientState = _store_js__WEBPACK_IMPORTED_MODULE_2__/* .store */ .M.getPatient();
+    const patientState = _store_js__WEBPACK_IMPORTED_MODULE_3__/* .store */ .M.getPatient();
     const newPatient = patientState ? patientState.ficha : null;
     if (((_this$currentPatient = this.currentPatient) === null || _this$currentPatient === void 0 ? void 0 : (_this$currentPatient$ = _this$currentPatient.isenPK) === null || _this$currentPatient$ === void 0 ? void 0 : _this$currentPatient$.idp) !== (newPatient === null || newPatient === void 0 ? void 0 : (_newPatient$isenPK = newPatient.isenPK) === null || _newPatient$isenPK === void 0 ? void 0 : _newPatient$isenPK.idp)) {
       this.setPatient(newPatient);
@@ -776,7 +1210,7 @@ class SectionManager {
     this._listeners.onToggleBtnClick = this.onToggleBtnClick.bind(this);
     this._listeners.onToggleMoreBtnClick = this.onToggleMoreBtnClick.bind(this);
     this._listeners.onClearBtnClick = this.onClearBtnClick.bind(this);
-    this._listeners.onSectionInput = _utils_js__WEBPACK_IMPORTED_MODULE_3__/* .debounce */ .sg(this.onSectionInput.bind(this), 300);
+    this._listeners.onSectionInput = _utils_js__WEBPACK_IMPORTED_MODULE_4__/* .debounce */ .sg(this.onSectionInput.bind(this), 300);
     this._listeners.onSectionChange = this.onSectionChange.bind(this);
     this._listeners.onSectionClick = this.onSectionClick.bind(this);
 
@@ -843,7 +1277,7 @@ class SectionManager {
     var _this = this;
     return (0,bluebird__WEBPACK_IMPORTED_MODULE_0__.coroutine)(function* () {
       if (!_this.currentPatient) {
-        if (_this.elements.section.style.display !== 'none') _utils_js__WEBPACK_IMPORTED_MODULE_3__/* .showMessage */ .rG('Nenhum paciente selecionado.');
+        if (_this.elements.section.style.display !== 'none') _utils_js__WEBPACK_IMPORTED_MODULE_4__/* .showMessage */ .rG('Nenhum paciente selecionado.');
         return;
       }
       if (_this.isLoading) return;
@@ -871,7 +1305,10 @@ class SectionManager {
         const result = yield _this.config.fetchFunction(params);
         _this.allData = Array.isArray(result) ? result : result.jsonData || [];
       } catch (error) {
-        console.error(`Erro ao buscar dados para ${_this.sectionKey}:`, error);
+        (0,_ErrorHandler_js__WEBPACK_IMPORTED_MODULE_1__/* .logError */ .vV)('SECTION_DATA_FETCH', `Erro ao buscar dados para ${_this.sectionKey}`, {
+          sectionKey: _this.sectionKey,
+          errorMessage: error.message
+        });
         const sectionNameMap = {
           consultations: 'consultas',
           exams: 'exames',
@@ -880,7 +1317,7 @@ class SectionManager {
           documents: 'documentos'
         };
         const friendlyName = sectionNameMap[_this.sectionKey] || _this.sectionKey;
-        _utils_js__WEBPACK_IMPORTED_MODULE_3__/* .showMessage */ .rG(`Erro ao buscar ${friendlyName}. Verifique a conexão e a URL base.`);
+        _utils_js__WEBPACK_IMPORTED_MODULE_4__/* .showMessage */ .rG(`Erro ao buscar ${friendlyName}. Verifique a conexão e a URL base.`);
         _this.allData = [];
       } finally {
         _this.isLoading = false;
@@ -905,8 +1342,8 @@ class SectionManager {
     return [...data].sort((a, b) => {
       let valA, valB;
       if (key === 'date' || key === 'sortableDate') {
-        valA = a.sortableDate || _utils_js__WEBPACK_IMPORTED_MODULE_3__/* .parseDate */ ._U(a.date);
-        valB = b.sortableDate || _utils_js__WEBPACK_IMPORTED_MODULE_3__/* .parseDate */ ._U(b.date);
+        valA = a.sortableDate || _utils_js__WEBPACK_IMPORTED_MODULE_4__/* .parseDate */ ._U(a.date);
+        valB = b.sortableDate || _utils_js__WEBPACK_IMPORTED_MODULE_4__/* .parseDate */ ._U(b.date);
       } else {
         valA = (a[key] || '').toString().toLowerCase();
         valB = (b[key] || '').toString().toLowerCase();
@@ -918,7 +1355,7 @@ class SectionManager {
   }
   getFilterValues() {
     const values = {};
-    const filters = _filter_config_js__WEBPACK_IMPORTED_MODULE_1__/* .filterConfig */ .J[this.sectionKey] || [];
+    const filters = _filter_config_js__WEBPACK_IMPORTED_MODULE_2__/* .filterConfig */ .J[this.sectionKey] || [];
     filters.forEach(filter => {
       if (filter.type === 'component') return;
       const el = document.getElementById(filter.id);
@@ -969,11 +1406,11 @@ class SectionManager {
       }
     };
     const range = dateRangeDefaults[this.sectionKey] || defaultRanges[this.sectionKey];
-    if (this.elements.dateInitial) this.elements.dateInitial.valueAsDate = _utils_js__WEBPACK_IMPORTED_MODULE_3__/* .calculateRelativeDate */ .Z9(range.start);
-    if (this.elements.dateFinal) this.elements.dateFinal.valueAsDate = _utils_js__WEBPACK_IMPORTED_MODULE_3__/* .calculateRelativeDate */ .Z9(range.end);
+    if (this.elements.dateInitial) this.elements.dateInitial.valueAsDate = _utils_js__WEBPACK_IMPORTED_MODULE_4__/* .calculateRelativeDate */ .Z9(range.start);
+    if (this.elements.dateFinal) this.elements.dateFinal.valueAsDate = _utils_js__WEBPACK_IMPORTED_MODULE_4__/* .calculateRelativeDate */ .Z9(range.end);
     // --- FIM DA CORREÇÃO ---
 
-    (_filter_config_js__WEBPACK_IMPORTED_MODULE_1__/* .filterConfig */ .J[this.sectionKey] || []).forEach(filter => {
+    (_filter_config_js__WEBPACK_IMPORTED_MODULE_2__/* .filterConfig */ .J[this.sectionKey] || []).forEach(filter => {
       if (filter.type === 'component') return;
       const el = document.getElementById(filter.id);
       if (el) {
@@ -1033,10 +1470,10 @@ class SectionManager {
     // eslint-disable-next-line no-alert
     const name = window.prompt('Digite um nome para o conjunto de filtros:');
     if (!name || name.trim() === '') {
-      _utils_js__WEBPACK_IMPORTED_MODULE_3__/* .showMessage */ .rG('Nome inválido. O filtro não foi salvo.');
+      _utils_js__WEBPACK_IMPORTED_MODULE_4__/* .showMessage */ .rG('Nome inválido. O filtro não foi salvo.');
       return;
     }
-    const savedSets = _store_js__WEBPACK_IMPORTED_MODULE_2__/* .store */ .M.getSavedFilterSets();
+    const savedSets = _store_js__WEBPACK_IMPORTED_MODULE_3__/* .store */ .M.getSavedFilterSets();
     if (!savedSets[this.sectionKey]) {
       savedSets[this.sectionKey] = [];
     }
@@ -1054,14 +1491,14 @@ class SectionManager {
     browser.storage.local.set({
       savedFilterSets: savedSets
     });
-    _store_js__WEBPACK_IMPORTED_MODULE_2__/* .store */ .M.setSavedFilterSets(savedSets);
-    _utils_js__WEBPACK_IMPORTED_MODULE_3__/* .showMessage */ .rG(`Filtro "${name}" salvo com sucesso.`, 'success');
+    _store_js__WEBPACK_IMPORTED_MODULE_3__/* .store */ .M.setSavedFilterSets(savedSets);
+    _utils_js__WEBPACK_IMPORTED_MODULE_4__/* .showMessage */ .rG(`Filtro "${name}" salvo com sucesso.`, 'success');
   }
   loadFilterSet() {
     const select = document.getElementById(`${this.prefix}-saved-filters-select`);
     const name = select.value;
     if (!name) return;
-    const set = (_store_js__WEBPACK_IMPORTED_MODULE_2__/* .store */ .M.getSavedFilterSets()[this.sectionKey] || []).find(s => s.name === name);
+    const set = (_store_js__WEBPACK_IMPORTED_MODULE_3__/* .store */ .M.getSavedFilterSets()[this.sectionKey] || []).find(s => s.name === name);
     if (!set) return;
     Object.entries(set.values).forEach(([id, value]) => {
       const el = document.getElementById(id);
@@ -1078,27 +1515,27 @@ class SectionManager {
     const select = document.getElementById(`${this.prefix}-saved-filters-select`);
     const name = select.value;
     if (!name) {
-      _utils_js__WEBPACK_IMPORTED_MODULE_3__/* .showMessage */ .rG('Selecione um filtro para apagar.');
+      _utils_js__WEBPACK_IMPORTED_MODULE_4__/* .showMessage */ .rG('Selecione um filtro para apagar.');
       return;
     }
 
     // eslint-disable-next-line no-alert
     const confirmation = window.confirm(`Tem certeza que deseja apagar o filtro "${name}"?`);
     if (!confirmation) return;
-    const savedSets = _store_js__WEBPACK_IMPORTED_MODULE_2__/* .store */ .M.getSavedFilterSets();
+    const savedSets = _store_js__WEBPACK_IMPORTED_MODULE_3__/* .store */ .M.getSavedFilterSets();
     savedSets[this.sectionKey] = (savedSets[this.sectionKey] || []).filter(set => set.name !== name);
     browser.storage.local.set({
       savedFilterSets: savedSets
     });
-    _store_js__WEBPACK_IMPORTED_MODULE_2__/* .store */ .M.setSavedFilterSets(savedSets);
-    _utils_js__WEBPACK_IMPORTED_MODULE_3__/* .showMessage */ .rG(`Filtro "${name}" apagado.`, 'success');
+    _store_js__WEBPACK_IMPORTED_MODULE_3__/* .store */ .M.setSavedFilterSets(savedSets);
+    _utils_js__WEBPACK_IMPORTED_MODULE_4__/* .showMessage */ .rG(`Filtro "${name}" apagado.`, 'success');
   }
   populateSavedFilterDropdown() {
     const select = document.getElementById(`${this.prefix}-saved-filters-select`);
     if (!select) return;
     const currentSelection = select.value;
     select.innerHTML = '<option value="">Carregar filtro...</option>';
-    const sets = _store_js__WEBPACK_IMPORTED_MODULE_2__/* .store */ .M.getSavedFilterSets()[this.sectionKey] || [];
+    const sets = _store_js__WEBPACK_IMPORTED_MODULE_3__/* .store */ .M.getSavedFilterSets()[this.sectionKey] || [];
     sets.forEach(set => {
       const option = document.createElement('option');
       option.value = set.name;
@@ -1109,7 +1546,7 @@ class SectionManager {
   }
   renderFilterControls() {
     try {
-      const sectionFilters = _filter_config_js__WEBPACK_IMPORTED_MODULE_1__/* .filterConfig */ .J[this.sectionKey] || [];
+      const sectionFilters = _filter_config_js__WEBPACK_IMPORTED_MODULE_2__/* .filterConfig */ .J[this.sectionKey] || [];
       const sectionLayout = this.globalSettings.filterLayout[this.sectionKey] || [];
       const layoutMap = new Map(sectionLayout.map(f => [f.id, f]));
       const sortedItems = [...sectionFilters].sort((a, b) => {
@@ -1137,7 +1574,10 @@ class SectionManager {
         }
       });
     } catch (e) {
-      console.error(`Erro ao renderizar filtros para ${this.sectionKey}:`, e);
+      (0,_ErrorHandler_js__WEBPACK_IMPORTED_MODULE_1__/* .logError */ .vV)('SECTION_FILTER_RENDER', `Erro ao renderizar filtros para ${this.sectionKey}`, {
+        sectionKey: this.sectionKey,
+        errorMessage: e.message
+      });
     }
   }
   createUiComponent(componentName) {
@@ -1194,10 +1634,10 @@ class SectionManager {
         end
       } = filterSettings.dateRange;
       if (this.elements.dateInitial && start !== null && !isNaN(start)) {
-        this.elements.dateInitial.valueAsDate = _utils_js__WEBPACK_IMPORTED_MODULE_3__/* .calculateRelativeDate */ .Z9(start);
+        this.elements.dateInitial.valueAsDate = _utils_js__WEBPACK_IMPORTED_MODULE_4__/* .calculateRelativeDate */ .Z9(start);
       }
       if (this.elements.dateFinal && end !== null && !isNaN(end)) {
-        this.elements.dateFinal.valueAsDate = _utils_js__WEBPACK_IMPORTED_MODULE_3__/* .calculateRelativeDate */ .Z9(end);
+        this.elements.dateFinal.valueAsDate = _utils_js__WEBPACK_IMPORTED_MODULE_4__/* .calculateRelativeDate */ .Z9(end);
       }
     }
     // --- FIM DA CORREÇÃO ---
@@ -1351,14 +1791,19 @@ function _fetchRegulationPriorities() {
     try {
       const response = yield fetch(url);
       if (!response.ok) {
-        console.error('Não foi possível buscar as prioridades de regulação.');
+        (0,_ErrorHandler_js__WEBPACK_IMPORTED_MODULE_1__/* .logWarning */ .FF)('SIGSS_API', 'Não foi possível buscar as prioridades de regulação', {
+          status: response.status,
+          statusText: response.statusText
+        });
         return [];
       }
       const data = yield response.json();
       // Filtra apenas as ativas e ordena pela ordem de exibição definida no sistema
       return data.filter(p => p.coreIsAtivo === 't').sort((a, b) => a.coreOrdemExibicao - b.coreOrdemExibicao);
     } catch (error) {
-      console.error('Erro de rede ao buscar prioridades:', error);
+      (0,_ErrorHandler_js__WEBPACK_IMPORTED_MODULE_1__/* .logError */ .vV)('SIGSS_API', 'Erro de rede ao buscar prioridades', {
+        errorMessage: error.message
+      });
       return []; // Retorna lista vazia em caso de falha de rede
     }
   });
@@ -1381,7 +1826,10 @@ function _clearRegulationLock() {
     reguIds
   }) {
     if (!reguIdp || !reguIds) {
-      console.warn('[Assistente] IDs da regulação não fornecidos para limpeza de lock.');
+      (0,_ErrorHandler_js__WEBPACK_IMPORTED_MODULE_1__/* .logWarning */ .FF)('REGULATION_LOCK', 'IDs da regulação não fornecidos para limpeza de lock', {
+        hasReguIdp: !!reguIdp,
+        hasReguIds: !!reguIds
+      });
       return false;
     }
     try {
@@ -1398,15 +1846,23 @@ function _clearRegulationLock() {
         body: `lock=${lockId}`
       });
       if (response.ok) {
-        console.log(`[Assistente] Lock da regulação ${lockId} liberado com sucesso.`);
+        (0,_ErrorHandler_js__WEBPACK_IMPORTED_MODULE_1__/* .logInfo */ .fH)('REGULATION_LOCK', 'Lock da regulação liberado com sucesso', {
+          lockIdProvided: !!lockId
+        });
         return true;
       } else {
-        console.warn(`[Assistente] Falha ao liberar lock da regulação ${lockId}: ${response.status} ${response.statusText}`);
+        (0,_ErrorHandler_js__WEBPACK_IMPORTED_MODULE_1__/* .logWarning */ .FF)('REGULATION_LOCK', 'Falha ao liberar lock da regulação', {
+          status: response.status,
+          statusText: response.statusText,
+          lockIdProvided: !!lockId
+        });
         return false;
       }
     } catch (error) {
       // Ignora erros conforme solicitado
-      console.warn('[Assistente] Erro ao liberar lock da regulação:', error);
+      (0,_ErrorHandler_js__WEBPACK_IMPORTED_MODULE_1__/* .logWarning */ .FF)('REGULATION_LOCK', 'Erro ao liberar lock da regulação', {
+        errorMessage: error.message
+      });
       return false;
     }
   });
@@ -1654,7 +2110,9 @@ function _fetchVisualizaUsuario() {
       const patientData = yield response.json();
       return (patientData === null || patientData === void 0 ? void 0 : patientData.usuarioServico) || {};
     } else {
-      console.error('A resposta do servidor não foi JSON. Provável expiração de sessão.');
+      (0,_ErrorHandler_js__WEBPACK_IMPORTED_MODULE_1__/* .logError */ .vV)('SESSION_MANAGEMENT', 'A resposta do servidor não foi JSON. Provável expiração de sessão', {
+        contentType
+      });
       throw new Error('A sessão pode ter expirado. Por favor, faça login no sistema novamente.');
     }
   });
@@ -1900,7 +2358,10 @@ function _fetchCadsusData() {
       }
     });
     if (!response.ok) {
-      console.warn(`A busca no CADSUS falhou com status ${response.status}.`);
+      (0,_ErrorHandler_js__WEBPACK_IMPORTED_MODULE_1__/* .logWarning */ .FF)('CADSUS_API', 'A busca no CADSUS falhou', {
+        status: response.status,
+        statusText: response.statusText
+      });
       return null;
     }
     const data = yield response.json();
@@ -1941,7 +2402,12 @@ function _fetchAppointmentDetails() {
       }
     });
     if (!response.ok) {
-      console.error(`Falha ao buscar detalhes do agendamento ${idp}-${ids}`);
+      (0,_ErrorHandler_js__WEBPACK_IMPORTED_MODULE_1__/* .logError */ .vV)('SIGSS_API', 'Falha ao buscar detalhes do agendamento', {
+        status: response.status,
+        statusText: response.statusText,
+        hasIdp: !!idp,
+        hasIds: !!ids
+      });
       return null;
     }
     const data = yield response.json();
@@ -2059,7 +2525,10 @@ function _fetchAppointments() {
               };
             }
           } catch (error) {
-            console.warn(`Falha ao buscar detalhes para o agendamento ${appt.id}`, error);
+            (0,_ErrorHandler_js__WEBPACK_IMPORTED_MODULE_1__/* .logWarning */ .FF)('SIGSS_API', 'Falha ao buscar detalhes para o agendamento', {
+              appointmentId: appt.id,
+              errorMessage: error.message
+            });
           }
           return appt;
         });
@@ -2213,7 +2682,10 @@ function _fetchAllRegulations() {
               attachments
             };
           } catch (error) {
-            console.warn(`Falha ao buscar anexos para regulação ${regulation.id}:`, error);
+            (0,_ErrorHandler_js__WEBPACK_IMPORTED_MODULE_1__/* .logWarning */ .FF)('SIGSS_API', 'Falha ao buscar anexos para regulação', {
+              regulationId: regulation.id,
+              errorMessage: error.message
+            });
             return {
               ...regulation,
               attachments: []
@@ -2480,7 +2952,9 @@ function _fetchAllTimelineData() {
         }
         return result.value; // For others
       }
-      console.warn('Falha em chamada de API para a timeline:', result.reason);
+      (0,_ErrorHandler_js__WEBPACK_IMPORTED_MODULE_1__/* .logWarning */ .FF)('TIMELINE_API', 'Falha em chamada de API para a timeline', {
+        reason: result.reason
+      });
       return defaultValue;
     };
     const timelineData = {};
@@ -2507,14 +2981,22 @@ function _keepSessionAlive() {
         }
       });
       if (!response.ok) {
-        console.warn(`Keep-alive falhou com status ${response.status}`);
+        (0,_ErrorHandler_js__WEBPACK_IMPORTED_MODULE_1__/* .logWarning */ .FF)('SESSION_MANAGEMENT', 'Keep-alive falhou', {
+          status: response.status,
+          statusText: response.statusText
+        });
         return false;
       }
       const data = yield response.json();
-      console.log('Sessão mantida ativa:', data);
+      (0,_ErrorHandler_js__WEBPACK_IMPORTED_MODULE_1__/* .logInfo */ .fH)('SESSION_MANAGEMENT', 'Sessão mantida ativa', {
+        sessionActive: true,
+        hasSessionData: !!data
+      });
       return true;
     } catch (error) {
-      console.error('Erro ao manter sessão ativa:', error);
+      (0,_ErrorHandler_js__WEBPACK_IMPORTED_MODULE_1__/* .logError */ .vV)('SESSION_MANAGEMENT', 'Erro ao manter sessão ativa', {
+        errorMessage: error.message
+      });
       return false;
     }
   });
@@ -2535,9 +3017,7 @@ function _keepSessionAlive() {
 /* harmony export */   zL: () => (/* binding */ renderDocuments)
 /* harmony export */ });
 /* harmony import */ var _SectionManager_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(338);
-if (61 == __webpack_require__.j) {
-	/* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(239);
-}
+/* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(239);
 /**
  * @file Contém todas as funções responsáveis por gerar o HTML dos resultados.
  */

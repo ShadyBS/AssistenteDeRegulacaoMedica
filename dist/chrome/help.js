@@ -1,1 +1,26 @@
-(()=>{"use strict";document.addEventListener("DOMContentLoaded",()=>{const e=document.querySelectorAll("main section"),t=document.querySelectorAll("#toc a"),o=new IntersectionObserver(e=>{e.forEach(e=>{const o=e.target.getAttribute("id"),r=document.querySelector(`#toc a[href='#${o}']`);e.isIntersecting&&e.intersectionRatio>.5&&(t.forEach(e=>e.classList.remove("active")),r&&r.classList.add("active"))})},{rootMargin:"0px 0px -50% 0px",threshold:.5});e.forEach(e=>{o.observe(e)})})})();
+/******/ (() => { // webpackBootstrap
+/******/ 	"use strict";
+document.addEventListener('DOMContentLoaded', () => {
+  const sections = document.querySelectorAll('main section');
+  const tocLinks = document.querySelectorAll('#toc a');
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      const id = entry.target.getAttribute('id');
+      const tocLink = document.querySelector(`#toc a[href='#${id}']`);
+      if (entry.isIntersecting && entry.intersectionRatio > 0.5) {
+        tocLinks.forEach(link => link.classList.remove('active'));
+        if (tocLink) {
+          tocLink.classList.add('active');
+        }
+      }
+    });
+  }, {
+    rootMargin: '0px 0px -50% 0px',
+    threshold: 0.5
+  });
+  sections.forEach(section => {
+    observer.observe(section);
+  });
+});
+/******/ })()
+;

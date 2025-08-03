@@ -8,12 +8,15 @@
 /* unused harmony export TimelineManager */
 /* harmony import */ var bluebird__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(104);
 /* harmony import */ var _api_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(574);
-/* harmony import */ var _renderers_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(690);
-/* harmony import */ var _store_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(335);
+/* harmony import */ var _ErrorHandler_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(322);
+/* harmony import */ var _renderers_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(690);
+/* harmony import */ var _store_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(335);
+/* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(239);
 
 /**
  * @file Módulo TimelineManager, responsável por gerir a secção da Linha do Tempo.
  */
+
 
 
 
@@ -170,7 +173,9 @@ class TimelineManager {
         _this.allData = normalizedData;
         _this.render();
       } catch (error) {
-        console.error('Erro ao buscar dados para a Linha do Tempo:', error);
+        logError('TIMELINE_DATA_FETCH', 'Erro ao buscar dados para a Linha do Tempo', {
+          errorMessage: error.message
+        });
         Renderers.renderTimeline([], 'error');
       } finally {
         _this.isLoading = false;
@@ -350,11 +355,6 @@ class TimelineManager {
 /******/ 	/* webpack/runtime/hasOwnProperty shorthand */
 /******/ 	(() => {
 /******/ 		__webpack_require__.o = (obj, prop) => (Object.prototype.hasOwnProperty.call(obj, prop))
-/******/ 	})();
-/******/ 	
-/******/ 	/* webpack/runtime/runtimeId */
-/******/ 	(() => {
-/******/ 		__webpack_require__.j = 583;
 /******/ 	})();
 /******/ 	
 /******/ 	/* webpack/runtime/jsonp chunk loading */

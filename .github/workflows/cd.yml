@@ -138,7 +138,7 @@ jobs:
         run: |
           VERSION="${{ needs.pre-release-check.outputs.version }}"
           
-          # Update main manifest
+          # Update main manifest (Chrome)
           jq --arg version "$VERSION" '.version = $version' manifest.json > manifest.tmp.json
           mv manifest.tmp.json manifest.json
           
@@ -146,6 +146,12 @@ jobs:
           if [ -f "manifest-edge.json" ]; then
             jq --arg version "$VERSION" '.version = $version' manifest-edge.json > manifest-edge.tmp.json
             mv manifest-edge.tmp.json manifest-edge.json
+          fi
+          
+          # Update Firefox manifest
+          if [ -f "manifest-firefox.json" ]; then
+            jq --arg version "$VERSION" '.version = $version' manifest-firefox.json > manifest-firefox.tmp.json
+            mv manifest-firefox.tmp.json manifest-firefox.json
           fi
           
           echo "📦 Updated version to $VERSION"
