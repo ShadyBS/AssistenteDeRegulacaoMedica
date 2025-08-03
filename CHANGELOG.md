@@ -1,5 +1,10 @@
 # Changelog
 
+Todas as mudanças notáveis do projeto serão documentadas neste arquivo.
+
+O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/),
+e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
+
 ## [Unreleased]
 
 ### ✨ Added
@@ -19,21 +24,7 @@
   - **Cross-browser consistency**: Configuração otimizada para cada navegador
   - **Build moderno**: Uso do sistema webpack moderno via `npm run package:all`
   - **Validação completa**: Manifests, segurança e performance validados
-  - **Zero breaking changes**: Funcionalidades médicas preservadasodas as mudanças notáveis do projeto serão documentadas neste arquivo.
-
-O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/),
-e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
-
-## [Unreleased]
-
-### ✨ Added
-
-- **� Manifest V3 Service Worker Migration (TASK-A-005)**: Migração completa para service workers compatíveis
-
-  - **Chrome/Edge**: Removido `"type": "module"` incompatível com service workers
-  - **Firefox**: Migrado de `"scripts"` para `"service_worker"` para conformidade Manifest V3
-  - **Cross-browser consistency**: Configuração uniforme de background scripts em todos os navegadores
-  - **Future-proof**: Preparado para atualizações futuras dos navegadores e especificações
+  - **Zero breaking changes**: Funcionalidades médicas preservadas
 
 - **🛡️ Security Validation Framework**: Implementado sistema completo de validação de mensagens (TASK-C-003)
 
@@ -53,6 +44,14 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
   - **Build funcionando**: `npm run build:all` executando com sucesso para todos os navegadores
 
 ### 🛠️ Changed
+
+- **🌐 Browser API Standardization (TASK-M-003)**: Padronização completa das APIs cross-browser
+  - **Padrão unificado**: Implementado `const api = typeof browser !== 'undefined' ? browser : chrome;` em todos os arquivos
+  - **content-script.js**: Migrado de `const api = browser;` para padrão fallback
+  - **options.js**: Migrado de `const api = window.browser || window.chrome;` para padrão fallback
+  - **ErrorHandler.js**: Substituído uso direto de `chrome.runtime` por wrapper padronizado (2 localizações)
+  - **Compatibilidade máxima**: Chrome, Firefox e Edge usando mesmo padrão de detecção de API
+  - **Zero breaking changes**: Funcionalidades médicas preservadas com melhor estabilidade cross-browser
 
 - **Scripts de release corrigidos**: `package-chrome.js` agora usa `manifest.json` em vez de `manifest-edge.json`
 - **Validação atualizada**: `validate-manifest.js` e `validate-security.js` usam `manifest.json` como arquivo principal

@@ -13,7 +13,7 @@ import { ERROR_CATEGORIES, logError, logInfo } from './ErrorHandler.js';
     ERROR_CATEGORIES.CONTENT_SCRIPT
   );
 
-  const api = browser;
+  const api = typeof browser !== 'undefined' ? browser : chrome;
   let lastProcessedReguId = null;
 
   const checkMaintenanceTab = () => {

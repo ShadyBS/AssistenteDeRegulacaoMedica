@@ -5,7 +5,7 @@ import { filterConfig } from './filter-config.js';
 import * as Utils from './utils.js';
 
 // Cross-browser API alias
-const api = window.browser || window.chrome;
+const api = typeof browser !== 'undefined' ? browser : chrome;
 
 // --- Constantes ---
 const CONFIG_VERSION = '1.3'; // Versão da estrutura de configuração

@@ -116,11 +116,9 @@ const getConfig = () => {
 
   try {
     // Detectar ambiente de desenvolvimento baseado na versão da extensão
+    const api = typeof browser !== 'undefined' ? browser : chrome;
     isDevelopment =
-      typeof chrome !== 'undefined' &&
-      chrome.runtime &&
-      chrome.runtime.getManifest &&
-      chrome.runtime.getManifest().version.includes('dev');
+      api.runtime && api.runtime.getManifest && api.runtime.getManifest().version.includes('dev');
   } catch {
     // Fallback para produção se não conseguir acessar manifest
     isDevelopment = false;
@@ -527,8 +525,9 @@ class MedicalErrorHandler {
    */
   getExtensionVersion() {
     try {
-      if (typeof chrome !== 'undefined' && chrome.runtime) {
-        return chrome.runtime.getManifest().version;
+      const api = typeof browser !== 'undefined' ? browser : chrome;
+      if (api.runtime) {
+        return api.runtime.getManifest().version;
       }
       return 'unknown';
     } catch {
