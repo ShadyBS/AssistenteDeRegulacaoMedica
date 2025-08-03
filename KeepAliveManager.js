@@ -48,7 +48,7 @@ export class KeepAliveManager {
    */
   setupAlarmListener() {
     const api = typeof browser !== 'undefined' ? browser : chrome;
-    
+
     if (api.alarms && api.alarms.onAlarm) {
       api.alarms.onAlarm.addListener((alarm) => {
         if (alarm.name === this.alarmName) {
@@ -119,7 +119,9 @@ export class KeepAliveManager {
     }
 
     this.isActive = true;
-    console.log(`Keep-alive iniciado: ${this.intervalMinutes} minutos (${this.isServiceWorker ? 'alarms' : 'setInterval'})`);
+    console.log(
+      `Keep-alive iniciado: ${this.intervalMinutes} minutos (${this.isServiceWorker ? 'alarms' : 'setInterval'})`
+    );
   }
 
   /**
@@ -127,7 +129,7 @@ export class KeepAliveManager {
    */
   async startWithAlarms() {
     const api = typeof browser !== 'undefined' ? browser : chrome;
-    
+
     if (!api.alarms) {
       console.warn('Alarms API não disponível, fallback para setInterval');
       this.startWithSetInterval();
@@ -137,13 +139,13 @@ export class KeepAliveManager {
     try {
       // Limpa alarm existente
       await api.alarms.clear(this.alarmName);
-      
+
       // Cria novo alarm
       await api.alarms.create(this.alarmName, {
         delayInMinutes: this.intervalMinutes,
-        periodInMinutes: this.intervalMinutes
+        periodInMinutes: this.intervalMinutes,
       });
-      
+
       console.log(`Alarm criado: ${this.alarmName} (${this.intervalMinutes} minutos)`);
     } catch (error) {
       console.error('Erro ao criar alarm, fallback para setInterval:', error);
@@ -183,7 +185,7 @@ export class KeepAliveManager {
    */
   async stopAlarm() {
     const api = typeof browser !== 'undefined' ? browser : chrome;
-    
+
     if (api.alarms) {
       try {
         await api.alarms.clear(this.alarmName);
