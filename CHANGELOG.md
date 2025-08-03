@@ -5,6 +5,7 @@
 ### ✨ Added
 
 - **🔄 KeepAliveManager Service Worker Migration (TASK-C-004)**: Migração completa para compatibilidade com service workers
+
   - **Hybrid Architecture**: Implementação dual que detecta automaticamente o ambiente (service worker vs background script)
   - **Chrome/Edge**: Utiliza Alarms API para manter sessões ativas em service workers
   - **Firefox**: Mantém setInterval em background scripts tradicionais

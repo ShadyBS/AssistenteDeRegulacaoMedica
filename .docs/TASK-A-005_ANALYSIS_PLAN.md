@@ -15,6 +15,7 @@
 A TASK-A-005 visa corrigir incompatibilidades na configuração de background scripts do Manifest V3, onde o uso de `"type": "module"` com service workers é **depreciado e pode causar falhas futuras**.
 
 ### Status Final da Implementação
+
 - ✅ **Chrome/Edge:** Usando `service_worker` com `"type": "module"` (CORRETO para ES6 imports)
 - ✅ **Firefox:** Migrado para `service_worker` (CONFORME Manifest V3)
 - ✅ **Background.js:** ES6 modules funcionando perfeitamente
