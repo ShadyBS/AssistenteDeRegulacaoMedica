@@ -10,13 +10,13 @@ describe('Store Medical Flow', () => {
     // Reset store state for each test
     store.clearOldData({ clearAllData: true });
     store.enableDebug(false);
-    
+
     // Mock global window for browser environment
     global.window = {
       FilterManager: undefined,
       AutomationManager: undefined,
       resetFiltersToDefault: undefined,
-      applyAutomationRules: undefined
+      applyAutomationRules: undefined,
     };
   });
 
@@ -31,15 +31,15 @@ describe('Store Medical Flow', () => {
       resetToDefault: jest.fn(),
     };
 
-    const patient1 = { 
-      id: 1, 
-      nome: 'João Silva', 
-      ficha: { isenPK: { idp: 1, ids: 1 } } 
+    const patient1 = {
+      id: 1,
+      nome: 'João Silva',
+      ficha: { isenPK: { idp: 1, ids: 1 } },
     };
-    const patient2 = { 
-      id: 2, 
-      nome: 'Maria Santos', 
-      ficha: { isenPK: { idp: 2, ids: 2 } } 
+    const patient2 = {
+      id: 2,
+      nome: 'Maria Santos',
+      ficha: { isenPK: { idp: 2, ids: 2 } },
     };
 
     // Carregar primeiro paciente
@@ -59,10 +59,10 @@ describe('Store Medical Flow', () => {
     // Mock fallback function
     window.resetFiltersToDefault = jest.fn();
 
-    const patient = { 
-      id: 1, 
-      nome: 'Test Patient', 
-      ficha: { isenPK: { idp: 1, ids: 1 } } 
+    const patient = {
+      id: 1,
+      nome: 'Test Patient',
+      ficha: { isenPK: { idp: 1, ids: 1 } },
     };
 
     await store.changePatient(patient, 'manual');
@@ -73,10 +73,10 @@ describe('Store Medical Flow', () => {
 
   test('should not add auto-detected patients to recent list', async () => {
     const initialRecentCount = store.getRecentPatients().length;
-    const autoDetectedPatient = { 
-      id: 999, 
-      nome: 'Auto Detected', 
-      ficha: { isenPK: { idp: 999, ids: 999 } } 
+    const autoDetectedPatient = {
+      id: 999,
+      nome: 'Auto Detected',
+      ficha: { isenPK: { idp: 999, ids: 999 } },
     };
 
     // Simular detecção automática
@@ -88,10 +88,10 @@ describe('Store Medical Flow', () => {
 
   test('should add manually searched patients to recent list', async () => {
     const initialRecentCount = store.getRecentPatients().length;
-    const manualPatient = { 
-      id: 888, 
-      nome: 'Manual Search', 
-      ficha: { isenPK: { idp: 888, ids: 888 } } 
+    const manualPatient = {
+      id: 888,
+      nome: 'Manual Search',
+      ficha: { isenPK: { idp: 888, ids: 888 } },
     };
 
     // Simular busca manual
@@ -106,13 +106,13 @@ describe('Store Medical Flow', () => {
     // Mock AutomationManager
     window.AutomationManager = {
       isEnabled: jest.fn(() => true),
-      applyRules: jest.fn()
+      applyRules: jest.fn(),
     };
 
-    const patient = { 
-      id: 1, 
-      nome: 'Test Patient', 
-      ficha: { isenPK: { idp: 1, ids: 1 } } 
+    const patient = {
+      id: 1,
+      nome: 'Test Patient',
+      ficha: { isenPK: { idp: 1, ids: 1 } },
     };
 
     await store.changePatient(patient, 'manual');
@@ -126,10 +126,10 @@ describe('Store Medical Flow', () => {
     // Mock fallback automation
     window.applyAutomationRules = jest.fn();
 
-    const patient = { 
-      id: 1, 
-      nome: 'Test Patient', 
-      ficha: { isenPK: { idp: 1, ids: 1 } } 
+    const patient = {
+      id: 1,
+      nome: 'Test Patient',
+      ficha: { isenPK: { idp: 1, ids: 1 } },
     };
 
     await store.changePatient(patient, 'manual');
@@ -140,10 +140,10 @@ describe('Store Medical Flow', () => {
 
   test('should work without automation (graceful degradation)', async () => {
     // Não definir nenhum automation manager
-    const patient = { 
-      id: 1, 
-      nome: 'Test Patient', 
-      ficha: { isenPK: { idp: 1, ids: 1 } } 
+    const patient = {
+      id: 1,
+      nome: 'Test Patient',
+      ficha: { isenPK: { idp: 1, ids: 1 } },
     };
 
     // Não deve dar erro
@@ -159,11 +159,11 @@ describe('Store Medical Flow', () => {
       nome: 'João Silva',
       cpf: '12345678900', // Sensível - não deve persistir
       cns: '123456789012345', // Sensível - não deve persistir
-      ficha: { 
+      ficha: {
         isenPK: { idp: 1, ids: 1 },
         nome: 'João Silva',
-        detalhes: 'médicos sensíveis' 
-      }
+        detalhes: 'médicos sensíveis',
+      },
     };
 
     store.addRecentPatient(sensitivePatient, { manual: true });
@@ -172,7 +172,7 @@ describe('Store Medical Flow', () => {
     expect(recentPatients.length).toBe(1);
 
     const savedPatient = recentPatients[0];
-    
+
     // Verificar dados seguros foram salvos
     expect(savedPatient.nome).toBe('João Silva');
     expect(savedPatient.source).toBe('manual_search');
@@ -195,7 +195,7 @@ describe('Store Medical Flow', () => {
     store.clearPatient({
       resetFiltersToDefault: false,
       reason: 'test_clear',
-      notifyListeners: false
+      notifyListeners: false,
     });
 
     // Verificar paciente foi limpo
@@ -206,26 +206,26 @@ describe('Store Medical Flow', () => {
   test('should maintain timeline temporarily when requested', (done) => {
     const patient = { id: 1, nome: 'Test Patient' };
     store.setPatient(patient, null);
-    
+
     // Simular timeline data
     store._getCurrentState = () => ({
       ...store.getState(),
       currentPatient: {
         ...store.getCurrentPatient(),
-        timeline: [{ id: 1, event: 'test' }]
-      }
+        timeline: [{ id: 1, event: 'test' }],
+      },
     });
 
     // Clear mantendo timeline temporariamente
     store.clearPatient({
       keepTimeline: true,
       keepForSeconds: 0.1, // 100ms para teste rápido
-      notifyListeners: false
+      notifyListeners: false,
     });
 
     // Timeline deve ainda existir inicialmente
     // (este teste é conceitual pois timeline não está implementada ainda)
-    
+
     setTimeout(() => {
       // Após timeout, timeline deve ter sido limpa
       done();
@@ -236,7 +236,7 @@ describe('Store Medical Flow', () => {
     const patient = {
       id: 1,
       nome: 'João Silva',
-      ficha: { isenPK: { idp: 1, ids: 1 } }
+      ficha: { isenPK: { idp: 1, ids: 1 } },
     };
 
     // Adicionar o mesmo paciente múltiplas vezes
@@ -255,14 +255,14 @@ describe('Store Medical Flow', () => {
       const patient = {
         id: i,
         nome: `Patient ${i}`,
-        ficha: { isenPK: { idp: i, ids: i } }
+        ficha: { isenPK: { idp: i, ids: i } },
       };
       store.addRecentPatient(patient, { manual: true, maxRecent: 50 });
     }
 
     // Lista deve respeitar limite de 50
     expect(store.getRecentPatients().length).toBe(50);
-    
+
     // Último paciente deve estar no início (mais recente)
     expect(store.getRecentPatients()[0].nome).toBe('Patient 60');
   });

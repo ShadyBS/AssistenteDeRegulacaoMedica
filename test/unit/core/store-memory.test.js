@@ -25,7 +25,7 @@ describe('Store Memory Management', () => {
     for (let i = 0; i < 100; i++) {
       const unsubscribe = store.subscribe(() => {}, {
         component: `test-component-${i}`,
-        description: 'Test listener'
+        description: 'Test listener',
       });
       unsubscribes.push(unsubscribe);
     }
@@ -43,7 +43,7 @@ describe('Store Memory Management', () => {
     const manyPatients = Array.from({ length: 100 }, (_, i) => ({
       id: i,
       name: `Patient ${i}`,
-      searchedAt: Date.now()
+      searchedAt: Date.now(),
     }));
 
     store.setRecentPatients(manyPatients);
@@ -62,12 +62,12 @@ describe('Store Memory Management', () => {
 
     const unsubscribe1 = store.subscribe(listener1, {
       component: 'test-component-1',
-      description: 'First test listener'
+      description: 'First test listener',
     });
 
     const unsubscribe2 = store.subscribe(listener2, {
       component: 'test-component-2',
-      description: 'Second test listener'
+      description: 'Second test listener',
     });
 
     expect(store.getDebugInfo().listenersCount).toBe(2);
@@ -83,7 +83,7 @@ describe('Store Memory Management', () => {
 
   test('should handle listener errors gracefully', () => {
     const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
-    
+
     // Adicionar listener que gera erro
     const errorListener = jest.fn(() => {
       throw new Error('Test listener error');
@@ -107,7 +107,7 @@ describe('Store Memory Management', () => {
     const unsubscribes = [];
     for (let i = 0; i < 1000; i++) {
       const unsubscribe = store.subscribe(() => {}, {
-        component: `perf-test-${i}`
+        component: `perf-test-${i}`,
       });
       unsubscribes.push(unsubscribe);
     }
@@ -127,12 +127,12 @@ describe('Store Memory Management', () => {
   test('should update memory stats when available', () => {
     // Mock performance.memory se não existir
     const originalMemory = global.performance?.memory;
-    
+
     global.performance = global.performance || {};
     global.performance.memory = {
       usedJSHeapSize: 1024 * 1024 * 10, // 10MB
       totalJSHeapSize: 1024 * 1024 * 20, // 20MB
-      jsHeapSizeLimit: 1024 * 1024 * 100 // 100MB
+      jsHeapSizeLimit: 1024 * 1024 * 100, // 100MB
     };
 
     store.enableDebug(true);

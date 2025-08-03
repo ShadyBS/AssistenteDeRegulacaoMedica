@@ -37,9 +37,9 @@ describe('Store Medical Persistence', () => {
       nome: 'João Silva',
       cpf: '12345678900', // Sensível - não deve persistir
       cns: '123456789012345', // Sensível - não deve persistir
-      ficha: { 
+      ficha: {
         isenPK: { idp: 1, ids: 1 },
-        detalhes: 'médicos sensíveis' 
+        detalhes: 'médicos sensíveis',
       },
     };
 
@@ -124,7 +124,7 @@ describe('Store Medical Persistence', () => {
     };
 
     // Tentar salvar todas as chaves
-    Object.keys(testData).forEach(key => {
+    Object.keys(testData).forEach((key) => {
       if (key === 'recentPatients') {
         store.setRecentPatients(testData[key]);
       } else if (key === 'savedFilterSets') {
@@ -175,9 +175,9 @@ describe('Store Medical Persistence', () => {
 
   test('should auto-save only specific keys', async () => {
     store.enableDebug(true);
-    
+
     const patient = { id: 1, nome: 'Test Patient', ficha: { data: 'test' } };
-    
+
     // Adicionar aos recentes (deve trigger auto-save)
     store.addRecentPatient(patient, { manual: true });
 
@@ -206,7 +206,7 @@ describe('Store Medical Persistence', () => {
 
     // Verificar dados parciais foram carregados
     expect(store.getRecentPatients()).toEqual(partialData.recentPatients);
-    
+
     // savedFilterSets deve manter valor padrão
     expect(store.getSavedFilterSets()).toEqual({});
   });
@@ -219,7 +219,7 @@ describe('Store Medical Persistence', () => {
 
     // Deve retornar objeto vazio em caso de erro
     expect(result).toEqual({});
-    
+
     // Estado do store não deve ser afetado
     expect(store.getRecentPatients()).toEqual([]);
     expect(store.getSavedFilterSets()).toEqual({});
@@ -227,9 +227,9 @@ describe('Store Medical Persistence', () => {
 
   test('should debug log persistence operations', async () => {
     const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
-    
+
     store.enableDebug(true);
-    
+
     const patient = { id: 1, nome: 'Test Patient' };
     store.addRecentPatient(patient, { manual: true });
 

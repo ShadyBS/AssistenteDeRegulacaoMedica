@@ -23,10 +23,10 @@ let nextListenerId = 1;
 
 // Medical data persistence strategy - defines what can be safely persisted
 const PERSISTENT_DATA = {
-  recentPatients: true,        // Lista de pacientes buscados manualmente
-  savedFilterSets: true,       // Conjuntos de filtros salvos pelo usuário
-  userPreferences: true,       // Configurações da extensão
-  automationRules: true        // Regras de automação configuradas
+  recentPatients: true, // Lista de pacientes buscados manualmente
+  savedFilterSets: true, // Conjuntos de filtros salvos pelo usuário
+  userPreferences: true, // Configurações da extensão
+  automationRules: true, // Regras de automação configuradas
 };
 
 export const store = {
@@ -36,7 +36,7 @@ export const store = {
     notificationCount: 0,
     listenerCount: 0,
     lastNotification: null,
-    memoryUsage: {}
+    memoryUsage: {},
   },
 
   /**
@@ -79,7 +79,9 @@ export const store = {
 
     if (this._debugMode) {
       this._updateMemoryStats();
-      console.log(`[Store] Notifying ${listeners.size} listeners (notification #${this._stats.notificationCount})`);
+      console.log(
+        `[Store] Notifying ${listeners.size} listeners (notification #${this._stats.notificationCount})`
+      );
     }
 
     for (const listener of listeners) {
@@ -89,7 +91,7 @@ export const store = {
         const metadata = listenerMetadata.get(listener);
         logError('STORE_LISTENER', 'Erro num listener do store', {
           errorMessage: error.message,
-          listenerMetadata: metadata
+          listenerMetadata: metadata,
         });
       }
     }
@@ -110,7 +112,7 @@ export const store = {
 
     for (const listener of listeners) {
       const metadata = listenerMetadata.get(listener);
-      if (metadata && (now - metadata.createdAt) > maxAge) {
+      if (metadata && now - metadata.createdAt > maxAge) {
         // Tentar detectar se listener ainda é válido
         try {
           // Test call with empty state
@@ -159,7 +161,7 @@ export const store = {
       stateSize: JSON.stringify(currentState).length,
       recentPatientsCount: currentState.recentPatients.length,
       filterSetsCount: Object.keys(currentState.savedFilterSets).length,
-      currentPatientLoaded: !!currentState.currentPatient.ficha
+      currentPatientLoaded: !!currentState.currentPatient.ficha,
     };
 
     console.log('[Store] Current state:', stats);
@@ -175,7 +177,7 @@ export const store = {
         used: Math.round(performance.memory.usedJSHeapSize / 1024 / 1024),
         total: Math.round(performance.memory.totalJSHeapSize / 1024 / 1024),
         limit: Math.round(performance.memory.jsHeapSizeLimit / 1024 / 1024),
-        timestamp: Date.now()
+        timestamp: Date.now(),
       };
     }
   },
@@ -188,7 +190,7 @@ export const store = {
       ...this._stats,
       listenersCount: listeners.size,
       debugMode: this._debugMode,
-      stateSnapshot: this.getState()
+      stateSnapshot: this.getState(),
     };
   },
 
@@ -200,7 +202,7 @@ export const store = {
       maxRecentPatients = 50,
       maxFilterSets = 20,
       clearCurrentPatient = false,
-      clearAllData = false
+      clearAllData = false,
     } = options;
 
     if (clearAllData) {
@@ -229,7 +231,7 @@ export const store = {
     if (filterKeys.length > maxFilterSets) {
       const toKeep = filterKeys.slice(0, maxFilterSets);
       const newFilterSets = {};
-      toKeep.forEach(key => {
+      toKeep.forEach((key) => {
         newFilterSets[key] = state.savedFilterSets[key];
       });
       state.savedFilterSets = newFilterSets;
@@ -240,7 +242,7 @@ export const store = {
     if (this._debugMode) {
       console.log('[Store] Old data cleared', {
         recentPatientsCount: state.recentPatients.length,
-        filterSetsCount: Object.keys(state.savedFilterSets).length
+        filterSetsCount: Object.keys(state.savedFilterSets).length,
       });
     }
   },
@@ -255,11 +257,11 @@ export const store = {
 
   clearPatient(options = {}) {
     const {
-      resetFiltersToDefault = true,  // ✅ Por padrão reseta filtros para nova análise
+      resetFiltersToDefault = true, // ✅ Por padrão reseta filtros para nova análise
       keepTimeline = false,
       keepForSeconds = 0,
       reason = 'patient_change',
-      notifyListeners = true
+      notifyListeners = true,
     } = options;
 
     if (this._debugMode) {
@@ -308,13 +310,16 @@ export const store = {
    */
   async changePatient(newPatientData, source = 'manual') {
     if (this._debugMode) {
-      console.log(`[Store] Changing patient (source: ${source}):`, newPatientData.nome || 'Unknown');
+      console.log(
+        `[Store] Changing patient (source: ${source}):`,
+        newPatientData.nome || 'Unknown'
+      );
     }
 
     // 1. Limpar análise anterior (incluindo filtros)
     this.clearPatient({
       resetFiltersToDefault: true,
-      reason: 'new_patient_analysis'
+      reason: 'new_patient_analysis',
     });
 
     // 2. Carregar novo paciente
@@ -348,8 +353,8 @@ export const store = {
    */
   addRecentPatient(patient, options = {}) {
     const {
-      manual = true,      // Apenas adiciona se foi busca manual
-      maxRecent = 50
+      manual = true, // Apenas adiciona se foi busca manual
+      maxRecent = 50,
     } = options;
 
     // Apenas adiciona se foi busca manual (não navegação casual)
@@ -362,15 +367,15 @@ export const store = {
 
     // Sanitizar dados para persistência (remover informações sensíveis)
     const safePatient = {
-      id: patient.id || (patient.ficha?.isenPK?.idp + '-' + patient.ficha?.isenPK?.ids),
-      nome: patient.nome || patient.ficha?.nome,           // Nome é necessário para UX
+      id: patient.id || patient.ficha?.isenPK?.idp + '-' + patient.ficha?.isenPK?.ids,
+      nome: patient.nome || patient.ficha?.nome, // Nome é necessário para UX
       searchedAt: Date.now(),
-      source: 'manual_search'
+      source: 'manual_search',
       // CPF, CNS, dados médicos → NUNCA salvos
     };
 
     // Remove duplicatas
-    const filtered = state.recentPatients.filter(p => p.id !== safePatient.id);
+    const filtered = state.recentPatients.filter((p) => p.id !== safePatient.id);
 
     // Adiciona no início
     state.recentPatients = [safePatient, ...filtered].slice(0, maxRecent);
@@ -389,9 +394,9 @@ export const store = {
    */
   _autoSave: (() => {
     let timeout;
-    return function(keys = []) {
+    return function (keys = []) {
       // Filtrar apenas chaves permitidas para persistência
-      const allowedKeys = keys.filter(key => PERSISTENT_DATA[key]);
+      const allowedKeys = keys.filter((key) => PERSISTENT_DATA[key]);
 
       if (allowedKeys.length === 0) {
         if (this._debugMode) {
@@ -414,13 +419,13 @@ export const store = {
     try {
       // Se não especificado, salvar apenas dados persistentes permitidos
       const defaultPersistentKeys = Object.keys(PERSISTENT_DATA).filter(
-        key => PERSISTENT_DATA[key]
+        (key) => PERSISTENT_DATA[key]
       );
 
       const keysToSave = keys || defaultPersistentKeys;
 
       // Filtrar apenas chaves permitidas para persistência
-      const allowedKeys = keysToSave.filter(key => PERSISTENT_DATA[key]);
+      const allowedKeys = keysToSave.filter((key) => PERSISTENT_DATA[key]);
 
       if (allowedKeys.length === 0) {
         if (this._debugMode) {
@@ -432,7 +437,7 @@ export const store = {
       const api = typeof browser !== 'undefined' ? browser : chrome;
       const dataToSave = {};
 
-      allowedKeys.forEach(key => {
+      allowedKeys.forEach((key) => {
         if (state[key] !== undefined) {
           dataToSave[key] = state[key];
         }
@@ -441,12 +446,15 @@ export const store = {
       await api.storage.local.set(dataToSave);
 
       if (this._debugMode) {
-        console.log('[Store] Dados médicos persistidos (sem estado de análise):', Object.keys(dataToSave));
+        console.log(
+          '[Store] Dados médicos persistidos (sem estado de análise):',
+          Object.keys(dataToSave)
+        );
       }
     } catch (error) {
       logError('STORE_PERSISTENCE', 'Erro ao salvar no storage', {
         errorMessage: error.message,
-        keys: keys || 'default'
+        keys: keys || 'default',
       });
     }
   },
@@ -457,14 +465,12 @@ export const store = {
   async loadFromStorage() {
     try {
       const api = typeof browser !== 'undefined' ? browser : chrome;
-      const persistentKeys = Object.keys(PERSISTENT_DATA).filter(
-        key => PERSISTENT_DATA[key]
-      );
+      const persistentKeys = Object.keys(PERSISTENT_DATA).filter((key) => PERSISTENT_DATA[key]);
 
       const data = await api.storage.local.get(persistentKeys);
 
       let hasChanges = false;
-      persistentKeys.forEach(key => {
+      persistentKeys.forEach((key) => {
         if (data[key] !== undefined) {
           state[key] = data[key];
           hasChanges = true;
@@ -485,7 +491,7 @@ export const store = {
       return data;
     } catch (error) {
       logError('STORE_PERSISTENCE', 'Erro ao carregar do storage', {
-        errorMessage: error.message
+        errorMessage: error.message,
       });
       return {};
     }
@@ -528,7 +534,7 @@ export const store = {
     }
 
     state.savedFilterSets[name] = { ...filterSet, savedAt: Date.now() };
-    
+
     // Auto-save para persistir filtros salvos
     this._autoSave(['savedFilterSets']);
     this._notify();
