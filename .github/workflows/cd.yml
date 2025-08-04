@@ -177,7 +177,7 @@ jobs:
         continue-on-error: true
 
       - name: 📤 Upload Release Package
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: release-${{ matrix.browser }}-${{ needs.pre-release-check.outputs.version }}
           path: dist/packages/
