@@ -9,8 +9,10 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ### ✨ Added
 
+- **🔧 automation**: implementa solução completa para fluxo obrigatório agents.md
+- **🔧 automation**: implementa automação completa do fluxo agents.md
 - **🔧 SelectGroup Filter Support**: Implementado suporte completo para filtros tipo `selectGroup` nas seções de agendamentos e regulação
-  
+
   - **Visual Consistency**: Filtros `selectGroup` agora possuem contorno visual idêntico aos elementos `select` tradicionais
   - **Renderização Radio Buttons**: `selectGroup` renderizado como radio buttons com aparência de combobox
   - **Event Handling**: Suporte completo para eventos de mudança em radio buttons
