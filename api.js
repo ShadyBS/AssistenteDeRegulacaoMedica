@@ -76,10 +76,40 @@ function getTextFromHTML(htmlString) {
 
 /**
  * Busca as configurações de prioridade de regulação do sistema.
+ * Utiliza cache de sessão que é invalidado automaticamente se a baseUrl mudar.
  * @returns {Promise<Array<object>>} Uma lista de objetos de prioridade.
  */
 export async function fetchRegulationPriorities() {
-  const baseUrl = await getBaseUrl();
+  let baseUrl;
+  try {
+    baseUrl = await getBaseUrl();
+  } catch (error) {
+    if (error.message === 'URL_BASE_NOT_CONFIGURED') {
+      logInfo(
+        'Busca de prioridades adiada: URL base não configurada.',
+        null,
+        ERROR_CATEGORIES.SIGSS_API
+      );
+      return []; // Retorna vazio para não quebrar a UI, tentará novamente na próxima chamada.
+    }
+    throw error; // Lança outros erros.
+  }
+
+  const CACHE_KEY = `regulation_priorities_${baseUrl}`;
+
+  try {
+    const cachedData = sessionStorage.getItem(CACHE_KEY);
+    if (cachedData) {
+      return JSON.parse(cachedData);
+    }
+  } catch (e) {
+    logWarning(
+      'Falha ao ler cache de prioridades da sessão',
+      { error: e.message },
+      ERROR_CATEGORIES.STORAGE
+    );
+  }
+
   const url = new URL(`${baseUrl}/sigss/configuracaoGravidade/loadConfiguracaoRegra`);
 
   try {
@@ -107,19 +137,32 @@ export async function fetchRegulationPriorities() {
     }
 
     const data = await response.json();
-    // Filtra apenas as ativas e ordena pela ordem de exibição definida no sistema
-    return data
+    const priorities = data
       .filter((p) => p.coreIsAtivo === 't')
       .sort((a, b) => a.coreOrdemExibicao - b.coreOrdemExibicao);
+
+    try {
+      sessionStorage.setItem(CACHE_KEY, JSON.stringify(priorities));
+    } catch (e) {
+      logWarning(
+        'Falha ao salvar cache de prioridades na sessão',
+        { error: e.message },
+        ERROR_CATEGORIES.STORAGE
+      );
+    }
+
+    return priorities;
   } catch (error) {
+    // Em caso de erro de rede ou qualquer outra exceção durante o fetch,
+    // registra o erro, mas retorna uma lista vazia para não quebrar a UI.
     logError(
-      'Erro de rede ao buscar prioridades',
+      'Erro de rede ou exceção ao buscar prioridades',
       {
         errorMessage: error.message,
       },
       ERROR_CATEGORIES.SIGSS_API
     );
-    return []; // Retorna lista vazia em caso de falha de rede
+    return []; // Retorna lista vazia em caso de falha de rede ou outra exceção.
   }
 }
 

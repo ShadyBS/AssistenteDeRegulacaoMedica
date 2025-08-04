@@ -7,6 +7,11 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased]
 
+### 🐞 Fixed
+
+- **API**: Corrigido `fetchRegulationPriorities` para ser mais robusto a falhas de rede e sessões expiradas, retornando sempre uma lista vazia para não quebrar a UI.
+- **Cache**: A chave do cache de prioridades agora inclui a `baseUrl`, garantindo que o cache seja invalidado automaticamente quando a URL do sistema muda.
+
 ### ✨ Added
 
 - **🔧 automation**: implementa solução completa para fluxo obrigatório agents.md
