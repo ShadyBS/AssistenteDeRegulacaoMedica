@@ -97,7 +97,7 @@ describe('ErrorHandler', () => {
       const sanitized = sanitizeForLog(longString);
 
       expect(sanitized).toHaveLength(103); // 100 chars + "..."
-      expect(sanitized).toEndWith('...');
+      expect(sanitized).toMatch(/\.\.\.$/);
     });
 
     test('lida com nested objects', () => {

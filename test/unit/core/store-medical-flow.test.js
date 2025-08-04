@@ -5,19 +5,17 @@
 
 import { store } from '../../../store.js';
 
+
 describe('Store Medical Flow', () => {
   beforeEach(() => {
     // Reset store state for each test
     store.clearOldData({ clearAllData: true });
     store.enableDebug(false);
 
-    // Mock global window for browser environment
-    global.window = {
-      FilterManager: undefined,
-      AutomationManager: undefined,
-      resetFiltersToDefault: undefined,
-      applyAutomationRules: undefined,
-    };
+    // Limpa apenas propriedades específicas do window, preservando mocks globais
+    window.FilterManager = undefined;
+    window.AutomationManager = undefined;
+    // Não sobrescrever window.resetFiltersToDefault nem window.applyAutomationRules (mantém jest.fn do setup.js)
   });
 
   afterEach(() => {

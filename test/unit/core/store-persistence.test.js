@@ -5,30 +5,35 @@
 
 import { store } from '../../../store.js';
 
+
 describe('Store Medical Persistence', () => {
-  let mockChromeStorage;
 
   beforeEach(() => {
     // Reset store state for each test
     store.clearOldData({ clearAllData: true });
     store.enableDebug(false);
-
-    // Mock Chrome Storage API
-    mockChromeStorage = {
-      local: {
+    // Garante que global.chrome existe
+    if (!global.chrome) global.chrome = {};
+    // Garante que global.chrome.storage existe
+    if (!global.chrome.storage) global.chrome.storage = {};
+    // Garante que global.chrome.storage.local existe
+    if (!global.chrome.storage.local) {
+      // Cria um mock básico se não existir
+      global.chrome.storage.local = {
         set: jest.fn().mockResolvedValue(undefined),
         get: jest.fn().mockResolvedValue({}),
-      },
-    };
-    global.chrome = { storage: mockChromeStorage };
-    global.browser = undefined; // Force Chrome API usage
+        remove: jest.fn().mockResolvedValue(undefined),
+        clear: jest.fn().mockResolvedValue(undefined)
+      };
+    }
+    // Limpa mocks do chrome.storage.local
+    Object.values(global.chrome.storage.local).forEach(fn => fn && fn.mockClear && fn.mockClear());
   });
 
   afterEach(() => {
     // Cleanup
     store.clearOldData({ clearAllData: true });
-    delete global.chrome;
-    delete global.browser;
+    jest.clearAllMocks();
   });
 
   test('should only persist allowed medical data', async () => {
@@ -51,7 +56,7 @@ describe('Store Medical Persistence', () => {
     await new Promise((resolve) => setTimeout(resolve, 1100));
 
     // Verificar que apenas dados seguros foram salvos
-    expect(mockChromeStorage.local.set).toHaveBeenCalledWith({
+    expect(global.chrome.storage.local.set).toHaveBeenCalledWith({
       recentPatients: [
         expect.objectContaining({
           id: expect.any(Number), // ID pode ser número
@@ -62,7 +67,7 @@ describe('Store Medical Persistence', () => {
     });
 
     // Verificar que dados sensíveis NÃO foram salvos
-    const savedData = mockChromeStorage.local.set.mock.calls[0][0];
+    const savedData = global.chrome.storage.local.set.mock.calls[0][0];
     expect(savedData.currentPatient).toBeUndefined();
     expect(savedData.recentPatients[0].cpf).toBeUndefined();
     expect(savedData.recentPatients[0].cns).toBeUndefined();
@@ -76,7 +81,7 @@ describe('Store Medical Persistence', () => {
     await store.saveToStorage();
 
     // currentPatient nunca deve ser salvo
-    expect(mockChromeStorage.local.set).not.toHaveBeenCalledWith(
+    expect(global.chrome.storage.local.set).not.toHaveBeenCalledWith(
       expect.objectContaining({
         currentPatient: expect.anything(),
       })
@@ -90,7 +95,7 @@ describe('Store Medical Persistence', () => {
       savedFilterSets: { favorito: { status: 'all' } },
     };
 
-    mockChromeStorage.local.get.mockResolvedValue(persistedData);
+    global.chrome.storage.local.get.mockResolvedValue(persistedData);
 
     // Carregar dados
     await store.loadFromStorage();
@@ -106,7 +111,7 @@ describe('Store Medical Persistence', () => {
   test('should handle storage errors gracefully', async () => {
     // Mock storage error
     const storageError = new Error('Storage quota exceeded');
-    mockChromeStorage.local.set.mockRejectedValue(storageError);
+    global.chrome.storage.local.set.mockRejectedValue(storageError);
 
     const patient = { id: 1, nome: 'Test Patient' };
     store.addRecentPatient(patient, { manual: true });
@@ -135,13 +140,13 @@ describe('Store Medical Persistence', () => {
     await store.saveToStorage(Object.keys(testData));
 
     // Verificar que apenas chaves permitidas foram salvas
-    expect(mockChromeStorage.local.set).toHaveBeenCalledWith({
+    expect(global.chrome.storage.local.set).toHaveBeenCalledWith({
       recentPatients: testData.recentPatients,
       savedFilterSets: testData.savedFilterSets,
       // currentPatient e secretKey NÃO devem estar presentes
     });
 
-    const savedData = mockChromeStorage.local.set.mock.calls[0][0];
+    const savedData = global.chrome.storage.local.set.mock.calls[0][0];
     expect(savedData.currentPatient).toBeUndefined();
     expect(savedData.secretKey).toBeUndefined();
   });
@@ -170,7 +175,7 @@ describe('Store Medical Persistence', () => {
     await store.saveToStorage(['nonExistentKey', 'anotherInvalidKey']);
 
     // Storage não deve ser chamado
-    expect(mockChromeStorage.local.set).not.toHaveBeenCalled();
+    expect(global.chrome.storage.local.set).not.toHaveBeenCalled();
   });
 
   test('should auto-save only specific keys', async () => {
@@ -185,11 +190,11 @@ describe('Store Medical Persistence', () => {
     await new Promise((resolve) => setTimeout(resolve, 1100));
 
     // Verificar que apenas recentPatients foi salvo
-    expect(mockChromeStorage.local.set).toHaveBeenCalledWith({
+    expect(global.chrome.storage.local.set).toHaveBeenCalledWith({
       recentPatients: expect.any(Array),
     });
 
-    const savedData = mockChromeStorage.local.set.mock.calls[0][0];
+    const savedData = global.chrome.storage.local.set.mock.calls[0][0];
     expect(Object.keys(savedData)).toEqual(['recentPatients']);
   });
 
@@ -200,7 +205,7 @@ describe('Store Medical Persistence', () => {
       // savedFilterSets ausente
     };
 
-    mockChromeStorage.local.get.mockResolvedValue(partialData);
+    global.chrome.storage.local.get.mockResolvedValue(partialData);
 
     await store.loadFromStorage();
 
@@ -213,7 +218,7 @@ describe('Store Medical Persistence', () => {
 
   test('should return empty object on load error', async () => {
     const loadError = new Error('Storage access denied');
-    mockChromeStorage.local.get.mockRejectedValue(loadError);
+    global.chrome.storage.local.get.mockRejectedValue(loadError);
 
     const result = await store.loadFromStorage();
 

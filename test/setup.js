@@ -6,18 +6,42 @@
  */
 
 // Setup environment
+// Padronizar mocks de console para garantir isolamento entre testes
+const originalConsole = global.console || {};
 global.console = {
-  ...console,
-  // Sempre manter logs de erro, mesmo em testes
-  error: jest.fn(console.error),
-  warn: jest.fn(console.warn),
-  // Silenciar logs normais em testes, exceto se explicitamente habilitado
-  log: process.env.JEST_VERBOSE ? jest.fn(console.log) : jest.fn(),
-  info: process.env.JEST_VERBOSE ? jest.fn(console.info) : jest.fn(),
-  debug: process.env.JEST_VERBOSE ? jest.fn(console.debug) : jest.fn()
+  ...originalConsole,
+  error: originalConsole.error && originalConsole.error.mockClear ? originalConsole.error : jest.fn(),
+  warn: originalConsole.warn && originalConsole.warn.mockClear ? originalConsole.warn : jest.fn(),
+  log: originalConsole.log && originalConsole.log.mockClear ? originalConsole.log : jest.fn(),
+  info: originalConsole.info && originalConsole.info.mockClear ? originalConsole.info : jest.fn(),
+  debug: originalConsole.debug && originalConsole.debug.mockClear ? originalConsole.debug : jest.fn()
 };
 
-// Mock de APIs do Browser
+
+// Mock de APIs do Browser (chrome.storage.local compatível com callback e Promise)
+function createChromeStorageMock() {
+  return {
+    get: jest.fn((...args) => {
+      let callback = args[1];
+      if (typeof args[0] === 'function') callback = args[0];
+      if (typeof callback === 'function') callback({});
+      return Promise.resolve({});
+    }),
+    set: jest.fn((items, callback) => {
+      if (typeof callback === 'function') callback();
+      return Promise.resolve();
+    }),
+    remove: jest.fn((keys, callback) => {
+      if (typeof callback === 'function') callback();
+      return Promise.resolve();
+    }),
+    clear: jest.fn((callback) => {
+      if (typeof callback === 'function') callback();
+      return Promise.resolve();
+    })
+  };
+}
+
 global.chrome = {
   runtime: {
     id: 'test-extension-id',
@@ -34,26 +58,8 @@ global.chrome = {
     getURL: jest.fn((path) => `chrome-extension://test-id/${path}`),
     reload: jest.fn()
   },
-    
   storage: {
-    local: {
-      get: jest.fn((keys, callback) => {
-        if (typeof keys === 'function') {
-          callback = keys;
-          keys = null;
-        }
-        callback({});
-      }),
-      set: jest.fn((items, callback) => {
-        if (callback) callback();
-      }),
-      remove: jest.fn((keys, callback) => {
-        if (callback) callback();
-      }),
-      clear: jest.fn((callback) => {
-        if (callback) callback();
-      })
-    },
+    local: createChromeStorageMock(),
     session: {
       get: jest.fn((keys, callback) => {
         if (typeof keys === 'function') {
@@ -74,31 +80,29 @@ global.chrome = {
       removeListener: jest.fn()
     }
   },
-    
   tabs: {
     query: jest.fn((queryInfo, callback) => {
-      callback([{
-        id: 1,
-        url: 'https://example.com',
-        title: 'Test Tab'
-      }]);
+      callback([
+        {
+          id: 1,
+          url: 'https://example.com',
+          title: 'Test Tab'
+        }
+      ]);
     }),
     sendMessage: jest.fn(),
     executeScript: jest.fn(),
     insertCSS: jest.fn()
   },
-    
   scripting: {
     executeScript: jest.fn(),
     insertCSS: jest.fn()
   },
-    
   action: {
     setBadgeText: jest.fn(),
     setBadgeBackgroundColor: jest.fn(),
     setIcon: jest.fn()
   },
-    
   permissions: {
     contains: jest.fn((permissions, callback) => {
       callback(true);
@@ -108,6 +112,33 @@ global.chrome = {
     })
   }
 };
+
+
+// Sempre garantir mocks limpos e definidos antes de cada teste
+beforeEach(() => {
+  // Garante que global.chrome existe
+  if (!global.chrome) global.chrome = {};
+  // Garante que global.chrome.storage existe
+  if (!global.chrome.storage) global.chrome.storage = {};
+  // Só recria chrome.storage.local se não foi sobrescrito pelo teste
+  if (!global.chrome.storage.local || !global.chrome.storage.local.set || typeof global.chrome.storage.local.set !== 'function') {
+    global.chrome.storage.local = createChromeStorageMock();
+  } else {
+    // Limpa os mocks existentes
+    Object.values(global.chrome.storage.local).forEach(fn => fn && fn.mockClear && fn.mockClear());
+  }
+  // Garante que browser sempre referencia chrome
+  global.browser = global.chrome;
+  // Limpa todos os mocks de console
+  Object.values(global.console).forEach(fn => fn && fn.mockClear && fn.mockClear());
+  // Limpa mocks de funções globais usadas em store
+  if (global.window && global.window.resetFiltersToDefault && global.window.resetFiltersToDefault.mockClear) {
+    global.window.resetFiltersToDefault.mockClear();
+  }
+  if (global.window && global.window.applyAutomationRules && global.window.applyAutomationRules.mockClear) {
+    global.window.applyAutomationRules.mockClear();
+  }
+});
 
 // Mock para Firefox (browser API)
 global.browser = { ...global.chrome };
@@ -147,8 +178,10 @@ global.document = {
 };
 
 // Mock window object
+// Adiciona mocks globais para funções usadas em store-medical-flow
+const windowBase = global.window || {};
 global.window = {
-  ...global.window,
+  ...windowBase,
   location: {
     href: 'https://test.example.com',
     hostname: 'test.example.com',
@@ -170,7 +203,10 @@ global.window = {
   },
   addEventListener: jest.fn(),
   removeEventListener: jest.fn(),
-  postMessage: jest.fn()
+  postMessage: jest.fn(),
+  // Mocks para fluxos médicos do store
+  resetFiltersToDefault: jest.fn(),
+  applyAutomationRules: jest.fn()
 };
 
 // Mock fetch para testes de API
@@ -270,16 +306,8 @@ afterEach(() => {
   if (typeof global.medicalTestUtils?.validateNoDataLeaks === 'function') {
     global.medicalTestUtils.validateNoDataLeaks();
   }
-    
-  // Limpar mocks
+  // Limpar todos os mocks
   jest.clearAllMocks();
-    
-  // Reset storage mocks
-  if (global.chrome?.storage?.local) {
-    global.chrome.storage.local.get.mockClear();
-    global.chrome.storage.local.set.mockClear();
-    global.chrome.storage.local.remove.mockClear();
-  }
 });
 
 // Setup antes de todos os testes
