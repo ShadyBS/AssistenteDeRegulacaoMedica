@@ -5,7 +5,6 @@
 
 import { store } from '../../../store.js';
 
-
 describe('Store Medical Flow', () => {
   beforeEach(() => {
     // Reset store state for each test

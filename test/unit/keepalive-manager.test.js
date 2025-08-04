@@ -62,81 +62,80 @@ afterEach(() => {
 });
 
 describe('KeepAliveManager', () => {
+  function setupServiceWorkerEnv() {
+    global.mockBrowser = {
+      alarms: {
+        create: jest.fn(),
+        clear: jest.fn(),
+        onAlarm: {
+          addListener: jest.fn(),
+          removeListener: jest.fn(),
+        },
+      },
+      storage: {
+        local: {
+          set: jest.fn().mockResolvedValue({}),
+          get: jest.fn().mockResolvedValue({}),
+        },
+        sync: {
+          get: jest.fn().mockResolvedValue({ keepSessionAliveInterval: 1 }),
+        },
+        onChanged: {
+          addListener: jest.fn(),
+        },
+      },
+    };
+    global.chrome = global.mockBrowser;
+    global.browser = global.mockBrowser;
+    delete global.document;
+    delete global.window;
+    Object.defineProperty(global, 'importScripts', {
+      value: undefined,
+      writable: true,
+    });
+    global.console = {
+      ...console,
+      log: jest.fn(),
+      warn: jest.fn(),
+      error: jest.fn(),
+    };
+  }
 
-function setupServiceWorkerEnv() {
-  global.mockBrowser = {
-    alarms: {
-      create: jest.fn(),
-      clear: jest.fn(),
-      onAlarm: {
-        addListener: jest.fn(),
-        removeListener: jest.fn(),
+  function setupBackgroundEnv() {
+    global.mockBrowser = {
+      alarms: {
+        create: jest.fn(),
+        clear: jest.fn(),
+        onAlarm: {
+          addListener: jest.fn(),
+          removeListener: jest.fn(),
+        },
       },
-    },
-    storage: {
-      local: {
-        set: jest.fn().mockResolvedValue({}),
-        get: jest.fn().mockResolvedValue({}),
+      storage: {
+        local: {
+          set: jest.fn().mockResolvedValue({}),
+          get: jest.fn().mockResolvedValue({}),
+        },
+        sync: {
+          get: jest.fn().mockResolvedValue({ keepSessionAliveInterval: 1 }),
+        },
+        onChanged: {
+          addListener: jest.fn(),
+        },
       },
-      sync: {
-        get: jest.fn().mockResolvedValue({ keepSessionAliveInterval: 1 }),
-      },
-      onChanged: {
-        addListener: jest.fn(),
-      },
-    },
-  };
-  global.chrome = global.mockBrowser;
-  global.browser = global.mockBrowser;
-  delete global.document;
-  delete global.window;
-  Object.defineProperty(global, 'importScripts', {
-    value: undefined,
-    writable: true,
-  });
-  global.console = {
-    ...console,
-    log: jest.fn(),
-    warn: jest.fn(),
-    error: jest.fn(),
-  };
-}
-
-function setupBackgroundEnv() {
-  global.mockBrowser = {
-    alarms: {
-      create: jest.fn(),
-      clear: jest.fn(),
-      onAlarm: {
-        addListener: jest.fn(),
-        removeListener: jest.fn(),
-      },
-    },
-    storage: {
-      local: {
-        set: jest.fn().mockResolvedValue({}),
-        get: jest.fn().mockResolvedValue({}),
-      },
-      sync: {
-        get: jest.fn().mockResolvedValue({ keepSessionAliveInterval: 1 }),
-      },
-      onChanged: {
-        addListener: jest.fn(),
-      },
-    },
-  };
-  global.chrome = global.mockBrowser;
-  global.browser = global.mockBrowser;
-  global.document = {};
-  global.window = {};
-  global.importScripts = jest.fn();
-  global.console = {
-    ...console,
-    log: jest.fn(),
-    warn: jest.fn(),
-    error: jest.fn(),
-  };
-}
+    };
+    global.chrome = global.mockBrowser;
+    global.browser = global.mockBrowser;
+    global.document = {};
+    global.window = {};
+    global.importScripts = jest.fn();
+    global.console = {
+      ...console,
+      log: jest.fn(),
+      warn: jest.fn(),
+      error: jest.fn(),
+    };
+  }
 
   describe('Service Worker Detection', () => {
     test('should detect service worker environment when importScripts is undefined', () => {
@@ -163,7 +162,10 @@ function setupBackgroundEnv() {
       const { KeepAliveManager } = require('../../KeepAliveManager.js');
       const kam = new KeepAliveManager();
       await kam.start();
-      expect(global.mockBrowser.alarms.create).toHaveBeenCalledWith('keepalive-session', expect.objectContaining({ periodInMinutes: expect.any(Number) }));
+      expect(global.mockBrowser.alarms.create).toHaveBeenCalledWith(
+        'keepalive-session',
+        expect.objectContaining({ periodInMinutes: expect.any(Number) })
+      );
     });
 
     test('should setup alarm listener when starting in service worker environment', async () => {

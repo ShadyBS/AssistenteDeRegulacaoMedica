@@ -356,7 +356,6 @@ describe('TASK-C-003: Origin Validation', () => {
     }
   });
 
-
   test('deve rejeitar mensagens de domínios completamente externos', () => {
     const invalidUrls = [
       'https://malicious.com/sigss/regulacao',

@@ -5,9 +5,7 @@
 
 import { store } from '../../../store.js';
 
-
 describe('Store Medical Persistence', () => {
-
   beforeEach(() => {
     // Reset store state for each test
     store.clearOldData({ clearAllData: true });
@@ -23,11 +21,13 @@ describe('Store Medical Persistence', () => {
         set: jest.fn().mockResolvedValue(undefined),
         get: jest.fn().mockResolvedValue({}),
         remove: jest.fn().mockResolvedValue(undefined),
-        clear: jest.fn().mockResolvedValue(undefined)
+        clear: jest.fn().mockResolvedValue(undefined),
       };
     }
     // Limpa mocks do chrome.storage.local
-    Object.values(global.chrome.storage.local).forEach(fn => fn && fn.mockClear && fn.mockClear());
+    Object.values(global.chrome.storage.local).forEach(
+      (fn) => fn && fn.mockClear && fn.mockClear()
+    );
   });
 
   afterEach(() => {
