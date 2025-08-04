@@ -59,7 +59,9 @@ function handleFetchError(response, operation = 'API Call') {
     ERROR_CATEGORIES.SIGSS_API
   );
 
-  throw new Error('Falha na comunicação com o servidor.');
+  throw new Error(
+    `Falha na comunicação com o servidor (${response.status}: ${response.statusText}).`
+  );
 }
 
 /**
@@ -473,9 +475,11 @@ export async function searchPatients(term) {
 
 export async function fetchVisualizaUsuario({ idp, ids }) {
   if (!idp || !ids) throw new Error(`ID inválido. idp: '${idp}', ids: '${ids}'.`);
+
   const baseUrl = await getBaseUrl();
   const url = `${baseUrl}/sigss/usuarioServico/visualiza`;
   const body = `isenPK.idp=${encodeURIComponent(idp)}&isenPK.ids=${encodeURIComponent(ids)}`;
+
   const response = await fetch(url, {
     method: 'POST',
     headers: {
@@ -485,7 +489,8 @@ export async function fetchVisualizaUsuario({ idp, ids }) {
     },
     body,
   });
-  if (!response.ok) handleFetchError(response);
+
+  if (!response.ok) handleFetchError(response, 'fetchVisualizaUsuario');
 
   const contentType = response.headers.get('content-type');
   if (contentType && contentType.indexOf('application/json') !== -1) {

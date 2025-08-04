@@ -7,7 +7,23 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased]
 
-### 🐞 Fixed
+### �️ Changed
+
+- **🏥 SectionManager**: Implementado carregamento condicional baseado em modo AUTO/MANUAL (TASK-M-002)
+  - **Modo AUTO**: Quando `userPreferences.autoLoadExams = true` → executa `fetchData()` automaticamente ao selecionar paciente
+  - **Modo MANUAL**: Quando `userPreferences.autoLoadExams = false` → aguarda ação manual do usuário (botão "Buscar")
+  - **Logs informativos**: Sistema de logging que indica claramente o modo ativo para debugging
+  - **Compatibilidade total**: Funcionalidade de regras de automação e sistema de gatilhos preservados
+  - **Zero breaking changes**: Interface de configuração e comportamento existente mantidos
+
+### �🐞 Fixed
+
+- **🏥 Carregamento Automático**: Corrigido comportamento inconsistente onde pesquisas eram executadas automaticamente mesmo com "Carregamento Automático por Secção (Modo Manual)" desabilitado
+
+  - **Problema**: `SectionManager.setPatient()` executava `fetchData()` automaticamente sempre que um paciente era selecionado
+  - **Solução**: Removido carregamento automático de `setPatient()`, alinhando comportamento com `TimelineManager`
+  - **Comportamento Atual**: Carregamento apenas manual via botão "Buscar", respeitando configuração do usuário
+  - **Compatibilidade**: Mantida funcionalidade de regras de automação e carregamento via mudança de tipo de busca
 
 - **API**: Corrigido `fetchRegulationPriorities` para ser mais robusto a falhas de rede e sessões expiradas, retornando sempre uma lista vazia para não quebrar a UI.
 - **Cache**: A chave do cache de prioridades agora inclui a `baseUrl`, garantindo que o cache seja invalidado automaticamente quando a URL do sistema muda.

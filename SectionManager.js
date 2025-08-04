@@ -161,7 +161,7 @@ export class SectionManager {
   setPatient(patient) {
     this.currentPatient = patient;
     this.allData = [];
-    this.clearFilters(false); // Reseta os filtros para o padrão ao trocar de paciente.
+    this.clearFilters(false);
     this.clearAutomationFeedbackAndFilters(false);
     this.applyFiltersAndRender();
 
@@ -169,13 +169,19 @@ export class SectionManager {
       this.elements.section.style.display = patient ? 'block' : 'none';
     }
 
-    if (
-      patient &&
-      this.globalSettings.userPreferences[
-        `autoLoad${this.sectionKey.charAt(0).toUpperCase() + this.sectionKey.slice(1)}`
-      ]
-    ) {
-      this.fetchData();
+    // ✅ NOVA LÓGICA: Carregamento baseado na configuração do usuário
+    if (patient) {
+      const autoLoadKey = `autoLoad${this.sectionKey.charAt(0).toUpperCase() + this.sectionKey.slice(1)}`;
+      const isAutoMode = this.globalSettings.userPreferences[autoLoadKey];
+
+      if (isAutoMode) {
+        console.log(`[Assistente Médico] Modo AUTO: Carregando ${this.sectionKey} automaticamente`);
+        this.fetchData();
+      } else {
+        console.log(
+          `[Assistente Médico] Modo MANUAL: Aguardando ação do usuário para ${this.sectionKey}`
+        );
+      }
     }
   }
 
