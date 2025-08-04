@@ -9,6 +9,29 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ### ✨ Added
 
+- **🔧 SelectGroup Filter Support**: Implementado suporte completo para filtros tipo `selectGroup` nas seções de agendamentos e regulação
+  
+  - **Visual Consistency**: Filtros `selectGroup` agora possuem contorno visual idêntico aos elementos `select` tradicionais
+  - **Renderização Radio Buttons**: `selectGroup` renderizado como radio buttons com aparência de combobox
+  - **Event Handling**: Suporte completo para eventos de mudança em radio buttons
+  - **Filter Persistence**: Salvamento e carregamento de estados para filtros `selectGroup`
+  - **Clear Filters**: Reset correto para valor padrão em filtros do tipo `selectGroup`
+  - **Cross-browser Compatibility**: Funcionalidade testada em Chrome, Firefox e Edge
+
+### 🛠️ Changed
+
+- **SectionManager**: Refatorado `createFilterElement()` para suportar tipo `selectGroup`
+- **Filter Values**: Melhorado `getFilterValues()` para capturar corretamente valores de radio buttons
+- **Event Listeners**: Atualizado `onSectionChange()` para detectar mudanças em `input[type='radio']`
+
+### 🐞 Fixed
+
+- **Filter Rendering**: Corrigido problema onde filtros `selectGroup` não eram renderizados
+- **Visual Border**: Adicionado contorno ausente em filtros tipo combobox nas seções agendamentos e regulação
+- **Filter State**: Corrigido problema de captura de valores em filtros `selectGroup`
+
+### ✨ Added
+
 - **🏗️ Store Pattern Refactoring (TASK-M-001)**: Refatoração completa do sistema de store para melhor gerenciamento de memória
 
   - **Memory Management**: Implementação de WeakMap para listeners registry, auto-cleanup de listeners órfãos e controle de tamanho de estado

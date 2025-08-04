@@ -1,4 +1,4 @@
-import { logError, logWarning } from './ErrorHandler.js';
+import { ERROR_CATEGORIES, logError, logWarning } from './ErrorHandler.js';
 
 /**
  * Exibe um modal customizado de confirmação.
@@ -248,9 +248,14 @@ export function normalizeTimelineData(apiData) {
       });
     });
   } catch (e) {
-    logError('TIMELINE_NORMALIZATION', 'Failed to normalize consultation data for timeline', {
-      errorMessage: e.message,
-    });
+    logError(
+      'Failed to normalize consultation data for timeline',
+      {
+        errorMessage: e.message,
+        error: e,
+      },
+      ERROR_CATEGORIES.TIMELINE_NORMALIZATION
+    );
   }
 
   // Normalize Exams
@@ -278,9 +283,14 @@ export function normalizeTimelineData(apiData) {
       });
     });
   } catch (e) {
-    logError('TIMELINE_NORMALIZATION', 'Failed to normalize exam data for timeline', {
-      errorMessage: e.message,
-    });
+    logError(
+      'Failed to normalize exam data for timeline',
+      {
+        errorMessage: e.message,
+        error: e,
+      },
+      ERROR_CATEGORIES.TIMELINE_NORMALIZATION
+    );
   }
 
   // Normalize Appointments
@@ -305,9 +315,14 @@ export function normalizeTimelineData(apiData) {
       });
     });
   } catch (e) {
-    logError('TIMELINE_NORMALIZATION', 'Failed to normalize appointment data for timeline', {
-      errorMessage: e.message,
-    });
+    logError(
+      'Failed to normalize appointment data for timeline',
+      {
+        errorMessage: e.message,
+        error: e,
+      },
+      ERROR_CATEGORIES.TIMELINE_NORMALIZATION
+    );
   }
 
   // Normalize Regulations
@@ -330,9 +345,14 @@ export function normalizeTimelineData(apiData) {
       });
     });
   } catch (e) {
-    logError('TIMELINE_NORMALIZATION', 'Failed to normalize regulation data for timeline', {
-      errorMessage: e.message,
-    });
+    logError(
+      'Failed to normalize regulation data for timeline',
+      {
+        errorMessage: e.message,
+        error: e,
+      },
+      ERROR_CATEGORIES.TIMELINE_NORMALIZATION
+    );
   }
 
   // --- INÍCIO DA MODIFICAÇÃO ---
@@ -353,9 +373,14 @@ export function normalizeTimelineData(apiData) {
       });
     });
   } catch (e) {
-    logError('TIMELINE_NORMALIZATION', 'Failed to normalize document data for timeline', {
-      errorMessage: e.message,
-    });
+    logError(
+      'Failed to normalize document data for timeline',
+      {
+        errorMessage: e.message,
+        error: e,
+      },
+      ERROR_CATEGORIES.TIMELINE_NORMALIZATION
+    );
   }
   // --- FIM DA MODIFICAÇÃO ---
 

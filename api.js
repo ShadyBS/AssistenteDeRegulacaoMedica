@@ -91,13 +91,34 @@ export async function fetchRegulationPriorities() {
       });
       return [];
     }
+
+    const contentType = response.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+      const responseText = await response.text();
+      logError(
+        'Erro ao buscar prioridades: resposta não é JSON. A sessão pode ter expirado.',
+        {
+          contentType,
+          responsePreview: responseText.substring(0, 200),
+        },
+        ERROR_CATEGORIES.SIGSS_API
+      );
+      return [];
+    }
+
     const data = await response.json();
     // Filtra apenas as ativas e ordena pela ordem de exibição definida no sistema
     return data
       .filter((p) => p.coreIsAtivo === 't')
       .sort((a, b) => a.coreOrdemExibicao - b.coreOrdemExibicao);
   } catch (error) {
-    logError('SIGSS_API', 'Erro de rede ao buscar prioridades', { errorMessage: error.message });
+    logError(
+      'Erro de rede ao buscar prioridades',
+      {
+        errorMessage: error.message,
+      },
+      ERROR_CATEGORIES.SIGSS_API
+    );
     return []; // Retorna lista vazia em caso de falha de rede
   }
 }
@@ -656,12 +677,16 @@ export async function fetchAppointmentDetails({ idp, ids }) {
   });
 
   if (!response.ok) {
-    logError('SIGSS_API', 'Falha ao buscar detalhes do agendamento', {
-      status: response.status,
-      statusText: response.statusText,
-      hasIdp: !!idp,
-      hasIds: !!ids,
-    });
+    logError(
+      'Falha ao buscar detalhes do agendamento',
+      {
+        status: response.status,
+        statusText: response.statusText,
+        hasIdp: !!idp,
+        hasIds: !!ids,
+      },
+      ERROR_CATEGORIES.SIGSS_API
+    );
     return null;
   }
   const data = await response.json();
@@ -1189,7 +1214,14 @@ export async function keepSessionAlive() {
     });
     return true;
   } catch (error) {
-    logError('SESSION_MANAGEMENT', 'Erro ao manter sessão ativa', { errorMessage: error.message });
+    logError(
+      'Erro ao manter sessão ativa',
+      {
+        errorMessage: error.message,
+        error: error,
+      },
+      ERROR_CATEGORIES.SESSION_MANAGEMENT
+    );
     return false;
   }
 }

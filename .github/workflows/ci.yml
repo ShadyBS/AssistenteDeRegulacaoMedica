@@ -1,15 +1,15 @@
 # Continuous Integration Pipeline for Browser Extension
-name: "CI - Browser Extension"
+name: 'CI - Browser Extension'
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [main, develop]
   pull_request:
-    branches: [ main ]
+    branches: [main]
   workflow_call:
     outputs:
       build-status:
-        description: "Build status"
+        description: 'Build status'
         value: ${{ jobs.final-validation.outputs.status }}
 
 env:
@@ -20,23 +20,23 @@ jobs:
   # ===============================
   # STAGE 1: VALIDATION & QUALITY
   # ===============================
-  
+
   validate:
     name: 🔍 Validation & Security
     runs-on: ubuntu-latest
     outputs:
       cache-hit: ${{ steps.cache.outputs.cache-hit }}
-    
+
     steps:
       - name: 📥 Checkout Repository
         uses: actions/checkout@v4
-        
+
       - name: 🔧 Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-          
+
       - name: 📦 Cache Dependencies
         id: cache
         uses: actions/cache@v3
@@ -45,14 +45,14 @@ jobs:
           key: ${{ runner.os }}-${{ env.CACHE_KEY }}-${{ hashFiles('package-lock.json') }}
           restore-keys: |
             ${{ runner.os }}-${{ env.CACHE_KEY }}-
-            
+
       - name: 📥 Install Dependencies
         if: steps.cache.outputs.cache-hit != 'true'
         run: npm ci
-        
+
       - name: 🛡️ Security Audit
         run: npm audit --audit-level=moderate
-        
+
       - name: 🔒 Snyk Security Scan
         if: github.event_name == 'push'
         env:
@@ -64,16 +64,16 @@ jobs:
             echo "⚠️ Snyk token not found, skipping security scan"
           fi
         continue-on-error: true
-        
+
       - name: ✅ Validate Manifests
         run: npm run validate:manifest
-        
+
       - name: 🔐 Validate Permissions
         run: npm run validate:permissions
-        
+
       - name: 🛡️ Validate CSP
         run: npm run validate:csp
-        
+
       - name: 📊 Performance Validation
         run: npm run validate:performance
 
@@ -81,40 +81,40 @@ jobs:
     name: 🎨 Code Quality & Linting
     runs-on: ubuntu-latest
     needs: validate
-    
+
     steps:
       - name: 📥 Checkout Repository
         uses: actions/checkout@v4
-        
+
       - name: 🔧 Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-          
+
       - name: 📦 Restore Dependencies
         uses: actions/cache@v3
         with:
           path: node_modules
           key: ${{ runner.os }}-${{ env.CACHE_KEY }}-${{ hashFiles('package-lock.json') }}
-          
+
       - name: 📥 Install Dependencies
         if: needs.validate.outputs.cache-hit != 'true'
         run: npm ci
-        
+
       - name: 🔍 ESLint JavaScript
         run: npm run lint:js
-        
+
       - name: 🎨 StyleLint CSS
         run: npm run lint:css
-        
+
       - name: 📄 HTMLHint HTML
         run: npm run lint:html
 
   # ===============================
   # STAGE 2: TESTING
   # ===============================
-  
+
   test:
     name: 🧪 Testing Suite
     runs-on: ubuntu-latest
@@ -122,30 +122,30 @@ jobs:
     strategy:
       matrix:
         test-type: [unit, integration, e2e]
-    
+
     steps:
       - name: 📥 Checkout Repository
         uses: actions/checkout@v4
-        
+
       - name: 🔧 Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-          
+
       - name: 📦 Restore Dependencies
         uses: actions/cache@v3
         with:
           path: node_modules
           key: ${{ runner.os }}-${{ env.CACHE_KEY }}-${{ hashFiles('package-lock.json') }}
-          
+
       - name: 📥 Install Dependencies
         if: needs.validate.outputs.cache-hit != 'true'
         run: npm ci
-        
+
       - name: 🧪 Run ${{ matrix.test-type }} Tests
         run: npm run test:${{ matrix.test-type }}
-        
+
       - name: 📊 Upload Coverage
         if: matrix.test-type == 'unit'
         uses: codecov/codecov-action@v3
@@ -161,45 +161,45 @@ jobs:
     strategy:
       matrix:
         browser: [chrome, firefox, edge]
-        
+
     steps:
       - name: 📥 Checkout Repository
         uses: actions/checkout@v4
-        
+
       - name: 🔧 Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-          
+
       - name: 📦 Restore Dependencies
         uses: actions/cache@v3
         with:
           path: node_modules
           key: ${{ runner.os }}-${{ env.CACHE_KEY }}-${{ hashFiles('package-lock.json') }}
-          
+
       - name: 📥 Install Dependencies
         run: npm ci
-        
+
       - name: 🌐 Install Browser (${{ matrix.browser }})
         if: matrix.browser == 'chrome'
         run: npx playwright install chromium
-        
+
       - name: 🦊 Install Browser (${{ matrix.browser }})
         if: matrix.browser == 'firefox'
         run: npx playwright install firefox
-        
+
       - name: 🌐 Install Browser (${{ matrix.browser }})
         if: matrix.browser == 'edge'
         run: npx playwright install chromium
-        
+
       - name: 🧪 Run Cross-Browser Tests
         run: BROWSER=${{ matrix.browser }} npm run test:cross-browser
 
   # ===============================
   # STAGE 3: BUILD & OPTIMIZATION
   # ===============================
-  
+
   build:
     name: 🏗️ Build Extension
     runs-on: ubuntu-latest
@@ -207,38 +207,38 @@ jobs:
     strategy:
       matrix:
         browser: [chrome, firefox, edge]
-        
+
     steps:
       - name: 📥 Checkout Repository
         uses: actions/checkout@v4
-        
+
       - name: 🔧 Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-          
+
       - name: 📦 Restore Dependencies
         uses: actions/cache@v3
         with:
           path: node_modules
           key: ${{ runner.os }}-${{ env.CACHE_KEY }}-${{ hashFiles('package-lock.json') }}
-          
+
       - name: 📥 Install Dependencies
         run: npm ci
-        
+
       - name: 🎨 Build CSS
         run: npm run build:css
-        
+
       - name: 🏗️ Build ${{ matrix.browser }} Extension
         run: npm run build:${{ matrix.browser }}
-        
+
       - name: 📦 Cache Build Artifacts
         uses: actions/cache@v3
         with:
           path: dist/${{ matrix.browser }}
           key: build-${{ matrix.browser }}-${{ github.sha }}
-          
+
       - name: 📤 Upload Build Artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -249,7 +249,7 @@ jobs:
   # ===============================
   # STAGE 4: PACKAGING & VALIDATION
   # ===============================
-  
+
   package:
     name: 📦 Package Extensions
     runs-on: ubuntu-latest
@@ -257,41 +257,41 @@ jobs:
     strategy:
       matrix:
         browser: [chrome, firefox, edge]
-        
+
     steps:
       - name: 📥 Checkout Repository
         uses: actions/checkout@v4
-        
+
       - name: 🔧 Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-          
+
       - name: 📦 Restore Dependencies
         uses: actions/cache@v3
         with:
           path: node_modules
           key: ${{ runner.os }}-${{ env.CACHE_KEY }}-${{ hashFiles('package-lock.json') }}
-          
+
       - name: 📥 Install Dependencies
         run: npm ci
-        
+
       - name: 📦 Restore Build Artifacts
         uses: actions/cache@v3
         with:
           path: dist/${{ matrix.browser }}
           key: build-${{ matrix.browser }}-${{ github.sha }}
-          
+
       - name: 📦 Package ${{ matrix.browser }} Extension
         run: npm run package:${{ matrix.browser }}
-        
+
       - name: ✅ Validate Package
         run: |
           if [ "${{ matrix.browser }}" = "firefox" ]; then
             npx web-ext lint --source-dir=dist/${{ matrix.browser }}
           fi
-          
+
       - name: 📤 Upload Package
         uses: actions/upload-artifact@v4
         with:
@@ -302,40 +302,40 @@ jobs:
   # ===============================
   # STAGE 5: FINAL VALIDATION
   # ===============================
-  
+
   final-validation:
     name: ✅ Final Validation
     runs-on: ubuntu-latest
     needs: package
-    
+
     steps:
       - name: 📥 Checkout Repository
         uses: actions/checkout@v4
-        
+
       - name: 📦 Download All Packages
         uses: actions/download-artifact@v4
         with:
           path: packages/
-          
+
       - name: 🔍 Validate All Packages
         run: |
           echo "📦 Validating all generated packages..."
           ls -la packages/
-          
+
           # Validate package sizes
           for pkg in packages/package-*/; do
             size=$(du -sb "$pkg" | cut -f1)
             echo "Package $pkg size: $size bytes"
-            
+
             # Check Chrome Web Store size limit (128MB)
             if [ $size -gt 134217728 ]; then
               echo "❌ Package $pkg exceeds size limit"
               exit 1
             fi
           done
-          
+
           echo "✅ All packages validated successfully"
-          
+
       - name: 📊 Generate Build Report
         run: |
           echo "# 📊 Build Report" > build-report.md
@@ -346,7 +346,7 @@ jobs:
           echo "" >> build-report.md
           echo "## 📦 Generated Packages" >> build-report.md
           ls -la packages/ >> build-report.md
-          
+
       - name: 📤 Upload Build Report
         uses: actions/upload-artifact@v4
         with:
@@ -356,20 +356,20 @@ jobs:
   # ===============================
   # NOTIFICATION
   # ===============================
-  
+
   notify:
     name: 📢 Notify Results
     runs-on: ubuntu-latest
     needs: [validate, lint, test, cross-browser-test, build, package, final-validation]
     if: always()
-    
+
     steps:
       - name: 📢 Notify Success
         if: needs.final-validation.result == 'success'
         run: |
           echo "✅ CI Pipeline completed successfully!"
           echo "🎉 All validations, tests, builds and packages are ready"
-          
+
       - name: 📢 Notify Failure
         if: failure()
         run: |

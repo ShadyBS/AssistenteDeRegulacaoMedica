@@ -167,6 +167,8 @@ describe('ErrorHandler', () => {
       expect(ERROR_CATEGORIES.CADSUS_API).toBeDefined();
       expect(ERROR_CATEGORIES.MEDICAL_DATA).toBeDefined();
       expect(ERROR_CATEGORIES.SECURITY).toBeDefined();
+      expect(ERROR_CATEGORIES.SECTION_FILTER_RENDER).toBeDefined();
+      expect(ERROR_CATEGORIES.TIMELINE_NORMALIZATION).toBeDefined();
     });
 
     test('níveis de erro estão definidos', () => {

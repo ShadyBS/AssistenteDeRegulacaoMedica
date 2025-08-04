@@ -2,7 +2,7 @@
  * @file Módulo SectionManager, responsável por gerir uma secção inteira da sidebar.
  */
 
-import { logError } from './ErrorHandler.js';
+import { ERROR_CATEGORIES, logError } from './ErrorHandler.js';
 import { filterConfig } from './filter-config.js';
 import { store } from './store.js';
 import * as Utils from './utils.js';
@@ -138,7 +138,7 @@ export class SectionManager {
     }
   }
   onSectionChange(e) {
-    if (e.target.matches("select, input[type='checkbox']")) {
+    if (e.target.matches("select, input[type='checkbox'], input[type='radio']")) {
       if (e.target.closest('.filter-select-group')) {
         this.handleFetchTypeChange(e.target);
       } else {
@@ -221,10 +221,15 @@ export class SectionManager {
       const result = await this.config.fetchFunction(params);
       this.allData = Array.isArray(result) ? result : result.jsonData || [];
     } catch (error) {
-      logError('SECTION_DATA_FETCH', `Erro ao buscar dados para ${this.sectionKey}`, {
-        sectionKey: this.sectionKey,
-        errorMessage: error.message,
-      });
+      logError(
+        `Erro ao buscar dados para ${this.sectionKey}`,
+        {
+          sectionKey: this.sectionKey,
+          errorMessage: error.message,
+          error: error,
+        },
+        ERROR_CATEGORIES.SECTION_DATA_FETCH
+      );
       const sectionNameMap = {
         consultations: 'consultas',
         exams: 'exames',
@@ -274,9 +279,17 @@ export class SectionManager {
     filters.forEach((filter) => {
       if (filter.type === 'component') return;
 
-      const el = document.getElementById(filter.id);
-      if (el) {
-        values[filter.id] = el.type === 'checkbox' ? el.checked : el.value;
+      if (filter.type === 'selectGroup') {
+        // Para selectGroup (radio buttons), busca pelo que está selecionado
+        const radioSelected = document.querySelector(`input[name="${filter.id}"]:checked`);
+        if (radioSelected) {
+          values[filter.id] = radioSelected.value;
+        }
+      } else {
+        const el = document.getElementById(filter.id);
+        if (el) {
+          values[filter.id] = el.type === 'checkbox' ? el.checked : el.value;
+        }
       }
     });
     return values;
@@ -322,25 +335,47 @@ export class SectionManager {
     (filterConfig[this.sectionKey] || []).forEach((filter) => {
       if (filter.type === 'component') return;
 
-      const el = document.getElementById(filter.id);
-      if (el) {
+      if (filter.type === 'selectGroup') {
+        // Para selectGroup (radio buttons), seleciona o primeiro por padrão
         const savedFilterSettings = layoutMap.get(filter.id);
         let defaultValue;
 
         if (savedFilterSettings && savedFilterSettings.defaultValue !== undefined) {
           defaultValue = savedFilterSettings.defaultValue;
         } else {
-          defaultValue = filter.defaultChecked ?? (filter.options ? filter.options[0].value : '');
+          defaultValue = filter.options ? filter.options[0].value : '';
         }
 
-        if (el.type === 'checkbox') {
-          el.checked = defaultValue;
-        } else {
-          el.value = defaultValue;
+        const radioToCheck = document.querySelector(
+          `input[name="${filter.id}"][value="${defaultValue}"]`
+        );
+        if (radioToCheck) {
+          radioToCheck.checked = true;
+          if (radioToCheck.classList.contains('filter-select-group')) {
+            this.handleFetchTypeChange(radioToCheck);
+          }
         }
+      } else {
+        const el = document.getElementById(filter.id);
+        if (el) {
+          const savedFilterSettings = layoutMap.get(filter.id);
+          let defaultValue;
 
-        if (el.classList.contains('filter-select-group')) {
-          this.handleFetchTypeChange(el);
+          if (savedFilterSettings && savedFilterSettings.defaultValue !== undefined) {
+            defaultValue = savedFilterSettings.defaultValue;
+          } else {
+            defaultValue = filter.defaultChecked ?? (filter.options ? filter.options[0].value : '');
+          }
+
+          if (el.type === 'checkbox') {
+            el.checked = defaultValue;
+          } else {
+            el.value = defaultValue;
+          }
+
+          if (el.classList.contains('filter-select-group')) {
+            this.handleFetchTypeChange(el);
+          }
         }
       }
     });
@@ -421,14 +456,25 @@ export class SectionManager {
     if (!name) return;
     const set = (store.getSavedFilterSets()[this.sectionKey] || []).find((s) => s.name === name);
     if (!set) return;
-    Object.entries(set.values).forEach(([id, value]) => {
-      const el = document.getElementById(id);
-      if (el) {
-        if (el.type === 'checkbox') el.checked = value;
-        else el.value = value;
 
-        if (el.classList.contains('filter-select-group')) {
-          this.handleFetchTypeChange(el);
+    Object.entries(set.values).forEach(([id, value]) => {
+      // Verifica se é um filtro selectGroup (radio buttons)
+      const radioInput = document.querySelector(`input[name="${id}"][value="${value}"]`);
+      if (radioInput) {
+        radioInput.checked = true;
+        if (radioInput.classList.contains('filter-select-group')) {
+          this.handleFetchTypeChange(radioInput);
+        }
+      } else {
+        // Tenta encontrar o elemento pelo ID (para outros tipos de filtro)
+        const el = document.getElementById(id);
+        if (el) {
+          if (el.type === 'checkbox') el.checked = value;
+          else el.value = value;
+
+          if (el.classList.contains('filter-select-group')) {
+            this.handleFetchTypeChange(el);
+          }
         }
       }
     });
@@ -471,10 +517,108 @@ export class SectionManager {
     select.value = currentSelection;
   }
 
+  createFilterElement(filter) {
+    const container = document.createElement('div');
+    container.className = 'mb-2';
+
+    const label = document.createElement('label');
+    label.htmlFor = filter.id;
+    label.className = 'block text-sm font-medium text-slate-700';
+    label.textContent = filter.label;
+    container.appendChild(label);
+
+    let input;
+    switch (filter.type) {
+      case 'select':
+        input = document.createElement('select');
+        input.className =
+          'mt-1 block w-full pl-3 pr-10 py-2 text-base border-slate-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md';
+        filter.options.forEach((opt) => {
+          const option = document.createElement('option');
+          option.value = opt.value;
+          option.textContent = opt.text;
+          input.appendChild(option);
+        });
+        if (filter.isFetchTrigger) {
+          input.classList.add('filter-select-group');
+        }
+        break;
+      case 'selectGroup': {
+        // SelectGroup é renderizado como botões de radio com aparência de select
+        const radioContainer = document.createElement('div');
+        radioContainer.className =
+          'mt-1 block w-full pl-3 pr-10 py-2 text-base border border-slate-300 focus-within:outline-none focus-within:ring-blue-500 focus-within:border-blue-500 sm:text-sm rounded-md bg-white';
+        radioContainer.style.minHeight = '2.5rem'; // Mesma altura que um select
+
+        const innerWrapper = document.createElement('div');
+        innerWrapper.className = 'flex flex-wrap gap-2 items-center';
+
+        filter.options.forEach((opt, index) => {
+          const radioWrapper = document.createElement('div');
+          radioWrapper.className = 'flex items-center';
+
+          const radioInput = document.createElement('input');
+          radioInput.type = 'radio';
+          radioInput.id = `${filter.id}-${opt.value}`;
+          radioInput.name = filter.id;
+          radioInput.value = opt.value;
+          radioInput.className = 'h-4 w-4 text-blue-600 border-slate-300 focus:ring-blue-500';
+          radioInput.classList.add('filter-select-group');
+
+          // Primeira opção selecionada por padrão
+          if (index === 0) {
+            radioInput.checked = true;
+          }
+
+          const radioLabel = document.createElement('label');
+          radioLabel.htmlFor = `${filter.id}-${opt.value}`;
+          radioLabel.className = 'ml-2 block text-sm text-slate-900 cursor-pointer';
+          radioLabel.textContent = opt.text;
+
+          radioWrapper.appendChild(radioInput);
+          radioWrapper.appendChild(radioLabel);
+          innerWrapper.appendChild(radioWrapper);
+        });
+
+        radioContainer.appendChild(innerWrapper);
+        container.appendChild(radioContainer);
+        return container;
+      }
+      case 'text':
+        input = document.createElement('input');
+        input.type = 'text';
+        input.placeholder = filter.placeholder || '';
+        input.className =
+          'mt-1 block w-full px-3 py-2 bg-white border border-slate-300 rounded-md text-sm shadow-sm placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500';
+        break;
+      case 'checkbox':
+        // Checkbox tem um layout diferente
+        container.innerHTML = `
+          <div class="flex items-center">
+            <input id="${filter.id}" type="checkbox" class="h-4 w-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500">
+            <label for="${filter.id}" class="ml-2 block text-sm text-slate-900">${filter.label}</label>
+          </div>
+        `;
+        return container;
+      default:
+        return null;
+    }
+
+    input.id = filter.id;
+    container.appendChild(input);
+    return container;
+  }
+
   renderFilterControls() {
     try {
       const sectionFilters = filterConfig[this.sectionKey] || [];
-      const sectionLayout = this.globalSettings.filterLayout[this.sectionKey] || [];
+      const filterLayout =
+        this.globalSettings && typeof this.globalSettings.filterLayout === 'object'
+          ? this.globalSettings.filterLayout
+          : {};
+      const sectionLayout = Array.isArray(filterLayout[this.sectionKey])
+        ? filterLayout[this.sectionKey]
+        : [];
       const layoutMap = new Map(sectionLayout.map((f) => [f.id, f]));
 
       const sortedItems = [...sectionFilters].sort((a, b) => {
@@ -503,11 +647,39 @@ export class SectionManager {
           }
         }
       });
+
+      // Popula dinamicamente as prioridades de regulação
+      this.populateRegulationPriorities();
     } catch (e) {
-      logError('SECTION_FILTER_RENDER', `Erro ao renderizar filtros para ${this.sectionKey}`, {
-        sectionKey: this.sectionKey,
-        errorMessage: e.message,
-      });
+      logError(
+        `Erro ao renderizar filtros para ${this.sectionKey}`,
+        {
+          sectionKey: this.sectionKey,
+          errorMessage: e.message,
+          error: e,
+        },
+        ERROR_CATEGORIES.SECTION_FILTER_RENDER
+      );
+    }
+  }
+
+  populateRegulationPriorities() {
+    if (this.sectionKey === 'regulations' && this.globalSettings?.regulationPriorities) {
+      const prioritySelect = document.getElementById('regulation-filter-priority');
+      if (prioritySelect) {
+        // Limpa as opções existentes exceto a primeira ("Todas")
+        while (prioritySelect.children.length > 1) {
+          prioritySelect.removeChild(prioritySelect.lastChild);
+        }
+
+        // Adiciona as prioridades dinâmicas
+        this.globalSettings.regulationPriorities.forEach((priority) => {
+          const option = document.createElement('option');
+          option.value = priority;
+          option.textContent = priority;
+          prioritySelect.appendChild(option);
+        });
+      }
     }
   }
 

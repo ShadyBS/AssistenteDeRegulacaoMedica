@@ -46,6 +46,20 @@ export const ERROR_CATEGORIES = {
   // UI/UX
   USER_INTERFACE: 'user_interface',
   USER_INPUT: 'user_input',
+
+  // Seções específicas
+  SECTION_FILTER_RENDER: 'section_filter_render',
+  SECTION_DATA_FETCH: 'section_data_fetch',
+  TIMELINE_DATA_FETCH: 'timeline_data_fetch',
+  TIMELINE_NORMALIZATION: 'timeline_normalization',
+  PATIENT_LOADING: 'patient_loading',
+  INITIALIZATION: 'initialization',
+  REGULATION_PROCESSING: 'regulation_processing',
+  CLIPBOARD_OPERATION: 'clipboard_operation',
+  DOCUMENT_ACCESS: 'document_access',
+  REGULATION_ATTACHMENT: 'regulation_attachment',
+  REGULATION_PENDING_CHECK: 'regulation_pending_check',
+  SESSION_MANAGEMENT: 'session_management',
 };
 
 /**
@@ -403,23 +417,29 @@ class MedicalErrorHandler {
   outputToConsole(level, logEntry) {
     const prefix = `[Assistente Médico ${logEntry.category}]`;
     const message = `${prefix} ${logEntry.message}`;
+    const data = logEntry.data;
+
+    // Para Edge, que pode ter problemas com objetos no console, serializa se não for dev
+    const isDevelopment = this.config.minLevel === ERROR_LEVELS.DEBUG;
+    const dataToLog =
+      !isDevelopment && typeof data === 'object' && data !== null ? JSON.stringify(data) : data;
 
     switch (level) {
       case ERROR_LEVELS.TRACE:
       case ERROR_LEVELS.DEBUG:
-        console.debug(message, logEntry.data);
+        console.debug(message, dataToLog);
         break;
       case ERROR_LEVELS.INFO:
-        console.info(message, logEntry.data);
+        console.info(message, dataToLog);
         break;
       case ERROR_LEVELS.WARN:
-        console.warn(message, logEntry.data);
+        console.warn(message, dataToLog);
         break;
       case ERROR_LEVELS.ERROR:
-        console.error(message, logEntry.data);
+        console.error(message, dataToLog);
         break;
       case ERROR_LEVELS.FATAL:
-        console.error(`🚨 FATAL: ${message}`, logEntry.data);
+        console.error(`🚨 FATAL: ${message}`, dataToLog);
         break;
     }
   }

@@ -1,10 +1,10 @@
-name: "Security Scan"
+name: 'Security Scan'
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [main, develop]
   pull_request:
-    branches: [ main ]
+    branches: [main]
   schedule:
     # Run security scan daily at 2 AM UTC
     - cron: '0 2 * * *'
@@ -17,25 +17,25 @@ jobs:
   security-scan:
     name: 🔒 Security Analysis
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: 📥 Checkout Repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          
+
       - name: 🔧 Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-          
+
       - name: 📥 Install Dependencies
         run: npm ci
-        
+
       - name: 🛡️ Run Security Validation
         run: npm run validate:security
-        
+
       - name: 📊 Upload Security Report
         if: always()
         uses: actions/upload-artifact@v4
@@ -43,11 +43,11 @@ jobs:
           name: security-report-${{ github.sha }}
           path: security-report.json
           retention-days: 30
-          
+
       - name: 🔒 Dependency Security Audit
         run: npm audit --audit-level=moderate
         continue-on-error: true
-        
+
       - name: 🛡️ Snyk Security Scan
         if: github.event_name != 'pull_request'
         env:
@@ -60,7 +60,7 @@ jobs:
             echo "⚠️ Snyk token not configured"
           fi
         continue-on-error: true
-        
+
       - name: 📤 Upload Snyk Report
         if: always() && hashFiles('snyk-report.json') != ''
         uses: actions/upload-artifact@v4
@@ -76,125 +76,125 @@ jobs:
       actions: read
       contents: read
       security-events: write
-      
+
     strategy:
       fail-fast: false
       matrix:
-        language: [ 'javascript' ]
-        
+        language: ['javascript']
+
     steps:
       - name: 📥 Checkout Repository
         uses: actions/checkout@v4
-        
+
       - name: 🔍 Initialize CodeQL
         uses: github/codeql-action/init@v2
         with:
           languages: ${{ matrix.language }}
           queries: security-extended,security-and-quality
-          
+
       - name: 🔧 Autobuild
         uses: github/codeql-action/autobuild@v2
-        
+
       - name: 🔍 Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v2
         with:
-          category: "/language:${{matrix.language}}"
+          category: '/language:${{matrix.language}}'
 
   medical-compliance:
     name: 🏥 Medical Data Compliance
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: 📥 Checkout Repository
         uses: actions/checkout@v4
-        
+
       - name: 🔧 Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-          
+
       - name: 📥 Install Dependencies
         run: npm ci
-        
+
       - name: 🏥 GDPR/LGPD Compliance Check
         run: |
           echo "🏥 Checking medical data compliance..."
-          
+
           # Check for sensitive data patterns
           if grep -r "cpf\|sus\|cns" --include="*.js" . | grep -v "test\|spec"; then
             echo "⚠️ Found potential medical identifiers in code"
             echo "Ensure proper data sanitization and GDPR compliance"
           fi
-          
+
           # Check for console.log with sensitive data
           if grep -r "console\.log.*\(cpf\|sus\|cns\|password\)" --include="*.js" .; then
             echo "❌ Found potential sensitive data logging"
             exit 1
           fi
-          
+
           # Check for localStorage usage
           if grep -r "localStorage" --include="*.js" . | grep -v "test\|spec"; then
             echo "⚠️ Found localStorage usage - ensure medical data uses secure storage"
           fi
-          
+
           echo "✅ Medical compliance checks passed"
-          
+
       - name: 🔐 CSP Validation
         run: |
           echo "🔐 Validating Content Security Policy..."
-          
+
           # Check manifest CSP
           if ! grep -q "content_security_policy" manifest.json; then
             echo "❌ No CSP defined in manifest"
             exit 1
           fi
-          
+
           # Check for unsafe CSP directives
           if grep -q "unsafe-eval\|unsafe-inline" manifest.json; then
             echo "❌ Unsafe CSP directives found"
             exit 1
           fi
-          
+
           echo "✅ CSP validation passed"
-          
+
       - name: 📊 Generate Compliance Report
         run: |
           cat > compliance-report.md << 'EOF'
           # Medical Data Compliance Report
-          
-          **Extension:** Assistente de Regulação Médica  
-          **Date:** $(date -u)  
+
+          **Extension:** Assistente de Regulação Médica
+          **Date:** $(date -u)
           **Commit:** ${{ github.sha }}
-          
+
           ## ✅ Compliance Checks
-          
+
           - [x] GDPR/LGPD data handling
           - [x] No sensitive data logging
           - [x] Secure storage implementation
           - [x] Content Security Policy
           - [x] Medical data anonymization
           - [x] Session-only data retention
-          
+
           ## 🔒 Security Measures
-          
+
           - Extension uses browser.storage.session for temporary data
           - No persistent storage of medical identifiers
           - CSP prevents code injection attacks
           - Input validation on all user data
           - Secure communication with SIGSS system
-          
+
           ## 📋 Recommendations
-          
+
           - Regular security audits
           - Keep dependencies updated
           - Monitor for data breaches
           - User privacy training for healthcare staff
-          
+
           ---
           Generated by automated compliance check
           EOF
-          
+
       - name: 📤 Upload Compliance Report
         uses: actions/upload-artifact@v4
         with:
@@ -207,13 +207,13 @@ jobs:
     runs-on: ubuntu-latest
     needs: [security-scan, code-scanning, medical-compliance]
     if: always()
-    
+
     steps:
       - name: 📥 Download Security Reports
         uses: actions/download-artifact@v4
         with:
           path: security-reports/
-          
+
       - name: 📊 Generate Security Summary
         run: |
           echo "# 🔒 Security Scan Summary" > security-summary.md
@@ -222,28 +222,28 @@ jobs:
           echo "**Commit:** ${{ github.sha }}" >> security-summary.md
           echo "**Branch:** ${{ github.ref_name }}" >> security-summary.md
           echo "" >> security-summary.md
-          
+
           echo "## 📋 Scan Results" >> security-summary.md
           echo "" >> security-summary.md
-          
+
           if [ "${{ needs.security-scan.result }}" = "success" ]; then
             echo "- ✅ Security Validation: PASSED" >> security-summary.md
           else
             echo "- ❌ Security Validation: FAILED" >> security-summary.md
           fi
-          
+
           if [ "${{ needs.code-scanning.result }}" = "success" ]; then
             echo "- ✅ CodeQL Analysis: PASSED" >> security-summary.md
           else
             echo "- ❌ CodeQL Analysis: FAILED" >> security-summary.md
           fi
-          
+
           if [ "${{ needs.medical-compliance.result }}" = "success" ]; then
             echo "- ✅ Medical Compliance: PASSED" >> security-summary.md
           else
             echo "- ❌ Medical Compliance: FAILED" >> security-summary.md
           fi
-          
+
           echo "" >> security-summary.md
           echo "## 🏥 Medical Extension Specific" >> security-summary.md
           echo "" >> security-summary.md
@@ -251,7 +251,7 @@ jobs:
           echo "- GDPR/LGPD compliance: Verified" >> security-summary.md
           echo "- Data anonymization: Implemented" >> security-summary.md
           echo "- Secure communication: HTTPS only" >> security-summary.md
-          
+
           echo "" >> security-summary.md
           echo "## 📋 Next Steps" >> security-summary.md
           echo "" >> security-summary.md
@@ -259,20 +259,20 @@ jobs:
           echo "2. Update dependencies with vulnerabilities" >> security-summary.md
           echo "3. Address any compliance violations" >> security-summary.md
           echo "4. Schedule next security review" >> security-summary.md
-          
+
           cat security-summary.md
-          
+
       - name: 📤 Upload Security Summary
         uses: actions/upload-artifact@v4
         with:
           name: security-summary-${{ github.sha }}
           path: security-summary.md
           retention-days: 90
-          
+
       - name: 📢 Security Status
         run: |
-          if [ "${{ needs.security-scan.result }}" = "success" ] && 
-             [ "${{ needs.code-scanning.result }}" = "success" ] && 
+          if [ "${{ needs.security-scan.result }}" = "success" ] &&
+             [ "${{ needs.code-scanning.result }}" = "success" ] &&
              [ "${{ needs.medical-compliance.result }}" = "success" ]; then
             echo "✅ All security checks passed!"
             exit 0

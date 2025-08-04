@@ -797,13 +797,15 @@ api.action.onClicked.addListener(openSidebar);
 
 // Initialize KeepAliveManager
 const keepAliveManager = new KeepAliveManager();
-keepAliveManager.start().catch((error) => {
+try {
+  keepAliveManager.start();
+} catch (error) {
   logError(
     'Falha ao inicializar KeepAliveManager',
     { errorMessage: error.message },
     ERROR_CATEGORIES.BACKGROUND_SCRIPT
   );
-});
+}
 
 api.runtime.onInstalled.addListener((details) => {
   logInfo(

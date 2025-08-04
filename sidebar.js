@@ -10,7 +10,7 @@
 const api = typeof browser !== 'undefined' ? browser : typeof chrome !== 'undefined' ? chrome : {};
 import * as API from './api.js';
 import './browser-polyfill.js';
-import { logError, logInfo, logWarning } from './ErrorHandler.js';
+import { ERROR_CATEGORIES, logError, logInfo, logWarning } from './ErrorHandler.js';
 import { defaultFieldConfig } from './field-config.js';
 import * as Renderers from './renderers.js';
 import { SectionManager } from './SectionManager.js';
@@ -341,9 +341,14 @@ async function selectPatient(patientInfo, forceRefresh = false) {
     await updateRecentPatients(store.getPatient());
   } catch (error) {
     Utils.showMessage(error.message, 'error');
-    logError('PATIENT_LOADING', 'Erro ao carregar dados do paciente', {
-      errorMessage: error.message,
-    });
+    logError(
+      'Erro ao carregar dados do paciente',
+      {
+        errorMessage: error.message,
+        error: error,
+      },
+      ERROR_CATEGORIES.PATIENT_LOADING
+    );
     store.clearPatient();
   } finally {
     Utils.toggleLoader(false);
@@ -389,9 +394,14 @@ async function init() {
 
       // **não retornamos mais aqui**, apenas marcamos que deu “fallback”
     } else {
-      logError('INITIALIZATION', 'Falha na inicialização da extensão', {
-        errorMessage: error.message,
-      });
+      logError(
+        'Falha na inicialização da extensão',
+        {
+          errorMessage: error.message,
+          error: error,
+        },
+        ERROR_CATEGORIES.INITIALIZATION
+      );
       Utils.showMessage('Ocorreu um erro inesperado ao iniciar a extensão.', 'error');
       // nesse caso você pode querer return ou throw de verdade
       return;
@@ -615,9 +625,14 @@ async function handleRegulationLoaded(regulationData) {
   } catch (error) {
     currentRegulationData = null;
     Utils.showMessage(`Erro ao processar a regulação: ${error.message}`, 'error');
-    logError('REGULATION_PROCESSING', 'Erro ao processar a regulação', {
-      errorMessage: error.message,
-    });
+    logError(
+      'Erro ao processar a regulação',
+      {
+        errorMessage: error.message,
+        error: error,
+      },
+      ERROR_CATEGORIES.REGULATION_PROCESSING
+    );
   } finally {
     Utils.toggleLoader(false);
   }
@@ -821,7 +836,14 @@ async function copyToClipboard(button) {
     await navigator.clipboard.writeText(textToCopy);
     if (document.body.contains(original)) original.textContent = '✅';
   } catch (err) {
-    logError('CLIPBOARD_OPERATION', 'Falha ao copiar texto', { errorMessage: err.message });
+    logError(
+      'Falha ao copiar texto',
+      {
+        errorMessage: err.message,
+        error: err,
+      },
+      ERROR_CATEGORIES.CLIPBOARD_OPERATION
+    );
     if (document.body.contains(original)) original.textContent = '❌';
   } finally {
     setTimeout(() => {
@@ -860,14 +882,19 @@ async function handleViewDocument(button) {
     const docUrl = await API.fetchDocumentUrl({ idp, ids });
     api.tabs.create({ url: docUrl || 'about:blank' });
     if (!docUrl) {
-      logWarning('DOCUMENT_ACCESS', 'URL do documento não encontrada', { idp, ids });
+      logWarning('URL do documento não encontrada', { idp, ids }, ERROR_CATEGORIES.DOCUMENT_ACCESS);
     }
   } catch (error) {
-    logError('DOCUMENT_ACCESS', 'Falha ao visualizar documento', {
-      idp,
-      ids,
-      errorMessage: error.message,
-    });
+    logError(
+      'Falha ao visualizar documento',
+      {
+        idp,
+        ids,
+        errorMessage: error.message,
+        error: error,
+      },
+      ERROR_CATEGORIES.DOCUMENT_ACCESS
+    );
   }
 }
 
@@ -880,14 +907,23 @@ async function handleViewRegulationAttachment(button) {
       // Use browser extension API instead of window.open
       await api.tabs.create({ url: fileUrl });
     } else {
-      logWarning('REGULATION_ATTACHMENT', 'URL do anexo não encontrada', { idp, ids });
+      logWarning(
+        'URL do anexo não encontrada',
+        { idp, ids },
+        ERROR_CATEGORIES.REGULATION_ATTACHMENT
+      );
     }
   } catch (error) {
-    logError('REGULATION_ATTACHMENT', 'Erro ao carregar anexo da regulação', {
-      idp,
-      ids,
-      errorMessage: error.message,
-    });
+    logError(
+      'Erro ao carregar anexo da regulação',
+      {
+        idp,
+        ids,
+        errorMessage: error.message,
+        error: error,
+      },
+      ERROR_CATEGORIES.REGULATION_ATTACHMENT
+    );
   }
 }
 
@@ -1045,9 +1081,14 @@ async function checkForPendingRegulation() {
       await api.storage.local.remove('pendingRegulation');
     }
   } catch (e) {
-    logError('REGULATION_PENDING_CHECK', 'Erro ao verificar regulação pendente', {
-      errorMessage: e.message,
-    });
+    logError(
+      'Erro ao verificar regulação pendente',
+      {
+        errorMessage: e.message,
+        error: e,
+      },
+      ERROR_CATEGORIES.REGULATION_PENDING_CHECK
+    );
   }
 }
 

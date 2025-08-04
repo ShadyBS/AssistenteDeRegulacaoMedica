@@ -1,6 +1,6 @@
 /**
  * Configuração do Jest para Browser Extensions
- * 
+ *
  * Setup específico para testes de extensões médicas
  * com mocks dos APIs do browser e validações de compliance
  */
@@ -226,7 +226,7 @@ global.medicalTestUtils = {
   sanitizeTestData: (data) => {
     if (typeof data === 'object' && data !== null) {
       const sanitized = { ...data };
-            
+
       // Remover dados sensíveis dos testes
       const sensitiveFields = ['cpf', 'rg', 'cns', 'nome_completo', 'endereco'];
       sensitiveFields.forEach(field => {
@@ -234,12 +234,12 @@ global.medicalTestUtils = {
           sanitized[field] = '[SANITIZED]';
         }
       });
-            
+
       return sanitized;
     }
     return data;
   },
-    
+
   // Mock de dados de paciente para testes
   createMockPatient: () => ({
     id: 'TEST_PATIENT_001',
@@ -249,20 +249,20 @@ global.medicalTestUtils = {
     // Sempre usar dados fictícios nos testes
     is_test_data: true
   }),
-    
+
   // Validar se dados não vazaram em logs
   validateNoDataLeaks: () => {
     const logCalls = console.log.mock?.calls || [];
     const errorCalls = console.error.mock?.calls || [];
     const allCalls = [...logCalls, ...errorCalls];
-        
+
     const sensitivePatterns = [
       /\d{3}\.\d{3}\.\d{3}-\d{2}/, // CPF
       /\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}/, // CNPJ
       /\d{15}/, // CNS
       /[A-Z]{2}\d{7}/ // RG patterns
     ];
-        
+
     allCalls.forEach((call, index) => {
       const message = call.join(' ');
       sensitivePatterns.forEach(pattern => {
@@ -288,7 +288,7 @@ global.medicalCompliance = {
       });
     }
   },
-    
+
   // Mock de validação GDPR/LGPD
   validateGDPRCompliance: (dataUsage) => {
     const requiredFields = ['purpose', 'retention', 'consent'];
@@ -321,7 +321,7 @@ beforeAll(() => {
 afterAll(() => {
   console.log('✅ Testes concluídos');
   console.log('🔍 Verificando compliance final...');
-    
+
   // Validação final de compliance
   if (global.medicalTestUtils?.validateNoDataLeaks) {
     global.medicalTestUtils.validateNoDataLeaks();
