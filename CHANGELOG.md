@@ -10,6 +10,7 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 ### ✅ Fixed
 
 - **KeepAliveManager**: Corrigidos todos os 20 testes unitários (100% passando)
+
   - **Idempotência**: Método `start()` agora previne múltiplas inicializações
   - **Listener Management**: Adicionada propriedade `_alarmListener` para remoção correta de listeners
   - **Async Callbacks**: Listeners de alarm retornam promises adequadamente
@@ -19,6 +20,7 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
   - **Coverage**: 81.11% de cobertura de código
 
 - **Code Quality**: Aplicado `npm run lint:fix` com 100% de conformidade
+
   - **ESLint**: Zero erros de linting
   - **Prettier**: Formatação consistente aplicada
   - **StyleLint**: CSS validado e corrigido
