@@ -327,26 +327,42 @@ describe('ErrorHandler Standalone Tests', () => {
     });
 
     test('stores critical errors', async () => {
+      // Ensure browser is undefined to force chrome usage
+      global.browser = undefined;
+      
       // Setup chrome.storage.local.get to return empty initially
       global.chrome.storage.local.get.mockResolvedValueOnce({});
       global.chrome.storage.local.set.mockResolvedValueOnce();
-      
+
       const handler = getErrorHandler();
-      
-      // Force storage to be enabled
+
+      // Force storage to be enabled and console logging disabled for cleaner test
       handler.config.enableErrorStorage = true;
-      
-      await handler.logError('Critical test error', { severity: 'high' });
+      handler.config.enableConsoleLogging = false;
+
+      // Spy on the storeError method to see if it's being called
+      const storeErrorSpy = jest.spyOn(handler, 'storeError');
+
+      // Use logError method directly to ensure it goes through the proper flow
+      await handler.logError('Critical test error', { severity: 'high' }, ERROR_CATEGORIES.MEDICAL_DATA);
 
       // Wait a bit for async operations
-      await new Promise(resolve => setTimeout(resolve, 50));
+      await new Promise((resolve) => setTimeout(resolve, 100));
 
+      // First check if storeError was called
+      console.log('storeError spy calls:', storeErrorSpy.mock.calls.length);
+      console.log('chrome.storage.local.set calls:', chrome.storage.local.set.mock.calls.length);
+      console.log('handler.config:', handler.config);
+      console.log('typeof browser:', typeof global.browser);
+
+      expect(storeErrorSpy).toHaveBeenCalled();
       expect(chrome.storage.local.set).toHaveBeenCalledWith(
         expect.objectContaining({
           medicalErrors: expect.arrayContaining([
             expect.objectContaining({
               message: 'Critical test error',
               level: 'ERROR',
+              category: 'medical_data',
             }),
           ]),
         })
@@ -359,8 +375,14 @@ describe('ErrorHandler Standalone Tests', () => {
         { message: 'Error 2', level: 'FATAL', timestamp: '2024-01-01T01:00:00.000Z' },
       ];
 
-      // Mock chrome.storage.local.get to return mock errors
-      global.chrome.storage.local.get.mockResolvedValueOnce({ medicalErrors: mockErrors });
+      // Reset and configure the mock to return the specific structure
+      global.chrome.storage.local.get.mockReset();
+      global.chrome.storage.local.get.mockImplementation((key) => {
+        if (key === 'medicalErrors') {
+          return Promise.resolve({ medicalErrors: mockErrors });
+        }
+        return Promise.resolve({});
+      });
 
       const handler = getErrorHandler();
       const storedErrors = await handler.getStoredErrors();
@@ -372,7 +394,7 @@ describe('ErrorHandler Standalone Tests', () => {
     test('handles storage errors gracefully', async () => {
       // Mock storage to throw an error
       global.chrome.storage.local.get.mockRejectedValueOnce(new Error('Storage error'));
-      
+
       const handler = getErrorHandler();
       const storedErrors = await handler.getStoredErrors();
 

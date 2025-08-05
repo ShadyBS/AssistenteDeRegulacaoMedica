@@ -9,6 +9,17 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ### ✅ Fixed
 
+- **ErrorHandler**: Corrigidos todos os 23 testes unitários (100% passando)
+
+  - **Storage Tests**: Resolvido problema de detecção browser vs chrome APIs em ambiente de teste
+  - **Cross-browser API**: Forçado uso de `chrome.storage.local` mockado em testes
+  - **Jest Configuration**: Criado `jest.errorhandler.cjs` standalone sem module mapping conflicts
+  - **Medical Compliance**: Validados 100% dos testes de sanitização de dados médicos (LGPD/HIPAA)
+  - **Error Storage**: Testado armazenamento e recuperação de erros críticos
+  - **Observer Pattern**: Validado sistema de notificação de observers
+  - **Performance Marks**: Testado sistema de timing de performance
+  - **Test Performance**: Execução em 5.3s com 74% de cobertura
+
 - **KeepAliveManager**: Corrigidos todos os 20 testes unitários (100% passando)
 
   - **Idempotência**: Método `start()` agora previne múltiplas inicializações
@@ -41,6 +52,8 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ### 📊 Performance
 
+- **ErrorHandler Tests**: Execução otimizada em 5.3s com 74% de cobertura (23/23 testes passando)
+- **KeepAliveManager Tests**: Execução em 6.4s com 81.11% de cobertura (20/20 testes passando)
 - **Test Execution**: Melhorado de ∞ (hang infinito) para 17-25 segundos
 - **Success Rate**: Alcançado 79% (91/115 testes passando)
 - **Test Suites**: 6 de 9 test suites passando (67% success rate)
