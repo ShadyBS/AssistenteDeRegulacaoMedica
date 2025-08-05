@@ -171,7 +171,9 @@ export class SectionManager {
 
     // ✅ NOVA LÓGICA: Carregamento baseado na configuração do usuário
     if (patient) {
-      const autoLoadKey = `autoLoad${this.sectionKey.charAt(0).toUpperCase() + this.sectionKey.slice(1)}`;
+      const autoLoadKey = `autoLoad${
+        this.sectionKey.charAt(0).toUpperCase() + this.sectionKey.slice(1)
+      }`;
       const isAutoMode = this.globalSettings.userPreferences[autoLoadKey];
 
       if (isAutoMode) {

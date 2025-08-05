@@ -13,7 +13,7 @@
 ### ✅ O QUE JÁ EXISTE E FUNCIONA
 
 - **Interface de gatilhos**: `options.html` linhas 1030-1036 ✅ FUNCIONANDO
-- **Lógica de detecção**: `sidebar.js` linhas 649-658 ✅ FUNCIONANDO  
+- **Lógica de detecção**: `sidebar.js` linhas 649-658 ✅ FUNCIONANDO
 - **Estrutura de dados**: `rule.triggerKeywords[]` ✅ FUNCIONANDO
 - **Método de aplicação**: `SectionManager.applyAutomationFilters()` linha 734 ✅ EXISTE
 
@@ -72,7 +72,7 @@ async setPatient(patient) {
   // ✅ NOVO: Verifica modo AUTO/MANUAL para carregamento
   const autoLoadKey = `autoLoad${this.sectionKey.charAt(0).toUpperCase() + this.sectionKey.slice(1)}`;
   const isAutoMode = this.globalSettings.userPreferences[autoLoadKey];
-  
+
   if (isAutoMode && patient) {
     console.log(`[Assistente Médico] Modo AUTO: Carregando ${this.sectionKey} automaticamente`);
     this.fetchData(); // ✅ Carrega dados automaticamente no modo AUTO
@@ -85,7 +85,8 @@ async setPatient(patient) {
 ### 4. VERIFICAR SE PRECISA MODIFICAR `applyAutomationFilters()`
 
 **DESCOBERTA**: O método `applyAutomationFilters()` linha 734 **JÁ EXISTE** mas precisa verificação se respeita o modo AUTO/MANUAL.
-```
+
+````
 
 ## 📋 COMPORTAMENTO CORRETO (BASEADO NA ANÁLISE REAL)
 
@@ -111,7 +112,7 @@ async setPatient(patient) {
    ↓
 5. ✅ MODO AUTO: Dados carregados automaticamente
    ❌ MODO MANUAL: Usuário deve clicar "Buscar"
-```
+````
 
 ## 🚀 SEQUÊNCIA DE EXECUÇÃO OTIMIZADA PARA IA
 
@@ -121,7 +122,7 @@ async setPatient(patient) {
 # 1. Verificar se setPatient já está corrigido
 grep -A 10 -B 5 "setPatient(patient)" SectionManager.js
 
-# 2. Verificar configuração de autoLoad  
+# 2. Verificar configuração de autoLoad
 grep -r "autoLoad" . --include="*.js"
 ```
 
@@ -140,7 +141,7 @@ grep -r "autoLoad" . --include="*.js"
 # Executar testes
 npm run test:unit
 
-# Validar código  
+# Validar código
 npm run lint:fix
 
 # Executar validação completa
@@ -251,7 +252,7 @@ async setPatient(patient) {
   if (patient) {
     const autoLoadKey = `autoLoad${this.sectionKey.charAt(0).toUpperCase() + this.sectionKey.slice(1)}`;
     const isAutoMode = this.globalSettings.userPreferences[autoLoadKey];
-    
+
     if (isAutoMode) {
       console.log(`[Assistente Médico] Modo AUTO: Carregando ${this.sectionKey} automaticamente`);
       this.fetchData();

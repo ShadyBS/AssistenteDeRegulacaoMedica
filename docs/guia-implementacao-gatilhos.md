@@ -11,12 +11,14 @@
 ## 📋 DESCOBERTAS CRÍTICAS
 
 ### ✅ O QUE JÁ EXISTE E FUNCIONA
+
 - **Interface de gatilhos**: `options.html` linhas 1030-1036 ✅ FUNCIONANDO
-- **Lógica de detecção**: `sidebar.js` linhas 649-658 ✅ FUNCIONANDO  
+- **Lógica de detecção**: `sidebar.js` linhas 649-658 ✅ FUNCIONANDO
 - **Estrutura de dados**: `rule.triggerKeywords[]` ✅ FUNCIONANDO
 - **Método de aplicação**: `SectionManager.applyAutomationFilters()` linha 734 ✅ EXISTE
 
 ### ❌ O QUE PRECISA SER CORRIGIDO
+
 - **`SectionManager.setPatient()`**: Linha ~161 - executa automação no modo MANUAL
 - **Verificação de modo**: Falta verificar `autoLoad` antes de aplicar filtros
 
@@ -82,7 +84,7 @@ async setPatient(patient) {
   // ✅ CORREÇÃO: Verifica modo AUTO para carregamento automático do PACIENTE
   const autoLoadKey = `autoLoad${this.sectionKey.charAt(0).toUpperCase() + this.sectionKey.slice(1)}`;
   const isAutoMode = this.globalSettings.userPreferences[autoLoadKey];
-  
+
   if (isAutoMode && patient) {
     console.log(`[Assistente Médico] Modo AUTO: Carregando ${this.sectionKey} automaticamente`);
     this.fetchData(); // ✅ SEMPRE carrega no modo AUTO
@@ -113,7 +115,7 @@ async applyAutomationFilters() {
   // 🚫 MODO MANUAL: Não aplica filtros automaticamente
   const autoLoadKey = `autoLoad${this.sectionKey.charAt(0).toUpperCase() + this.sectionKey.slice(1)}`;
   const isAutoMode = this.globalSettings.userPreferences[autoLoadKey];
-  
+
   if (!isAutoMode) {
     console.log('[Assistente Médico] Modo MANUAL: Filtros de automação desabilitados');
     return;
@@ -124,7 +126,7 @@ async applyAutomationFilters() {
 
   // ✅ Apenas no MODO AUTO: usa lógica já implementada do sidebar.js
   const contextString = this.getCurrentPageContent().toLowerCase();
-  
+
   for (const rule of automationRules) {
     if (!rule.isActive) continue;
 
@@ -134,10 +136,10 @@ async applyAutomationFilters() {
 
     if (hasMatch && rule.filterSettings[this.sectionKey]) {
       console.log(`[Assistente Médico] MODO AUTO: Aplicando filtros da regra "${rule.name}" para ${this.sectionKey}`);
-      
+
       // ✅ USA O MÉTODO JÁ EXISTENTE
       this.applyAutomationFilters(rule.filterSettings[this.sectionKey], rule.name);
-      
+
       // Mostra feedback visual
       this.showAutomationFeedback([rule]);
       break; // Aplica apenas a primeira regra que faz match
@@ -155,7 +157,7 @@ getCurrentPageContent() {
     const mainContent = document.querySelector('main, .main-content, #content, .content');
     const contentText = mainContent ? mainContent.textContent : document.body.textContent;
     const titleText = document.title || '';
-    
+
     return `${titleText} ${contentText || ''}`.trim();
   } catch (error) {
     console.error('[Assistente Médico] Erro ao obter conteúdo da página:', error.message);
@@ -197,15 +199,19 @@ getCurrentPageContent() {
 ```javascript
 // Exemplo de regra salva no sistema atual
 const automationRule = {
-  id: "1640995200000",
-  name: "Cardiologia Urgente",
-  triggerKeywords: ["cardiologia", "cardio", "urgente", "infarto"], // ✅ JÁ EXISTE!
+  id: '1640995200000',
+  name: 'Cardiologia Urgente',
+  triggerKeywords: ['cardiologia', 'cardio', 'urgente', 'infarto'], // ✅ JÁ EXISTE!
   isActive: true,
   filterSettings: {
-    consultations: { /* filtros */ },
-    exams: { /* filtros */ },
+    consultations: {
+      /* filtros */
+    },
+    exams: {
+      /* filtros */
+    },
     // ... outras seções
-  }
+  },
 };
 ```
 
@@ -239,34 +245,39 @@ for (const rule of automationRules) {
 ```javascript
 // ✅ Estrutura já implementada e funcionando
 const automationRule = {
-  id: "cardiologia-urgente-001",
-  name: "Cardiologia Urgente",
-  
+  id: 'cardiologia-urgente-001',
+  name: 'Cardiologia Urgente',
+
   // 🔍 GATILHOS - sistema já implementado
   triggerKeywords: [
-    "cardiologia", "cardio", "coração", "urgente", 
-    "emergência", "infarto", "arritmia"
+    'cardiologia',
+    'cardio',
+    'coração',
+    'urgente',
+    'emergência',
+    'infarto',
+    'arritmia',
   ],
-  
+
   // Condições do paciente (já implementado)
   conditions: {
     ageMin: 18,
     ageMax: 99,
-    specialty: "cardiologia"
+    specialty: 'cardiologia',
   },
-  
+
   // Ações a executar (já implementado)
   filterSettings: {
     exams: {
-      priority: "alta",
-      status: "pendente",
-      dateRange: "last30days"
+      priority: 'alta',
+      status: 'pendente',
+      dateRange: 'last30days',
     },
     consultations: {
-      specialty: "cardiologia",
-      urgency: "alta"
-    }
-  }
+      specialty: 'cardiologia',
+      urgency: 'alta',
+    },
+  },
 };
 ```
 
@@ -274,12 +285,12 @@ const automationRule = {
 
 ### Matriz de Comportamento
 
-| Modo | Paciente | Gatilho Detectado | Filtros Aplicados | Resultado Final |
-|------|----------|-------------------|-------------------|-----------------|
-| **AUTO** | ✅ Sempre carrega | ❌ Não | ❌ Não | ✅ **Dados básicos carregados** |
-| **AUTO** | ✅ Sempre carrega | ✅ Sim | ✅ Sim | ✅ **Dados + filtros aplicados** |
-| **MANUAL** | ❌ Nunca carrega | ❌ Não | ❌ Não | ❌ **Nada carregado** |
-| **MANUAL** | ❌ Nunca carrega | ✅ Sim | ❌ Não | ❌ **Nada carregado** |
+| Modo       | Paciente          | Gatilho Detectado | Filtros Aplicados | Resultado Final                  |
+| ---------- | ----------------- | ----------------- | ----------------- | -------------------------------- |
+| **AUTO**   | ✅ Sempre carrega | ❌ Não            | ❌ Não            | ✅ **Dados básicos carregados**  |
+| **AUTO**   | ✅ Sempre carrega | ✅ Sim            | ✅ Sim            | ✅ **Dados + filtros aplicados** |
+| **MANUAL** | ❌ Nunca carrega  | ❌ Não            | ❌ Não            | ❌ **Nada carregado**            |
+| **MANUAL** | ❌ Nunca carrega  | ✅ Sim            | ❌ Não            | ❌ **Nada carregado**            |
 
 ### Fluxo de Execução (CORRIGIDO)
 
@@ -312,19 +323,19 @@ const automationRule = {
 
 #### Modo AUTO (autoLoad = true)
 
-| Cenário | Página Contém | Gatilhos Config | Paciente Carregado | Filtros Aplicados |
-|---------|---------------|-----------------|-------------------|-------------------|
-| AUTO + Sem contexto | "consulta geral" | `["cardiologia"]` | ✅ **SIM** | ❌ Não |
-| AUTO + Com contexto | "consulta cardiologia" | `["cardiologia"]` | ✅ **SIM** | ✅ **SIM** |
-| AUTO + Sem regras | "qualquer coisa" | `[]` (sem regras) | ✅ **SIM** | ❌ Não |
+| Cenário             | Página Contém          | Gatilhos Config   | Paciente Carregado | Filtros Aplicados |
+| ------------------- | ---------------------- | ----------------- | ------------------ | ----------------- |
+| AUTO + Sem contexto | "consulta geral"       | `["cardiologia"]` | ✅ **SIM**         | ❌ Não            |
+| AUTO + Com contexto | "consulta cardiologia" | `["cardiologia"]` | ✅ **SIM**         | ✅ **SIM**        |
+| AUTO + Sem regras   | "qualquer coisa"       | `[]` (sem regras) | ✅ **SIM**         | ❌ Não            |
 
 #### Modo MANUAL (autoLoad = false)
 
-| Cenário | Página Contém | Gatilhos Config | Paciente Carregado | Filtros Aplicados |
-|---------|---------------|-----------------|-------------------|-------------------|
-| MANUAL + Sem contexto | "consulta geral" | `["cardiologia"]` | ❌ Não | ❌ Não |
-| MANUAL + Com contexto | "consulta cardiologia" | `["cardiologia"]` | ✅ **SIM** | ✅ **SIM** |
-| MANUAL + Sem regras | "qualquer coisa" | `[]` (sem regras) | ❌ Não | ❌ Não |
+| Cenário               | Página Contém          | Gatilhos Config   | Paciente Carregado | Filtros Aplicados |
+| --------------------- | ---------------------- | ----------------- | ------------------ | ----------------- |
+| MANUAL + Sem contexto | "consulta geral"       | `["cardiologia"]` | ❌ Não             | ❌ Não            |
+| MANUAL + Com contexto | "consulta cardiologia" | `["cardiologia"]` | ✅ **SIM**         | ✅ **SIM**        |
+| MANUAL + Sem regras   | "qualquer coisa"       | `[]` (sem regras) | ❌ Não             | ❌ Não            |
 
 ### Logs Esperados (APÓS INTEGRAÇÃO)
 
@@ -389,6 +400,7 @@ const automationRule = {
 ## 📝 COMANDOS DE BUILD
 
 ### Desenvolvimento
+
 ```bash
 npm run dev              # Desenvolvimento com watch
 npm run lint:fix         # Fix linting issues
@@ -396,6 +408,7 @@ npm run test:unit        # Testes unitários
 ```
 
 ### Build
+
 ```bash
 npm run build:css        # Build TailwindCSS
 npm run build:zips       # Generate browser packages
@@ -403,6 +416,7 @@ npm run ci:validate      # Validação completa
 ```
 
 ### Release
+
 ```bash
 npm run release:patch    # Release patch version
 ```
@@ -442,16 +456,19 @@ npm run release:patch    # Release patch version
 ## 🚨 AVISOS IMPORTANTES
 
 ### Segurança Médica
+
 - ❌ Nunca logar dados médicos sensíveis
 - ✅ Sanitizar logs de debug
 - ✅ Verificar conformidade LGPD
 
 ### Compatibilidade
+
 - ✅ Testar em Chrome/Firefox/Edge
 - ✅ Verificar Manifest V3 compliance
 - ✅ Validar CSP policies
 
 ### Performance
+
 - ✅ Debounce detecção de gatilhos se necessário
 - ✅ Cache de conteúdo da página
 - ✅ Evitar múltiplas chamadas `fetchData()`

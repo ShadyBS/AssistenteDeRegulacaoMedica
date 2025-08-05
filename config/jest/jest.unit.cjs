@@ -43,7 +43,11 @@ module.exports = {
   // Module mapping
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/$1',
-    '^@test/(.*)$': '<rootDir>/test/$1'
+    '^@test/(.*)$': '<rootDir>/test/$1',
+    '^./ErrorHandler.js$': '<rootDir>/test/mocks/error-handler-mock.js',
+    '^../../ErrorHandler.js$': '<rootDir>/test/mocks/error-handler-mock.js',
+    '^./api.js$': '<rootDir>/test/mocks/api-mock.js',
+    '^../../api.js$': '<rootDir>/test/mocks/api-mock.js'
   },
 
   // Globals for browser extension

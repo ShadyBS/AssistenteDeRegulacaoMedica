@@ -2,72 +2,73 @@
  * @jest-environment node
  */
 /**
- * Unit Tests for KeepAliveManager
+ * Unit Tests for KeepAliveManager - VERSÃO CORRIGIDA
  * Tests the hybrid alarms/setInterval implementation for service worker compatibility
  */
 
 import { jest } from '@jest/globals';
-import { TestStoreCleanup } from '../utils/test-infrastructure.js';
 
-// Mock inline antes de qualquer import
-jest.doMock('../../ErrorHandler.js', () => ({
-  getErrorHandler: jest.fn(() => ({
-    logInfo: jest.fn(),
-    logError: jest.fn(),
-    logWarning: jest.fn(),
-    setupGlobalErrorHandling: jest.fn(),
+// Mock ErrorHandler GLOBALMENTE antes de qualquer outra importação
+const mockErrorHandler = {
+  logInfo: jest.fn(),
+  logError: jest.fn(),
+  logWarning: jest.fn(),
+  setupGlobalErrorHandling: jest.fn(),
+  sanitizeData: jest.fn((data) => data),
+  createMedicalError: jest.fn((type, message, context) => ({
+    type,
+    message,
+    context,
+    timestamp: new Date().toISOString(),
   })),
-}));
+};
 
-jest.doMock('../../api.js', () => ({
+// Mock API module
+const mockAPI = {
   keepSessionAlive: jest.fn().mockResolvedValue(true),
-}));
+};
 
 let originalDocument;
 let originalWindow;
 
 beforeEach(() => {
-  // Use standardized test infrastructure
-  TestStoreCleanup.cleanup();
-  TestStoreCleanup.mockBrowserAPIs();
+  // Mock timer functions
+  jest.useFakeTimers();
 
   // Store originals for service worker simulation
   originalDocument = global.document;
   originalWindow = global.window;
 
-  // Mock timer functions
-  jest.useFakeTimers();
-
   // Enhanced chrome.alarms mock
-  global.chrome.alarms = {
-    create: jest.fn().mockResolvedValue(),
-    clear: jest.fn().mockResolvedValue(true),
-    onAlarm: {
-      addListener: jest.fn(),
-      removeListener: jest.fn(),
+  global.chrome = {
+    alarms: {
+      create: jest.fn().mockResolvedValue(),
+      clear: jest.fn().mockResolvedValue(true),
+      onAlarm: {
+        addListener: jest.fn(),
+        removeListener: jest.fn(),
+      },
     },
-  };
-
-  // Enhanced chrome.storage mock for KeepAliveManager settings
-  global.chrome.storage.sync = {
-    get: jest.fn().mockResolvedValue({ keepSessionAliveInterval: 10 }),
-    set: jest.fn().mockResolvedValue(),
-    onChanged: {
-      addListener: jest.fn(),
-      removeListener: jest.fn(),
+    storage: {
+      sync: {
+        get: jest.fn().mockResolvedValue({ keepSessionAliveInterval: 10 }),
+        set: jest.fn().mockResolvedValue(),
+        onChanged: {
+          addListener: jest.fn(),
+          removeListener: jest.fn(),
+        },
+      },
     },
   };
 
   // Enhanced window mock for background scripts
   global.window = {
-    ...originalWindow,
     addEventListener: jest.fn(),
     removeEventListener: jest.fn(),
   };
 
   // Enhanced document mock
   global.document = {
-    ...originalDocument,
     addEventListener: jest.fn(),
     removeEventListener: jest.fn(),
   };
@@ -78,17 +79,25 @@ beforeEach(() => {
     status: 200,
     json: () => Promise.resolve({}),
   });
+
+  // Mock modules usando require cache
+  jest.doMock('../../ErrorHandler.js', () => ({
+    getErrorHandler: jest.fn(() => mockErrorHandler),
+  }));
+
+  jest.doMock('../../api.js', () => mockAPI);
 });
 
 afterEach(() => {
-  // Use standardized cleanup
-  TestStoreCleanup.cleanup();
   jest.clearAllMocks();
   jest.useRealTimers();
 
   // Restore original globals
   global.document = originalDocument;
   global.window = originalWindow;
+
+  // Clear module cache
+  jest.resetModules();
 });
 
 describe('KeepAliveManager', () => {
@@ -104,15 +113,14 @@ describe('KeepAliveManager', () => {
 
   function setupBackgroundEnv() {
     // Simulate background script environment
-    global.document = originalDocument || { addEventListener: jest.fn() };
-    global.window = originalWindow || { addEventListener: jest.fn() };
+    global.document = { addEventListener: jest.fn() };
+    global.window = { addEventListener: jest.fn() };
     global.importScripts = jest.fn();
   }
 
   describe('Service Worker Detection', () => {
     test('should detect service worker environment when importScripts is undefined', () => {
       setupServiceWorkerEnv();
-      jest.resetModules();
       const { KeepAliveManager } = require('../../KeepAliveManager.js');
       const kam = new KeepAliveManager();
       expect(kam.detectServiceWorkerEnvironment()).toBe(true);
@@ -120,7 +128,6 @@ describe('KeepAliveManager', () => {
 
     test('should detect background script environment when importScripts exists', () => {
       setupBackgroundEnv();
-      jest.resetModules();
       const { KeepAliveManager } = require('../../KeepAliveManager.js');
       const kam = new KeepAliveManager();
       expect(kam.detectServiceWorkerEnvironment()).toBe(false);
@@ -130,32 +137,36 @@ describe('KeepAliveManager', () => {
   describe('Alarms API Implementation', () => {
     test('should create alarm when starting in service worker environment', async () => {
       setupServiceWorkerEnv();
-      jest.resetModules();
       const { KeepAliveManager } = require('../../KeepAliveManager.js');
       const kam = new KeepAliveManager();
+      kam.intervalMinutes = 1; // Garante que não será 0
+
       await kam.start();
       expect(global.chrome.alarms.create).toHaveBeenCalledWith(
         'keepalive-session',
-        expect.objectContaining({ periodInMinutes: expect.any(Number) })
+        expect.objectContaining({ periodInMinutes: 1 })
       );
     });
 
-    test('should setup alarm listener when starting in service worker environment', async () => {
+    test('should setup alarm listener when KeepAliveManager is created in service worker', async () => {
       setupServiceWorkerEnv();
-      jest.resetModules();
       const { KeepAliveManager } = require('../../KeepAliveManager.js');
 
-      const kam = new KeepAliveManager();
-      await kam.initPromise; // Aguarda a inicialização
+      // O listener é configurado no init(), que é chamado no constructor
+      new KeepAliveManager();
+
+      // Aguarda qualquer operação async do init
+      await Promise.resolve();
 
       expect(global.chrome.alarms.onAlarm.addListener).toHaveBeenCalled();
     });
 
     test('should clear existing alarm before creating new one', async () => {
       setupServiceWorkerEnv();
-      jest.resetModules();
       const { KeepAliveManager } = require('../../KeepAliveManager.js');
       const kam = new KeepAliveManager();
+      kam.intervalMinutes = 1;
+
       await kam.start();
       expect(global.chrome.alarms.clear).toHaveBeenCalledWith('keepalive-session');
       expect(global.chrome.alarms.create).toHaveBeenCalled();
@@ -163,32 +174,31 @@ describe('KeepAliveManager', () => {
 
     test('should handle alarm events correctly', async () => {
       setupServiceWorkerEnv();
-      jest.resetModules();
       const { KeepAliveManager } = require('../../KeepAliveManager.js');
       const kam = new KeepAliveManager();
-
-      // Spy no método executeKeepAlive ao invés de testar fetch
-      const executeKeepAliveSpy = jest.spyOn(kam, 'executeKeepAlive').mockResolvedValue();
+      kam.intervalMinutes = 1;
 
       await kam.start();
+
+      // Simula disparo do alarm
       const alarmListener = global.chrome.alarms.onAlarm.addListener.mock.calls[0]?.[0];
       if (alarmListener) {
         await alarmListener({ name: 'keepalive-session' });
-        expect(executeKeepAliveSpy).toHaveBeenCalled();
+        expect(mockAPI.keepSessionAlive).toHaveBeenCalled();
       }
     });
 
     test('should ignore non-keepAlive alarms', async () => {
       setupServiceWorkerEnv();
-      jest.resetModules();
       const { KeepAliveManager } = require('../../KeepAliveManager.js');
       const kam = new KeepAliveManager();
+
       await kam.start();
+
       const alarmListener = global.chrome.alarms.onAlarm.addListener.mock.calls[0]?.[0];
-      global.fetch = jest.fn();
       if (alarmListener) {
         await alarmListener({ name: 'otherAlarm' });
-        expect(global.fetch).not.toHaveBeenCalled();
+        expect(mockAPI.keepSessionAlive).not.toHaveBeenCalled();
       }
     });
   });
@@ -196,10 +206,10 @@ describe('KeepAliveManager', () => {
   describe('SetInterval Implementation', () => {
     test('should use setInterval in background script environment', async () => {
       setupBackgroundEnv();
-      jest.resetModules();
       const { KeepAliveManager } = require('../../KeepAliveManager.js');
       const kam = new KeepAliveManager();
-      kam.intervalMinutes = 1; // Garante que não será 0
+      kam.intervalMinutes = 1;
+
       await kam.start();
       expect(kam.intervalId).toBeDefined();
       expect(kam.intervalId).not.toBeNull();
@@ -207,39 +217,36 @@ describe('KeepAliveManager', () => {
 
     test('should not create alarm in background script environment', async () => {
       setupBackgroundEnv();
-      jest.resetModules();
       const { KeepAliveManager } = require('../../KeepAliveManager.js');
       const kam = new KeepAliveManager();
       kam.intervalMinutes = 1;
+
       await kam.start();
       expect(global.chrome.alarms.create).not.toHaveBeenCalled();
     });
 
     test('should execute ping via setInterval', async () => {
       setupBackgroundEnv();
-      jest.resetModules();
       const { KeepAliveManager } = require('../../KeepAliveManager.js');
       const kam = new KeepAliveManager();
-      await kam.initPromise; // Aguarda a inicialização
-
-      // Spy no método executeKeepAlive ANTES de start()
-      const executeKeepAliveSpy = jest.spyOn(kam, 'executeKeepAlive').mockResolvedValue();
-
       kam.intervalMinutes = 1; // 1 minuto
+
       await kam.start();
 
-      // Executa apenas os timers pendentes ao invés de avançar o tempo
-      jest.runOnlyPendingTimers();
-      expect(executeKeepAliveSpy).toHaveBeenCalled();
+      // Avança o timer em 60 segundos (1 minuto)
+      jest.advanceTimersByTime(60000);
+
+      expect(mockAPI.keepSessionAlive).toHaveBeenCalled();
     });
   });
 
   describe('Stop Functionality', () => {
     test('should clear alarm when stopping in service worker environment', async () => {
       setupServiceWorkerEnv();
-      jest.resetModules();
       const { KeepAliveManager } = require('../../KeepAliveManager.js');
       const kam = new KeepAliveManager();
+      kam.intervalMinutes = 1;
+
       await kam.start();
       kam.stop();
       expect(global.chrome.alarms.clear).toHaveBeenCalledWith('keepalive-session');
@@ -247,10 +254,10 @@ describe('KeepAliveManager', () => {
 
     test('should clear interval when stopping in background script environment', async () => {
       setupBackgroundEnv();
-      jest.resetModules();
       const { KeepAliveManager } = require('../../KeepAliveManager.js');
       const kam = new KeepAliveManager();
       kam.intervalMinutes = 1;
+
       await kam.start();
       expect(kam.intervalId).toBeDefined();
       kam.stop();
@@ -259,13 +266,12 @@ describe('KeepAliveManager', () => {
 
     test('should remove alarm listener when stopping', async () => {
       setupServiceWorkerEnv();
-      jest.resetModules();
       const { KeepAliveManager } = require('../../KeepAliveManager.js');
       const kam = new KeepAliveManager();
 
-      await kam.initPromise; // Aguarda a inicialização
+      // Aguarda inicialização
+      await Promise.resolve();
 
-      // Agora para o KeepAliveManager
       kam.stop();
       expect(global.chrome.alarms.onAlarm.removeListener).toHaveBeenCalled();
     });
@@ -274,10 +280,12 @@ describe('KeepAliveManager', () => {
   describe('Error Handling', () => {
     test('should handle fetch errors gracefully in alarm context', async () => {
       setupServiceWorkerEnv();
-      jest.resetModules();
       const { KeepAliveManager } = require('../../KeepAliveManager.js');
       const kam = new KeepAliveManager();
-      global.fetch = jest.fn().mockRejectedValue(new Error('Network error'));
+
+      // Mock API para retornar erro
+      mockAPI.keepSessionAlive.mockRejectedValueOnce(new Error('Network error'));
+
       await kam.start();
       const alarmListener = global.chrome.alarms.onAlarm.addListener.mock.calls[0]?.[0];
       if (alarmListener) {
@@ -287,12 +295,14 @@ describe('KeepAliveManager', () => {
 
     test('should handle fetch errors gracefully in setInterval context', async () => {
       setupBackgroundEnv();
-      jest.resetModules();
       const { KeepAliveManager } = require('../../KeepAliveManager.js');
       const kam = new KeepAliveManager();
       kam.intervalMinutes = 1;
-      global.fetch = jest.fn().mockRejectedValue(new Error('Network error'));
+
+      mockAPI.keepSessionAlive.mockRejectedValueOnce(new Error('Network error'));
+
       await kam.start();
+
       // Fast-forward timer - should not throw
       expect(() => jest.advanceTimersByTime(60000)).not.toThrow();
     });
@@ -300,9 +310,10 @@ describe('KeepAliveManager', () => {
     test('should handle missing alarms API gracefully', async () => {
       setupServiceWorkerEnv();
       global.chrome.alarms = undefined;
-      jest.resetModules();
+
       const { KeepAliveManager } = require('../../KeepAliveManager.js');
       const kam = new KeepAliveManager();
+
       expect(() => kam.start()).not.toThrow();
     });
   });
@@ -310,7 +321,6 @@ describe('KeepAliveManager', () => {
   describe('State Management', () => {
     test('should track running state correctly', async () => {
       setupServiceWorkerEnv();
-      jest.resetModules();
       const { KeepAliveManager } = require('../../KeepAliveManager.js');
       const kam = new KeepAliveManager();
 
@@ -326,11 +336,9 @@ describe('KeepAliveManager', () => {
 
     test('should prevent multiple starts', async () => {
       setupServiceWorkerEnv();
-      jest.resetModules();
       const { KeepAliveManager } = require('../../KeepAliveManager.js');
       const kam = new KeepAliveManager();
-      await kam.initPromise;
-      kam.intervalMinutes = 1; // Garante que não será 0
+      kam.intervalMinutes = 1;
 
       await kam.start();
       await kam.start();
@@ -342,36 +350,37 @@ describe('KeepAliveManager', () => {
     test('should work with chrome API', async () => {
       setupServiceWorkerEnv();
       delete global.browser;
-      // Garante que chrome.alarms existe
-      global.chrome.alarms = {
-        create: jest.fn().mockResolvedValue(),
-        clear: jest.fn().mockResolvedValue(true),
-        onAlarm: {
-          addListener: jest.fn(),
-          removeListener: jest.fn(),
-        },
-      };
-      jest.resetModules();
+
       const { KeepAliveManager } = require('../../KeepAliveManager.js');
       const kam = new KeepAliveManager();
       kam.intervalMinutes = 1;
+
       await kam.start();
       expect(global.chrome.alarms.clear).toHaveBeenCalled();
     });
 
     test('should work with browser API', async () => {
       setupServiceWorkerEnv();
-
-      // Correção: Clona o objeto chrome para o browser e DEPOIS deleta o chrome.
-      // Isso garante que o mock do 'browser' tenha todas as APIs necessárias (storage, etc.)
-      global.browser = { ...global.chrome };
       delete global.chrome;
+      global.browser = {
+        alarms: {
+          create: jest.fn().mockResolvedValue(),
+          clear: jest.fn().mockResolvedValue(true),
+          onAlarm: { addListener: jest.fn(), removeListener: jest.fn() },
+        },
+        storage: {
+          sync: {
+            get: jest.fn().mockResolvedValue({ keepSessionAliveInterval: 10 }),
+            onChanged: { addListener: jest.fn() },
+          },
+        },
+      };
 
-      jest.resetModules();
-      const { KeepAliveManager: FreshManager } = require('../../KeepAliveManager.js');
-      const freshManager = new FreshManager();
-      await freshManager.initPromise; // Aguarda a inicialização
-      await freshManager.start();
+      const { KeepAliveManager } = require('../../KeepAliveManager.js');
+      const kam = new KeepAliveManager();
+      kam.intervalMinutes = 1;
+
+      await kam.start();
       expect(global.browser.alarms.clear).toHaveBeenCalled();
     });
   });

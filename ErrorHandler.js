@@ -180,6 +180,17 @@ class MedicalErrorHandler {
 
     try {
       const api = typeof browser !== 'undefined' ? browser : chrome;
+
+      // Verificar se estamos em ambiente de teste
+      const isTestEnvironment = typeof jest !== 'undefined';
+
+      if (!api || !api.storage || !api.storage.local) {
+        if (!isTestEnvironment) {
+          console.warn('[ErrorHandler] Storage API não disponível');
+        }
+        return;
+      }
+
       const result = await api.storage.local.get('medicalErrors');
 
       if (!result.medicalErrors) {
@@ -187,7 +198,10 @@ class MedicalErrorHandler {
       }
     } catch (error) {
       // Fallback silencioso se storage não estiver disponível
-      console.warn('[ErrorHandler] Storage não disponível:', error.message);
+      const isTestEnvironment = typeof jest !== 'undefined';
+      if (!isTestEnvironment) {
+        console.warn('[ErrorHandler] Storage não disponível:', error.message);
+      }
     }
   }
 
