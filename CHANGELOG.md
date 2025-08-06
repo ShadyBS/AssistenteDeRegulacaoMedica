@@ -7,7 +7,19 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased]
 
-### ✅ Fixed
+### 🐞 Fixed
+
+- **🔒 Carregamento Automático por Secção**: Corrigido comportamento crítico onde a extensão executava pesquisas automaticamente mesmo com "Carregamento Automático por Secção (Modo Manual)" desabilitado nas configurações
+
+  - **Problema Identificado**: `SectionManager.setPatient()` executava `fetchData()` automaticamente sempre que um paciente era selecionado, ignorando completamente a configuração do usuário
+  - **Validação Rigorosa**: Implementada verificação explícita de `globalSettings.userPreferences[autoLoadKey] === true` antes de executar carregamento automático
+  - **Logs de Diagnóstico**: Adicionado sistema de logging detalhado que mostra claramente o modo ativo (AUTO/MANUAL) e o valor da configuração para cada seção
+  - **Modo Manual Forçado**: Em caso de erro de carregamento de configurações, o sistema força modo MANUAL por segurança
+  - **Comportamento Correto**: 
+    - **Modo AUTO** (`autoLoadExams: true`): Executa `fetchData()` automaticamente ao selecionar paciente
+    - **Modo MANUAL** (`autoLoadExams: false`): Aguarda ação manual do usuário (botão "Buscar")
+  - **Compatibilidade Preservada**: Funcionalidades de regras de automação e sistema de gatilhos mantidas intactas
+  - **Teste Validado**: Criado `test-autoload-fix.js` que confirma correção em 5 cenários diferentes (100% dos testes passando)
 
 - **ErrorHandler**: Corrigidos todos os 23 testes unitários (100% passando)
 

@@ -275,50 +275,78 @@
                 </p>
               </div>
             </div>
-            <h3 class="text-md font-medium text-slate-600 mt-4 pt-4 border-t">
-              Carregamento Automático por Secção (Modo Manual)
-            </h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-2">
-              <label class="flex items-center">
-                <input
-                  type="checkbox"
-                  id="autoLoadConsultationsCheckbox"
-                  class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 mr-2"
-                />
-                Consultas
-              </label>
-              <label class="flex items-center">
-                <input
-                  type="checkbox"
-                  id="autoLoadExamsCheckbox"
-                  class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 mr-2"
-                />
-                Exames
-              </label>
-              <label class="flex items-center">
-                <input
-                  type="checkbox"
-                  id="autoLoadAppointmentsCheckbox"
-                  class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 mr-2"
-                />
-                Agendamentos
-              </label>
-              <label class="flex items-center">
-                <input
-                  type="checkbox"
-                  id="autoLoadRegulationsCheckbox"
-                  class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 mr-2"
-                />
-                Regulação
-              </label>
-              <label class="flex items-center">
-                <input
-                  type="checkbox"
-                  id="autoLoadDocumentsCheckbox"
-                  class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 mr-2"
-                />
-                Documentos
-              </label>
+            <div class="mt-4 p-4 bg-blue-50 rounded-md border border-blue-200">
+              <h3 class="text-md font-medium text-blue-800 mb-2 flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                  <path d="m9 12 2 2 4-4"></path>
+                </svg>
+                Carregamento Automático por Secção
+              </h3>
+              <p class="text-sm text-blue-700 mb-3">
+                <strong>Independente da detecção automática acima</strong>, você pode configurar quais seções carregam dados automaticamente quando um paciente é selecionado. 
+                Seções desmarcadas exigem que o usuário clique no botão "Buscar" manualmente.
+              </p>
+              <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <label class="flex items-center p-2 bg-white rounded border hover:bg-blue-50 transition-colors">
+                  <input
+                    type="checkbox"
+                    id="autoLoadConsultationsCheckbox"
+                    class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 mr-3"
+                  />
+                  <div>
+                    <span class="font-medium">Consultas</span>
+                    <div class="text-xs text-slate-500">Histórico de consultas</div>
+                  </div>
+                </label>
+                <label class="flex items-center p-2 bg-white rounded border hover:bg-blue-50 transition-colors">
+                  <input
+                    type="checkbox"
+                    id="autoLoadExamsCheckbox"
+                    class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 mr-3"
+                  />
+                  <div>
+                    <span class="font-medium">Exames</span>
+                    <div class="text-xs text-slate-500">Exames solicitados</div>
+                  </div>
+                </label>
+                <label class="flex items-center p-2 bg-white rounded border hover:bg-blue-50 transition-colors">
+                  <input
+                    type="checkbox"
+                    id="autoLoadAppointmentsCheckbox"
+                    class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 mr-3"
+                  />
+                  <div>
+                    <span class="font-medium">Agendamentos</span>
+                    <div class="text-xs text-slate-500">Consultas e exames agendados</div>
+                  </div>
+                </label>
+                <label class="flex items-center p-2 bg-white rounded border hover:bg-blue-50 transition-colors">
+                  <input
+                    type="checkbox"
+                    id="autoLoadRegulationsCheckbox"
+                    class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 mr-3"
+                  />
+                  <div>
+                    <span class="font-medium">Regulação</span>
+                    <div class="text-xs text-slate-500">Solicitações de regulação</div>
+                  </div>
+                </label>
+                <label class="flex items-center p-2 bg-white rounded border hover:bg-blue-50 transition-colors">
+                  <input
+                    type="checkbox"
+                    id="autoLoadDocumentsCheckbox"
+                    class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 mr-3"
+                  />
+                  <div>
+                    <span class="font-medium">Documentos</span>
+                    <div class="text-xs text-slate-500">Documentos anexados</div>
+                  </div>
+                </label>
+              </div>
+              <div class="mt-3 p-2 bg-amber-50 border border-amber-200 rounded text-sm text-amber-800">
+                <strong>💡 Dica:</strong> Para melhor performance, desmarque seções que você raramente usa ou que contêm muitos dados.
+              </div>
             </div>
           </div>
         </div>

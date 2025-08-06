@@ -169,20 +169,41 @@ export class SectionManager {
       this.elements.section.style.display = patient ? 'block' : 'none';
     }
 
-    // ✅ NOVA LÓGICA: Carregamento baseado na configuração do usuário
+    // 🔒 CORREÇÃO CRÍTICA: Carregamento automático baseado na configuração do usuário
     if (patient) {
       const autoLoadKey = `autoLoad${
         this.sectionKey.charAt(0).toUpperCase() + this.sectionKey.slice(1)
       }`;
+      
+      // 🚨 VALIDAÇÃO RIGOROSA: Verifica se as configurações foram carregadas
+      if (!this.globalSettings) {
+        console.warn(`[Assistente Médico] ⚠️ globalSettings não definido para ${this.sectionKey}. MODO MANUAL forçado.`);
+        return;
+      }
+      
+      if (!this.globalSettings.userPreferences) {
+        console.warn(`[Assistente Médico] ⚠️ userPreferences não definido para ${this.sectionKey}. MODO MANUAL forçado.`);
+        return;
+      }
+      
+      // 🔍 VERIFICAÇÃO EXPLÍCITA: Obtém o valor da configuração
       const isAutoMode = this.globalSettings.userPreferences[autoLoadKey];
-
-      if (isAutoMode) {
-        console.log(`[Assistente Médico] Modo AUTO: Carregando ${this.sectionKey} automaticamente`);
+      
+      // 📊 LOG DETALHADO para diagnóstico
+      console.log(`[Assistente Médico] 🔧 === DIAGNÓSTICO CARREGAMENTO AUTOMÁTICO ===`);
+      console.log(`[Assistente Médico] 🔧 Seção: ${this.sectionKey}`);
+      console.log(`[Assistente Médico] 🔧 autoLoadKey: ${autoLoadKey}`);
+      console.log(`[Assistente Médico] 🔧 isAutoMode: ${isAutoMode} (tipo: ${typeof isAutoMode})`);
+      console.log(`[Assistente Médico] 🔧 userPreferences completo:`, this.globalSettings.userPreferences);
+      
+      // 🎯 DECISÃO FINAL: Só carrega se explicitamente TRUE
+      if (isAutoMode === true) {
+        console.log(`[Assistente Médico] ✅ MODO AUTO CONFIRMADO: Carregando ${this.sectionKey} automaticamente`);
         this.fetchData();
       } else {
-        console.log(
-          `[Assistente Médico] Modo MANUAL: Aguardando ação do usuário para ${this.sectionKey}`
-        );
+        console.log(`[Assistente Médico] 🔒 MODO MANUAL CONFIRMADO: Aguardando ação do usuário para ${this.sectionKey}`);
+        console.log(`[Assistente Médico] 🔒 Valor recebido: ${isAutoMode} (esperado: true para auto)`);
+        // ✋ NÃO executa fetchData() - usuário deve clicar no botão manualmente
       }
     }
   }
