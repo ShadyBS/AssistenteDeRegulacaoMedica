@@ -28,7 +28,7 @@ async function packageEdge() {
     '.backup',
     '.refactor-tests',
     'test-backup-20250803-115056',
-    
+
     // Configuration files
     '.env',
     '.gitignore',
@@ -41,7 +41,7 @@ async function packageEdge() {
     'postcss.config.cjs',
     '.babelrc.cjs',
     'babel.config.cjs',
-    
+
     // Documentation and markdown files
     'README.md',
     'CHANGELOG.md',
@@ -57,7 +57,7 @@ async function packageEdge() {
     'PROMPT_AUDITORIA_EXECUTAVEL.md',
     'RESUMO_ENTREGA_PROMPT.md',
     'TASK_COMPLETION_SUMMARY.md',
-    
+
     // Test and debug files
     'debug-autoload.js',
     'debug-connection.js',
@@ -70,12 +70,12 @@ async function packageEdge() {
     'ErrorHandler-Demo.js',
     'newtestoutput.txt',
     'testunitouput.txt',
-    
+
     // Backup and temporary files
     'manifest-edge.json.backup',
     'manifest-firefox.json.backup',
     'manifest.json.backup',
-    
+
     // IDE and tool configuration
     '.docs',
     '.copilot-instructions',
