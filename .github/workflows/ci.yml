@@ -39,7 +39,7 @@ jobs:
 
       - name: 📦 Cache Dependencies
         id: cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: node_modules
           key: ${{ runner.os }}-${{ env.CACHE_KEY }}-${{ hashFiles('package-lock.json') }}
@@ -93,7 +93,7 @@ jobs:
           cache: 'npm'
 
       - name: 📦 Restore Dependencies
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: node_modules
           key: ${{ runner.os }}-${{ env.CACHE_KEY }}-${{ hashFiles('package-lock.json') }}
@@ -134,7 +134,7 @@ jobs:
           cache: 'npm'
 
       - name: 📦 Restore Dependencies
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: node_modules
           key: ${{ runner.os }}-${{ env.CACHE_KEY }}-${{ hashFiles('package-lock.json') }}
@@ -173,7 +173,7 @@ jobs:
           cache: 'npm'
 
       - name: 📦 Restore Dependencies
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: node_modules
           key: ${{ runner.os }}-${{ env.CACHE_KEY }}-${{ hashFiles('package-lock.json') }}
@@ -219,7 +219,7 @@ jobs:
           cache: 'npm'
 
       - name: 📦 Restore Dependencies
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: node_modules
           key: ${{ runner.os }}-${{ env.CACHE_KEY }}-${{ hashFiles('package-lock.json') }}
@@ -234,7 +234,7 @@ jobs:
         run: npm run build:${{ matrix.browser }}
 
       - name: 📦 Cache Build Artifacts
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: dist/${{ matrix.browser }}
           key: build-${{ matrix.browser }}-${{ github.sha }}
@@ -269,7 +269,7 @@ jobs:
           cache: 'npm'
 
       - name: 📦 Restore Dependencies
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: node_modules
           key: ${{ runner.os }}-${{ env.CACHE_KEY }}-${{ hashFiles('package-lock.json') }}
@@ -278,7 +278,7 @@ jobs:
         run: npm ci
 
       - name: 📦 Restore Build Artifacts
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: dist/${{ matrix.browser }}
           key: build-${{ matrix.browser }}-${{ github.sha }}
