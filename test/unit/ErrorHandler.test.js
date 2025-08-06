@@ -329,7 +329,7 @@ describe('ErrorHandler Standalone Tests', () => {
     test('stores critical errors', async () => {
       // Ensure browser is undefined to force chrome usage
       global.browser = undefined;
-      
+
       // Setup chrome.storage.local.get to return empty initially
       global.chrome.storage.local.get.mockResolvedValueOnce({});
       global.chrome.storage.local.set.mockResolvedValueOnce();
@@ -344,7 +344,11 @@ describe('ErrorHandler Standalone Tests', () => {
       const storeErrorSpy = jest.spyOn(handler, 'storeError');
 
       // Use logError method directly to ensure it goes through the proper flow
-      await handler.logError('Critical test error', { severity: 'high' }, ERROR_CATEGORIES.MEDICAL_DATA);
+      await handler.logError(
+        'Critical test error',
+        { severity: 'high' },
+        ERROR_CATEGORIES.MEDICAL_DATA
+      );
 
       // Wait a bit for async operations
       await new Promise((resolve) => setTimeout(resolve, 100));

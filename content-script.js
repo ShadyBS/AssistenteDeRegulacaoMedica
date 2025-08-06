@@ -4,9 +4,26 @@
  * que atua como um intermediário para salvar os dados no storage.session.
  */
 
-import { ERROR_CATEGORIES, logError, logInfo } from './ErrorHandler.js';
-
 (function () {
+  // Implementação inline das constantes e funções de logging necessárias
+  // (sem usar módulos ES6 para compatibilidade com content scripts)
+  
+  const ERROR_CATEGORIES = {
+    CONTENT_SCRIPT: 'content_script',
+    EXTENSION_LIFECYCLE: 'extension_lifecycle'
+  };
+
+  // Função de logging simplificada para content script
+  function logInfo(message, data, category) {
+    const prefix = `[Assistente Médico ${category || ERROR_CATEGORIES.CONTENT_SCRIPT}]`;
+    console.info(`${prefix} ${message}`, data || {});
+  }
+
+  function logError(message, data, category) {
+    const prefix = `[Assistente Médico ${category || ERROR_CATEGORIES.CONTENT_SCRIPT}]`;
+    console.error(`${prefix} ${message}`, data || {});
+  }
+
   logInfo(
     'Script de controle v16 (Detecção com Broker) ativo',
     {},

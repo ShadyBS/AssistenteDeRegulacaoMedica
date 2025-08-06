@@ -174,35 +174,48 @@ export class SectionManager {
       const autoLoadKey = `autoLoad${
         this.sectionKey.charAt(0).toUpperCase() + this.sectionKey.slice(1)
       }`;
-      
+
       // 🚨 VALIDAÇÃO RIGOROSA: Verifica se as configurações foram carregadas
       if (!this.globalSettings) {
-        console.warn(`[Assistente Médico] ⚠️ globalSettings não definido para ${this.sectionKey}. MODO MANUAL forçado.`);
+        console.warn(
+          `[Assistente Médico] ⚠️ globalSettings não definido para ${this.sectionKey}. MODO MANUAL forçado.`
+        );
         return;
       }
-      
+
       if (!this.globalSettings.userPreferences) {
-        console.warn(`[Assistente Médico] ⚠️ userPreferences não definido para ${this.sectionKey}. MODO MANUAL forçado.`);
+        console.warn(
+          `[Assistente Médico] ⚠️ userPreferences não definido para ${this.sectionKey}. MODO MANUAL forçado.`
+        );
         return;
       }
-      
+
       // 🔍 VERIFICAÇÃO EXPLÍCITA: Obtém o valor da configuração
       const isAutoMode = this.globalSettings.userPreferences[autoLoadKey];
-      
+
       // 📊 LOG DETALHADO para diagnóstico
       console.log(`[Assistente Médico] 🔧 === DIAGNÓSTICO CARREGAMENTO AUTOMÁTICO ===`);
       console.log(`[Assistente Médico] 🔧 Seção: ${this.sectionKey}`);
       console.log(`[Assistente Médico] 🔧 autoLoadKey: ${autoLoadKey}`);
       console.log(`[Assistente Médico] 🔧 isAutoMode: ${isAutoMode} (tipo: ${typeof isAutoMode})`);
-      console.log(`[Assistente Médico] 🔧 userPreferences completo:`, this.globalSettings.userPreferences);
-      
+      console.log(
+        `[Assistente Médico] 🔧 userPreferences completo:`,
+        this.globalSettings.userPreferences
+      );
+
       // 🎯 DECISÃO FINAL: Só carrega se explicitamente TRUE
       if (isAutoMode === true) {
-        console.log(`[Assistente Médico] ✅ MODO AUTO CONFIRMADO: Carregando ${this.sectionKey} automaticamente`);
+        console.log(
+          `[Assistente Médico] ✅ MODO AUTO CONFIRMADO: Carregando ${this.sectionKey} automaticamente`
+        );
         this.fetchData();
       } else {
-        console.log(`[Assistente Médico] 🔒 MODO MANUAL CONFIRMADO: Aguardando ação do usuário para ${this.sectionKey}`);
-        console.log(`[Assistente Médico] 🔒 Valor recebido: ${isAutoMode} (esperado: true para auto)`);
+        console.log(
+          `[Assistente Médico] 🔒 MODO MANUAL CONFIRMADO: Aguardando ação do usuário para ${this.sectionKey}`
+        );
+        console.log(
+          `[Assistente Médico] 🔒 Valor recebido: ${isAutoMode} (esperado: true para auto)`
+        );
         // ✋ NÃO executa fetchData() - usuário deve clicar no botão manualmente
       }
     }
@@ -361,6 +374,11 @@ export class SectionManager {
       this.elements.dateFinal.valueAsDate = Utils.calculateRelativeDate(range.end);
     // --- FIM DA CORREÇÃO ---
 
+    // 🔒 CORREÇÃO CRÍTICA: Verifica se deve evitar carregamento automático
+    const autoLoadKey = `autoLoad${this.sectionKey.charAt(0).toUpperCase() + this.sectionKey.slice(1)}`;
+    const isAutoMode = this.globalSettings?.userPreferences?.[autoLoadKey] === true;
+    const shouldAvoidAutoFetch = !isAutoMode && this.currentPatient; // Evita fetch automático no modo manual
+
     (filterConfig[this.sectionKey] || []).forEach((filter) => {
       if (filter.type === 'component') return;
 
@@ -380,8 +398,15 @@ export class SectionManager {
         );
         if (radioToCheck) {
           radioToCheck.checked = true;
-          if (radioToCheck.classList.contains('filter-select-group')) {
+          // 🔒 CORREÇÃO: Só chama handleFetchTypeChange se não estiver no modo manual
+          if (radioToCheck.classList.contains('filter-select-group') && !shouldAvoidAutoFetch) {
             this.handleFetchTypeChange(radioToCheck);
+          } else if (
+            radioToCheck.classList.contains('filter-select-group') &&
+            shouldAvoidAutoFetch
+          ) {
+            // Apenas atualiza o fetchType sem fazer fetch
+            this.fetchType = radioToCheck.value || radioToCheck.dataset.fetchType;
           }
         }
       } else {
@@ -402,8 +427,12 @@ export class SectionManager {
             el.value = defaultValue;
           }
 
-          if (el.classList.contains('filter-select-group')) {
+          // 🔒 CORREÇÃO: Só chama handleFetchTypeChange se não estiver no modo manual
+          if (el.classList.contains('filter-select-group') && !shouldAvoidAutoFetch) {
             this.handleFetchTypeChange(el);
+          } else if (el.classList.contains('filter-select-group') && shouldAvoidAutoFetch) {
+            // Apenas atualiza o fetchType sem fazer fetch
+            this.fetchType = el.value || el.dataset.fetchType;
           }
         }
       }
@@ -486,13 +515,23 @@ export class SectionManager {
     const set = (store.getSavedFilterSets()[this.sectionKey] || []).find((s) => s.name === name);
     if (!set) return;
 
+    // 🔒 CORREÇÃO: Verifica se deve evitar carregamento automático
+    const autoLoadKey = `autoLoad${this.sectionKey.charAt(0).toUpperCase() + this.sectionKey.slice(1)}`;
+    const isAutoMode = this.globalSettings?.userPreferences?.[autoLoadKey] === true;
+    const shouldAvoidAutoFetch = !isAutoMode && this.currentPatient;
+
     Object.entries(set.values).forEach(([id, value]) => {
       // Verifica se é um filtro selectGroup (radio buttons)
       const radioInput = document.querySelector(`input[name="${id}"][value="${value}"]`);
       if (radioInput) {
         radioInput.checked = true;
         if (radioInput.classList.contains('filter-select-group')) {
-          this.handleFetchTypeChange(radioInput);
+          if (!shouldAvoidAutoFetch) {
+            this.handleFetchTypeChange(radioInput);
+          } else {
+            // Apenas atualiza o fetchType sem fazer fetch
+            this.fetchType = radioInput.value || radioInput.dataset.fetchType;
+          }
         }
       } else {
         // Tenta encontrar o elemento pelo ID (para outros tipos de filtro)
@@ -502,7 +541,12 @@ export class SectionManager {
           else el.value = value;
 
           if (el.classList.contains('filter-select-group')) {
-            this.handleFetchTypeChange(el);
+            if (!shouldAvoidAutoFetch) {
+              this.handleFetchTypeChange(el);
+            } else {
+              // Apenas atualiza o fetchType sem fazer fetch
+              this.fetchType = el.value || el.dataset.fetchType;
+            }
           }
         }
       }

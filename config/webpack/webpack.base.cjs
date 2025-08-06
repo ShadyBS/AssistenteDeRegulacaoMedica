@@ -245,6 +245,9 @@ const getEntryPoints = (target) => {
     entries['field-config'] = path.resolve(__dirname, '../../field-config.js');
     entries['filter-config'] = path.resolve(__dirname, '../../filter-config.js');
 
+    // Error Handler
+    entries['ErrorHandler'] = path.resolve(__dirname, '../../ErrorHandler.js');
+
     // Renderers
     entries['renderers'] = path.resolve(__dirname, '../../renderers.js');
 

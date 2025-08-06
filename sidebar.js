@@ -679,7 +679,7 @@ async function applyAutomationRules(regulationData) {
  */
 function handleStorageChange(changes, areaName) {
   if (areaName === 'local' && changes.pendingRegulation) {
-    // Apenas processa se a detecção automática estiver LIGADA
+    // 🔒 CORREÇÃO: enableAutomaticDetection controla APENAS detecção automática de pacientes e regras de automação
     api.storage.sync.get({ enableAutomaticDetection: true }).then((settings) => {
       if (settings.enableAutomaticDetection) {
         const { newValue } = changes.pendingRegulation;

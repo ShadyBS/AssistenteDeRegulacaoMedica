@@ -9,17 +9,34 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ### 🐞 Fixed
 
-- **🔒 Carregamento Automático por Secção**: Corrigido comportamento crítico onde a extensão executava pesquisas automaticamente mesmo com "Carregamento Automático por Secção (Modo Manual)" desabilitado nas configurações
+- **Content Script ES6 Compatibility**: Removido uso de módulos ES6 do content script para compatibilidade com Manifest V3
+  - **Problema**: Content scripts não podem usar `import`/`export` ES6 modules em extensões
+  - **Solução**: Implementação inline das funções de logging necessárias do ErrorHandler
+  - **Compatibilidade**: Mantida funcionalidade de logging médico com sanitização automática
+  - **Conformidade**: Zero breaking changes, funcionalidade preservada
+  - **Validação**: Linting passou sem erros após correção
 
-  - **Problema Identificado**: `SectionManager.setPatient()` executava `fetchData()` automaticamente sempre que um paciente era selecionado, ignorando completamente a configuração do usuário
-  - **Validação Rigorosa**: Implementada verificação explícita de `globalSettings.userPreferences[autoLoadKey] === true` antes de executar carregamento automático
-  - **Logs de Diagnóstico**: Adicionado sistema de logging detalhado que mostra claramente o modo ativo (AUTO/MANUAL) e o valor da configuração para cada seção
-  - **Modo Manual Forçado**: Em caso de erro de carregamento de configurações, o sistema força modo MANUAL por segurança
-  - **Comportamento Correto**: 
+- **🔒 CRÍTICO: Carregamento Automático Indevido das Seções**: Corrigido comportamento crítico onde as seções carregavam automaticamente mesmo com todas as opções de autoload desligadas
+
+  - **Problema Raiz Identificado**: O método `clearFilters()` do `SectionManager` estava chamando `handleFetchTypeChange()` durante a inicialização dos filtros, que por sua vez sempre executava `fetchData()`, ignorando completamente as configurações do usuário
+  - **Localizações do Bug**: 
+    - `SectionManager.js` linha 374: `this.handleFetchTypeChange(radioToCheck);`
+    - `SectionManager.js` linha 390: `this.handleFetchTypeChange(el);`
+    - `SectionManager.js` linha 418: `handleFetchTypeChange()` sempre chama `this.fetchData()`
+  - **Correção Implementada**: 
+    - Adicionada verificação `shouldAvoidAutoFetch` no método `clearFilters()`
+    - Quando no modo manual, apenas atualiza `fetchType` sem executar `fetchData()`
+    - Preserva funcionalidade completa no modo automático
+  - **Validação Rigorosa**: Implementada verificação explícita de `globalSettings.userPreferences[autoLoadKey] === true` antes de permitir carregamento automático
+  - **Logs de Diagnóstico**: Sistema de logging detalhado que mostra claramente o modo ativo (AUTO/MANUAL) e o valor da configuração para cada seção
+  - **Comportamento Correto Restaurado**: 
     - **Modo AUTO** (`autoLoadExams: true`): Executa `fetchData()` automaticamente ao selecionar paciente
     - **Modo MANUAL** (`autoLoadExams: false`): Aguarda ação manual do usuário (botão "Buscar")
   - **Compatibilidade Preservada**: Funcionalidades de regras de automação e sistema de gatilhos mantidas intactas
-  - **Teste Validado**: Criado `test-autoload-fix.js` que confirma correção em 5 cenários diferentes (100% dos testes passando)
+  - **Teste Validado**: Criado `test-autoload-fix-validation.js` que confirma correção em 3 cenários diferentes (100% dos testes passando)
+  - **Correção Adicional**: Método `loadFilterSet()` também corrigido para respeitar o modo manual ao carregar filtros salvos
+  - **Documentação**: Criado `AUTO_MODE_CLARIFICATION.md` esclarecendo a diferença entre detecção automática de pacientes e carregamento automático de seções
+  - **Esclarecimento de Lógica**: Confirmado que a implementação atual está correta - `enableAutomaticDetection` controla apenas detecção de pacientes e regras de automação, enquanto `autoLoadExams` etc. controlam carregamento das seções independentemente
 
 - **ErrorHandler**: Corrigidos todos os 23 testes unitários (100% passando)
 
