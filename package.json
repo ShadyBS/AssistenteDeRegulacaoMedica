@@ -18,7 +18,7 @@
     "validate": "npm run validate:all",
     "validate:all": "npm run validate:manifest && npm run validate:security && npm run validate:performance && npm run validate:packages",
     "validate:manifest": "node scripts/validation/validate-manifest.js",
-    "validate:security": "node scripts/validation/security-check.js || echo 'Security validation script not found'",
+    "validate:security": "node scripts/validation/validate-security.js || echo 'Security validation script not found'",
     "validate:medical": "node scripts/utils/medical-compliance.cjs",
     "validate:permissions": "node scripts/validation/validate-permissions.js",
     "validate:csp": "node scripts/validation/validate-csp.js",
