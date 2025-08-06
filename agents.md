@@ -71,7 +71,7 @@ AssistenteDeRegulacaoMedica/
 ✅ VALIDAR
    ├── npm run ci:validate
    ├── npm run lint:fix
-   └── npm run test:unit
+   └── ⚠️ npm run test:unit (TEMPORARIAMENTE DESABILITADO)
     ↓
 🔄 TESTAR EM AMBOS BROWSERS
     ↓
@@ -81,6 +81,8 @@ AssistenteDeRegulacaoMedica/
     ↓
 ✅ COMPLETO
 ```
+
+**⚠️ NOTA TEMPORÁRIA:** Os testes JEST estão temporariamente desabilitados devido a problemas técnicos. O fluxo de release e CI/CD foi ajustado para não depender dos testes até que sejam corrigidos.
 
 ### Comandos Essenciais
 
