@@ -12,30 +12,71 @@ async function packageFirefox() {
   const srcDir = path.resolve(__dirname, '../../');
   const outputDir = path.resolve(__dirname, '../../dist-zips');
 
-  // Files to ignore (same as legacy script)
+  // Files and patterns to ignore - comprehensive list for clean extension package
   const FILES_TO_IGNORE = [
+    // Build and development directories
     'dist-zips',
     'src',
     'node_modules',
-    'build-zips.js',
-    'build-zips.bat',
-    'release.js',
-    '.env',
-    'build-release.bat',
-    'rollback-release.bat',
-    '.gitignore',
-    '.git',
-    '.vscode',
-    'package-lock.json',
-    'package.json',
-    'tailwind.config.js',
-    'README.md',
     'config',
     'coverage',
     'dist',
     'scripts',
     'test',
     'security',
+    'docs',
+    '.backup',
+    '.refactor-tests',
+    'test-backup-20250803-115056',
+    
+    // Configuration files
+    '.env',
+    '.gitignore',
+    '.git',
+    '.vscode',
+    'package-lock.json',
+    'package.json',
+    'tailwind.config.js',
+    'eslint.config.js',
+    'postcss.config.cjs',
+    '.babelrc.cjs',
+    'babel.config.cjs',
+    
+    // Documentation and markdown files
+    'README.md',
+    'CHANGELOG.md',
+    'agents.md',
+    'PIPELINE_SUMMARY.md',
+    'AUDITORIA_FUNCIONAL_PROMPT.md',
+    'AUTO_MODE_CLARIFICATION.md',
+    'AUTOLOAD_FIX_SUMMARY.md',
+    'EXTENSION_AUDIT_REPORT_EXEMPLO.md',
+    'FINAL_AUTO_MODE_ANALYSIS.md',
+    'MANIFEST_CORRECTION_SUMMARY.md',
+    'MANIFEST_REMOVAL_SUMMARY.md',
+    'PROMPT_AUDITORIA_EXECUTAVEL.md',
+    'RESUMO_ENTREGA_PROMPT.md',
+    'TASK_COMPLETION_SUMMARY.md',
+    
+    // Test and debug files
+    'debug-autoload.js',
+    'debug-connection.js',
+    'debug-storage.js',
+    'test-autoload-fix-validation.js',
+    'test-autoload-fix.js',
+    'test-autoload.js',
+    'test-independent-autoload-validation.js',
+    'store-test-methods.js',
+    'ErrorHandler-Demo.js',
+    'newtestoutput.txt',
+    'testunitouput.txt',
+    
+    // Backup and temporary files
+    'manifest-edge.json.backup',
+    'manifest-firefox.json.backup',
+    'manifest.json.backup',
+    
+    // IDE and tool configuration
     '.docs',
     '.copilot-instructions',
     '.github',
@@ -48,14 +89,6 @@ async function packageFirefox() {
     '.qodo',
     '.stylelintrc.json',
     'AssistenteDeRegulacao.code-workspace',
-    'build-release.bat',
-    'eslint.config.js',
-    'postcss.config.cjs',
-    'PIPELINE_SUMMARY.md',
-    'CHANGELOG.md',
-    'agents.md',
-    'ErrorHandler-Demo.js',
-    '.babelrc.cjs',
   ];
 
   const manifest = await fs.readJson(path.join(srcDir, 'manifest-firefox.json'));

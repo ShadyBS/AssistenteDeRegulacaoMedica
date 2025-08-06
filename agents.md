@@ -88,7 +88,7 @@ AssistenteDeRegulacaoMedica/
 npm run dev              # Desenvolvimento
 npm run ci:validate      # Validação completa
 npm run build:css        # Build TailwindCSS
-npm run build:zips       # Generate browser packages
+npm run package:all      # Generate browser packages
 ```
 
 ### ⚠️ Nunca Pule
@@ -114,8 +114,7 @@ npm run release:patch    # Release patch version
 
 ```bash
 npm run build:css        # Compila TailwindCSS
-npm run build:zips       # Gera ZIPs Chrome/Firefox/Edge
-npm run package:all      # Packages para stores
+npm run package:all      # Gera ZIPs Chrome/Firefox/Edge
 npm run release:all      # Release completo
 ```
 
@@ -340,6 +339,7 @@ npm run lint:fix         # Fix linting issues
 npm run test:unit        # Testes unitários
 npm run build:css        # Rebuild CSS
 npm run validate:security # Segurança médica
+npm run validate:packages # Validar conteúdo dos packages
 ```
 
 ### Cross-browser

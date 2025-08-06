@@ -7,10 +7,10 @@
 (function () {
   // Implementação inline das constantes e funções de logging necessárias
   // (sem usar módulos ES6 para compatibilidade com content scripts)
-  
+
   const ERROR_CATEGORIES = {
     CONTENT_SCRIPT: 'content_script',
-    EXTENSION_LIFECYCLE: 'extension_lifecycle'
+    EXTENSION_LIFECYCLE: 'extension_lifecycle',
   };
 
   // Função de logging simplificada para content script

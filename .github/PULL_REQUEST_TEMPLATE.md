@@ -35,7 +35,7 @@ Brief description of changes made in this PR.
 ### Build & Quality
 
 - [ ] CSS built (`npm run build:css`)
-- [ ] Extension packages built (`npm run build:zips`)
+- [ ] Extension packages built (`npm run package:all`)
 - [ ] Linting passes (`npm run lint`)
 - [ ] Security validation passes (`npm run validate:security`)
 - [ ] Medical compliance checks pass

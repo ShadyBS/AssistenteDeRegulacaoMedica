@@ -79,7 +79,7 @@ npm install
 # Desenvolvimento
 npm run dev          # Build dev + watch
 npm run build:css    # Build CSS apenas
-npm run build:zips   # Build packages para teste
+npm run package:all  # Build packages para teste
 
 # Validação e testes
 npm run validate     # Validação completa

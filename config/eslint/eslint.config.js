@@ -94,8 +94,7 @@ export default [
     files: [
       'scripts/**/*.js',
       'release.js',
-      'build-zips.js',
-      '*.config.js',
+            '*.config.js',
       'tailwind.config.js',
       'eslint.config.js',
     ],

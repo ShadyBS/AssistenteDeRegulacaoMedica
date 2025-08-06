@@ -1,13 +1,13 @@
 /**
  * 🏥 TESTE DE VALIDAÇÃO - INDEPENDÊNCIA DO CARREGAMENTO AUTOMÁTICO
- * 
+ *
  * Este teste verifica se o carregamento automático das seções funciona
  * INDEPENDENTEMENTE da configuração enableAutomaticDetection.
- * 
+ *
  * CENÁRIO CRÍTICO:
  * - enableAutomaticDetection = false (modo MANUAL para detecção de pacientes)
  * - autoLoadExams = true (carregamento automático de exames LIGADO)
- * 
+ *
  * RESULTADO ESPERADO:
  * - Quando um paciente é selecionado MANUALMENTE, as seções com autoLoad = true
  *   devem carregar automaticamente, mesmo com enableAutomaticDetection = false
@@ -19,14 +19,14 @@ const criticalScenario = {
   userPreferences: {
     // 🔒 MODO MANUAL para detecção de pacientes
     enableAutomaticDetection: false,
-    
+
     // ✅ CARREGAMENTO AUTOMÁTICO das seções (INDEPENDENTE)
     autoLoadExams: true,
     autoLoadConsultations: true,
     autoLoadAppointments: false,
     autoLoadRegulations: false,
     autoLoadDocuments: false,
-    
+
     dateRangeDefaults: {
       appointments: { end: 3, start: -1 },
       consultations: { end: 0, start: -6 },
@@ -35,11 +35,17 @@ const criticalScenario = {
       regulations: { end: 0, start: -12 },
     },
   },
-  expectedBehavior: 'Seções com autoLoad=true devem carregar automaticamente quando paciente é selecionado MANUALMENTE',
+  expectedBehavior:
+    'Seções com autoLoad=true devem carregar automaticamente quando paciente é selecionado MANUALMENTE',
 };
 
 // Simula a lógica do SectionManager.setPatient()
-function simulateSetPatientLogic(sectionKey, globalSettings, hasPatient = true, patientSource = 'manual') {
+function simulateSetPatientLogic(
+  sectionKey,
+  globalSettings,
+  hasPatient = true,
+  patientSource = 'manual'
+) {
   const autoLoadKey = `autoLoad${sectionKey.charAt(0).toUpperCase() + sectionKey.slice(1)}`;
 
   // Validações rigorosas (como no código)
@@ -106,8 +112,11 @@ function simulatePatientSelection(scenario, patientSource = 'manual') {
     results[sectionKey] = result;
 
     const status = result.shouldLoad ? '✅ CARREGA' : '🔒 MANUAL';
-    const autoLoadValue = scenario.userPreferences[`autoLoad${sectionKey.charAt(0).toUpperCase() + sectionKey.slice(1)}`];
-    
+    const autoLoadValue =
+      scenario.userPreferences[
+        `autoLoad${sectionKey.charAt(0).toUpperCase() + sectionKey.slice(1)}`
+      ];
+
     console.log(
       `  ${sectionKey.padEnd(13)} | ${status} | autoLoad: ${autoLoadValue} | ${result.reason}`
     );
@@ -120,7 +129,9 @@ function simulatePatientSelection(scenario, patientSource = 'manual') {
 // Executa os testes
 console.log('🧪 === TESTE DE INDEPENDÊNCIA DO CARREGAMENTO AUTOMÁTICO ===\n');
 
-console.log('🎯 OBJETIVO: Verificar se autoLoad* funciona independentemente de enableAutomaticDetection\n');
+console.log(
+  '🎯 OBJETIVO: Verificar se autoLoad* funciona independentemente de enableAutomaticDetection\n'
+);
 
 // Teste 1: Paciente selecionado MANUALMENTE (busca manual)
 console.log('📋 CENÁRIO 1: Paciente selecionado via BUSCA MANUAL');
@@ -128,14 +139,17 @@ const manualResults = simulatePatientSelection(criticalScenario, 'manual');
 
 // Teste 2: Paciente selecionado via DETECÇÃO AUTOMÁTICA (se enableAutomaticDetection fosse true)
 console.log('📋 CENÁRIO 2: Paciente selecionado via DETECÇÃO AUTOMÁTICA (hipotético)');
-const autoResults = simulatePatientSelection({
-  ...criticalScenario,
-  name: 'enableAutomaticDetection = true + autoLoadExams = true',
-  userPreferences: {
-    ...criticalScenario.userPreferences,
-    enableAutomaticDetection: true, // Mudança apenas nesta configuração
-  }
-}, 'automatic');
+const autoResults = simulatePatientSelection(
+  {
+    ...criticalScenario,
+    name: 'enableAutomaticDetection = true + autoLoadExams = true',
+    userPreferences: {
+      ...criticalScenario.userPreferences,
+      enableAutomaticDetection: true, // Mudança apenas nesta configuração
+    },
+  },
+  'automatic'
+);
 
 // Análise dos resultados
 console.log('🔍 === ANÁLISE DOS RESULTADOS ===\n');
@@ -144,14 +158,14 @@ const sectionsWithAutoLoad = ['consultations', 'exams']; // Seções com autoLoa
 const sectionsWithoutAutoLoad = ['appointments', 'regulations', 'documents']; // Seções com autoLoad = false
 
 console.log('✅ SEÇÕES COM AUTOLOAD = TRUE:');
-sectionsWithAutoLoad.forEach(section => {
+sectionsWithAutoLoad.forEach((section) => {
   const manualResult = manualResults[section];
   const autoResult = autoResults[section];
-  
+
   console.log(`  ${section}:`);
   console.log(`    - Busca manual: ${manualResult.shouldLoad ? 'CARREGA ✅' : 'NÃO CARREGA ❌'}`);
   console.log(`    - Detecção auto: ${autoResult.shouldLoad ? 'CARREGA ✅' : 'NÃO CARREGA ❌'}`);
-  
+
   if (manualResult.shouldLoad && autoResult.shouldLoad) {
     console.log(`    - 🎉 CORRETO: Carrega independentemente de enableAutomaticDetection`);
   } else {
@@ -161,14 +175,14 @@ sectionsWithAutoLoad.forEach(section => {
 });
 
 console.log('🔒 SEÇÕES COM AUTOLOAD = FALSE:');
-sectionsWithoutAutoLoad.forEach(section => {
+sectionsWithoutAutoLoad.forEach((section) => {
   const manualResult = manualResults[section];
   const autoResult = autoResults[section];
-  
+
   console.log(`  ${section}:`);
   console.log(`    - Busca manual: ${manualResult.shouldLoad ? 'CARREGA ❌' : 'NÃO CARREGA ✅'}`);
   console.log(`    - Detecção auto: ${autoResult.shouldLoad ? 'CARREGA ❌' : 'NÃO CARREGA ✅'}`);
-  
+
   if (!manualResult.shouldLoad && !autoResult.shouldLoad) {
     console.log(`    - 🎉 CORRETO: Não carrega independentemente de enableAutomaticDetection`);
   } else {
@@ -192,22 +206,30 @@ const criticalTest = simulateSetPatientLogic(
 );
 
 console.log('📊 RESULTADO DO TESTE:');
-console.log(`  - enableAutomaticDetection: ${criticalScenario.userPreferences.enableAutomaticDetection}`);
+console.log(
+  `  - enableAutomaticDetection: ${criticalScenario.userPreferences.enableAutomaticDetection}`
+);
 console.log(`  - autoLoadExams: ${criticalScenario.userPreferences.autoLoadExams}`);
 console.log(`  - Paciente selecionado: MANUALMENTE`);
 console.log(`  - Seção de exames carrega: ${criticalTest.shouldLoad ? 'SIM ✅' : 'NÃO ❌'}`);
 console.log(`  - Razão: ${criticalTest.reason}\n`);
 
 if (criticalTest.shouldLoad) {
-  console.log('✅ RESULTADO: CORRETO - O carregamento automático das se��ões funciona independentemente de enableAutomaticDetection');
+  console.log(
+    '✅ RESULTADO: CORRETO - O carregamento automático das se��ões funciona independentemente de enableAutomaticDetection'
+  );
   console.log('✅ CONFIRMAÇÃO: A implementação atual está correta');
 } else {
   console.log('❌ RESULTADO: INCORRETO - Há um problema na implementação');
-  console.log('❌ PROBLEMA: O carregamento das seções está sendo afetado por enableAutomaticDetection');
+  console.log(
+    '❌ PROBLEMA: O carregamento das seções está sendo afetado por enableAutomaticDetection'
+  );
 }
 
 console.log('\n🎉 CONCLUSÃO:');
 console.log('O carregamento automático das seções (autoLoad*) deve funcionar independentemente');
-console.log('da configuração enableAutomaticDetection, que controla apenas a detecção de pacientes.');
+console.log(
+  'da configuração enableAutomaticDetection, que controla apenas a detecção de pacientes.'
+);
 
 export { simulateSetPatientLogic, criticalScenario };

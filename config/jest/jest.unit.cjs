@@ -22,9 +22,7 @@ module.exports = {
     '!test/**',
     '!scripts/**',
     '!config/**',
-    '!build-zips.js',
-    '!release.js',
-    '!*.config.js'
+        '!*.config.js'
   ],
   coverageDirectory: '<rootDir>/coverage/unit',
   coverageReporters: ['text', 'lcov', 'html'],

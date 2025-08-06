@@ -1,21 +1,21 @@
 /**
-* 🏥 TESTE DE VALIDAÇÃO - CORREÇÃO DO CARREGAMENTO AUTOMÁTICO
-* 
-* Este arquivo testa se a correção do problema de carregamento automático
-* das seções está funcionando corretamente.
-* 
-* ESCLARECIMENTO IMPORTANTE:
-* - enableAutomaticDetection: Controla APENAS detecção automática de pacientes e regras de automação
-* - autoLoad*: Controla carregamento automático das seções (INDEPENDENTE do modo AUTO)
-* 
-* PROBLEMA ORIGINAL:
-* - Mesmo com autoLoad* = false, as seções carregavam automaticamente
-* - Isso acontecia porque handleFetchTypeChange era chamado durante clearFilters
-* 
-* CORREÇÃO APLICADA:
-* - Verificação do modo manual antes de chamar handleFetchTypeChange
-* - Apenas atualiza fetchType sem fazer fetch quando no modo manual
-*/
+ * 🏥 TESTE DE VALIDAÇÃO - CORREÇÃO DO CARREGAMENTO AUTOMÁTICO
+ *
+ * Este arquivo testa se a correção do problema de carregamento automático
+ * das seções está funcionando corretamente.
+ *
+ * ESCLARECIMENTO IMPORTANTE:
+ * - enableAutomaticDetection: Controla APENAS detecção automática de pacientes e regras de automação
+ * - autoLoad*: Controla carregamento automático das seções (INDEPENDENTE do modo AUTO)
+ *
+ * PROBLEMA ORIGINAL:
+ * - Mesmo com autoLoad* = false, as seções carregavam automaticamente
+ * - Isso acontecia porque handleFetchTypeChange era chamado durante clearFilters
+ *
+ * CORREÇÃO APLICADA:
+ * - Verificação do modo manual antes de chamar handleFetchTypeChange
+ * - Apenas atualiza fetchType sem fazer fetch quando no modo manual
+ */
 
 // Simula as configurações do usuário
 const testScenarios = [
