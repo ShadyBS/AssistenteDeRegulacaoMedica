@@ -63,7 +63,9 @@ runCommand(
 
 // 4. Executar testes unitários e verificar cobertura (OPCIONAL - JEST com problemas)
 console.log(`\n${colors.blue}🧪 Verificando testes unitários...${colors.reset}`);
-console.log(`${colors.yellow}⚠️ Testes JEST temporariamente desabilitados devido a problemas${colors.reset}`);
+console.log(
+  `${colors.yellow}⚠️ Testes JEST temporariamente desabilitados devido a problemas${colors.reset}`
+);
 console.log(`${colors.green}✓${colors.reset} Testes pulados - JEST será corrigido em breve`);
 
 // 5. Validar segurança
