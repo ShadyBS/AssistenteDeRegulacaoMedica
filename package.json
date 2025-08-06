@@ -1,6 +1,6 @@
 {
   "name": "assistente-de-regulacao-medica",
-  "version": "3.3.7",
+  "version": "4.0.1",
   "description": "Extensão para auxiliar na regulação médica. IMPORTANTE: Leia agents.md antes de modificar o código.",
   "type": "module",
   "main": "sidebar.js",
