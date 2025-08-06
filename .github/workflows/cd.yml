@@ -53,12 +53,13 @@ jobs:
 
       - name: 📥 Install Dependencies
         run: |
-          cd AssistenteDeRegulacaoMedica 2>/dev/null || true
+          cd AssistenteDeRegulacaoMedica
           npm ci
 
       - name: 📋 Extract Version
         id: version
         run: |
+          cd AssistenteDeRegulacaoMedica
           if [[ ${{ github.ref }} =~ ^refs/tags/v(.+)$ ]]; then
             VERSION=${BASH_REMATCH[1]}
           else
@@ -70,6 +71,7 @@ jobs:
       - name: 🌍 Determine Environment
         id: environment
         run: |
+          cd AssistenteDeRegulacaoMedica
           if [[ "${{ github.event.inputs.environment }}" == "production" ]] || [[ ${{ github.ref }} =~ ^refs/tags/v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
             echo "is-production=true" >> $GITHUB_OUTPUT
             echo "🚀 Production Release"
@@ -80,7 +82,7 @@ jobs:
 
       - name: ✅ Validate Release Prerequisites
         run: |
-          cd AssistenteDeRegulacaoMedica 2>/dev/null || true
+          cd AssistenteDeRegulacaoMedica
           echo "🔍 Validating release prerequisites..."
 
           # Validate version format
@@ -123,10 +125,13 @@ jobs:
           cache: 'npm'
 
       - name: 📥 Install Dependencies
-        run: npm ci
+        run: |
+          cd AssistenteDeRegulacaoMedica
+          npm ci
 
       - name: 🔧 Update Version in Manifests
         run: |
+          cd AssistenteDeRegulacaoMedica
           VERSION="${{ needs.pre-release-check.outputs.version }}"
 
           # Update main manifest (Chrome)
@@ -149,17 +154,21 @@ jobs:
 
       - name: 🏗️ Build Production
         run: |
+          cd AssistenteDeRegulacaoMedica
           npm run build:css
           npm run build:prod
 
       - name: 📦 Package ${{ matrix.browser }}
-        run: npm run package:${{ matrix.browser }}
+        run: |
+          cd AssistenteDeRegulacaoMedica
+          npm run package:${{ matrix.browser }}
 
       - name: 🔐 Sign Extension (Chrome)
         if: matrix.browser == 'chrome' && needs.pre-release-check.outputs.is-production == 'true'
         env:
           CHROME_PRIVATE_KEY: ${{ secrets.CHROME_PRIVATE_KEY }}
         run: |
+          cd AssistenteDeRegulacaoMedica
           if [ ! -z "$CHROME_PRIVATE_KEY" ]; then
             mkdir -p keys
             echo "$CHROME_PRIVATE_KEY" | base64 -d > keys/chrome-private-key.pem
@@ -171,7 +180,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: release-${{ matrix.browser }}-${{ needs.pre-release-check.outputs.version }}
-          path: dist/packages/
+          path: AssistenteDeRegulacaoMedica/dist/packages/
           retention-days: 365
 
   # ===============================
