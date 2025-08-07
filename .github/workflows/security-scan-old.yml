@@ -87,16 +87,16 @@ jobs:
         uses: actions/checkout@v4
 
       - name: 🔍 Initialize CodeQL
-        uses: github/codeql-action/init@v3
+        uses: github/codeql-action/init@v2
         with:
           languages: ${{ matrix.language }}
           queries: security-extended,security-and-quality
 
       - name: 🔧 Autobuild
-        uses: github/codeql-action/autobuild@v3
+        uses: github/codeql-action/autobuild@v2
 
       - name: 🔍 Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v3
+        uses: github/codeql-action/analyze@v2
         with:
           category: '/language:${{matrix.language}}'
 
@@ -121,39 +121,42 @@ jobs:
         run: |
           echo "🏥 Checking medical data compliance..."
 
-          # Check for direct console.log with actual sensitive data values (not just variable names)
-          if grep -r "console\.log.*['\"][0-9]\{3\}\.[0-9]\{3\}\.[0-9]\{3\}-[0-9]\{2\}['\"]" --include="*.js" . | grep -v "test\|spec\|node_modules"; then
-            echo "❌ Found actual CPF values being logged"
+          # Check for sensitive data patterns
+          if grep -r "cpf\|sus\|cns" --include="*.js" . | grep -v "test\|spec"; then
+            echo "⚠️ Found potential medical identifiers in code"
+            echo "Ensure proper data sanitization and GDPR compliance"
+          fi
+
+          # Check for console.log with sensitive data
+          if grep -r "console\.log.*\(cpf\|sus\|cns\|password\)" --include="*.js" .; then
+            echo "❌ Found potential sensitive data logging"
             exit 1
           fi
 
-          # Check for direct console.log with CNS patterns
-          if grep -r "console\.log.*['\"][0-9]\{15\}['\"]" --include="*.js" . | grep -v "test\|spec\|node_modules"; then
-            echo "❌ Found actual CNS values being logged"
-            exit 1
+          # Check for localStorage usage
+          if grep -r "localStorage" --include="*.js" . | grep -v "test\|spec"; then
+            echo "⚠️ Found localStorage usage - ensure medical data uses secure storage"
           fi
-
-          # Check for password logging
-          if grep -r "console\.log.*password.*:" --include="*.js" . | grep -v "test\|spec\|node_modules"; then
-            echo "❌ Found password logging"
-            exit 1
-          fi
-
-          # Check for localStorage usage with medical data
-          if grep -r "localStorage\.setItem.*\(cpf\|cns\|sus\)" --include="*.js" . | grep -v "test\|spec\|node_modules"; then
-            echo "❌ Found localStorage usage with medical data"
-            exit 1
-          fi
-
-          # Informational: Show medical identifiers usage in code (not an error for medical extension)
-          echo "📋 Medical identifier usage in code (informational only):"
-          grep -r "cpf\|cns\|sus" --include="*.js" . | grep -v "test\|spec\|node_modules" | head -5 || echo "None found"
-          echo "ℹ️ Medical identifiers in code are expected for healthcare functionality"
 
           echo "✅ Medical compliance checks passed"
 
       - name: 🔐 CSP Validation
-        run: npm run validate:csp
+        run: |
+          echo "🔐 Validating Content Security Policy..."
+
+          # Check manifest CSP
+          if ! grep -q "content_security_policy" manifest.json; then
+            echo "❌ No CSP defined in manifest"
+            exit 1
+          fi
+
+          # Check for unsafe CSP directives
+          if grep -q "unsafe-eval\|unsafe-inline" manifest.json; then
+            echo "❌ Unsafe CSP directives found"
+            exit 1
+          fi
+
+          echo "✅ CSP validation passed"
 
       - name: 📊 Generate Compliance Report
         run: |

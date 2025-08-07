@@ -11,12 +11,7 @@ class PermissionsValidator {
   constructor() {
     this.errors = [];
     this.warnings = [];
-    this.medicalDataPermissions = [
-      'storage',
-      'scripting',
-      'contextMenus',
-      'clipboardWrite'
-    ];
+    this.medicalDataPermissions = ['storage', 'scripting', 'contextMenus', 'clipboardWrite'];
     this.dangerousPermissions = [
       '<all_urls>',
       'tabs',
@@ -27,13 +22,13 @@ class PermissionsValidator {
       'nativeMessaging',
       'privacy',
       'management',
-      'identity'
+      'identity',
     ];
     this.allowedHostPermissions = [
       '*://*/sigss/*',
       '*://sigss.*/*',
       'https://sigss.*/*',
-      'http://sigss.*/*'
+      'http://sigss.*/*',
     ];
   }
 
@@ -74,14 +69,12 @@ class PermissionsValidator {
 
   validateBasicPermissions(manifest) {
     const permissions = manifest.permissions || [];
-    
+
     // Check for required medical extension permissions
-    const missingRequired = this.medicalDataPermissions.filter(
-      req => !permissions.includes(req)
-    );
+    const missingRequired = this.medicalDataPermissions.filter((req) => !permissions.includes(req));
 
     if (missingRequired.length > 0) {
-      missingRequired.forEach(perm => {
+      missingRequired.forEach((perm) => {
         if (perm === 'clipboardWrite') {
           this.addWarning(`Missing optional permission: ${perm} (needed for copy functionality)`);
         } else {
@@ -95,10 +88,10 @@ class PermissionsValidator {
       'geolocation',
       'notifications',
       'background',
-      'unlimitedStorage'
+      'unlimitedStorage',
     ];
 
-    unnecessaryPermissions.forEach(perm => {
+    unnecessaryPermissions.forEach((perm) => {
       if (permissions.includes(perm)) {
         this.addWarning(`Potentially unnecessary permission: ${perm}`);
       }
@@ -109,16 +102,17 @@ class PermissionsValidator {
 
   validateHostPermissions(manifest) {
     const hostPermissions = manifest.host_permissions || [];
-    
+
     if (hostPermissions.length === 0) {
       this.addError('No host permissions defined - extension needs SIGSS access');
       return;
     }
 
     // Check for SIGSS-specific permissions
-    const hasSigssPermission = hostPermissions.some(host => 
-      host.includes('sigss') || 
-      this.allowedHostPermissions.some(allowed => this.matchesPattern(host, allowed))
+    const hasSigssPermission = hostPermissions.some(
+      (host) =>
+        host.includes('sigss') ||
+        this.allowedHostPermissions.some((allowed) => this.matchesPattern(host, allowed))
     );
 
     if (!hasSigssPermission) {
@@ -126,16 +120,19 @@ class PermissionsValidator {
     }
 
     // Check for overly broad permissions
-    const broadPermissions = hostPermissions.filter(host => 
-      host === '<all_urls>' || 
-      host === '*://*/*' || 
-      host === 'https://*/*' ||
-      host === 'http://*/*'
+    const broadPermissions = hostPermissions.filter(
+      (host) =>
+        host === '<all_urls>' ||
+        host === '*://*/*' ||
+        host === 'https://*/*' ||
+        host === 'http://*/*'
     );
 
     if (broadPermissions.length > 0) {
-      broadPermissions.forEach(perm => {
-        this.addWarning(`Overly broad host permission: ${perm} - consider restricting to specific domains`);
+      broadPermissions.forEach((perm) => {
+        this.addWarning(
+          `Overly broad host permission: ${perm} - consider restricting to specific domains`
+        );
       });
     }
 
@@ -143,19 +140,18 @@ class PermissionsValidator {
   }
 
   validateMedicalDataCompliance(manifest) {
-    const allPermissions = [
-      ...(manifest.permissions || []),
-      ...(manifest.host_permissions || [])
-    ];
+    const allPermissions = [...(manifest.permissions || []), ...(manifest.host_permissions || [])];
 
     // Check for privacy-sensitive permissions
-    const privacyPermissions = this.dangerousPermissions.filter(perm => 
-      allPermissions.some(p => p.includes(perm))
+    const privacyPermissions = this.dangerousPermissions.filter((perm) =>
+      allPermissions.some((p) => p.includes(perm))
     );
 
     if (privacyPermissions.length > 0) {
-      privacyPermissions.forEach(perm => {
-        this.addWarning(`Privacy-sensitive permission detected: ${perm} - ensure LGPD/GDPR compliance`);
+      privacyPermissions.forEach((perm) => {
+        this.addWarning(
+          `Privacy-sensitive permission detected: ${perm} - ensure LGPD/GDPR compliance`
+        );
       });
     }
 
@@ -173,11 +169,13 @@ class PermissionsValidator {
 
     // Check for secure communication requirements
     const hostPermissions = manifest.host_permissions || [];
-    const hasHttpPermissions = hostPermissions.some(host => host.startsWith('http://'));
-    const hasHttpsPermissions = hostPermissions.some(host => host.startsWith('https://'));
+    const hasHttpPermissions = hostPermissions.some((host) => host.startsWith('http://'));
+    const hasHttpsPermissions = hostPermissions.some((host) => host.startsWith('https://'));
 
     if (hasHttpPermissions && !hasHttpsPermissions) {
-      this.addWarning('Extension allows HTTP connections - consider HTTPS only for medical data security');
+      this.addWarning(
+        'Extension allows HTTP connections - consider HTTPS only for medical data security'
+      );
     }
 
     console.log(`✅ Medical data compliance validated`);
@@ -185,21 +183,19 @@ class PermissionsValidator {
 
   validateSecurityPermissions(manifest) {
     const permissions = manifest.permissions || [];
-    
+
     // Check for dangerous permissions
-    const dangerous = permissions.filter(perm => 
-      this.dangerousPermissions.includes(perm)
-    );
+    const dangerous = permissions.filter((perm) => this.dangerousPermissions.includes(perm));
 
     if (dangerous.length > 0) {
-      dangerous.forEach(perm => {
+      dangerous.forEach((perm) => {
         this.addWarning(`Potentially dangerous permission: ${perm} - ensure proper justification`);
       });
     }
 
     // Check for development-only permissions
     const devPermissions = ['debugger', 'management'];
-    const hasDevPermissions = permissions.some(perm => devPermissions.includes(perm));
+    const hasDevPermissions = permissions.some((perm) => devPermissions.includes(perm));
 
     if (hasDevPermissions) {
       this.addError('Development-only permissions detected - remove before production');
@@ -209,11 +205,15 @@ class PermissionsValidator {
     const contentScripts = manifest.content_scripts || [];
     contentScripts.forEach((script, index) => {
       if (script.all_frames === true) {
-        this.addWarning(`Content script ${index}: all_frames=true may expose medical data in iframes`);
+        this.addWarning(
+          `Content script ${index}: all_frames=true may expose medical data in iframes`
+        );
       }
-      
+
       if (script.run_at === 'document_start') {
-        this.addWarning(`Content script ${index}: document_start execution may interfere with page security`);
+        this.addWarning(
+          `Content script ${index}: document_start execution may interfere with page security`
+        );
       }
     });
 
@@ -222,31 +222,31 @@ class PermissionsValidator {
 
   validateCrossOriginPermissions(manifest) {
     const hostPermissions = manifest.host_permissions || [];
-    
+
     // Check for cross-origin access patterns
-    const crossOriginPatterns = hostPermissions.filter(host => 
-      host.includes('*') && !host.includes('sigss')
+    const crossOriginPatterns = hostPermissions.filter(
+      (host) => host.includes('*') && !host.includes('sigss')
     );
 
     if (crossOriginPatterns.length > 0) {
-      crossOriginPatterns.forEach(pattern => {
-        this.addWarning(`Cross-origin permission: ${pattern} - ensure necessary for medical functionality`);
+      crossOriginPatterns.forEach((pattern) => {
+        this.addWarning(
+          `Cross-origin permission: ${pattern} - ensure necessary for medical functionality`
+        );
       });
     }
 
     // Validate specific medical system domains
-    const medicalDomains = [
-      'sigss',
-      'cadsus',
-      'datasus'
-    ];
+    const medicalDomains = ['sigss', 'cadsus', 'datasus'];
 
-    const hasMedicalDomainAccess = hostPermissions.some(host => 
-      medicalDomains.some(domain => host.includes(domain))
+    const hasMedicalDomainAccess = hostPermissions.some((host) =>
+      medicalDomains.some((domain) => host.includes(domain))
     );
 
     if (!hasMedicalDomainAccess) {
-      this.addWarning('No medical system domain permissions detected - verify integration requirements');
+      this.addWarning(
+        'No medical system domain permissions detected - verify integration requirements'
+      );
     }
 
     console.log(`✅ Cross-origin permissions validated`);
@@ -254,10 +254,8 @@ class PermissionsValidator {
 
   matchesPattern(permission, pattern) {
     // Simple pattern matching for host permissions
-    const permissionRegex = pattern
-      .replace(/\*/g, '.*')
-      .replace(/\./g, '\\.');
-    
+    const permissionRegex = pattern.replace(/\*/g, '.*').replace(/\./g, '\\.');
+
     return new RegExp(`^${permissionRegex}$`).test(permission);
   }
 
@@ -336,7 +334,7 @@ async function main() {
 }
 
 // Run if called directly
-const isMainModule = 
+const isMainModule =
   import.meta.url === `file://${process.argv[1]}` ||
   import.meta.url.endsWith(process.argv[1]) ||
   process.argv[1].endsWith('validate-permissions.js');
