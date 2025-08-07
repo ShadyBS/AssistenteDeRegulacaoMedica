@@ -7,6 +7,7 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ## [Unreleased]
 
+## [4.0.4] - 2025-08-07
 ### 🛠️ Changed
 
 - **⚠️ JEST Tests Temporarily Disabled**: Removida obrigatoriedade de testes JEST nos fluxos de release e CI/CD devido a problemas técnicos
