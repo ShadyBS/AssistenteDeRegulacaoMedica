@@ -325,7 +325,7 @@ jobs:
           path: dist-zips/
 
       - name: 🧪 Create Beta Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ needs.pre-release-check.outputs.version }}-beta
           name: 🧪 Beta Release v${{ needs.pre-release-check.outputs.version }}
@@ -404,7 +404,7 @@ jobs:
           echo "EOF" >> $GITHUB_OUTPUT
 
       - name: 🚀 Create Production Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ needs.pre-release-check.outputs.version }}
           name: 🚀 Release v${{ needs.pre-release-check.outputs.version }}
