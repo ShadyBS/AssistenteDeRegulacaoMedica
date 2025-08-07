@@ -435,11 +435,11 @@ class ManifestValidator {
 // Main execution
 async function main() {
   const validator = new ManifestValidator();
-  
+
   // Get root directory - handle both local and CI environments
   const scriptDir = path.dirname(fileURLToPath(import.meta.url));
   const rootDir = path.resolve(scriptDir, '..', '..');
-  
+
   console.log(`📁 Script directory: ${scriptDir}`);
   console.log(`📁 Root directory: ${rootDir}`);
 
@@ -472,9 +472,10 @@ async function main() {
 }
 
 // Run if called directly
-const isMainModule = import.meta.url === `file://${process.argv[1]}` || 
-                     import.meta.url.endsWith(process.argv[1]) ||
-                     process.argv[1].endsWith('validate-manifest.js');
+const isMainModule =
+  import.meta.url === `file://${process.argv[1]}` ||
+  import.meta.url.endsWith(process.argv[1]) ||
+  process.argv[1].endsWith('validate-manifest.js');
 
 if (isMainModule) {
   main().catch((error) => {
