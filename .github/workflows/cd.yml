@@ -338,7 +338,7 @@ jobs:
 
             **Commit:** ${{ github.sha }}
             **Build Date:** ${{ github.run_id }}
-          files: packages/**/*
+          files: packages/**/*.zip
           prerelease: true
           draft: false
 
@@ -410,7 +410,7 @@ jobs:
 
             ### 🛡️ Security
             All packages are digitally signed and verified.
-          files: packages/**/*
+          files: packages/**/*.zip
           prerelease: false
           draft: false
 
