@@ -10,7 +10,7 @@ async function packageFirefox() {
   console.log('🦊 Starting Firefox packaging...');
 
   const srcDir = path.resolve(__dirname, '../../');
-  const outputDir = path.resolve(__dirname, '../../dist/packages');
+  const outputDir = path.resolve(__dirname, '../../dist-zips');
 
   // Files and patterns to ignore - comprehensive list for clean extension package
   const FILES_TO_IGNORE = [
