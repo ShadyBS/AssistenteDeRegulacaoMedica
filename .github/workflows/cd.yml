@@ -172,124 +172,124 @@ jobs:
           retention-days: 365
 
   # ===============================
-  # STORE SUBMISSION
+  # STORE SUBMISSION (DISABLED)
   # ===============================
 
-  submit-chrome:
-    name: 🌐 Submit to Chrome Web Store
-    runs-on: ubuntu-latest
-    needs: [pre-release-check, build-release]
-    if: needs.pre-release-check.outputs.is-production == 'true'
+  # submit-chrome:
+  #   name: 🌐 Submit to Chrome Web Store
+  #   runs-on: ubuntu-latest
+  #   needs: [pre-release-check, build-release]
+  #   if: needs.pre-release-check.outputs.is-production == 'true'
 
-    steps:
-      - name: 📥 Checkout Repository
-        uses: actions/checkout@v4
+  #   steps:
+  #     - name: 📥 Checkout Repository
+  #       uses: actions/checkout@v4
 
-      - name: 🔧 Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
+  #     - name: 🔧 Setup Node.js
+  #       uses: actions/setup-node@v4
+  #       with:
+  #         node-version: ${{ env.NODE_VERSION }}
+  #         cache: 'npm'
 
-      - name: 📥 Install Dependencies
-        run: npm ci
+  #     - name: 📥 Install Dependencies
+  #       run: npm ci
 
-      - name: 📦 Download Chrome Package
-        uses: actions/download-artifact@v4
-        with:
-          name: release-chrome-${{ needs.pre-release-check.outputs.version }}
-          path: dist/packages/
+  #     - name: 📦 Download Chrome Package
+  #       uses: actions/download-artifact@v4
+  #       with:
+  #         name: release-chrome-${{ needs.pre-release-check.outputs.version }}
+  #         path: dist/packages/
 
-      - name: 🚀 Upload to Chrome Web Store
-        env:
-          CHROME_EXTENSION_ID: ${{ secrets.CHROME_EXTENSION_ID }}
-          CHROME_CLIENT_ID: ${{ secrets.CHROME_CLIENT_ID }}
-          CHROME_CLIENT_SECRET: ${{ secrets.CHROME_CLIENT_SECRET }}
-          CHROME_REFRESH_TOKEN: ${{ secrets.CHROME_REFRESH_TOKEN }}
-        run: |
-          if [ ! -z "$CHROME_EXTENSION_ID" ]; then
-            node scripts/release/upload-chrome.js
-          else
-            echo "⚠️ Chrome Web Store credentials not found, skipping upload"
-          fi
-        continue-on-error: true
+  #     - name: 🚀 Upload to Chrome Web Store
+  #       env:
+  #         CHROME_EXTENSION_ID: ${{ secrets.CHROME_EXTENSION_ID }}
+  #         CHROME_CLIENT_ID: ${{ secrets.CHROME_CLIENT_ID }}
+  #         CHROME_CLIENT_SECRET: ${{ secrets.CHROME_CLIENT_SECRET }}
+  #         CHROME_REFRESH_TOKEN: ${{ secrets.CHROME_REFRESH_TOKEN }}
+  #       run: |
+  #         if [ ! -z "$CHROME_EXTENSION_ID" ]; then
+  #           node scripts/release/upload-chrome.js
+  #         else
+  #           echo "⚠️ Chrome Web Store credentials not found, skipping upload"
+  #         fi
+  #       continue-on-error: true
 
-  submit-firefox:
-    name: 🦊 Submit to Firefox Add-ons
-    runs-on: ubuntu-latest
-    needs: [pre-release-check, build-release]
-    if: needs.pre-release-check.outputs.is-production == 'true'
+  # submit-firefox:
+  #   name: 🦊 Submit to Firefox Add-ons
+  #   runs-on: ubuntu-latest
+  #   needs: [pre-release-check, build-release]
+  #   if: needs.pre-release-check.outputs.is-production == 'true'
 
-    steps:
-      - name: 📥 Checkout Repository
-        uses: actions/checkout@v4
+  #   steps:
+  #     - name: 📥 Checkout Repository
+  #       uses: actions/checkout@v4
 
-      - name: 🔧 Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
+  #     - name: 🔧 Setup Node.js
+  #       uses: actions/setup-node@v4
+  #       with:
+  #         node-version: ${{ env.NODE_VERSION }}
+  #         cache: 'npm'
 
-      - name: 📥 Install Dependencies
-        run: npm ci
+  #     - name: 📥 Install Dependencies
+  #       run: npm ci
 
-      - name: 📦 Download Firefox Package
-        uses: actions/download-artifact@v4
-        with:
-          name: release-firefox-${{ needs.pre-release-check.outputs.version }}
-          path: dist/packages/
+  #     - name: 📦 Download Firefox Package
+  #       uses: actions/download-artifact@v4
+  #       with:
+  #         name: release-firefox-${{ needs.pre-release-check.outputs.version }}
+  #         path: dist/packages/
 
-      - name: 🚀 Upload to Firefox Add-ons
-        env:
-          FIREFOX_JWT_ISSUER: ${{ secrets.FIREFOX_JWT_ISSUER }}
-          FIREFOX_JWT_SECRET: ${{ secrets.FIREFOX_JWT_SECRET }}
-          FIREFOX_EXTENSION_ID: ${{ secrets.FIREFOX_EXTENSION_ID }}
-        run: |
-          if [ ! -z "$FIREFOX_JWT_ISSUER" ]; then
-            node scripts/release/upload-firefox.js
-          else
-            echo "⚠️ Firefox Add-ons credentials not found, skipping upload"
-          fi
-        continue-on-error: true
+  #     - name: 🚀 Upload to Firefox Add-ons
+  #       env:
+  #         FIREFOX_JWT_ISSUER: ${{ secrets.FIREFOX_JWT_ISSUER }}
+  #         FIREFOX_JWT_SECRET: ${{ secrets.FIREFOX_JWT_SECRET }}
+  #         FIREFOX_EXTENSION_ID: ${{ secrets.FIREFOX_EXTENSION_ID }}
+  #       run: |
+  #         if [ ! -z "$FIREFOX_JWT_ISSUER" ]; then
+  #           node scripts/release/upload-firefox.js
+  #         else
+  #           echo "⚠️ Firefox Add-ons credentials not found, skipping upload"
+  #         fi
+  #       continue-on-error: true
 
-  submit-edge:
-    name: 🌐 Submit to Edge Add-ons
-    runs-on: ubuntu-latest
-    needs: [pre-release-check, build-release]
-    if: needs.pre-release-check.outputs.is-production == 'true'
+  # submit-edge:
+  #   name: 🌐 Submit to Edge Add-ons
+  #   runs-on: ubuntu-latest
+  #   needs: [pre-release-check, build-release]
+  #   if: needs.pre-release-check.outputs.is-production == 'true'
 
-    steps:
-      - name: 📥 Checkout Repository
-        uses: actions/checkout@v4
+  #   steps:
+  #     - name: 📥 Checkout Repository
+  #       uses: actions/checkout@v4
 
-      - name: 🔧 Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
+  #     - name: 🔧 Setup Node.js
+  #       uses: actions/setup-node@v4
+  #       with:
+  #         node-version: ${{ env.NODE_VERSION }}
+  #         cache: 'npm'
 
-      - name: 📥 Install Dependencies
-        run: npm ci
+  #     - name: 📥 Install Dependencies
+  #       run: npm ci
 
-      - name: 📦 Download Edge Package
-        uses: actions/download-artifact@v4
-        with:
-          name: release-edge-${{ needs.pre-release-check.outputs.version }}
-          path: dist/packages/
+  #     - name: 📦 Download Edge Package
+  #       uses: actions/download-artifact@v4
+  #       with:
+  #         name: release-edge-${{ needs.pre-release-check.outputs.version }}
+  #         path: dist/packages/
 
-      - name: 🚀 Upload to Edge Add-ons
-        env:
-          EDGE_CLIENT_ID: ${{ secrets.EDGE_CLIENT_ID }}
-          EDGE_CLIENT_SECRET: ${{ secrets.EDGE_CLIENT_SECRET }}
-          EDGE_ACCESS_TOKEN_URL: ${{ secrets.EDGE_ACCESS_TOKEN_URL }}
-          EDGE_PRODUCT_ID: ${{ secrets.EDGE_PRODUCT_ID }}
-        run: |
-          if [ ! -z "$EDGE_CLIENT_ID" ]; then
-            node scripts/release/upload-edge.js
-          else
-            echo "⚠️ Edge Add-ons credentials not found, skipping upload"
-          fi
-        continue-on-error: true
+  #     - name: 🚀 Upload to Edge Add-ons
+  #       env:
+  #         EDGE_CLIENT_ID: ${{ secrets.EDGE_CLIENT_ID }}
+  #         EDGE_CLIENT_SECRET: ${{ secrets.EDGE_CLIENT_SECRET }}
+  #         EDGE_ACCESS_TOKEN_URL: ${{ secrets.EDGE_ACCESS_TOKEN_URL }}
+  #         EDGE_PRODUCT_ID: ${{ secrets.EDGE_PRODUCT_ID }}
+  #       run: |
+  #         if [ ! -z "$EDGE_CLIENT_ID" ]; then
+  #           node scripts/release/upload-edge.js
+  #         else
+  #           echo "⚠️ Edge Add-ons credentials not found, skipping upload"
+  #         fi
+  #       continue-on-error: true
 
   # ===============================
   # BETA DISTRIBUTION
@@ -343,7 +343,7 @@ jobs:
   production-release:
     name: 🚀 Production Release
     runs-on: ubuntu-latest
-    needs: [pre-release-check, build-release, submit-chrome, submit-firefox, submit-edge]
+    needs: [pre-release-check, build-release]
     if: needs.pre-release-check.outputs.is-production == 'true'
 
     steps:

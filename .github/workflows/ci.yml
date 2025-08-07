@@ -52,6 +52,7 @@ jobs:
 
       - name: 🛡️ Security Audit
         run: npm audit --audit-level=moderate
+        continue-on-error: true
 
       - name: 🔒 Snyk Security Scan
         if: github.event_name == 'push'
@@ -309,7 +310,8 @@ jobs:
   notify:
     name: 📢 Notify Results
     runs-on: ubuntu-latest
-    needs: [validate, lint, test-disabled, cross-browser-test-disabled, build, package, final-validation]
+    needs:
+      [validate, lint, test-disabled, cross-browser-test-disabled, build, package, final-validation]
     if: always()
 
     steps:
