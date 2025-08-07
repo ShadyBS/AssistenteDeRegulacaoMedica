@@ -8,8 +8,6 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-
 class ManifestValidator {
   constructor() {
     this.ajv = new Ajv({ allErrors: true });
@@ -47,6 +45,7 @@ class ManifestValidator {
         background: {
           type: 'object',
           properties: {
+            service_worker: { type: 'string' },
             scripts: {
               type: 'array',
               items: { type: 'string' },
@@ -309,18 +308,24 @@ class ManifestValidator {
       this.addError('Background script must use type: "module" in Manifest V3');
     }
 
-    if (!background.scripts || background.scripts.length === 0) {
-      this.addError('Background script files not specified');
-      return;
-    }
-
-    // Validate background script files exist
-    background.scripts.forEach((scriptFile) => {
-      const scriptPath = this.resolveScriptPath(scriptFile);
+    // Check for service_worker (Manifest V3) or scripts (legacy)
+    if (background.service_worker) {
+      // Validate service worker file exists
+      const scriptPath = this.resolveScriptPath(background.service_worker);
       if (!fs.existsSync(scriptPath)) {
-        this.addError(`Background script file not found: ${scriptFile}`);
+        this.addError(`Background service worker file not found: ${background.service_worker}`);
       }
-    });
+    } else if (background.scripts && background.scripts.length > 0) {
+      // Validate background script files exist
+      background.scripts.forEach((scriptFile) => {
+        const scriptPath = this.resolveScriptPath(scriptFile);
+        if (!fs.existsSync(scriptPath)) {
+          this.addError(`Background script file not found: ${scriptFile}`);
+        }
+      });
+    } else {
+      this.addError('Background script files not specified (missing service_worker or scripts)');
+    }
   }
 
   validateBrowserCompatibility(manifest) {
@@ -381,11 +386,15 @@ class ManifestValidator {
   }
 
   resolveIconPath(iconPath) {
-    return path.resolve(path.dirname(__dirname), '..', '..', iconPath);
+    const scriptDir = path.dirname(fileURLToPath(import.meta.url));
+    const rootDir = path.resolve(scriptDir, '..', '..');
+    return path.resolve(rootDir, iconPath);
   }
 
   resolveScriptPath(scriptPath) {
-    return path.resolve(path.dirname(__dirname), '..', '..', scriptPath);
+    const scriptDir = path.dirname(fileURLToPath(import.meta.url));
+    const rootDir = path.resolve(scriptDir, '..', '..');
+    return path.resolve(rootDir, scriptPath);
   }
 
   addError(message) {
@@ -426,10 +435,17 @@ class ManifestValidator {
 // Main execution
 async function main() {
   const validator = new ManifestValidator();
-  const rootDir = path.resolve(path.dirname(__dirname), '..', '..');
+  
+  // Get root directory - handle both local and CI environments
+  const scriptDir = path.dirname(fileURLToPath(import.meta.url));
+  const rootDir = path.resolve(scriptDir, '..', '..');
+  
+  console.log(`📁 Script directory: ${scriptDir}`);
+  console.log(`📁 Root directory: ${rootDir}`);
 
   // Validate main manifest
   const mainManifestPath = path.join(rootDir, 'manifest.json');
+  console.log(`📄 Looking for manifest at: ${mainManifestPath}`);
   const isMainValid = await validator.validateManifest(mainManifestPath);
 
   // Validate Edge-specific manifest if it exists
@@ -456,7 +472,11 @@ async function main() {
 }
 
 // Run if called directly
-if (import.meta.url === `file://${process.argv[1]}`) {
+const isMainModule = import.meta.url === `file://${process.argv[1]}` || 
+                     import.meta.url.endsWith(process.argv[1]) ||
+                     process.argv[1].endsWith('validate-manifest.js');
+
+if (isMainModule) {
   main().catch((error) => {
     console.error('❌ Validation script failed:', error);
     process.exit(1);
