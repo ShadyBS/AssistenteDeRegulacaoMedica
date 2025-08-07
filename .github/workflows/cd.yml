@@ -301,6 +301,8 @@ jobs:
     runs-on: ubuntu-latest
     needs: [pre-release-check, build-release]
     if: needs.pre-release-check.outputs.is-production == 'false'
+    permissions:
+      contents: write
 
     steps:
       - name: 📥 Checkout Repository
@@ -349,6 +351,8 @@ jobs:
     runs-on: ubuntu-latest
     needs: [pre-release-check, build-release]
     if: needs.pre-release-check.outputs.is-production == 'true'
+    permissions:
+      contents: write
 
     steps:
       - name: 📥 Checkout Repository
