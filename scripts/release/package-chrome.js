@@ -10,7 +10,7 @@ async function packageChrome() {
   console.log('📦 Starting Chrome packaging...');
 
   const srcDir = path.resolve(__dirname, '../../');
-  const outputDir = path.resolve(__dirname, '../../dist-zips');
+  const outputDir = path.resolve(__dirname, '../../dist/packages');
 
   // Files and patterns to ignore - comprehensive list for clean extension package
   const FILES_TO_IGNORE = [

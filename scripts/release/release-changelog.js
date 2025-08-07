@@ -16,10 +16,18 @@ const newVersionHeader = `## [${version}] - ${today}`;
 
 let changelogContent = fs.readFileSync(changelogPath, 'utf8');
 
-// Adiciona a nova seção de versão
+// Encontra o conteúdo em "Unreleased"
+const unreleasedRegex = /## \[Unreleased\]\n([\s\S]*?)\n## \[/;
+const unreleasedMatch = changelogContent.match(unreleasedRegex);
+const unreleasedContent = unreleasedMatch ? unreleasedMatch[1].trim() : '';
+
+// Remove o conteúdo de "Unreleased"
+changelogContent = changelogContent.replace(unreleasedRegex, `## [Unreleased]\n\n## [`);
+
+// Adiciona a nova seção de versão com o conteúdo
 changelogContent = changelogContent.replace(
   '## [Unreleased]',
-  `## [Unreleased]\n\n${newVersionHeader}`
+  `## [Unreleased]\n\n${newVersionHeader}\n${unreleasedContent}`
 );
 
 // Adiciona o novo link de comparação

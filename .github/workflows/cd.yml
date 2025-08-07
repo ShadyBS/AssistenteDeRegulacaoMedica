@@ -311,6 +311,14 @@ jobs:
       - name: 📝 Update CHANGELOG
         run: node scripts/release/release-changelog.js ${{ needs.pre-release-check.outputs.version }}
 
+      - name: 🚀 Commit and Push CHANGELOG
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          git add CHANGELOG.md
+          git commit -m "docs(changelog): update for version ${{ needs.pre-release-check.outputs.version }}"
+          git push
+
       - name: 📦 Download All Packages
         uses: actions/download-artifact@v4
         with:
@@ -360,6 +368,14 @@ jobs:
 
       - name: 📝 Update CHANGELOG
         run: node scripts/release/release-changelog.js ${{ needs.pre-release-check.outputs.version }}
+
+      - name: 🚀 Commit and Push CHANGELOG
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          git add CHANGELOG.md
+          git commit -m "docs(changelog): update for version ${{ needs.pre-release-check.outputs.version }}"
+          git push
 
       - name: 📦 Download All Packages
         uses: actions/download-artifact@v4
