@@ -195,7 +195,7 @@ jobs:
   #       run: npm ci
 
   #     - name: 📦 Download Chrome Package
-  #       uses: actions/download-artifact@v4
+  #       uses: actions/download-artifact@v5
   #       with:
   #         name: release-chrome-${{ needs.pre-release-check.outputs.version }}
   #         path: dist/packages/
@@ -234,7 +234,7 @@ jobs:
   #       run: npm ci
 
   #     - name: 📦 Download Firefox Package
-  #       uses: actions/download-artifact@v4
+  #       uses: actions/download-artifact@v5
   #       with:
   #         name: release-firefox-${{ needs.pre-release-check.outputs.version }}
   #         path: dist/packages/
@@ -272,7 +272,7 @@ jobs:
   #       run: npm ci
 
   #     - name: 📦 Download Edge Package
-  #       uses: actions/download-artifact@v4
+  #       uses: actions/download-artifact@v5
   #       with:
   #         name: release-edge-${{ needs.pre-release-check.outputs.version }}
   #         path: dist/packages/
@@ -319,7 +319,7 @@ jobs:
           git push origin HEAD:main
 
       - name: 📦 Download All Packages
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: release
           path: dist-zips/
@@ -378,7 +378,7 @@ jobs:
           git push origin HEAD:main
 
       - name: 📦 Download All Packages
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: release
           path: dist-zips/
